@@ -29,6 +29,7 @@ void registerResources(flecs::world &world) {
           .src("$team")
           .build(), // team_members
   });
+  world.set<GuiResource>({});
 }
 
 void registerSystems(flecs::world &world) {
@@ -63,7 +64,7 @@ void registerSystems(flecs::world &world) {
 
   // Update Phase
 
-  world.system<GameResource, Renderer>("Events")
+  world.system<GameResource, Renderer>("Event Handling")
       .term_at(1)
       .singleton()
       .term_at(2)
@@ -71,12 +72,10 @@ void registerSystems(flecs::world &world) {
       .kind(preFramePhase)
       .iter(systemEventHandling);
 
-  world.system<GameResource, Renderer>("Update UI")
+  world.system<GuiResource>("Update UI")
       .term_at(1)
       .singleton()
-      .term_at(2)
-      .singleton()
-      .kind(flecs::PreStore)
+      .kind(preFramePhase)
       .iter(systemUpdateUI);
 
   // Render Phase
@@ -168,7 +167,8 @@ int main(void) {
   registerSystems(world);
   prepareGraphics(world);
 
-  auto site = world.entity().set<Site>({"Cape Canaveral", 10, 10});
+  auto site =
+      world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
   world.entity()
       .add<Building>()
       .add<Storage>()

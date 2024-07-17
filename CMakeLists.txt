@@ -19,6 +19,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
+add_subdirectory(external)
 add_subdirectory(src)
 
 if(SC_BUILD_TESTS)

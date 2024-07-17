@@ -2,9 +2,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL_ttf.h>
-#include <TGUI/AllWidgets.hpp>
-#include <TGUI/Backend/SDL-Renderer.hpp>
-#include <TGUI/Core.hpp>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
@@ -52,8 +49,6 @@ void initialiseGraphics(flecs::world &world) {
     spdlog::error("Failed to initialize TTF: {}", TTF_GetError());
     throw std::runtime_error("Failed to initialize TTF");
   }
-
-  r.gui = new tgui::Gui{r.window, r.renderer};
 
   world.set<Renderer>(r);
 }

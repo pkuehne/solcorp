@@ -1,7 +1,9 @@
 #include "gui.h"
-#include <TGUI/AllWidgets.hpp>
-#include <TGUI/Backend/SDL-Renderer.hpp>
-#include <TGUI/Core.hpp>
+#include "components.h"
+#include "gui/site_window.h"
+#include <backends/imgui_impl_sdl2.h>
+#include <backends/imgui_impl_sdlrenderer2.h>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 /// @brief Creates and initialises the GUI system
@@ -9,58 +11,43 @@
 void initialiseGUI(flecs::world &world) {
   spdlog::info("Creating GUI");
 
+  IMGUI_CHECKVERSION();
+
+  ImGui::CreateContext();
+  auto io = ImGui::GetIO();
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+
   auto r = world.get_mut<Renderer>();
-
-  auto popLaunchSite = tgui::ChildWindow::create();
-  // child->setRenderer(theme.getRenderer("ChildWindow"));
-  popLaunchSite->setClientSize({250, 120});
-  popLaunchSite->setPosition("50%", "50%");
-  popLaunchSite->setOrigin(0.5f, 0.5f);
-  popLaunchSite->setTitle("Launch Site");
-  popLaunchSite->setVisible(false);
-  popLaunchSite->onClosing([=](bool *abort) {
-    *abort = true; // Prevents the window from being closed, onClose won't be
-                   // triggered
-    popLaunchSite->setVisible(false);
-  });
-  r->gui->add(popLaunchSite, "popLaunchSite");
-
-  auto lblName = tgui::Label::create();
-  lblName->setText("Name: ");
-  popLaunchSite->add(lblName, "lblName");
-
-  auto panel = tgui::Panel::create();
-  panel->setPosition(0, 0);
-  // panel->getRenderer()->setBackgroundColor(tgui::Color::Green);
-  r->gui->add(panel);
-
-  auto lblDay = tgui::Label::create();
-  // label->setRenderer(theme.getRenderer("Label"));
-  lblDay->setText("Day: 0");
-  lblDay->setPosition(0, 0);
-  // label->setTextSize(36);
-  panel->add(lblDay, "lblDay");
-  panel->setSize(r->gui->getView().getSize().x, lblDay->getSize().y);
+  ImGui_ImplSDL2_InitForSDLRenderer(r->window, r->renderer);
+  ImGui_ImplSDLRenderer2_Init(r->renderer);
 }
 
 /// @brief System to update the UI from the current game state
 /// @param it
 /// @param game The game resource
 /// @param r The renderer
-void systemUpdateUI(flecs::iter &it, GameResource *game, Renderer *r) {
+void systemUpdateUI(flecs::iter &it, GuiResource *gui) {
   auto world = it.world();
-  auto gui = r->gui;
 
-  auto label = gui->get<tgui::Label>("lblDay");
-  if (label == nullptr) {
-    spdlog::critical("Failed to find widget: {}", "");
-    world.quit();
-    return;
+  ImGui_ImplSDLRenderer2_NewFrame();
+  ImGui_ImplSDL2_NewFrame();
+  ImGui::NewFrame();
+
+  if (gui->show_demo_window) {
+    ImGui::ShowDemoWindow();
   }
-  label->setText("Day: " + std::to_string(game->day));
+  gui->site_window.draw(world);
+
+  ImGui::EndFrame();
+  ImGui::Render();
 }
 
 /// @brief System to send render instructions for the UI
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderUI(flecs::iter &, const Renderer *r) { r->gui->draw(); }
+void systemRenderUI(flecs::iter &, const Renderer *r) {
+  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r->renderer);
+}

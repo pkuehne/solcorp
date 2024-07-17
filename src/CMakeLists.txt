@@ -1,6 +1,7 @@
 list(APPEND SolCorpSources
     components.cpp
     gui.cpp
+    gui/site_window.cpp
     graphics.cpp
     systems.cpp
     systems/rocket_system.cpp
@@ -8,6 +9,7 @@ list(APPEND SolCorpSources
 list(APPEND SolCorpHeaders
     components.h
     gui.h
+    gui/site_window.h
     graphics.h
     systems.h
     systems/rocket_system.h
@@ -21,16 +23,10 @@ fetchcontent_declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/
     GIT_TAG v1.x
 )
-fetchcontent_declare(tgui
-    GIT_REPOSITORY https://github.com/texus/TGUI/
-    GIT_TAG 1.x
-)
 
 set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
-set(TGUI_BACKEND SDL_RENDERER)
-set(TGUI_SHARED_LIBS off)
 
-fetchcontent_makeavailable(flecs spdlog tgui)
+fetchcontent_makeavailable(flecs spdlog)
 
 add_compile_definitions(SC_VERSION="${PROJECT_VERSION}")
 
@@ -49,6 +45,7 @@ add_library(solcorp::solcorplib ALIAS solcorplib)
 target_include_directories(solcorplib PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(solcorplib PUBLIC ${SDL2_INCLUDE_DIRS})
 target_include_directories(solcorplib PUBLIC ${SDL2IMAGE_INCLUDE_DIRS})
+target_include_directories(solcorplib PUBLIC ${SDL2TTF_INCLUDE_DIRS})
 
 set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER
     "${SolCorpHeaders}")
@@ -60,9 +57,10 @@ target_compile_options(solcorplib PRIVATE -Wpedantic)
 
 target_link_libraries(solcorplib ${SDL2_LIBRARIES})
 target_link_libraries(solcorplib ${SDL2IMAGE_LIBRARIES})
+target_link_libraries(solcorplib ${SDL2TTF_LIBRARIES})
 target_link_libraries(solcorplib flecs::flecs_static)
 target_link_libraries(solcorplib spdlog::spdlog)
-target_link_libraries(solcorplib tgui)
+target_link_libraries(solcorplib imgui)
 
 # Executable
 add_executable(solcorp main.cpp)

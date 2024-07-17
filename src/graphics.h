@@ -1,8 +1,6 @@
 #pragma once
 
-#include "TGUI/Backend/SDL-Renderer.hpp"
 #include "components.h"
-#include <TGUI/Core.hpp>
 #include <string>
 
 struct SDL_Window;
@@ -19,7 +17,6 @@ struct world;
 struct Renderer {
   SDL_Window *window = nullptr;
   SDL_Renderer *renderer = nullptr;
-  tgui::Gui *gui = nullptr;
 };
 
 /// @brief Stores an SDL2 texture and its size information

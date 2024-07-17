@@ -3,35 +3,36 @@
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 #include <SDL_keycode.h>
-#include <TGUI/AllWidgets.hpp>
-#include <TGUI/Backend/SDL-Renderer.hpp>
-#include <TGUI/Core.hpp>
+#include <backends/imgui_impl_sdl2.h>
 #include <graphics.h>
 #include <spdlog/spdlog.h>
 
-void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *r) {
+void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
   // spdlog::info("Handling Events");
 
+  auto world = it.world();
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
-    if (r->gui->handleEvent(event))
-      continue; // Gui handled the event
+    ImGui_ImplSDL2_ProcessEvent(&event);
+    // if (r->gui->handleEvent(event))
+    //   continue; // Gui handled the event
 
     switch (event.type) {
       // User requests quit
     case SDL_QUIT:
-      it.world().quit();
+      world.quit();
       break;
     case SDL_KEYUP:
       if (event.key.keysym.sym == SDLK_ESCAPE) {
-        it.world().quit();
+        world.quit();
       }
       if (event.key.keysym.sym == SDLK_SPACE) {
         game->sim_speed.enabled() ? game->sim_speed.disable()
                                   : game->sim_speed.enable();
       }
       if (event.key.keysym.sym == SDLK_l) {
-        r->gui->get<tgui::ChildWindow>("popLaunchSite")->setVisible(true);
+        auto gui = world.get_mut<GuiResource>();
+        gui->site_window.visible = !gui->site_window.visible;
       }
       break;
 
@@ -40,24 +41,6 @@ void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *r) {
     }
   }
 }
-
-// void render_system(flecs::iter &it, GameResource *game) {
-//   spdlog::trace("Rendering");
-//
-//   sf::Texture texture;
-//   if (!texture.loadFromFile("../../textures/hello_world.png")) {
-//     spdlog::critical("Unable to load image {}!", "hello_world.png");
-//     it.world().quit();
-//     return;
-//   }
-//   sf::Sprite sprite;
-//   sprite.setTexture(texture);
-//
-//   game->window->clear(sf::Color::Black);
-//   game->window->draw(sprite);
-//   game->gui->draw();
-//   game->window->display();
-// }
 
 void sim_update_system(flecs::iter &, GameResource *game) {
   game->day++;

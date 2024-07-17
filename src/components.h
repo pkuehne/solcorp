@@ -1,6 +1,6 @@
 #pragma once
 
-// #include <SDL/Graphics.hpp>
+#include "gui/site_window.h"
 #include <flecs.h>
 #include <string>
 #include <sys/types.h>
@@ -86,4 +86,9 @@ struct QueryResource {
 struct GameResource {
   flecs::entity sim_speed;
   u_int day = 0;
+};
+
+struct GuiResource {
+  bool show_demo_window = false;
+  SiteWindow site_window;
 };
