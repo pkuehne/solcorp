@@ -1,11 +1,11 @@
 #include "systems.h"
+#include "backends/imgui_impl_sdl2.h"
 #include "components.h"
+#include "graphics.h"
+#include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 #include <SDL_keycode.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <graphics.h>
-#include <spdlog/spdlog.h>
 
 void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
   // spdlog::info("Handling Events");
@@ -42,7 +42,7 @@ void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
   }
 }
 
-void sim_update_system(flecs::iter &, GameResource *game) {
+void systemUpdateSimDate(flecs::iter &, GameResource *game) {
   game->day++;
   spdlog::info("It's Day {}", game->day);
 }

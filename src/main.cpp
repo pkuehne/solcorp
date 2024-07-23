@@ -1,11 +1,10 @@
 #include "components.h"
 #include "graphics.h"
 #include "gui.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/spdlog.h"
 #include "systems.h"
-#include <flecs.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
+#include "systems/building_systems.h"
 // #include "systems/rocket_system.h"
 
 void registerResources(flecs::world &world) {
@@ -33,7 +32,7 @@ void registerResources(flecs::world &world) {
 }
 
 void registerSystems(flecs::world &world) {
-  // auto game = world.get<GameResource>();
+  auto game = world.get<GameResource>();
 
   auto preFramePhase = world.entity("Phase.PreFrame").add(flecs::Phase);
   auto validatePhase = world.entity("Phase.Validate")
@@ -78,6 +77,19 @@ void registerSystems(flecs::world &world) {
       .kind(preFramePhase)
       .iter(systemUpdateUI);
 
+  // Simulator Systems
+  world.system<GameResource>("Update Simulation Date")
+      .tick_source(game->sim_speed)
+      .term_at(1)
+      .singleton()
+      .kind(UpdatePhase)
+      .iter(systemUpdateSimDate);
+
+  world.system<Manufacturing>("Update Construction")
+      .tick_source(game->sim_speed)
+      .kind(UpdatePhase)
+      .each(systemBuildingUpdateConstruction);
+
   // Render Phase
   world.system<const Renderer>("Render Begin")
       .term_at(1)
@@ -106,13 +118,6 @@ void registerSystems(flecs::world &world) {
   // Cleanup
   // PostFrame
 
-  //   // Simulator Systems
-  //   world.system<GameResource>("sim_update_system")
-  //       .tick_source(game->sim_speed)
-  //       .term_at(1)
-  //       .singleton()
-  //       .kind(flecs::PreUpdate)
-  //       .iter(sim_update_system);
   //   world.system<Rocket>("rocket_print_system")
   //       .tick_source(game->sim_speed)
   //       .each(rocket_print_system);
@@ -170,26 +175,36 @@ int main(void) {
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
   world.entity()
-      .add<Building>()
-      .add<Storage>()
+      .set<Building>({"Storage Hall 1"})
+      .set<Storage>({})
       .set<SiteLocation>({0, 0})
       .set<Position>({0, 1})
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
   world.entity()
-      .add<Building>()
-      .add<Launchpad>()
+      .set<Building>({"Launchpad"})
+      .set<Launchpad>({})
       .set<SiteLocation>({1, 0})
       .set<Position>({1, 1})
       .set<Sprite>({"building_texture", 3})
       .child_of(site);
   world.entity()
-      .add<Building>()
-      .add<Office>()
+      .set<Building>({"North Building"})
+      .set<Office>({})
       .set<SiteLocation>({2, 0})
       .set<Position>({2, 1})
       .set<Sprite>({"building_texture", 1})
       .child_of(site);
+  world.entity()
+      .set<Building>({"Manufacturing A"})
+      .set<Manufacturing>({})
+      .set<Storage>({})
+      .set<SiteLocation>({1, 1})
+      .set<Position>({1, 2})
+      .set<Sprite>({"building_texture", 2})
+      .child_of(site);
+
+  world.get_mut<GuiResource>()->site_window.siteEntity = site;
 
   // Main Loop
   logger->info("Starting");

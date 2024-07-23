@@ -1,23 +1,29 @@
 list(APPEND SolCorpSources
     components.cpp
     gui.cpp
+    gui/launch_window.cpp
+    gui/main_menu.cpp
     gui/site_window.cpp
     graphics.cpp
     systems.cpp
+    systems/building_systems.cpp
     systems/rocket_system.cpp
     )
 list(APPEND SolCorpHeaders
     components.h
     gui.h
+    gui/launch_window.h
+    gui/main_menu.h
     gui/site_window.h
     graphics.h
     systems.h
+    systems/building_systems.h
     systems/rocket_system.h
     )
 
 fetchcontent_declare(flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs
-    GIT_TAG master
+    GIT_TAG v4.0.0
 )
 fetchcontent_declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/

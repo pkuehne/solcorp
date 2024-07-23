@@ -1,9 +1,8 @@
 #include "graphics.h"
+#include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL_ttf.h>
-#include <flecs.h>
-#include <spdlog/spdlog.h>
 
 /// @brief Initialises the Renderer and Window
 /// @returns A Renderer Component to be added to the World

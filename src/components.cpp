@@ -1,5 +1,4 @@
 #include "components.h"
-#include <flecs.h>
 
 void registerComponents(flecs::world &world) {
   world.component<TeamMember>().add(flecs::Transitive);

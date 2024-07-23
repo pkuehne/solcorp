@@ -1,7 +1,8 @@
 #pragma once
 
+#include "gui/launch_window.h"
+#include "gui/main_menu.h"
 #include "gui/site_window.h"
-#include <flecs.h>
 #include <string>
 #include <sys/types.h>
 
@@ -28,6 +29,11 @@ struct Team {
 
 struct Rocket {};
 
+struct Construction {
+  u_int effort_remaining = 0;
+  u_int effort_total = 0;
+};
+
 struct CargoHold {
   u_int capacity = 0;
 };
@@ -43,18 +49,29 @@ struct Site {
   u_int height = 10;
 };
 
-/// @brief Tag that entity is a building
-struct Building {};
+/// @brief Indicates that entity is a building
+struct Building {
+  std::string name = "";
+};
 
 struct SiteLocation {
   u_int x = 0;
   u_int y = 0;
 };
 
+/// @brief Allows construction of rockets
+struct Manufacturing {
+  u_int lines = 1;
+  u_int max_weight = 1000;
+  u_int available_effort = 10;
+};
+
+/// @brief Can launch rockets
 struct Launchpad {
   u_int max_weight = 1000;
 };
 
+/// @brief For rockets and payloads
 struct Storage {
   u_int max_storage = 1000;
 };
@@ -91,4 +108,6 @@ struct GameResource {
 struct GuiResource {
   bool show_demo_window = false;
   SiteWindow site_window;
+  LaunchWindow launch_window;
+  MainMenu main_menu;
 };

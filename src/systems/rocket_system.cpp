@@ -1,7 +1,6 @@
 #include "rocket_system.h"
-
+#include "spdlog/spdlog.h"
 #include <iostream>
-#include <spdlog/spdlog.h>
 #include <sstream>
 
 void rocket_generator_system(flecs::iter &it) {
