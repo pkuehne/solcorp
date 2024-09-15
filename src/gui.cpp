@@ -2,6 +2,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "components.h"
+#include "gui/launch_window.h"
 #include "gui/site_window.h"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
@@ -24,6 +25,12 @@ void initialiseGUI(flecs::world &world) {
   auto r = world.get_mut<Renderer>();
   ImGui_ImplSDL2_InitForSDLRenderer(r->window, r->renderer);
   ImGui_ImplSDLRenderer2_Init(r->renderer);
+}
+
+void systemOpenLaunchWindow(flecs::entity entity, GuiResource &gui,
+                            const OpenLaunchWindow &) {
+  entity.remove<OpenLaunchWindow>();
+  gui.launch_window.show(entity);
 }
 
 /// @brief System to update the UI from the current game state

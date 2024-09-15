@@ -90,6 +90,12 @@ void registerSystems(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 
+  world.system<GuiResource, const OpenLaunchWindow>("Open Launch Window")
+      .term_at(1)
+      .singleton()
+      .kind(UpdatePhase)
+      .each(systemOpenLaunchWindow);
+
   // Render Phase
   world.system<const Renderer>("Render Begin")
       .term_at(1)
@@ -203,8 +209,6 @@ int main(void) {
       .set<Position>({1, 2})
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
-
-  world.get_mut<GuiResource>()->site_window.siteEntity = site;
 
   // Main Loop
   logger->info("Starting");

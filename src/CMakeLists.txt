@@ -4,6 +4,7 @@ list(APPEND SolCorpSources
     gui/launch_window.cpp
     gui/main_menu.cpp
     gui/site_window.cpp
+    gui/widgets.cpp
     graphics.cpp
     systems.cpp
     systems/building_systems.cpp
@@ -15,6 +16,7 @@ list(APPEND SolCorpHeaders
     gui/launch_window.h
     gui/main_menu.h
     gui/site_window.h
+    gui/widgets.h
     graphics.h
     systems.h
     systems/building_systems.h

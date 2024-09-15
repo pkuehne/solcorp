@@ -32,7 +32,7 @@ void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
       }
       if (event.key.keysym.sym == SDLK_l) {
         auto gui = world.get_mut<GuiResource>();
-        gui->site_window.visible = !gui->site_window.visible;
+        gui->site_window.show(world.lookup("cape_canaveral"));
       }
       break;
 

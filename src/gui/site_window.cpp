@@ -3,32 +3,30 @@
 #include "flecs/addons/cpp/entity.hpp"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
+#include "widgets.h"
 #include <vector>
 
-bool ActionButton(const char *label, const char *tooltip,
-                  const std::string &issue) {
-  bool retval = false;
-  ImGui::BeginDisabled(!issue.empty());
-  if (ImGui::Button(label)) {
-    retval = true;
+void SiteWindow::show(const flecs::entity &entity) {
+  if (entity == flecs::entity() || !entity.is_alive()) {
+    spdlog::error("Called show on SiteWindow with invalid site: {}",
+                  entity.id());
+    m_visible = false;
+    return;
   }
-  if ((tooltip || !issue.empty()) && ImGui::BeginItemTooltip()) {
-    if (tooltip)
-      ImGui::Text("%s", tooltip);
-    if (!issue.empty())
-      ImGui::TextColored((ImVec4)ImColor::HSV(1.0, 1.0, 1.0), "%s",
-                         issue.c_str());
-    ImGui::EndTooltip();
-  }
-  ImGui::EndDisabled();
-  return retval;
+  m_siteEntity = entity;
+  m_visible = true;
+}
+
+void SiteWindow::hide() {
+  m_siteEntity = flecs::entity();
+  m_visible = false;
 }
 
 void SiteWindow::loadData() {
   m_manuBuildings.clear();
   m_storageBuildings.clear();
 
-  siteEntity.children([&](flecs::entity e) {
+  m_siteEntity.children([&](flecs::entity e) {
     if (e.has<Manufacturing>()) {
       m_manuBuildings.push_back(e);
     }
@@ -39,17 +37,17 @@ void SiteWindow::loadData() {
 }
 
 void SiteWindow::draw(flecs::world &) {
-  if (!visible)
+  if (!m_visible)
     return;
 
-  if (siteEntity == flecs::entity() || !siteEntity.is_alive()) {
-    spdlog::error("Opened SiteWindow on non-existant site");
-    visible = false;
+  if (m_siteEntity == flecs::entity() || !m_siteEntity.is_alive()) {
+    spdlog::error("Site is no longer valid for SiteWindow");
+    m_visible = false;
     return;
   }
   this->loadData();
 
-  const Site *site = siteEntity.get<Site>();
+  const Site *site = m_siteEntity.get<Site>();
   u_int numBuildings = m_manuBuildings.size() + m_storageBuildings.size();
 
   ImGui::Begin("Site");
@@ -98,7 +96,9 @@ void SiteWindow::drawRocket(flecs::entity &rocket) {
       issue = "Cannot schedule rocket while being built";
     }
     if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
-      ImGui::OpenPopup("Schedule Launch");
+      // ImGui::OpenPopup("Schedule Launch");
+      auto world = rocket.world();
+      world.entity().set<LaunchPlan>({}).add<OpenLaunchWindow>();
     }
     this->movePopup(rocket.parent(), rocket);
     this->schedulePopup(rocket);
@@ -107,7 +107,7 @@ void SiteWindow::drawRocket(flecs::entity &rocket) {
 }
 
 void SiteWindow::drawManufacturingSection() {
-  const flecs::world &world = siteEntity.world();
+  const flecs::world &world = m_siteEntity.world();
 
   ImGui::SeparatorText("Manufacturing");
   for (flecs::entity e : m_manuBuildings) {

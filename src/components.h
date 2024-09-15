@@ -4,7 +4,6 @@
 #include "gui/main_menu.h"
 #include "gui/site_window.h"
 #include <string>
-#include <sys/types.h>
 
 void registerComponents(flecs::world &);
 
@@ -38,9 +37,9 @@ struct CargoHold {
   u_int capacity = 0;
 };
 
-struct PlanetaryLaunch {
-  u_int remaining_days = 0;
-  bool completed = false;
+struct LaunchPlan {
+  u_int launch_date = 0;
+  bool draft = true;
 };
 
 struct Site {
@@ -89,7 +88,9 @@ struct Position {
 struct TeamMember {};
 struct Manager {};
 
-struct LaunchingWith {};
+struct LaunchingFrom {}; /// From which launchpad?
+struct LaunchingOn {};   /// On what  rocket
+struct LaunchingWith {}; /// With what payloads?
 
 // Resources
 struct PrefabResource {
@@ -111,3 +112,6 @@ struct GuiResource {
   LaunchWindow launch_window;
   MainMenu main_menu;
 };
+
+struct OpenLaunchWindow {};
+struct OpenSiteWindow {};
