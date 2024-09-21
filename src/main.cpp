@@ -19,15 +19,15 @@ void registerResources(flecs::world &world) {
   //                   a member of "
   //                               << it.get_var("team").name() << std::endl;
   //                               });
-  world.set<QueryResource>({
-      world.rule_builder<Person>()
-          .with<Employee>()
-          .with<TeamMember>()
-          .second("$team")
-          .with<TeamMember>(flecs::Any)
-          .src("$team")
-          .build(), // team_members
-  });
+  //   world.set<QueryResource>({
+  //       world.rule_builder<Person>()
+  //           .with<Employee>()
+  //           .with<TeamMember>()
+  //           .second("$team")
+  //           .with<TeamMember>(flecs::Any)
+  //           .src("$team")
+  //           .build(), // team_members
+  //   });
   world.set<GuiResource>({});
 }
 
@@ -64,26 +64,26 @@ void registerSystems(flecs::world &world) {
   // Update Phase
 
   world.system<GameResource, Renderer>("Event Handling")
+      .term_at(0)
+      .singleton()
       .term_at(1)
       .singleton()
-      .term_at(2)
-      .singleton()
       .kind(preFramePhase)
-      .iter(systemEventHandling);
+      .each(systemEventHandling);
 
   world.system<GuiResource>("Update UI")
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(preFramePhase)
-      .iter(systemUpdateUI);
+      .each(systemUpdateUI);
 
   // Simulator Systems
   world.system<GameResource>("Update Simulation Date")
       .tick_source(game->sim_speed)
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(UpdatePhase)
-      .iter(systemUpdateSimDate);
+      .each(systemUpdateSimDate);
 
   world.system<Manufacturing>("Update Construction")
       .tick_source(game->sim_speed)
@@ -91,35 +91,35 @@ void registerSystems(flecs::world &world) {
       .each(systemBuildingUpdateConstruction);
 
   world.system<GuiResource, const OpenLaunchWindow>("Open Launch Window")
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(UpdatePhase)
       .each(systemOpenLaunchWindow);
 
   // Render Phase
   world.system<const Renderer>("Render Begin")
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(RenderPhase)
-      .iter(systemRenderClear);
+      .each(systemRenderClear);
 
   world.system<const Sprite, const Position, const Renderer>("Render Sprites")
-      .term_at(3)
+      .term_at(2)
       .singleton()
       .kind(RenderPhase)
-      .iter(systemRenderSprite);
+      .each(systemRenderSprite);
 
   world.system<const Renderer>("Render UI")
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(RenderPhase)
-      .iter(systemRenderUI);
+      .each(systemRenderUI);
 
   world.system<const Renderer>("Render End")
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(RenderPhase)
-      .iter(systemRenderPresent);
+      .each(systemRenderPresent);
 
   // Cleanup
   // PostFrame
@@ -212,8 +212,8 @@ int main(void) {
 
   // Main Loop
   logger->info("Starting");
-  world.import <flecs::monitor>();
   world.set_target_fps(60);
+  //   ecs_log_set_level(0);
   int rcode = world.app().enable_rest().run();
 
   return rcode;

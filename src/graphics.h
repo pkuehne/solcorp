@@ -43,10 +43,10 @@ void initialiseGraphics(flecs::world &world);
 Texture loadTexture(const std::string &name, flecs::world &world);
 
 // Systems
-void systemRenderClear(flecs::iter &it, const Renderer *r);
-void systemRenderPresent(flecs::iter &it, const Renderer *r);
-void systemRenderSprite(flecs::iter &it, const Sprite *sprite,
-                        const Position *target, const Renderer *renderer);
+void systemRenderClear(const Renderer &r);
+void systemRenderPresent(const Renderer &r);
+void systemRenderSprite(flecs::entity e, const Sprite &sprite,
+                        const Position &target, const Renderer &renderer);
 // void systemRenderTileMap(flecs::entity e, const TileMap &map, const Renderer
 // &renderer, const Constants &c); void systemUpdateAnimation(flecs::entity
 // e, Animation &animation, Sprite &sprite);

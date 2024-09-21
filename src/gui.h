@@ -2,7 +2,7 @@
 #include "graphics.h"
 
 void initialiseGUI(flecs::world &);
-void systemUpdateUI(flecs::iter &, GuiResource *);
-void systemRenderUI(flecs::iter &, const Renderer *);
+void systemUpdateUI(flecs::iter &, size_t, GuiResource &);
+void systemRenderUI(const Renderer &);
 void systemOpenLaunchWindow(flecs::entity entity, GuiResource &gui,
                             const OpenLaunchWindow &);
