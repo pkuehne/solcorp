@@ -17,6 +17,18 @@ void LaunchWindow::show(const flecs::entity &entity) {
   m_entity = entity;
   m_visible = true;
   m_launchDay = today + m_launchPrepDays;
+
+  m_rocketQuery = m_entity.world()
+                      .query_builder<Rocket>()
+                      .with<Rocket>()
+                      //  .with(flecs::ChildOf)
+                      //  .second()
+                      //  .var("Site")
+                      .build();
+  m_launchpadQuery = m_entity.world()
+                         .query_builder<Launchpad, Building>()
+                         .with<Building>()
+                         .build();
 }
 
 void LaunchWindow::hide() { m_visible = false; }
@@ -45,6 +57,36 @@ void LaunchWindow::draw(flecs::world &) {
   ImGui::Begin("Launch Planning");
   ImGui::DragInt("Launch Date:", &m_launchDay, 1.0f, today + 5, today + 1000,
                  "%d", ImGuiSliderFlags_AlwaysClamp);
+
+  // Rocket
+
+  if (ImGui::BeginCombo("##RocketCombo", m_rocketDisplay.c_str())) {
+    m_rocketQuery
+        .iter()
+        // .set_var("Site", m_entity)
+        .each([&](flecs::entity e, Rocket) {
+          std::string display = fmt::format("Rocket {}", e.id());
+          if (ImGui::Selectable(display.c_str())) {
+            m_rocketDisplay = display;
+            m_rocket = e;
+          }
+        });
+    ImGui::EndCombo();
+  }
+
+  // Launchpad
+  if (ImGui::BeginCombo("##Launchpass", m_launchpadDisplay.c_str())) {
+    m_launchpadQuery
+        .iter()
+        // .set_var("Site", m_entity)
+        .each([&](flecs::entity e, Launchpad, Building &b) {
+          if (ImGui::Selectable(b.name.c_str())) {
+            m_launchpadDisplay = b.name;
+            m_launchpad = e;
+          }
+        });
+    ImGui::EndCombo();
+  }
 
   if (ActionButton("Save", "Save Launch Plan to be executed", std::string())) {
     // Save LaunchPlan and close window

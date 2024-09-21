@@ -1,6 +1,11 @@
 #pragma once
 
 #include <flecs.h>
+#include <string>
+
+struct Rocket;
+struct Launchpad;
+struct Building;
 
 class LaunchWindow {
 public:
@@ -15,4 +20,12 @@ private:
   bool m_visible = false;
   int m_launchDay = 0;
   u_int m_launchPrepDays = 5;
+
+  flecs::query<Rocket> m_rocketQuery;
+  flecs::entity m_rocket;
+  std::string m_rocketDisplay = "<Select Rocket>";
+
+  flecs::query<Launchpad, Building> m_launchpadQuery;
+  flecs::entity m_launchpad;
+  std::string m_launchpadDisplay = "<Select Launchpad>";
 };

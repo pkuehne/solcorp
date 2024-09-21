@@ -98,7 +98,7 @@ struct PrefabResource {
 };
 
 struct QueryResource {
-  flecs::rule<Person> team_members;
+  // flecs::rule<Person> team_members;
 };
 
 struct GameResource {
