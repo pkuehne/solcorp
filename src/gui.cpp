@@ -26,24 +26,37 @@ void initialiseGUI(flecs::world &world) {
   ImGui_ImplSDLRenderer2_Init(r->renderer);
 }
 
+/// @brief Task that creates a new ImGui Frame
+void systemGuiNewFrame(flecs::iter &) {
+  ImGui_ImplSDLRenderer2_NewFrame();
+  ImGui_ImplSDL2_NewFrame();
+  ImGui::NewFrame();
+}
+
 /// @brief System to update the UI from the current game state
 /// @param it
 /// @param game The game resource
 /// @param r The renderer
-void systemUpdateUI(flecs::iter &it, GuiResource *gui) {
-  auto world = it.world();
+void systemDrawGui(flecs::iter &iter, size_t, GuiResource &gui) {
+  auto world = iter.world();
 
-  ImGui_ImplSDLRenderer2_NewFrame();
-  ImGui_ImplSDL2_NewFrame();
-  ImGui::NewFrame();
+  // ImGui_ImplSDLRenderer2_NewFrame();
+  // ImGui_ImplSDL2_NewFrame();
+  // ImGui::NewFrame();
 
-  if (gui->show_demo_window) {
-    ImGui::ShowDemoWindow();
-  }
-  gui->main_menu.draw(world);
-  gui->site_window.draw(world);
-  gui->launch_window.draw(world);
+  // if (gui.show_demo_window) {
+  //   ImGui::ShowDemoWindow();
+  // }
+  gui.main_menu.draw(world);
+  gui.site_window.draw(world);
+  // gui.launch_window.draw(world);
 
+  // ImGui::EndFrame();
+  // ImGui::Render();
+}
+
+/// @brief Task that finishes up ImGui Frame creation
+void systemGuiEndFrame(flecs::iter &) {
   ImGui::EndFrame();
   ImGui::Render();
 }
@@ -51,6 +64,6 @@ void systemUpdateUI(flecs::iter &it, GuiResource *gui) {
 /// @brief System to send render instructions for the UI
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderUI(flecs::iter &, const Renderer *r) {
-  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r->renderer);
+void systemRenderGUI(const Renderer &r) {
+  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r.renderer);
 }

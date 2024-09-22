@@ -1,10 +1,9 @@
 #pragma once
 
-#include "gui/launch_window.h"
+// #include "gui/launch_window.h"
 #include "gui/main_menu.h"
 #include "gui/site_window.h"
 #include <string>
-#include <sys/types.h>
 
 void registerComponents(flecs::world &);
 
@@ -27,8 +26,6 @@ struct Team {
   std::string name;
 };
 
-struct Rocket {};
-
 struct Construction {
   u_int effort_remaining = 0;
   u_int effort_total = 0;
@@ -36,11 +33,6 @@ struct Construction {
 
 struct CargoHold {
   u_int capacity = 0;
-};
-
-struct PlanetaryLaunch {
-  u_int remaining_days = 0;
-  bool completed = false;
 };
 
 struct Site {
@@ -63,12 +55,7 @@ struct SiteLocation {
 struct Manufacturing {
   u_int lines = 1;
   u_int max_weight = 1000;
-  u_int available_effort = 10;
-};
-
-/// @brief Can launch rockets
-struct Launchpad {
-  u_int max_weight = 1000;
+  u_int available_effort = 50;
 };
 
 /// @brief For rockets and payloads
@@ -89,15 +76,13 @@ struct Position {
 struct TeamMember {};
 struct Manager {};
 
-struct LaunchingWith {};
-
 // Resources
 struct PrefabResource {
   flecs::entity rocket;
 };
 
 struct QueryResource {
-  flecs::rule<Person> team_members;
+  // flecs::rule<Person> team_members;
 };
 
 struct GameResource {
@@ -108,6 +93,8 @@ struct GameResource {
 struct GuiResource {
   bool show_demo_window = false;
   SiteWindow site_window;
-  LaunchWindow launch_window;
   MainMenu main_menu;
 };
+
+struct OpenLaunchWindow {};
+struct OpenSiteWindow {};

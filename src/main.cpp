@@ -1,11 +1,11 @@
 #include "components.h"
 #include "graphics.h"
 #include "gui.h"
+#include "modules/rocket_launch.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 #include "systems.h"
 #include "systems/building_systems.h"
-// #include "systems/rocket_system.h"
 
 void registerResources(flecs::world &world) {
   world.set<PrefabResource>({
@@ -19,15 +19,15 @@ void registerResources(flecs::world &world) {
   //                   a member of "
   //                               << it.get_var("team").name() << std::endl;
   //                               });
-  world.set<QueryResource>({
-      world.rule_builder<Person>()
-          .with<Employee>()
-          .with<TeamMember>()
-          .second("$team")
-          .with<TeamMember>(flecs::Any)
-          .src("$team")
-          .build(), // team_members
-  });
+  //   world.set<QueryResource>({
+  //       world.rule_builder<Person>()
+  //           .with<Employee>()
+  //           .with<TeamMember>()
+  //           .second("$team")
+  //           .with<TeamMember>(flecs::Any)
+  //           .src("$team")
+  //           .build(), // team_members
+  //   });
   world.set<GuiResource>({});
 }
 
@@ -44,102 +44,72 @@ void registerSystems(flecs::world &world) {
   auto UpdatePhase = world.entity("Phase.Update")
                          .add(flecs::Phase)
                          .depends_on(PostValidatePhase);
-  auto RenderPhase =
-      world.entity("Phase.Render").add(flecs::Phase).depends_on(UpdatePhase);
-  // auto CleanupPhase =
-  //     world.entity("Phase.Cleanup").add(flecs::Phase).depends_on(RenderPhase);
-  // auto PostFramePhase = world.entity("Phase.PostFrame")
-  //                           .add(flecs::Phase)
-  //                           .depends_on(CleanupPhase);
+  auto guiPhase =
+      world.entity("Phase.Gui").add(flecs::Phase).depends_on(UpdatePhase);
 
-  // Startup Systems
-  //   world.system<>("company_generator_system")
-  //       .kind(flecs::OnStart)
-  //       .iter(company_generator_system);
-  //   world.system<>("rocket_generator_system")
-  //       .kind(flecs::OnStart)
-  //       .iter(rocket_generator_system);
-  // PreFrame
-
-  // Update Phase
+  auto preRenderPhase =
+      world.entity("Phase.PreRender").add(flecs::Phase).depends_on(guiPhase);
+  auto renderPhase =
+      world.entity("Phase.Render").add(flecs::Phase).depends_on(preRenderPhase);
+  auto postRenderPhase = world.entity("Phase.PostRender")
+                             .add(flecs::Phase)
+                             .depends_on(renderPhase);
 
   world.system<GameResource, Renderer>("Event Handling")
+      .term_at(0)
+      .singleton()
       .term_at(1)
       .singleton()
-      .term_at(2)
-      .singleton()
       .kind(preFramePhase)
-      .iter(systemEventHandling);
+      .each(systemEventHandling);
 
-  world.system<GuiResource>("Update UI")
-      .term_at(1)
-      .singleton()
-      .kind(preFramePhase)
-      .iter(systemUpdateUI);
+  world.system("New GUI Frame").kind(preFramePhase).run(systemGuiNewFrame);
 
   // Simulator Systems
   world.system<GameResource>("Update Simulation Date")
       .tick_source(game->sim_speed)
-      .term_at(1)
+      .term_at(0)
       .singleton()
       .kind(UpdatePhase)
-      .iter(systemUpdateSimDate);
+      .each(systemUpdateSimDate);
 
   world.system<Manufacturing>("Update Construction")
       .tick_source(game->sim_speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 
-  // Render Phase
-  world.system<const Renderer>("Render Begin")
-      .term_at(1)
+  world.system<GuiResource>("Draw GUI")
+      .term_at(0)
       .singleton()
-      .kind(RenderPhase)
-      .iter(systemRenderClear);
+      .kind(guiPhase)
+      .each(systemDrawGui);
+
+  // Render Phase
+  world.system("End GUI Frame").kind(preRenderPhase).run(systemGuiEndFrame);
+
+  world.system<const Renderer>("Render Begin")
+      .term_at(0)
+      .singleton()
+      .kind(preRenderPhase)
+      .each(systemRenderClear);
 
   world.system<const Sprite, const Position, const Renderer>("Render Sprites")
-      .term_at(3)
+      .term_at(2)
       .singleton()
-      .kind(RenderPhase)
-      .iter(systemRenderSprite);
+      .kind(renderPhase)
+      .each(systemRenderSprite);
 
-  world.system<const Renderer>("Render UI")
-      .term_at(1)
+  world.system<const Renderer>("Render GUI")
+      .term_at(0)
       .singleton()
-      .kind(RenderPhase)
-      .iter(systemRenderUI);
+      .kind(renderPhase)
+      .each(systemRenderGUI);
 
   world.system<const Renderer>("Render End")
-      .term_at(1)
+      .term_at(0)
       .singleton()
-      .kind(RenderPhase)
-      .iter(systemRenderPresent);
-
-  // Cleanup
-  // PostFrame
-
-  //   world.system<Rocket>("rocket_print_system")
-  //       .tick_source(game->sim_speed)
-  //       .each(rocket_print_system);
-  //   world.system<Rocket>("rocket_launch_scheduler_system")
-  //       .interval(3.0f)
-  //       .each(rocket_launch_scheduler_system);
-  //   world.system<PlanetaryLaunch>("launch_decrementer_system")
-  //       .tick_source(game->sim_speed)
-  //       .each(launch_decrementer_system);
-
-  //   // Continuous Systems
-  //   world.system<GameResource>("render_system")
-  //       .term_at(1)
-  //       .singleton()
-  //       .kind(flecs::OnStore)
-  //       .iter(render_system);
-
-  //   world.system<PlanetaryLaunch>("launch_end_system")
-  //       .each([](flecs::iter &it, size_t i, PlanetaryLaunch &l) {
-  //         auto entity = it.entity(i);
-  //         launch_end_system(entity, l);
-  //       });
+      .kind(postRenderPhase)
+      .each(systemRenderPresent);
 }
 
 void prepareGraphics(flecs::world &world) {
@@ -167,10 +137,22 @@ int main(void) {
       0,                                                // Day
   });
 
+  world.component<std::string>()
+      .opaque(flecs::String) // Opaque type that maps to string
+      .serialize([](const flecs::serializer *s, const std::string *data) {
+        const char *str = data->c_str();
+        return s->value(flecs::String, &str); // Forward to serializer
+      })
+      .assign_string([](std::string *data, const char *value) {
+        *data = value; // Assign new value to std::string
+      });
+
   registerResources(world);
   registerComponents(world);
   registerSystems(world);
   prepareGraphics(world);
+
+  world.import <RocketLaunchModule>();
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
@@ -204,12 +186,10 @@ int main(void) {
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
 
-  world.get_mut<GuiResource>()->site_window.siteEntity = site;
-
   // Main Loop
   logger->info("Starting");
-  world.import <flecs::monitor>();
   world.set_target_fps(60);
+  //   ecs_log_set_level(0);
   int rcode = world.app().enable_rest().run();
 
   return rcode;

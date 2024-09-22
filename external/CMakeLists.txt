@@ -18,6 +18,13 @@ list(APPEND imgui_headers
     imgui/backends/imgui_impl_sdlrenderer2.h
 )
 
+# Add SDL2 depndencies
+include(FindPkgConfig)
+pkg_search_module(SDL2 REQUIRED sdl2)
+pkg_search_module(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
+pkg_search_module(SDL2TTF REQUIRED SDL2_ttf>=2.0.14)
+
+
 add_library(imgui STATIC "${imgui_sources}")
 target_include_directories(imgui PUBLIC ./imgui/)
 target_include_directories(imgui PUBLIC ${SDL2_INCLUDE_DIRS})

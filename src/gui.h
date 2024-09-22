@@ -2,5 +2,9 @@
 #include "graphics.h"
 
 void initialiseGUI(flecs::world &);
-void systemUpdateUI(flecs::iter &, GuiResource *);
-void systemRenderUI(flecs::iter &, const Renderer *);
+
+void systemGuiNewFrame(flecs::iter &);
+void systemDrawGui(flecs::iter &, size_t, GuiResource &);
+void systemGuiEndFrame(flecs::iter &);
+
+void systemRenderGUI(const Renderer &);

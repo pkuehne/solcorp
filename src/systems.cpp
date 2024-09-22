@@ -7,7 +7,8 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 
-void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
+void systemEventHandling(flecs::iter &it, size_t, GameResource &game,
+                         Renderer &) {
   // spdlog::info("Handling Events");
 
   auto world = it.world();
@@ -27,12 +28,12 @@ void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
         world.quit();
       }
       if (event.key.keysym.sym == SDLK_SPACE) {
-        game->sim_speed.enabled() ? game->sim_speed.disable()
-                                  : game->sim_speed.enable();
+        game.sim_speed.enabled() ? game.sim_speed.disable()
+                                 : game.sim_speed.enable();
       }
       if (event.key.keysym.sym == SDLK_l) {
         auto gui = world.get_mut<GuiResource>();
-        gui->site_window.visible = !gui->site_window.visible;
+        gui->site_window.show(world.lookup("cape_canaveral"));
       }
       break;
 
@@ -42,9 +43,9 @@ void systemEventHandling(flecs::iter &it, GameResource *game, Renderer *) {
   }
 }
 
-void systemUpdateSimDate(flecs::iter &, GameResource *game) {
-  game->day++;
-  spdlog::info("It's Day {}", game->day);
+void systemUpdateSimDate(GameResource &game) {
+  game.day++;
+  spdlog::info("It's Day {}", game.day);
 }
 
 void company_generator_system(flecs::iter &it) {

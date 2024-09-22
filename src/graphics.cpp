@@ -90,16 +90,12 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
 /// @brief System that clears the screen before a frame update
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderClear(flecs::iter &, const Renderer *r) {
-  SDL_RenderClear(r->renderer);
-}
+void systemRenderClear(const Renderer &r) { SDL_RenderClear(r.renderer); }
 
 /// @brief System to present the rendering instructions from previous systems
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderPresent(flecs::iter &, const Renderer *r) {
-  SDL_RenderPresent(r->renderer);
-}
+void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 
 std::string format_as(SDL_Rect r) {
   return fmt::format("({},{}) {}x{}", r.x, r.y, r.w, r.h);
@@ -120,17 +116,17 @@ SDL_Rect clipTileFromTexture(const Texture *texture, int tile) {
 /// @param sprite Sprite information to render
 /// @param target Where on screen to render the sprite
 /// @param renderer The renderer used to draw on the screen
-void systemRenderSprite(flecs::iter &iter, const Sprite *sprite,
-                        const Position *target, const Renderer *renderer) {
+void systemRenderSprite(flecs::entity e, const Sprite &sprite,
+                        const Position &target, const Renderer &renderer) {
   const u_int tileSize = 32;
-  auto texture = iter.world().lookup(sprite->texture.c_str()).get<Texture>();
-  int target_x = static_cast<int>(target->x * tileSize);
-  int target_y = static_cast<int>(target->y * tileSize);
-  SDL_Rect source = clipTileFromTexture(texture, sprite->tile);
+  auto texture = e.world().lookup(sprite.texture.c_str()).get<Texture>();
+  int target_x = static_cast<int>(target.x * tileSize);
+  int target_y = static_cast<int>(target.y * tileSize);
+  SDL_Rect source = clipTileFromTexture(texture, sprite.tile);
   SDL_Rect destination = {target_x, target_y, tileSize, tileSize};
 
   // SDL_SetTextureColorMod(spite.texture, fg.Red(), fg.Green(), fg.Blue());
-  SDL_RenderCopy(renderer->renderer, texture->ptr, &source, &destination);
+  SDL_RenderCopy(renderer.renderer, texture->ptr, &source, &destination);
 }
 
 // /// @brief System to render a tilemap (i.e. background tiles)
