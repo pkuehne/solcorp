@@ -2,7 +2,6 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "components.h"
-#include "gui/launch_window.h"
 #include "gui/site_window.h"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
@@ -27,30 +26,37 @@ void initialiseGUI(flecs::world &world) {
   ImGui_ImplSDLRenderer2_Init(r->renderer);
 }
 
-void systemOpenLaunchWindow(flecs::entity entity, GuiResource &gui,
-                            const OpenLaunchWindow &) {
-  entity.remove<OpenLaunchWindow>();
-  gui.launch_window.show(entity);
+/// @brief Task that creates a new ImGui Frame
+void systemGuiNewFrame(flecs::iter &) {
+  ImGui_ImplSDLRenderer2_NewFrame();
+  ImGui_ImplSDL2_NewFrame();
+  ImGui::NewFrame();
 }
 
 /// @brief System to update the UI from the current game state
 /// @param it
 /// @param game The game resource
 /// @param r The renderer
-void systemUpdateUI(flecs::iter &iter, size_t, GuiResource &gui) {
+void systemDrawGui(flecs::iter &iter, size_t, GuiResource &gui) {
   auto world = iter.world();
 
-  ImGui_ImplSDLRenderer2_NewFrame();
-  ImGui_ImplSDL2_NewFrame();
-  ImGui::NewFrame();
+  // ImGui_ImplSDLRenderer2_NewFrame();
+  // ImGui_ImplSDL2_NewFrame();
+  // ImGui::NewFrame();
 
-  if (gui.show_demo_window) {
-    ImGui::ShowDemoWindow();
-  }
+  // if (gui.show_demo_window) {
+  //   ImGui::ShowDemoWindow();
+  // }
   gui.main_menu.draw(world);
   gui.site_window.draw(world);
-  gui.launch_window.draw(world);
+  // gui.launch_window.draw(world);
 
+  // ImGui::EndFrame();
+  // ImGui::Render();
+}
+
+/// @brief Task that finishes up ImGui Frame creation
+void systemGuiEndFrame(flecs::iter &) {
   ImGui::EndFrame();
   ImGui::Render();
 }
@@ -58,6 +64,6 @@ void systemUpdateUI(flecs::iter &iter, size_t, GuiResource &gui) {
 /// @brief System to send render instructions for the UI
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderUI(const Renderer &r) {
+void systemRenderGUI(const Renderer &r) {
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r.renderer);
 }

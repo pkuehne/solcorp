@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gui/launch_window.h"
+// #include "gui/launch_window.h"
 #include "gui/main_menu.h"
 #include "gui/site_window.h"
 #include <string>
@@ -25,8 +25,6 @@ struct Employee {
 struct Team {
   std::string name;
 };
-
-struct Rocket {};
 
 struct Construction {
   u_int effort_remaining = 0;
@@ -57,12 +55,7 @@ struct SiteLocation {
 struct Manufacturing {
   u_int lines = 1;
   u_int max_weight = 1000;
-  u_int available_effort = 10;
-};
-
-/// @brief Can launch rockets
-struct Launchpad {
-  u_int max_weight = 1000;
+  u_int available_effort = 50;
 };
 
 /// @brief For rockets and payloads
@@ -100,7 +93,6 @@ struct GameResource {
 struct GuiResource {
   bool show_demo_window = false;
   SiteWindow site_window;
-  LaunchWindow launch_window;
   MainMenu main_menu;
 };
 

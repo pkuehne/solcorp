@@ -1,7 +1,6 @@
 list(APPEND SolCorpSources
     components.cpp
     gui.cpp
-    gui/launch_window.cpp
     gui/main_menu.cpp
     gui/site_window.cpp
     gui/widgets.cpp
@@ -13,7 +12,6 @@ list(APPEND SolCorpSources
 list(APPEND SolCorpHeaders
     components.h
     gui.h
-    gui/launch_window.h
     gui/main_menu.h
     gui/site_window.h
     gui/widgets.h

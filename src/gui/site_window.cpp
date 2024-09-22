@@ -105,7 +105,8 @@ void SiteWindow::drawRocket(flecs::entity &rocket) {
     if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
       // ImGui::OpenPopup("Schedule Launch");
       auto world = rocket.world();
-      world.entity().set<LaunchPlan>({}).add<OpenLaunchWindow>();
+      auto e = world.entity().set<LaunchPlan>({});
+      showLaunchWindow(e);
     }
     this->movePopup(rocket.parent(), rocket);
     this->schedulePopup(rocket);
