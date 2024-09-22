@@ -29,6 +29,8 @@ void LaunchWindow::show(const flecs::entity &entity) {
                          .query_builder<Launchpad, Building>()
                          .with<Building>()
                          .build();
+  m_rocketDisplay = "<Select Rocket>";
+  m_launchpadDisplay = "<Select Launchpad>";
 }
 
 void LaunchWindow::hide() { m_visible = false; }
@@ -66,7 +68,7 @@ void LaunchWindow::draw(flecs::world &) {
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e, Rocket) {
           std::string display = fmt::format("Rocket {}", e.id());
-          if (ImGui::Selectable(display.c_str())) {
+          if (ImGui::Selectable(display.c_str(), e == m_rocket)) {
             m_rocketDisplay = display;
             m_rocket = e;
           }
@@ -75,12 +77,12 @@ void LaunchWindow::draw(flecs::world &) {
   }
 
   // Launchpad
-  if (ImGui::BeginCombo("##Launchpass", m_launchpadDisplay.c_str())) {
+  if (ImGui::BeginCombo("##Launchpad", m_launchpadDisplay.c_str())) {
     m_launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e, Launchpad, Building &b) {
-          if (ImGui::Selectable(b.name.c_str())) {
+          if (ImGui::Selectable(b.name.c_str(), e == m_launchpad)) {
             m_launchpadDisplay = b.name;
             m_launchpad = e;
           }
@@ -92,6 +94,13 @@ void LaunchWindow::draw(flecs::world &) {
     // Save LaunchPlan and close window
     LaunchPlan *plan = m_entity.get_mut<LaunchPlan>();
     plan->launch_date = m_launchDay;
+    m_entity.add<LaunchingWith>(m_rocket);
+    m_entity.add<LaunchingOn>(m_launchpad);
+
+    hide();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel")) {
     hide();
   }
   ImGui::End();

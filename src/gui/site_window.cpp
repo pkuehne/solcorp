@@ -1,5 +1,6 @@
 #include "site_window.h"
 #include "components.h"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "flecs/addons/cpp/entity.hpp"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
@@ -71,6 +72,8 @@ void SiteWindow::drawRocket(flecs::entity &rocket) {
                               ImGuiTreeNodeFlags_Leaf |
                                   ImGuiTreeNodeFlags_CollapsingHeader)) {
     const Construction *c = rocket.get<Construction>();
+    bool planned = rocket.has<LaunchingWith>(flecs::Wildcard);
+
     if (c) {
       float completed = c->effort_total - c->effort_remaining;
 
@@ -95,6 +98,10 @@ void SiteWindow::drawRocket(flecs::entity &rocket) {
     if (c) {
       issue = "Cannot schedule rocket while being built";
     }
+    if (planned) {
+      issue = "Rocket is already scheduled";
+    }
+
     if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
       // ImGui::OpenPopup("Schedule Launch");
       auto world = rocket.world();

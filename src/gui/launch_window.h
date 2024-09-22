@@ -23,9 +23,9 @@ private:
 
   flecs::query<Rocket> m_rocketQuery;
   flecs::entity m_rocket;
-  std::string m_rocketDisplay = "<Select Rocket>";
+  std::string m_rocketDisplay;
 
   flecs::query<Launchpad, Building> m_launchpadQuery;
   flecs::entity m_launchpad;
-  std::string m_launchpadDisplay = "<Select Launchpad>";
+  std::string m_launchpadDisplay;
 };
