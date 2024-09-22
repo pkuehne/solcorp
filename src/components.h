@@ -37,11 +37,6 @@ struct CargoHold {
   u_int capacity = 0;
 };
 
-struct LaunchPlan {
-  u_int launch_date = 0;
-  bool draft = true;
-};
-
 struct Site {
   std::string name;
   u_int width = 10;
@@ -87,10 +82,6 @@ struct Position {
 // Relationships
 struct TeamMember {};
 struct Manager {};
-
-struct LaunchingFrom {}; /// From which launchpad?
-struct LaunchingOn {};   /// On what  rocket
-struct LaunchingWith {}; /// With what payloads?
 
 // Resources
 struct PrefabResource {

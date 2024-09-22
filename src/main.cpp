@@ -1,12 +1,11 @@
 #include "components.h"
 #include "graphics.h"
 #include "gui.h"
+#include "modules/rocket_launch.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 #include "systems.h"
 #include "systems/building_systems.h"
-#include "systems/rocket_system.h"
-// #include "systems/rocket_system.h"
 
 void registerResources(flecs::world &world) {
   world.set<PrefabResource>({
@@ -90,11 +89,6 @@ void registerSystems(flecs::world &world) {
       .tick_source(game->sim_speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
-
-  world.system<LaunchPlan>("Launch Rocket")
-      .tick_source(game->sim_speed)
-      .kind(UpdatePhase)
-      .each(systemLaunchRocket);
 
   world.system<GuiResource, const OpenLaunchWindow>("Open Launch Window")
       .term_at(0)
@@ -183,6 +177,8 @@ int main(void) {
   registerComponents(world);
   registerSystems(world);
   prepareGraphics(world);
+
+  world.import <RocketLaunchModule>();
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
