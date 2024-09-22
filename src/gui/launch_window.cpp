@@ -1,5 +1,6 @@
 #include "launch_window.h"
 #include "components.h"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
 #include "widgets.h"
@@ -90,7 +91,31 @@ void LaunchWindow::draw(flecs::world &) {
     ImGui::EndCombo();
   }
 
-  if (ActionButton("Save", "Save Launch Plan to be executed", std::string())) {
+  std::string issue;
+  if (!m_rocket.is_valid()) {
+    issue = "No rocket selected";
+  } else if (m_rocket.has<LaunchingWith>(flecs::Wildcard)) {
+    issue = "Rocket is already planned for a launch";
+  }
+  if (m_launchpad.is_valid()) {
+    m_launchpad.each<LaunchingFrom>([&](flecs::entity p) {
+      auto plan = p.get<LaunchPlan>();
+      if (plan->launch_date < static_cast<u_int>(m_launchDay) &&
+          plan->launch_date >= (m_launchDay - m_launchPrepDays)) {
+        issue = "Another launch is already scheduled at that time";
+      }
+    });
+  } else {
+    issue = "No launchpad selected";
+  }
+
+  if (static_cast<u_int>(m_launchDay) < today + m_launchPrepDays) {
+    issue =
+        fmt::format("Launch needs to be planned at least {} days in advance",
+                    m_launchPrepDays);
+  }
+
+  if (ActionButton("Save", "Save Launch Plan to be executed", issue)) {
     // Save LaunchPlan and close window
     LaunchPlan *plan = m_entity.get_mut<LaunchPlan>();
     plan->launch_date = m_launchDay;
