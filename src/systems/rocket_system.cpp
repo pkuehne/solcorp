@@ -1,4 +1,5 @@
 #include "rocket_system.h"
+#include "components.h"
 #include "spdlog/spdlog.h"
 // #include <iostream>
 //  #include <sstream>
@@ -45,14 +46,25 @@ void launch_decrementer_system(LaunchPlan &) {
   // launch.remaining_days--;
 }
 
-void launch_end_system(flecs::entity &, LaunchPlan &) {
-  // if (launch.remaining_days > 0 || launch.completed) {
-  //   return;
-  // }
-  // launch.completed = true;
-  //
-  // auto rocket = entity.target<LaunchingWith>();
-  // entity.remove<LaunchingWith>(rocket);
-  // spdlog::info("{} has launched", rocket.id());
-  // rocket.destruct();
+void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
+  auto world = planE.world();
+  u_int today = world.get<GameResource>()->day;
+
+  if (plan.launch_date > today) {
+    return;
+  }
+
+  auto rocketE = planE.target<LaunchingOn>();
+  if (rocketE.is_valid()) {
+    spdlog::info("Removing rocket: {}", rocketE.id());
+    rocketE.destruct();
+  }
+  auto payloadE = planE.target<LaunchingWith>();
+  if (payloadE.is_valid()) {
+    spdlog::info("Removing payload: {}", payloadE.id());
+
+    payloadE.destruct();
+  }
+  spdlog::info("Removing plan: {}", planE.id());
+  planE.destruct();
 }

@@ -199,7 +199,6 @@ void SiteWindow::movePopup(const flecs::entity &source, flecs::entity &rocket) {
   std::string issue =
       destination == flecs::entity() ? "Invalid destination" : "";
   if (ActionButton("Ok", nullptr, issue)) {
-    spdlog::info("Picked item: {}", destination.id());
     rocket.child_of(destination);
     closePopup();
   }

@@ -5,6 +5,7 @@
 #include "spdlog/spdlog.h"
 #include "systems.h"
 #include "systems/building_systems.h"
+#include "systems/rocket_system.h"
 // #include "systems/rocket_system.h"
 
 void registerResources(flecs::world &world) {
@@ -89,6 +90,11 @@ void registerSystems(flecs::world &world) {
       .tick_source(game->sim_speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
+
+  world.system<LaunchPlan>("Launch Rocket")
+      .tick_source(game->sim_speed)
+      .kind(UpdatePhase)
+      .each(systemLaunchRocket);
 
   world.system<GuiResource, const OpenLaunchWindow>("Open Launch Window")
       .term_at(0)

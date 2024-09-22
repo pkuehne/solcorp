@@ -58,11 +58,15 @@ void LaunchWindow::draw(flecs::world &) {
 
   this->loadData();
   ImGui::Begin("Launch Planning");
-  ImGui::DragInt("Launch Date:", &m_launchDay, 1.0f, today + 5, today + 1000,
+
+  ImGui::Text("Launch Date: ");
+  ImGui::SameLine();
+  ImGui::DragInt("##LaunchDate", &m_launchDay, 1.0f, today + 5, today + 1000,
                  "%d", ImGuiSliderFlags_AlwaysClamp);
 
   // Rocket
-
+  ImGui::Text("Rocket: ");
+  ImGui::SameLine();
   if (ImGui::BeginCombo("##RocketCombo", m_rocketDisplay.c_str())) {
     m_rocketQuery
         .iter()
@@ -78,6 +82,8 @@ void LaunchWindow::draw(flecs::world &) {
   }
 
   // Launchpad
+  ImGui::Text("Launchpad: ");
+  ImGui::SameLine();
   if (ImGui::BeginCombo("##Launchpad", m_launchpadDisplay.c_str())) {
     m_launchpadQuery
         .iter()
@@ -120,7 +126,7 @@ void LaunchWindow::draw(flecs::world &) {
     LaunchPlan *plan = m_entity.get_mut<LaunchPlan>();
     plan->launch_date = m_launchDay;
     m_entity.add<LaunchingWith>(m_rocket);
-    m_entity.add<LaunchingOn>(m_launchpad);
+    m_entity.add<LaunchingFrom>(m_launchpad);
 
     hide();
   }
