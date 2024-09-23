@@ -1,6 +1,8 @@
 #include "components.h"
 #include "graphics.h"
 #include "gui.h"
+#include "modules/gui.h"
+#include "modules/main_menu.h"
 #include "modules/rocket_launch.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
@@ -63,8 +65,6 @@ void registerSystems(flecs::world &world) {
       .kind(preFramePhase)
       .each(systemEventHandling);
 
-  world.system("New GUI Frame").kind(preFramePhase).run(systemGuiNewFrame);
-
   // Simulator Systems
   world.system<GameResource>("Update Simulation Date")
       .tick_source(game->sim_speed)
@@ -82,10 +82,7 @@ void registerSystems(flecs::world &world) {
       .term_at(0)
       .singleton()
       .kind(guiPhase)
-      .each(systemDrawGui);
-
-  // Render Phase
-  world.system("End GUI Frame").kind(preRenderPhase).run(systemGuiEndFrame);
+      .each(systemDrawSiteWindow);
 
   world.system<const Renderer>("Render Begin")
       .term_at(0)
@@ -99,12 +96,6 @@ void registerSystems(flecs::world &world) {
       .kind(renderPhase)
       .each(systemRenderSprite);
 
-  world.system<const Renderer>("Render GUI")
-      .term_at(0)
-      .singleton()
-      .kind(renderPhase)
-      .each(systemRenderGUI);
-
   world.system<const Renderer>("Render End")
       .term_at(0)
       .singleton()
@@ -114,7 +105,6 @@ void registerSystems(flecs::world &world) {
 
 void prepareGraphics(flecs::world &world) {
   initialiseGraphics(world);
-  initialiseGUI(world);
 
   Texture t = loadTexture("../../textures/solcorp_buildings.png", world);
   t.cols = 1;
@@ -152,7 +142,9 @@ int main(void) {
   registerSystems(world);
   prepareGraphics(world);
 
+  world.import <MainMenuModule>();
   world.import <RocketLaunchModule>();
+  world.import <GuiModule>();
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});

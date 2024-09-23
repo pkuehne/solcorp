@@ -1,10 +1,6 @@
 #pragma once
-#include "graphics.h"
 
-void initialiseGUI(flecs::world &);
+#include "components.h"
+#include <flecs.h>
 
-void systemGuiNewFrame(flecs::iter &);
-void systemDrawGui(flecs::iter &, size_t, GuiResource &);
-void systemGuiEndFrame(flecs::iter &);
-
-void systemRenderGUI(const Renderer &);
+void systemDrawSiteWindow(flecs::iter &, size_t, GuiResource &);

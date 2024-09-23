@@ -7,6 +7,8 @@ list(APPEND SolCorpSources
     graphics.cpp
     systems.cpp
     systems/building_systems.cpp
+    modules/gui.cpp
+    modules/main_menu.cpp
     modules/rocket_launch.cpp
     )
 list(APPEND SolCorpHeaders
@@ -18,6 +20,8 @@ list(APPEND SolCorpHeaders
     graphics.h
     systems.h
     systems/building_systems.h
+    modules/gui.h
+    modules/main_menu.h
     modules/rocket_launch.h
     )
 
