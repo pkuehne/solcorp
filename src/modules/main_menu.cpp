@@ -1,11 +1,14 @@
 #include "main_menu.h"
 #include "components.h"
 #include "imgui.h"
+#include "modules/gui.h"
 #include <flecs.h>
 
 void systemDrawMainMenu(flecs::entity winE, MainMenuBar);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
+  world.import <GuiModule>();
+
   flecs::entity GuiPhase = world.lookup("Phase.Gui");
 
   // Register components
@@ -14,7 +17,7 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
   // Register window
   world.entity("MainMenuBar").add<MainMenuBar>();
 
-  // Register systems
+  // Register Systems
   world.system<MainMenuBar>("Draw LaunchWindow")
       .kind(GuiPhase)
       .each(systemDrawMainMenu);
