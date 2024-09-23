@@ -4,7 +4,7 @@
 void initialiseGUI(flecs::world &);
 
 void systemGuiNewFrame(flecs::iter &);
-void systemDrawGui(flecs::iter &, size_t, GuiResource &);
+void systemDrawSiteWindow(flecs::iter &, size_t, GuiResource &);
 void systemGuiEndFrame(flecs::iter &);
 
 void systemRenderGUI(const Renderer &);

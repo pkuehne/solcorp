@@ -8,6 +8,7 @@ list(APPEND SolCorpSources
     systems.cpp
     systems/building_systems.cpp
     modules/rocket_launch.cpp
+    modules/main_menu.cpp
     )
 list(APPEND SolCorpHeaders
     components.h
@@ -19,6 +20,7 @@ list(APPEND SolCorpHeaders
     systems.h
     systems/building_systems.h
     modules/rocket_launch.h
+    modules/main_menu.h
     )
 
 fetchcontent_declare(flecs

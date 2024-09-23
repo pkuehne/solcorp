@@ -1,7 +1,5 @@
 #pragma once
 
-// #include "gui/launch_window.h"
-#include "gui/main_menu.h"
 #include "gui/site_window.h"
 #include <string>
 
@@ -93,8 +91,6 @@ struct GameResource {
 struct GuiResource {
   bool show_demo_window = false;
   SiteWindow site_window;
-  MainMenu main_menu;
 };
 
-struct OpenLaunchWindow {};
 struct OpenSiteWindow {};

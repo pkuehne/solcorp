@@ -1,6 +1,7 @@
 #include "components.h"
 #include "graphics.h"
 #include "gui.h"
+#include "modules/main_menu.h"
 #include "modules/rocket_launch.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
@@ -82,7 +83,7 @@ void registerSystems(flecs::world &world) {
       .term_at(0)
       .singleton()
       .kind(guiPhase)
-      .each(systemDrawGui);
+      .each(systemDrawSiteWindow);
 
   // Render Phase
   world.system("End GUI Frame").kind(preRenderPhase).run(systemGuiEndFrame);
@@ -152,6 +153,7 @@ int main(void) {
   registerSystems(world);
   prepareGraphics(world);
 
+  world.import <MainMenuModule>();
   world.import <RocketLaunchModule>();
 
   auto site =

@@ -37,7 +37,7 @@ void systemGuiNewFrame(flecs::iter &) {
 /// @param it
 /// @param game The game resource
 /// @param r The renderer
-void systemDrawGui(flecs::iter &iter, size_t, GuiResource &gui) {
+void systemDrawSiteWindow(flecs::iter &iter, size_t, GuiResource &gui) {
   auto world = iter.world();
 
   // ImGui_ImplSDLRenderer2_NewFrame();
@@ -47,7 +47,6 @@ void systemDrawGui(flecs::iter &iter, size_t, GuiResource &gui) {
   // if (gui.show_demo_window) {
   //   ImGui::ShowDemoWindow();
   // }
-  gui.main_menu.draw(world);
   gui.site_window.draw(world);
   // gui.launch_window.draw(world);
 
