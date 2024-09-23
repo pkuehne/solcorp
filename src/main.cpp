@@ -1,8 +1,8 @@
 #include "components.h"
-#include "graphics.h"
 #include "gui.h"
 #include "modules/gui.h"
 #include "modules/main_menu.h"
+#include "modules/render.h"
 #include "modules/rocket_launch.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
@@ -56,11 +56,10 @@ void registerSystems(flecs::world &world) {
   auto postRenderPhase = world.entity("Phase.PostRender")
                              .add(flecs::Phase)
                              .depends_on(renderPhase);
+  spdlog::debug("Final Phase: {}", postRenderPhase.id());
 
-  world.system<GameResource, Renderer>("Event Handling")
+  world.system<GameResource>("Event Handling")
       .term_at(0)
-      .singleton()
-      .term_at(1)
       .singleton()
       .kind(preFramePhase)
       .each(systemEventHandling);
@@ -78,38 +77,11 @@ void registerSystems(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 
-  world.system<GuiResource>("Draw GUI")
+  world.system<GuiResource>("Draw Site Window")
       .term_at(0)
       .singleton()
       .kind(guiPhase)
       .each(systemDrawSiteWindow);
-
-  world.system<const Renderer>("Render Begin")
-      .term_at(0)
-      .singleton()
-      .kind(preRenderPhase)
-      .each(systemRenderClear);
-
-  world.system<const Sprite, const Position, const Renderer>("Render Sprites")
-      .term_at(2)
-      .singleton()
-      .kind(renderPhase)
-      .each(systemRenderSprite);
-
-  world.system<const Renderer>("Render End")
-      .term_at(0)
-      .singleton()
-      .kind(postRenderPhase)
-      .each(systemRenderPresent);
-}
-
-void prepareGraphics(flecs::world &world) {
-  initialiseGraphics(world);
-
-  Texture t = loadTexture("../../textures/solcorp_buildings.png", world);
-  t.cols = 1;
-  t.rows = 4;
-  world.entity("building_texture").set<Texture>(t);
 }
 
 int main(void) {
@@ -140,8 +112,8 @@ int main(void) {
   registerResources(world);
   registerComponents(world);
   registerSystems(world);
-  prepareGraphics(world);
 
+  world.import <RenderModule>();
   world.import <MainMenuModule>();
   world.import <RocketLaunchModule>();
   world.import <GuiModule>();

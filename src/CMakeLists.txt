@@ -3,24 +3,24 @@ list(APPEND SolCorpSources
     gui.cpp
     gui/site_window.cpp
     gui/widgets.cpp
-    graphics.cpp
     systems.cpp
     systems/building_systems.cpp
     modules/gui.cpp
     modules/main_menu.cpp
     modules/rocket_launch.cpp
+    modules/render.cpp
     )
 list(APPEND SolCorpHeaders
     components.h
     gui.h
     gui/site_window.h
     gui/widgets.h
-    graphics.h
     systems.h
     systems/building_systems.h
     modules/gui.h
     modules/main_menu.h
     modules/rocket_launch.h
+    modules/render.h
     )
 
 fetchcontent_declare(flecs
