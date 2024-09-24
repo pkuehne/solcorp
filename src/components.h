@@ -65,11 +65,6 @@ struct Office {
   u_int max_desks = 100;
 };
 
-struct Position {
-  u_int x = 0;
-  u_int y = 0;
-};
-
 // Relationships
 struct TeamMember {};
 struct Manager {};

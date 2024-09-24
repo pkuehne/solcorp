@@ -1,14 +1,12 @@
 #include "systems.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "components.h"
-#include "graphics.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 
-void systemEventHandling(flecs::iter &it, size_t, GameResource &game,
-                         Renderer &) {
+void systemEventHandling(flecs::iter &it, size_t, GameResource &game) {
   // spdlog::info("Handling Events");
 
   auto world = it.world();
