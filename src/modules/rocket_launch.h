@@ -41,9 +41,6 @@ struct LaunchWindow {
 void showLaunchWindow(const flecs::entity &planE);
 void hideLaunchWindow(flecs::world &world);
 
-// Systems
-void systemLaunchRocket(flecs::entity, LaunchPlan &);
-
 struct RocketLaunchModule {
   RocketLaunchModule(flecs::world &);
 };

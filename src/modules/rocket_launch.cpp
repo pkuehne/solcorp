@@ -7,6 +7,7 @@
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 
+void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win);
 
 /// @brief Module Constructor
