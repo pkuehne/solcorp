@@ -10,13 +10,14 @@ struct LaunchPlan {
   bool draft = true;
 };
 
-/// @brief Can launch rockets
-struct Launchpad {
-  u_int max_weight = 1000;
-};
-
 /// @brief Identifies a planetary launch vehicle
 struct Rocket {};
+
+struct RocketPrefab {};
+
+struct CargoHold {
+  u_int capacity = 0;
+};
 
 // Relationships
 struct LaunchingFrom {}; /// From which launchpad?

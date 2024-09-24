@@ -1,7 +1,7 @@
 #include "site_window.h"
-#include "components.h"
 #include "imgui.h"
 #include "modules/rocket_launch.h"
+#include "modules/site.h"
 #include "spdlog/spdlog.h"
 #include "widgets.h"
 #include <flecs.h>
@@ -133,7 +133,7 @@ void SiteWindow::drawManufacturingSection() {
       if (ImGui::Button("Begin")) {
         // Build new rocket
         world.entity()
-            .is_a(world.get<PrefabResource>()->rocket)
+            .is_a<RocketPrefab>()
             .set<Construction>({300, 300})
             .child_of(e);
       }

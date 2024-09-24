@@ -4,11 +4,11 @@ list(APPEND SolCorpSources
     gui/site_window.cpp
     gui/widgets.cpp
     systems.cpp
-    systems/building_systems.cpp
     modules/gui.cpp
     modules/main_menu.cpp
     modules/rocket_launch.cpp
     modules/render.cpp
+    modules/site.cpp
     )
 list(APPEND SolCorpHeaders
     components.h
@@ -16,11 +16,11 @@ list(APPEND SolCorpHeaders
     gui/site_window.h
     gui/widgets.h
     systems.h
-    systems/building_systems.h
     modules/gui.h
     modules/main_menu.h
     modules/rocket_launch.h
     modules/render.h
+    modules/site.h
     )
 
 fetchcontent_declare(flecs

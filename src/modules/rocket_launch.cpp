@@ -1,9 +1,9 @@
 
 #include "rocket_launch.h"
 #include "components.h"
-#include "flecs/addons/cpp/world.hpp"
 #include "gui/widgets.h"
 #include "imgui.h"
+#include "modules/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 
@@ -13,14 +13,15 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win);
 /// Sets up all necessary components, GUIs and Systems
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::info("Loading RocketLaunchModule");
-  auto game = world.get<GameResource>();
+
+  world.import <SiteModule>();
 
   flecs::entity UpdatePhase = world.lookup("Phase.Update");
   flecs::entity GuiPhase = world.lookup("Phase.Gui");
 
   // Register components
   world.component<Rocket>();
-  world.component<Launchpad>();
+  world.component<CargoHold>().member<u_int>("capacity");
   world.component<LaunchPlan>();
   world.component<LaunchWindow>()
       .member<flecs::entity>("planE")
@@ -31,12 +32,16 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member<flecs::entity>("launchpad")
       .member<std::string>("launchpadDisplay");
 
-  // Register Relationships
+  // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingFrom>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
 
+  // Register prefabs
+  world.prefab<RocketPrefab>().add<Rocket>().set<CargoHold>({1000});
+
   // Register systems
+  auto game = world.get<GameResource>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(game->sim_speed)
       .kind(UpdatePhase)
