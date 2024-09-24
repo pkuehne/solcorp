@@ -3,17 +3,7 @@ fetchcontent_declare(
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG        main
 )
-
-fetchcontent_getproperties(googletest)
-if(NOT googletest_POPULATED)
-  message(STATUS "Downloading googletest repo")
-  fetchcontent_populate(googletest)
-  message(STATUS "Downloading googletest repo - done")
-  add_subdirectory(
-        ${googletest_SOURCE_DIR} ${googletest_BINARY_DIR}
-        EXCLUDE_FROM_ALL
-    )
-endif()
+fetchcontent_makeavailable(googletest)
 
 add_executable(unit_test
     systems.test.cpp
