@@ -1,6 +1,7 @@
 #include "systems.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "components.h"
+#include "modules/site.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
@@ -30,8 +31,7 @@ void systemEventHandling(flecs::iter &it, size_t, GameResource &game) {
                                  : game.sim_speed.enable();
       }
       if (event.key.keysym.sym == SDLK_l) {
-        auto gui = world.get_mut<GuiResource>();
-        gui->site_window.show(world.lookup("cape_canaveral"));
+        showSiteWindow(world.lookup("cape_canaveral"));
       }
       break;
 

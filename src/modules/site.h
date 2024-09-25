@@ -45,6 +45,15 @@ struct Launchpad {
   u_int max_weight = 1000;
 };
 
+// GUIs
+struct SiteWindow {
+  flecs::entity siteE;
+};
+
+// GUIs
+void showSiteWindow(const flecs::entity &siteE);
+void hideSiteWindow(flecs::world &world);
+
 struct SiteModule {
 public:
   SiteModule(flecs::world &);

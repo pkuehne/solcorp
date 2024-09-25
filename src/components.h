@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gui/site_window.h"
+#include <flecs.h>
 #include <string>
 
 void registerComponents(flecs::world &);
@@ -28,16 +28,29 @@ struct Team {
 struct TeamMember {};
 struct Manager {};
 
+// Find all Persons that are TeamMember of a $team, where the $team is a
+// TeamMember of anything
+// i.e. Match any person with a team that has another team above it.
+// team_members.each([](flecs::iter &it, size_t, Person &p)
+//                   { std::cout << p.first_name << " " << p.last_name << " is
+//                   a member of "
+//                               << it.get_var("team").name() << std::endl;
+//                               });
+//   world.set<QueryResource>({
+//       world.rule_builder<Person>()
+//           .with<Employee>()
+//           .with<TeamMember>()
+//           .second("$team")
+//           .with<TeamMember>(flecs::Any)
+//           .src("$team")
+//           .build(), // team_members
+//   });
 // Resources
+
+// world.component<TeamMember>().add(flecs::Transitive);
+// world.component<Manager>().add(flecs::Symmetric);
 
 struct GameResource {
   flecs::entity sim_speed;
   u_int day = 0;
 };
-
-struct GuiResource {
-  bool show_demo_window = false;
-  SiteWindow site_window;
-};
-
-struct OpenSiteWindow {};

@@ -1,5 +1,4 @@
 #include "components.h"
-#include "gui.h"
 #include "modules/gui.h"
 #include "modules/main_menu.h"
 #include "modules/render.h"
@@ -8,27 +7,6 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 #include "systems.h"
-
-void registerResources(flecs::world &world) {
-  // Find all Persons that are TeamMember of a $team, where the $team is a
-  // TeamMember of anything
-  // i.e. Match any person with a team that has another team above it.
-  // team_members.each([](flecs::iter &it, size_t, Person &p)
-  //                   { std::cout << p.first_name << " " << p.last_name << " is
-  //                   a member of "
-  //                               << it.get_var("team").name() << std::endl;
-  //                               });
-  //   world.set<QueryResource>({
-  //       world.rule_builder<Person>()
-  //           .with<Employee>()
-  //           .with<TeamMember>()
-  //           .second("$team")
-  //           .with<TeamMember>(flecs::Any)
-  //           .src("$team")
-  //           .build(), // team_members
-  //   });
-  world.set<GuiResource>({});
-}
 
 void registerSystems(flecs::world &world) {
   auto game = world.get<GameResource>();
@@ -68,12 +46,6 @@ void registerSystems(flecs::world &world) {
       .singleton()
       .kind(UpdatePhase)
       .each(systemUpdateSimDate);
-
-  world.system<GuiResource>("Draw Site Window")
-      .term_at(0)
-      .singleton()
-      .kind(guiPhase)
-      .each(systemDrawSiteWindow);
 }
 
 int main(void) {
@@ -101,8 +73,6 @@ int main(void) {
         *data = value; // Assign new value to std::string
       });
 
-  registerResources(world);
-  registerComponents(world);
   registerSystems(world);
 
   world.import <RenderModule>();
