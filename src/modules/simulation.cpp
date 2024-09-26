@@ -1,9 +1,12 @@
 #include "simulation.h"
+#include "modules/phase.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);
 
 SimulationModule::SimulationModule(flecs::world &world) {
+  world.import <phase>();
+
   // Register components
   world.component<Simulation>().member<flecs::entity>("speed");
   world.component<Game>().member<u_int>("day");
@@ -14,7 +17,7 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.set<Game>({});
 
   // Register systems
-  flecs::entity UpdatePhase = world.lookup("Phase.Update");
+  flecs::entity UpdatePhase = world.lookup("phase.Update");
   world.system<Game>("Update Simulation Date")
       .tick_source(sim.speed)
       .term_at(0)

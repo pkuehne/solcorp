@@ -1,6 +1,7 @@
 #include "main_menu.h"
 #include "imgui.h"
 #include "modules/gui.h"
+#include "modules/phase.h"
 #include "modules/simulation.h"
 #include <flecs.h>
 
@@ -8,9 +9,10 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation, const Game,
                         MainMenuBar);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
+  world.import <phase>();
   world.import <GuiModule>();
 
-  flecs::entity GuiPhase = world.lookup("Phase.Gui");
+  flecs::entity GuiPhase = world.lookup("phase.Gui");
 
   // Register components
   world.component<MainMenuBar>();

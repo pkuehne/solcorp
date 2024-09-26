@@ -1,4 +1,5 @@
 #include "render.h"
+#include "modules/phase.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -16,11 +17,14 @@ SDL_Rect clipTileFromTexture(const Texture *, int);
 Texture loadTexture(const std::string &, flecs::world &);
 
 RenderModule::RenderModule(flecs::world &world) {
+
+  world.import <phase>();
+
   initialiseGraphics(world);
 
-  flecs::entity PreRenderPhase = world.lookup("Phase.PreRender");
-  flecs::entity RenderPhase = world.lookup("Phase.Render");
-  flecs::entity PostRenderPhase = world.lookup("Phase.PostRender");
+  flecs::entity PreRenderPhase = world.lookup("phase.PreRender");
+  flecs::entity RenderPhase = world.lookup("phase.Render");
+  flecs::entity PostRenderPhase = world.lookup("phase.PostRender");
 
   // Register components
   world.component<Position>().member<u_int>("x").member<u_int>("y");

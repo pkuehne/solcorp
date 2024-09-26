@@ -1,6 +1,7 @@
 #include "site.h"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
+#include "modules/phase.h"
 #include "modules/rocket_launch.h"
 #include "modules/simulation.h"
 #include "spdlog/spdlog.h"
@@ -13,11 +14,12 @@ void drawRocket(flecs::entity &rocket);
 
 SiteModule::SiteModule(flecs::world &world) {
 
+  world.import <phase>();
   world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
 
-  flecs::entity UpdatePhase = world.lookup("Phase.Update");
-  flecs::entity GuiPhase = world.lookup("Phase.Gui");
+  flecs::entity UpdatePhase = world.lookup("phase.Update");
+  flecs::entity GuiPhase = world.lookup("phase.Gui");
 
   // Register components
   world.component<Site>()

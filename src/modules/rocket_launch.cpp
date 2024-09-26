@@ -1,6 +1,7 @@
 
 #include "rocket_launch.h"
 #include "imgui.h"
+#include "modules/phase.h"
 #include "modules/simulation.h"
 #include "modules/site.h"
 #include "spdlog/spdlog.h"
@@ -15,11 +16,12 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::info("Loading RocketLaunchModule");
 
+  world.import <phase>();
   world.import <SimulationModule>();
   world.import <SiteModule>();
 
-  flecs::entity UpdatePhase = world.lookup("Phase.Update");
-  flecs::entity GuiPhase = world.lookup("Phase.Gui");
+  flecs::entity UpdatePhase = world.lookup("phase.Update");
+  flecs::entity GuiPhase = world.lookup("phase.Gui");
 
   // Register components
   world.component<Rocket>();

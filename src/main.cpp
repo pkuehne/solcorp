@@ -11,7 +11,7 @@
 #include "systems.h"
 
 void registerSystems(flecs::world &world) {
-  flecs::entity PreFramePhase = world.lookup("Phase.PreFrame");
+  flecs::entity PreFramePhase = world.lookup("phase.PreFrame");
 
   world.system<Simulation>("Event Handling")
       .term_at(0)
@@ -39,29 +39,6 @@ int main(void) {
       .assign_string([](std::string *data, const char *value) {
         *data = value; // Assign new value to std::string
       });
-
-  // Register phases
-  auto preFramePhase = world.entity("Phase.PreFrame").add(flecs::Phase);
-  auto validatePhase = world.entity("Phase.Validate")
-                           .add(flecs::Phase)
-                           .depends_on(preFramePhase);
-  auto PostValidatePhase = world.entity("Phase.PostValidate")
-                               .add(flecs::Phase)
-                               .depends_on(validatePhase);
-  auto UpdatePhase = world.entity("Phase.Update")
-                         .add(flecs::Phase)
-                         .depends_on(PostValidatePhase);
-  auto guiPhase =
-      world.entity("Phase.Gui").add(flecs::Phase).depends_on(UpdatePhase);
-
-  auto preRenderPhase =
-      world.entity("Phase.PreRender").add(flecs::Phase).depends_on(guiPhase);
-  auto renderPhase =
-      world.entity("Phase.Render").add(flecs::Phase).depends_on(preRenderPhase);
-  auto postRenderPhase = world.entity("Phase.PostRender")
-                             .add(flecs::Phase)
-                             .depends_on(renderPhase);
-  spdlog::debug("Final Phase: {}", postRenderPhase.id());
 
   world.import <SimulationModule>();
   world.import <RenderModule>();

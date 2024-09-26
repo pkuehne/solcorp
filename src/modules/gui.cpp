@@ -14,9 +14,9 @@ void systemRenderGUI(const Renderer &);
 GuiModule::GuiModule(flecs::world &world) {
   world.import <RenderModule>();
 
-  flecs::entity PreFramePhase = world.lookup("Phase.PreFrame");
-  flecs::entity PreRenderPhase = world.lookup("Phase.PreRender");
-  flecs::entity RenderPhase = world.lookup("Phase.Render");
+  flecs::entity PreFramePhase = world.lookup("phase.PreFrame");
+  flecs::entity PreRenderPhase = world.lookup("phase.PreRender");
+  flecs::entity RenderPhase = world.lookup("phase.Render");
 
   // Register Systems
   world.system("Initiatlise GUI").kind(flecs::OnStart).run(systemInitialiseGui);
