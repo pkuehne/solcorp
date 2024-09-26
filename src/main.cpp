@@ -1,5 +1,6 @@
 
 #include "modules/gui.h"
+#include "modules/input.h"
 #include "modules/main_menu.h"
 #include "modules/phase.h"
 #include "modules/render.h"
@@ -9,17 +10,6 @@
 #include "modules/staff.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include "systems.h"
-
-void registerSystems(flecs::world &world) {
-  world.system<Simulation>("Event Handling")
-      .term_at(0)
-      .singleton()
-      .kind(PreFramePhase)
-      .each(systemEventHandling);
-
-  // Simulator Systems
-}
 
 int main(void) {
   auto logger = spdlog::basic_logger_mt("solcorp", "./solcorp.log", true);
@@ -43,12 +33,11 @@ int main(void) {
   world.import <SimulationModule>();
   world.import <RenderModule>();
   world.import <GuiModule>();
+  world.import <InputModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
-
-  registerSystems(world);
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});

@@ -1,7 +1,7 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
-    systems.cpp
     modules/gui.cpp
+    modules/input.cpp
     modules/main_menu.cpp
     modules/phase.cpp
     modules/rocket_launch.cpp
@@ -12,8 +12,8 @@ list(APPEND SolCorpSources
     )
 list(APPEND SolCorpHeaders
     widgets/widgets.h
-    systems.h
     modules/gui.h
+    modules/input.h
     modules/main_menu.h
     modules/phase.h
     modules/rocket_launch.h
