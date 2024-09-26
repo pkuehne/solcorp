@@ -6,6 +6,7 @@ list(APPEND SolCorpSources
     modules/rocket_launch.cpp
     modules/render.cpp
     modules/site.cpp
+    modules/staff.cpp
     )
 list(APPEND SolCorpHeaders
     components.h
@@ -16,6 +17,7 @@ list(APPEND SolCorpHeaders
     modules/rocket_launch.h
     modules/render.h
     modules/site.h
+    modules/staff.h
     )
 
 fetchcontent_declare(flecs

@@ -4,6 +4,7 @@
 #include "modules/render.h"
 #include "modules/rocket_launch.h"
 #include "modules/site.h"
+#include "modules/staff.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 #include "systems.h"
@@ -80,6 +81,7 @@ int main(void) {
   world.import <MainMenuModule>();
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();
+  world.import <StaffModule>();
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
