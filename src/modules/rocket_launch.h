@@ -10,13 +10,12 @@ struct LaunchPlan {
   bool draft = true;
 };
 
-/// @brief Can launch rockets
-struct Launchpad {
-  u_int max_weight = 1000;
-};
-
-/// @brief Identifies a planetary launch vehicle
+/// @brief Prefab for a planetary launch vehicle
 struct Rocket {};
+
+struct CargoHold {
+  u_int capacity = 0;
+};
 
 // Relationships
 struct LaunchingFrom {}; /// From which launchpad?
@@ -39,9 +38,6 @@ struct LaunchWindow {
 // GUIs
 void showLaunchWindow(const flecs::entity &planE);
 void hideLaunchWindow(flecs::world &world);
-
-// Systems
-void systemLaunchRocket(flecs::entity, LaunchPlan &);
 
 struct RocketLaunchModule {
   RocketLaunchModule(flecs::world &);

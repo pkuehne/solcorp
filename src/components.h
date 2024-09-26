@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gui/site_window.h"
+#include <flecs.h>
 #include <string>
 
 void registerComponents(flecs::world &);
@@ -24,68 +24,33 @@ struct Team {
   std::string name;
 };
 
-struct Construction {
-  u_int effort_remaining = 0;
-  u_int effort_total = 0;
-};
-
-struct CargoHold {
-  u_int capacity = 0;
-};
-
-struct Site {
-  std::string name;
-  u_int width = 10;
-  u_int height = 10;
-};
-
-/// @brief Indicates that entity is a building
-struct Building {
-  std::string name = "";
-};
-
-struct SiteLocation {
-  u_int x = 0;
-  u_int y = 0;
-};
-
-/// @brief Allows construction of rockets
-struct Manufacturing {
-  u_int lines = 1;
-  u_int max_weight = 1000;
-  u_int available_effort = 50;
-};
-
-/// @brief For rockets and payloads
-struct Storage {
-  u_int max_storage = 1000;
-};
-
-struct Office {
-  u_int max_desks = 100;
-};
-
 // Relationships
 struct TeamMember {};
 struct Manager {};
 
+// Find all Persons that are TeamMember of a $team, where the $team is a
+// TeamMember of anything
+// i.e. Match any person with a team that has another team above it.
+// team_members.each([](flecs::iter &it, size_t, Person &p)
+//                   { std::cout << p.first_name << " " << p.last_name << " is
+//                   a member of "
+//                               << it.get_var("team").name() << std::endl;
+//                               });
+//   world.set<QueryResource>({
+//       world.rule_builder<Person>()
+//           .with<Employee>()
+//           .with<TeamMember>()
+//           .second("$team")
+//           .with<TeamMember>(flecs::Any)
+//           .src("$team")
+//           .build(), // team_members
+//   });
 // Resources
-struct PrefabResource {
-  flecs::entity rocket;
-};
 
-struct QueryResource {
-  // flecs::rule<Person> team_members;
-};
+// world.component<TeamMember>().add(flecs::Transitive);
+// world.component<Manager>().add(flecs::Symmetric);
 
 struct GameResource {
   flecs::entity sim_speed;
   u_int day = 0;
 };
-
-struct GuiResource {
-  bool show_demo_window = false;
-  SiteWindow site_window;
-};
-
-struct OpenSiteWindow {};
