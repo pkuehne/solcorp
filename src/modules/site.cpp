@@ -1,8 +1,9 @@
 #include "site.h"
-#include "components.h"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
+#include "modules/phase.h"
 #include "modules/rocket_launch.h"
+#include "modules/simulation.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 
@@ -13,10 +14,9 @@ void drawRocket(flecs::entity &rocket);
 
 SiteModule::SiteModule(flecs::world &world) {
 
+  world.import <PhaseModule>();
+  world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
-
-  flecs::entity UpdatePhase = world.lookup("Phase.Update");
-  flecs::entity GuiPhase = world.lookup("Phase.Gui");
 
   // Register components
   world.component<Site>()
@@ -31,10 +31,10 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Launchpad>();
 
   // Register Systems
-  auto game = world.get<GameResource>();
+  auto sim = world.get<Simulation>();
 
   world.system<Manufacturing>("Update Construction")
-      .tick_source(game->sim_speed)
+      .tick_source(sim->speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 

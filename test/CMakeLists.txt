@@ -7,6 +7,7 @@ fetchcontent_makeavailable(googletest)
 
 add_executable(unit_test
     systems.test.cpp
+    simulation.test.cpp
     )
 
 target_compile_options(unit_test PUBLIC -Wall)

@@ -1,24 +1,24 @@
 
 #include "rocket_launch.h"
-#include "components.h"
 #include "imgui.h"
+#include "modules/phase.h"
+#include "modules/simulation.h"
 #include "modules/site.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
 
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
-void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win);
+void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
 
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::info("Loading RocketLaunchModule");
 
+  world.import <PhaseModule>();
+  world.import <SimulationModule>();
   world.import <SiteModule>();
-
-  flecs::entity UpdatePhase = world.lookup("Phase.Update");
-  flecs::entity GuiPhase = world.lookup("Phase.Gui");
 
   // Register components
   world.component<Rocket>();
@@ -42,9 +42,9 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.prefab<Rocket>().set<CargoHold>({1000});
 
   // Register systems
-  auto game = world.get<GameResource>();
+  auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
-      .tick_source(game->sim_speed)
+      .tick_source(sim->speed)
       .kind(UpdatePhase)
       .each(systemLaunchRocket);
 
@@ -61,7 +61,7 @@ void showLaunchWindow(const flecs::entity &planE) {
   }
 
   auto world = planE.world();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
 
   auto win = LaunchWindow();
   win.planE = planE;
@@ -82,9 +82,9 @@ void hideLaunchWindow(flecs::world &world) {
 /// @param plan The plan's component
 void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto world = planE.world();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
 
-  if (plan.launch_date > today) {
+  if (plan.launch_date == 0 || plan.launch_date > today) {
     return;
   }
 
@@ -99,7 +99,8 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 
     payloadE.destruct();
   }
-  spdlog::info("Removing plan: {}", planE.id());
+  spdlog::info("Removing plan: {} launch_date: {} today: {}", planE.id(),
+               plan.launch_date, today);
   planE.destruct();
 }
 
@@ -107,7 +108,6 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 /// @param winE Entity for the window
 /// @param win LaunchWindow component
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
-  spdlog::info("drawingLaunchWindow");
   auto world = winE.world();
   flecs::query<> rocketQuery = world.query_builder()
                                    .with(flecs::IsA)
@@ -132,7 +132,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   // auto *plan = m_entity.get_mut<LaunchPlan>();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
   if (static_cast<u_int>(win.launchDay) < today + win.launchPrepDays) {
     win.launchDay = today + win.launchPrepDays;
   }
