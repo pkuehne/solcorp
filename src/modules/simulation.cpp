@@ -5,7 +5,7 @@
 void systemUpdateSimDate(Game &game);
 
 SimulationModule::SimulationModule(flecs::world &world) {
-  world.import <phase>();
+  world.import <PhaseModule>();
 
   // Register components
   world.component<Simulation>().member<flecs::entity>("speed");
@@ -17,7 +17,6 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.set<Game>({});
 
   // Register systems
-  flecs::entity UpdatePhase = world.lookup("phase.Update");
   world.system<Game>("Update Simulation Date")
       .tick_source(sim.speed)
       .term_at(0)

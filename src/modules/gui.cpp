@@ -2,6 +2,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
+#include "modules/phase.h"
 #include "modules/render.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
@@ -12,11 +13,8 @@ void systemGuiEndFrame(flecs::iter &);
 void systemRenderGUI(const Renderer &);
 
 GuiModule::GuiModule(flecs::world &world) {
+  world.import <PhaseModule>();
   world.import <RenderModule>();
-
-  flecs::entity PreFramePhase = world.lookup("phase.PreFrame");
-  flecs::entity PreRenderPhase = world.lookup("phase.PreRender");
-  flecs::entity RenderPhase = world.lookup("phase.Render");
 
   // Register Systems
   world.system("Initiatlise GUI").kind(flecs::OnStart).run(systemInitialiseGui);

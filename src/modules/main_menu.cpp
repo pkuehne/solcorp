@@ -9,10 +9,8 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation, const Game,
                         MainMenuBar);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
-  world.import <phase>();
+  world.import <PhaseModule>();
   world.import <GuiModule>();
-
-  flecs::entity GuiPhase = world.lookup("phase.Gui");
 
   // Register components
   world.component<MainMenuBar>();

@@ -14,12 +14,9 @@ void drawRocket(flecs::entity &rocket);
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <phase>();
+  world.import <PhaseModule>();
   world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
-
-  flecs::entity UpdatePhase = world.lookup("phase.Update");
-  flecs::entity GuiPhase = world.lookup("phase.Gui");
 
   // Register components
   world.component<Site>()

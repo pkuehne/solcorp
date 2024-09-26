@@ -18,13 +18,9 @@ Texture loadTexture(const std::string &, flecs::world &);
 
 RenderModule::RenderModule(flecs::world &world) {
 
-  world.import <phase>();
+  world.import <PhaseModule>();
 
   initialiseGraphics(world);
-
-  flecs::entity PreRenderPhase = world.lookup("phase.PreRender");
-  flecs::entity RenderPhase = world.lookup("phase.Render");
-  flecs::entity PostRenderPhase = world.lookup("phase.PostRender");
 
   // Register components
   world.component<Position>().member<u_int>("x").member<u_int>("y");

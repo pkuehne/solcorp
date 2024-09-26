@@ -1,6 +1,7 @@
 
 #include "modules/gui.h"
 #include "modules/main_menu.h"
+#include "modules/phase.h"
 #include "modules/render.h"
 #include "modules/rocket_launch.h"
 #include "modules/simulation.h"
@@ -11,8 +12,6 @@
 #include "systems.h"
 
 void registerSystems(flecs::world &world) {
-  flecs::entity PreFramePhase = world.lookup("phase.PreFrame");
-
   world.system<Simulation>("Event Handling")
       .term_at(0)
       .singleton()
@@ -40,6 +39,7 @@ int main(void) {
         *data = value; // Assign new value to std::string
       });
 
+  world.import <PhaseModule>();
   world.import <SimulationModule>();
   world.import <RenderModule>();
   world.import <GuiModule>();
