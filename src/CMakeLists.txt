@@ -82,6 +82,11 @@ target_compile_options(solcorp PRIVATE -Wpedantic)
 
 target_link_libraries(solcorp PRIVATE solcorplib)
 
+
+file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
+file(COPY ${TEXTURES}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+
 add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp

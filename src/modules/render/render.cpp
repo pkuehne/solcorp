@@ -106,7 +106,7 @@ void initialiseGraphics(flecs::world &world) {
 void systemLoadTextures(flecs::iter &iter) {
   auto world = iter.world();
 
-  Texture t = loadTexture("../../textures/solcorp_buildings.png", world);
+  Texture t = loadTexture("textures/solcorp_buildings.png", world);
   t.cols = 1;
   t.rows = 4;
   world.entity("building_texture").set<Texture>(t);
