@@ -1,6 +1,8 @@
 #include "site.h"
+#include "SDL_keycode.h"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
+#include "modules/input.h"
 #include "modules/phase.h"
 #include "modules/rocket_launch.h"
 #include "modules/simulation.h"
@@ -11,6 +13,7 @@ void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win);
 void movePopup(const flecs::entity &source, flecs::entity &rocket);
 void drawRocket(flecs::entity &rocket);
+void systemOpenSiteWindow(flecs::iter &, size_t, const KeyDown);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -38,9 +41,15 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 
-  world.system<SiteWindow>("Draw LaunchWindow")
+  world.system<SiteWindow>("Draw Site Window")
       .kind(GuiPhase)
       .each(systemDrawSiteWindow);
+
+  world.system<const KeyDown>("Open Site Window")
+      .term_at(0)
+      .singleton()
+      .kind(ValidatePhase)
+      .each(systemOpenSiteWindow);
 }
 
 void showSiteWindow(const flecs::entity &siteE) {
@@ -258,4 +267,11 @@ void movePopup(const flecs::entity &source, flecs::entity &rocket) {
     closePopup();
   }
   ImGui::EndPopup();
+}
+
+void systemOpenSiteWindow(flecs::iter &it, size_t, const KeyDown event) {
+  auto world = it.world();
+  if (event.key == SDLK_l) {
+    showSiteWindow(world.lookup("cape_canaveral"));
+  }
 }

@@ -8,6 +8,7 @@ flecs::entity GuiPhase;
 flecs::entity PreRenderPhase;
 flecs::entity RenderPhase;
 flecs::entity PostRenderPhase;
+flecs::entity PostFramePhase;
 
 PhaseModule::PhaseModule(flecs::world &world) {
   // Register phases
@@ -25,4 +26,6 @@ PhaseModule::PhaseModule(flecs::world &world) {
       world.entity("Render").add(flecs::Phase).depends_on(PreRenderPhase);
   PostRenderPhase =
       world.entity("PostRender").add(flecs::Phase).depends_on(RenderPhase);
+  PostFramePhase =
+      world.entity("PostFrame").add(flecs::Phase).depends_on(PostRenderPhase);
 }

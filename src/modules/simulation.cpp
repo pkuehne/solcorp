@@ -1,10 +1,14 @@
 #include "simulation.h"
+#include "SDL_keycode.h"
+#include "modules/input.h"
 #include "modules/phase.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);
+void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 
 SimulationModule::SimulationModule(flecs::world &world) {
+  world.import <InputModule>();
   world.import <PhaseModule>();
 
   // Register components
@@ -23,9 +27,21 @@ SimulationModule::SimulationModule(flecs::world &world) {
       .singleton()
       .kind(UpdatePhase)
       .each(systemUpdateSimDate);
+
+  world.system<const KeyDown>("Quit on Esc")
+      .term_at(0)
+      .singleton()
+      .kind(ValidatePhase)
+      .each(systemQuitOnEscape);
 }
 
 void systemUpdateSimDate(Game &game) {
   game.day++;
   spdlog::info("It's Day {}", game.day);
+}
+
+void systemQuitOnEscape(flecs::iter &it, size_t, const KeyDown event) {
+  if (event.key == SDLK_ESCAPE) {
+    it.world().quit();
+  }
 }
