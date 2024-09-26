@@ -1,6 +1,4 @@
 #pragma once
 
-#include "components.h"
-
-void systemEventHandling(flecs::iter &, size_t, GameResource &);
-void systemUpdateSimDate(GameResource &);
+#include "modules/simulation.h"
+void systemEventHandling(flecs::iter &, size_t, Simulation &);

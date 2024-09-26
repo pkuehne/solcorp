@@ -1,20 +1,21 @@
 
 #include "rocket_launch.h"
-#include "components.h"
 #include "imgui.h"
+#include "modules/simulation.h"
 #include "modules/site.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
 
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
-void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win);
+void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
 
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::info("Loading RocketLaunchModule");
 
+  world.import <SimulationModule>();
   world.import <SiteModule>();
 
   flecs::entity UpdatePhase = world.lookup("Phase.Update");
@@ -42,9 +43,9 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.prefab<Rocket>().set<CargoHold>({1000});
 
   // Register systems
-  auto game = world.get<GameResource>();
+  auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
-      .tick_source(game->sim_speed)
+      .tick_source(sim->speed)
       .kind(UpdatePhase)
       .each(systemLaunchRocket);
 
@@ -61,7 +62,7 @@ void showLaunchWindow(const flecs::entity &planE) {
   }
 
   auto world = planE.world();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
 
   auto win = LaunchWindow();
   win.planE = planE;
@@ -82,7 +83,7 @@ void hideLaunchWindow(flecs::world &world) {
 /// @param plan The plan's component
 void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto world = planE.world();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
 
   if (plan.launch_date > today) {
     return;
@@ -132,7 +133,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   // auto *plan = m_entity.get_mut<LaunchPlan>();
-  u_int today = world.get<GameResource>()->day;
+  u_int today = world.get<Game>()->day;
   if (static_cast<u_int>(win.launchDay) < today + win.launchPrepDays) {
     win.launchDay = today + win.launchPrepDays;
   }

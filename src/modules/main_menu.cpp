@@ -1,10 +1,11 @@
 #include "main_menu.h"
-#include "components.h"
 #include "imgui.h"
 #include "modules/gui.h"
+#include "modules/simulation.h"
 #include <flecs.h>
 
-void systemDrawMainMenu(flecs::entity winE, MainMenuBar);
+void systemDrawMainMenu(flecs::entity winE, const Simulation, const Game,
+                        MainMenuBar);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
   world.import <GuiModule>();
@@ -18,21 +19,24 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
   world.entity("MainMenuBar").add<MainMenuBar>();
 
   // Register Systems
-  world.system<MainMenuBar>("Draw LaunchWindow")
+  world.system<const Simulation, const Game, MainMenuBar>("Draw MainMenu")
+      .term_at(0)
+      .singleton()
+      .term_at(1)
+      .singleton()
       .kind(GuiPhase)
       .each(systemDrawMainMenu);
 }
 
-void systemDrawMainMenu(flecs::entity winE, MainMenuBar) {
+void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
+                        const Game game, MainMenuBar) {
   auto world = winE.world();
-  GameResource *game = world.get_mut<GameResource>();
 
   if (ImGui::BeginMainMenuBar()) {
     ImGui::PushItemWidth(-FLT_MIN);
-    ImGui::Text("Day: %3d", game->day);
-    if (ImGui::Button(game->sim_speed.enabled() ? "||" : ">")) {
-      game->sim_speed.enabled() ? game->sim_speed.disable()
-                                : game->sim_speed.enable();
+    ImGui::Text("Day: %3d", game.day);
+    if (ImGui::Button(sim.speed.enabled() ? "||" : ">")) {
+      sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();

@@ -1,8 +1,9 @@
-#include "components.h"
+
 #include "modules/gui.h"
 #include "modules/main_menu.h"
 #include "modules/render.h"
 #include "modules/rocket_launch.h"
+#include "modules/simulation.h"
 #include "modules/site.h"
 #include "modules/staff.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -10,8 +11,36 @@
 #include "systems.h"
 
 void registerSystems(flecs::world &world) {
-  auto game = world.get<GameResource>();
+  flecs::entity PreFramePhase = world.lookup("Phase.PreFrame");
 
+  world.system<Simulation>("Event Handling")
+      .term_at(0)
+      .singleton()
+      .kind(PreFramePhase)
+      .each(systemEventHandling);
+
+  // Simulator Systems
+}
+
+int main(void) {
+  auto logger = spdlog::basic_logger_mt("solcorp", "./solcorp.log", true);
+  spdlog::set_default_logger(logger);
+  logger->set_level(spdlog::level::debug);
+  logger->flush_on(spdlog::level::info);
+
+  flecs::world world;
+
+  world.component<std::string>()
+      .opaque(flecs::String) // Opaque type that maps to string
+      .serialize([](const flecs::serializer *s, const std::string *data) {
+        const char *str = data->c_str();
+        return s->value(flecs::String, &str); // Forward to serializer
+      })
+      .assign_string([](std::string *data, const char *value) {
+        *data = value; // Assign new value to std::string
+      });
+
+  // Register phases
   auto preFramePhase = world.entity("Phase.PreFrame").add(flecs::Phase);
   auto validatePhase = world.entity("Phase.Validate")
                            .add(flecs::Phase)
@@ -34,54 +63,15 @@ void registerSystems(flecs::world &world) {
                              .depends_on(renderPhase);
   spdlog::debug("Final Phase: {}", postRenderPhase.id());
 
-  world.system<GameResource>("Event Handling")
-      .term_at(0)
-      .singleton()
-      .kind(preFramePhase)
-      .each(systemEventHandling);
-
-  // Simulator Systems
-  world.system<GameResource>("Update Simulation Date")
-      .tick_source(game->sim_speed)
-      .term_at(0)
-      .singleton()
-      .kind(UpdatePhase)
-      .each(systemUpdateSimDate);
-}
-
-int main(void) {
-  auto logger = spdlog::basic_logger_mt("solcorp", "./solcorp.log", true);
-  spdlog::set_default_logger(logger);
-  logger->set_level(spdlog::level::debug);
-  logger->flush_on(spdlog::level::info);
-
-  flecs::world world;
-
-  logger->info("Assigning GameResource");
-  world.set<GameResource>({
-      world.timer("SimTimer").interval(0.5f).disable(), // sim_speed, start
-                                                        // paused
-      0,                                                // Day
-  });
-
-  world.component<std::string>()
-      .opaque(flecs::String) // Opaque type that maps to string
-      .serialize([](const flecs::serializer *s, const std::string *data) {
-        const char *str = data->c_str();
-        return s->value(flecs::String, &str); // Forward to serializer
-      })
-      .assign_string([](std::string *data, const char *value) {
-        *data = value; // Assign new value to std::string
-      });
-
-  registerSystems(world);
-
+  world.import <SimulationModule>();
   world.import <RenderModule>();
   world.import <GuiModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
+
+  registerSystems(world);
 
   auto site =
       world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
