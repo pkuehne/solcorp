@@ -1,14 +1,18 @@
 #include "main_menu.h"
+#include "SDL_keycode.h"
 #include "imgui.h"
-#include "modules/gui.h"
-#include "modules/phase.h"
-#include "modules/simulation.h"
+#include "modules/gui/gui.h"
+#include "modules/input/input.h"
+#include "modules/phase/phase.h"
+#include "modules/simulation/simulation.h"
 #include <flecs.h>
 
-void systemDrawMainMenu(flecs::entity winE, const Simulation, const Game,
+void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
+void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
+  world.import <InputModule>();
   world.import <PhaseModule>();
   world.import <GuiModule>();
 
@@ -26,6 +30,13 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
       .singleton()
       .kind(GuiPhase)
       .each(systemDrawMainMenu);
+  world.system<Simulation, const KeyDown>("Toggle Play/Pause")
+      .term_at(0)
+      .singleton()
+      .term_at(1)
+      .singleton()
+      .kind(ValidatePhase)
+      .each(systemToggle);
 }
 
 void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
@@ -40,5 +51,11 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();
+  }
+}
+
+void systemToggle(flecs::iter &, size_t, Simulation &sim, const KeyDown event) {
+  if (event.key == SDLK_SPACE) {
+    sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
   }
 }

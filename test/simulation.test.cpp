@@ -1,4 +1,4 @@
-#include "modules/simulation.h"
+#include "modules/simulation/simulation.h"
 #include <flecs.h>
 #include <gtest/gtest.h>
 

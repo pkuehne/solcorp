@@ -1,5 +1,4 @@
 #include "staff.h"
-#include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
 #include <spdlog/spdlog.h>
 
 void systemSeedStaff(flecs::iter &it);

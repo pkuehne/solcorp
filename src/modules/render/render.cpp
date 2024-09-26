@@ -1,5 +1,5 @@
 #include "render.h"
-#include "modules/phase.h"
+#include "modules/phase/phase.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>

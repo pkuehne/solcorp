@@ -9,6 +9,7 @@ extern flecs::entity GuiPhase;
 extern flecs::entity PreRenderPhase;
 extern flecs::entity RenderPhase;
 extern flecs::entity PostRenderPhase;
+extern flecs::entity PostFramePhase;
 
 struct PhaseModule {
   PhaseModule(flecs::world &);

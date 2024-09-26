@@ -1,26 +1,26 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
-    systems.cpp
-    modules/gui.cpp
-    modules/main_menu.cpp
-    modules/phase.cpp
-    modules/rocket_launch.cpp
-    modules/render.cpp
-    modules/simulation.cpp
-    modules/site.cpp
-    modules/staff.cpp
+    modules/gui/gui.cpp
+    modules/input/input.cpp
+    modules/main_menu/main_menu.cpp
+    modules/phase/phase.cpp
+    modules/rocket_launch/rocket_launch.cpp
+    modules/render/render.cpp
+    modules/simulation/simulation.cpp
+    modules/site/site.cpp
+    modules/staff/staff.cpp
     )
 list(APPEND SolCorpHeaders
     widgets/widgets.h
-    systems.h
-    modules/gui.h
-    modules/main_menu.h
-    modules/phase.h
-    modules/rocket_launch.h
-    modules/render.h
-    modules/simulation.h
-    modules/site.h
-    modules/staff.h
+    modules/gui/gui.h
+    modules/input/input.h
+    modules/main_menu/main_menu.h
+    modules/phase/phase.h
+    modules/rocket_launch/rocket_launch.h
+    modules/render/render.h
+    modules/simulation/simulation.h
+    modules/site/site.h
+    modules/staff/staff.h
     )
 
 fetchcontent_declare(flecs
