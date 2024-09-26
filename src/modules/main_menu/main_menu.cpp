@@ -1,10 +1,10 @@
 #include "main_menu.h"
 #include "SDL_keycode.h"
 #include "imgui.h"
-#include "modules/gui.h"
-#include "modules/input.h"
-#include "modules/phase.h"
-#include "modules/simulation.h"
+#include "modules/gui/gui.h"
+#include "modules/input/input.h"
+#include "modules/phase/phase.h"
+#include "modules/simulation/simulation.h"
 #include <flecs.h>
 
 void systemDrawMainMenu(flecs::entity, const Simulation, const Game,

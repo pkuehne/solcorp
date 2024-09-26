@@ -1,6 +1,6 @@
 #include "input.h"
 #include "backends/imgui_impl_sdl2.h"
-#include "modules/phase.h"
+#include "modules/phase/phase.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 

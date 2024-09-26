@@ -1,7 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
-#include "modules/input.h"
-#include "modules/phase.h"
+#include "modules/input/input.h"
+#include "modules/phase/phase.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);

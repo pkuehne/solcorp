@@ -1,9 +1,9 @@
 
 #include "rocket_launch.h"
 #include "imgui.h"
-#include "modules/phase.h"
-#include "modules/simulation.h"
-#include "modules/site.h"
+#include "modules/phase/phase.h"
+#include "modules/simulation/simulation.h"
+#include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
