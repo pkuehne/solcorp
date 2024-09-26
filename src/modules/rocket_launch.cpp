@@ -39,7 +39,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
 
   // Register prefabs
-  world.prefab<RocketPrefab>().add<Rocket>().set<CargoHold>({1000});
+  world.prefab<Rocket>().set<CargoHold>({1000});
 
   // Register systems
   auto game = world.get<GameResource>();
@@ -109,12 +109,13 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   spdlog::info("drawingLaunchWindow");
   auto world = winE.world();
-  flecs::query<Rocket> rocketQuery = world.query_builder<Rocket>()
-                                         .with<Rocket>()
-                                         //  .with(flecs::ChildOf)
-                                         //  .second()
-                                         //  .var("Site")
-                                         .build();
+  flecs::query<> rocketQuery = world.query_builder()
+                                   .with(flecs::IsA)
+                                   .second<Rocket>()
+                                   //  .with(flecs::ChildOf)
+                                   //  .second()
+                                   //  .var("Site")
+                                   .build();
   ;
   flecs::query<Launchpad, Building> launchpadQuery =
       world.query_builder<Launchpad, Building>()
@@ -150,7 +151,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
     rocketQuery
         .iter()
         // .set_var("Site", m_entity)
-        .each([&](flecs::entity e, Rocket) {
+        .each([&](flecs::entity e) {
           std::string display = fmt::format("Rocket {}", e.id());
           if (ImGui::Selectable(display.c_str(), e == win.rocket)) {
             win.rocketDisplay = display;

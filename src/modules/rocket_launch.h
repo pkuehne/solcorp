@@ -10,10 +10,8 @@ struct LaunchPlan {
   bool draft = true;
 };
 
-/// @brief Identifies a planetary launch vehicle
+/// @brief Prefab for a planetary launch vehicle
 struct Rocket {};
-
-struct RocketPrefab {};
 
 struct CargoHold {
   u_int capacity = 0;

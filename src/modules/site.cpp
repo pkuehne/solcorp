@@ -130,10 +130,7 @@ void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win) {
       ImGui::SameLine();
       if (ImGui::Button("Begin")) {
         // Build new rocket
-        world.entity()
-            .is_a<RocketPrefab>()
-            .set<Construction>({300, 300})
-            .child_of(e);
+        world.entity().is_a<Rocket>().set<Construction>({300, 300}).child_of(e);
       }
       ImGui::Text(" ");
       ImGui::PopID();
@@ -148,7 +145,7 @@ void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win) {
   u_int rocketNum = 0;
   for (flecs::entity &e : storageBuildings) {
     e.children([&](flecs::entity c) {
-      if (c.has<Rocket>() && !c.has<Construction>()) {
+      if (c.is_a<Rocket>() && !c.has<Construction>()) {
         rocketNum++;
       }
     });
