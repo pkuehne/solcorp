@@ -8,10 +8,11 @@
 #include <flecs.h>
 
 void initialiseGraphics(flecs::world &);
+void systemApplyParentTransform(Transform &t, const Transform *parent);
 void systemLoadTextures(flecs::iter &);
 void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
-void systemRenderSprite(flecs::entity, const Sprite &, const Position &,
+void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
 SDL_Rect clipTileFromTexture(const Texture *, int);
 Texture loadTexture(const std::string &, flecs::world &);
@@ -23,7 +24,10 @@ RenderModule::RenderModule(flecs::world &world) {
   initialiseGraphics(world);
 
   // Register components
-  world.component<Position>().member<u_int>("x").member<u_int>("y");
+  world.component<Point>().member<int>("x").member<int>("y");
+  world.component<Transform>()
+      .member<Point>("relativePosition")
+      .member<Point>("worldPosition");
   world.component<Renderer>();
   world.component<Texture>();
   world.component<Sprite>().member<std::string>("texture").member<int>("tile");
@@ -31,13 +35,20 @@ RenderModule::RenderModule(flecs::world &world) {
   // Register systems
   world.system("Load Textures").kind(flecs::OnStart).run(systemLoadTextures);
 
+  world.system<Transform, const Transform *>("Apply Parent Transform")
+      .term_at(1)
+      .parent()
+      .cascade()
+      .kind(PreFramePhase)
+      .each(systemApplyParentTransform);
+
   world.system<const Renderer>("Render Begin")
       .term_at(0)
       .singleton()
       .kind(PreRenderPhase)
       .each(systemRenderClear);
 
-  world.system<const Sprite, const Position, const Renderer>("Render Sprites")
+  world.system<const Sprite, const Transform, const Renderer>("Render Sprites")
       .term_at(2)
       .singleton()
       .kind(RenderPhase)
@@ -100,9 +111,21 @@ void initialiseGraphics(flecs::world &world) {
   world.set<Renderer>(r);
 }
 
+/// @brief Applies the parent's transform to the relative co-ordinates
+/// @param[in/out] t The Transform to calculate worldPosition for
+/// @param[in] parent The parent transform to use
+void systemApplyParentTransform(Transform &t, const Transform *parent) {
+  if (parent) {
+    t.worldPosition.x = parent->worldPosition.x + t.relativePosition.x;
+    t.worldPosition.y = parent->worldPosition.y + t.relativePosition.y;
+  } else {
+    t.worldPosition = t.relativePosition;
+    t.worldPosition = t.relativePosition;
+  }
+}
+
 /// @brief Initialises the Renderer and Window
 /// @param iter Access to flecs world
-/// @returns A Renderer Component to be added to the World
 void systemLoadTextures(flecs::iter &iter) {
   auto world = iter.world();
 
@@ -126,11 +149,11 @@ void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 /// @param target Where on screen to render the sprite
 /// @param renderer The renderer used to draw on the screen
 void systemRenderSprite(flecs::entity e, const Sprite &sprite,
-                        const Position &target, const Renderer &renderer) {
+                        const Transform &target, const Renderer &renderer) {
   const u_int tileSize = 32;
   auto texture = e.world().lookup(sprite.texture.c_str()).get<Texture>();
-  int target_x = static_cast<int>(target.x * tileSize);
-  int target_y = static_cast<int>(target.y * tileSize);
+  int target_x = static_cast<int>(target.worldPosition.x);
+  int target_y = static_cast<int>(target.worldPosition.y);
   SDL_Rect source = clipTileFromTexture(texture, sprite.tile);
   SDL_Rect destination = {target_x, target_y, tileSize, tileSize};
 

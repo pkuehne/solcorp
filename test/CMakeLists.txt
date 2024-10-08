@@ -6,6 +6,7 @@ fetchcontent_declare(
 fetchcontent_makeavailable(googletest)
 
 add_executable(unit_test
+    render.test.cpp
     systems.test.cpp
     simulation.test.cpp
     )

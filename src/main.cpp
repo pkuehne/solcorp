@@ -39,27 +39,28 @@ int main(void) {
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
 
-  auto site =
-      world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
+  auto site = world.entity("cape_canaveral")
+                  .set<Site>({"Cape Canaveral", 10, 10})
+                  .set<Transform>({{0, 50}, {}});
   world.entity()
       .set<Building>({"Storage Hall 1"})
       .set<Storage>({})
       .set<SiteLocation>({0, 0})
-      .set<Position>({0, 1})
+      .set<Transform>({{0, 0}, {}})
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
   world.entity()
       .set<Building>({"Launchpad"})
       .set<Launchpad>({})
       .set<SiteLocation>({1, 0})
-      .set<Position>({1, 1})
+      .set<Transform>({{32, 0}, {}})
       .set<Sprite>({"building_texture", 3})
       .child_of(site);
   world.entity()
       .set<Building>({"North Building"})
       .set<Office>({})
       .set<SiteLocation>({2, 0})
-      .set<Position>({2, 1})
+      .set<Transform>({{64, 0}, {}})
       .set<Sprite>({"building_texture", 1})
       .child_of(site);
   world.entity()
@@ -67,7 +68,7 @@ int main(void) {
       .set<Manufacturing>({})
       .set<Storage>({})
       .set<SiteLocation>({1, 1})
-      .set<Position>({1, 2})
+      .set<Transform>({{32, 32}, {}})
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
 
