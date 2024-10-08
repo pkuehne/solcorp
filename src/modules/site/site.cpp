@@ -16,6 +16,8 @@ void drawRocket(flecs::entity &rocket);
 void systemOpenSiteWindow(flecs::iter &, size_t, const KeyDown);
 void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
 
+void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win);
+
 SiteModule::SiteModule(flecs::world &world) {
 
   world.import <PhaseModule>();
@@ -33,6 +35,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Storage>();
   world.component<Office>();
   world.component<Launchpad>();
+  world.component<BuildingWindow>().member<flecs::entity>("buildingE");
 
   // Register Systems
   auto sim = world.get<Simulation>();
@@ -45,6 +48,10 @@ SiteModule::SiteModule(flecs::world &world) {
   world.system<SiteWindow>("Draw Site Window")
       .kind(GuiPhase)
       .each(systemDrawSiteWindow);
+
+  world.system<BuildingWindow>("Draw Building Window")
+      .kind(GuiPhase)
+      .each(systemDrawBuildingWindow);
 
   world.system<const KeyDown>("Open Site Window")
       .term_at(0)
@@ -88,6 +95,7 @@ void systemShowBuildingWindow(flecs::entity e, Transform &t,
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
     // Click on this building!
     spdlog::info("Clicked on {}", e.name().c_str());
+    showBuildingWindow(e);
   }
 }
 
@@ -110,6 +118,7 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
     }
   });
 }
+
 void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win) {
   auto world = winE.world();
   if (win.siteE == flecs::entity() || !win.siteE.is_alive()) {

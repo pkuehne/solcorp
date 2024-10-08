@@ -48,9 +48,16 @@ struct SiteWindow {
   flecs::entity siteE;
 };
 
+struct BuildingWindow {
+  flecs::entity buildingE;
+};
+
 // GUIs
 void showSiteWindow(const flecs::entity &siteE);
 void hideSiteWindow(flecs::world &world);
+
+void showBuildingWindow(const flecs::entity &buildingE);
+void hideBuildingWindow(flecs::world &world);
 
 struct SiteModule {
 public:
