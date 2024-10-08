@@ -117,13 +117,12 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
                                    //  .var("Site")
                                    .build();
   ;
-  flecs::query<Launchpad, Building> launchpadQuery =
-      world.query_builder<Launchpad, Building>()
-          .with<Building>()
-          //  .with(flecs::ChildOf)
-          //  .second()
-          //  .var("Site")
-          .build();
+  flecs::query<Launchpad> launchpadQuery = world.query_builder<Launchpad>()
+                                               .with<Building>()
+                                               //  .with(flecs::ChildOf)
+                                               //  .second()
+                                               //  .var("Site")
+                                               .build();
 
   if (win.planE == flecs::entity() || !win.planE.is_alive()) {
     spdlog::error("Opened LaunchWindow on non-existant launch plan");
@@ -168,9 +167,9 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
     launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
-        .each([&](flecs::entity e, Launchpad, Building &b) {
-          if (ImGui::Selectable(b.name.c_str(), e == win.launchpad)) {
-            win.launchpadDisplay = b.name;
+        .each([&](flecs::entity e, Launchpad) {
+          if (ImGui::Selectable(e.name().c_str(), e == win.launchpad)) {
+            win.launchpadDisplay = e.name();
             win.launchpad = e;
           }
         });
