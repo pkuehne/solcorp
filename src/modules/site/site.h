@@ -15,9 +15,7 @@ struct Site {
 };
 
 /// @brief Indicates that entity is a building
-struct Building {
-  std::string name = "";
-};
+struct Building {};
 
 struct SiteLocation {
   u_int x = 0;

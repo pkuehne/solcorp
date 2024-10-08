@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "modules/input/input.h"
 #include "modules/phase/phase.h"
+#include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "spdlog/spdlog.h"
@@ -13,6 +14,7 @@ void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win);
 void movePopup(const flecs::entity &source, flecs::entity &rocket);
 void drawRocket(flecs::entity &rocket);
 void systemOpenSiteWindow(flecs::iter &, size_t, const KeyDown);
+void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -25,7 +27,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .member<std::string>("name")
       .member<u_int>("width")
       .member<u_int>("height");
-  world.component<Building>().member<std::string>("name");
+  world.component<Building>();
   world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
   world.component<Manufacturing>();
   world.component<Storage>();
@@ -49,6 +51,13 @@ SiteModule::SiteModule(flecs::world &world) {
       .singleton()
       .kind(ValidatePhase)
       .each(systemOpenSiteWindow);
+
+  world.system<Transform, const MouseUp>("Open Building Window")
+      .with<Building>()
+      .term_at(1)
+      .singleton()
+      .kind(ValidatePhase)
+      .each(systemShowBuildingWindow);
 }
 
 void showSiteWindow(const flecs::entity &siteE) {
@@ -69,6 +78,17 @@ void hideSiteWindow(flecs::world &world) {
   spdlog::info("Hiding SiteWindow");
   auto winE = world.lookup("SiteWindow");
   winE.destruct();
+}
+
+void systemShowBuildingWindow(flecs::entity e, Transform &t,
+                              const MouseUp &mouse) {
+  // We know from the query that this is a Building
+  int tileSize = 32;
+  if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
+      (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
+    // Click on this building!
+    spdlog::info("Clicked on {}", e.name().c_str());
+  }
 }
 
 void systemBuildingUpdateConstruction(flecs::entity entity,
@@ -234,13 +254,12 @@ void movePopup(const flecs::entity &source, flecs::entity &rocket) {
 
   if (ImGui::BeginCombo("##StorageCombo", display.c_str())) {
     storageBuildings.each([&](flecs::entity s) {
-      const Building *building = s.get<Building>();
       if (s == source) {
         ImGui::BeginDisabled();
       }
-      if (ImGui::Selectable(building->name.c_str(), destination == s)) {
+      if (ImGui::Selectable(s.name().c_str(), destination == s)) {
         destination = s;
-        display = building->name;
+        display = s.name();
       }
       if (s == source) {
         ImGui::EndDisabled();
