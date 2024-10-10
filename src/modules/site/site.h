@@ -2,6 +2,7 @@
 
 #include <flecs.h>
 #include <string>
+#include <vector>
 
 struct Construction {
   u_int effort_remaining = 0;
@@ -24,7 +25,8 @@ struct SiteLocation {
 
 /// @brief Allows construction of rockets
 struct Manufacturing {
-  u_int lines = 1;
+  u_int maxLines = 1;
+  std::vector<flecs::entity> lines;
   u_int max_weight = 1000;
   u_int available_effort = 50;
 };

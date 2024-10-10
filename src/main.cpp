@@ -63,14 +63,16 @@ int main(void) {
       .set<Transform>({{64, 0}, {}})
       .set<Sprite>({"building_texture", 1})
       .child_of(site);
-  world.entity("Manufacturing A")
-      .add<Building>()
-      .set<Manufacturing>({})
-      .set<Storage>({})
-      .set<SiteLocation>({1, 1})
-      .set<Transform>({{32, 32}, {}})
-      .set<Sprite>({"building_texture", 2})
-      .child_of(site);
+  auto e = world.entity("Manufacturing A")
+               .add<Building>()
+               .set<Manufacturing>({})
+               .set<Storage>({})
+               .set<SiteLocation>({1, 1})
+               .set<Transform>({{32, 32}, {}})
+               .set<Sprite>({"building_texture", 2})
+               .child_of(site);
+  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
+  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
 
   // Main Loop
   logger->info("Starting");

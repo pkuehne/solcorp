@@ -1,5 +1,6 @@
 #include "site.h"
 #include "SDL_keycode.h"
+#include "flecs/addons/cpp/entity.hpp"
 #include "imgui.h"
 #include "modules/input/input.h"
 #include "modules/phase/phase.h"
@@ -90,11 +91,9 @@ void hideSiteWindow(flecs::world &world) {
 void systemShowBuildingWindow(flecs::entity e, Transform &t,
                               const MouseUp &mouse) {
   // We know from the query that this is a Building
-  int tileSize = 32;
+  int tileSize = 32; // SOL-39
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
-    // Click on this building!
-    spdlog::info("Clicked on {}", e.name().c_str());
     showBuildingWindow(e);
   }
 }
@@ -103,20 +102,26 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
                                       Manufacturing &manufacturing) {
   flecs::world world = entity.world();
 
-  entity.children([&](flecs::entity r) {
-    Construction *construction = r.get_mut<Construction>();
-    if (!construction)
-      return;
-    if (construction->effort_remaining == 0) {
-      r.remove<Construction>();
-      return;
+  for (flecs::entity &rocket : manufacturing.lines) {
+    if (!rocket.is_valid()) {
+      continue;
+    }
+    Construction *construction = rocket.get_mut<Construction>();
+    if (!construction) {
+      // Remove it from the manufacturing line
+      rocket = flecs::entity();
+      continue;
     }
     if (manufacturing.available_effort > construction->effort_remaining) {
       construction->effort_remaining = 0;
     } else {
       construction->effort_remaining -= manufacturing.available_effort;
     }
-  });
+    if (construction->effort_remaining == 0) {
+      rocket.remove<Construction>();
+      rocket = flecs::entity();
+    }
+  }
 }
 
 void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win) {
@@ -156,10 +161,10 @@ void systemDrawSiteWindow(flecs::entity winE, SiteWindow &win) {
   for (flecs::entity e : manuBuildings) {
     ImGui::PushID(e.id());
     const Manufacturing *m = e.get<Manufacturing>();
-    ImGui::Text("Production Lines: %d", m->lines);
+    ImGui::Text("Production Lines: %d", m->maxLines);
     std::vector<flecs::entity> rockets;
     e.children([&](flecs::entity r) { rockets.push_back(r); });
-    for (u_int ii = 0; ii < m->lines - rockets.size(); ii++) {
+    for (u_int ii = 0; ii < m->maxLines - rockets.size(); ii++) {
       ImGui::PushID(ii);
       ImGui::Text(" ");
       ImGui::AlignTextToFramePadding();
