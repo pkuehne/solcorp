@@ -8,6 +8,8 @@
 #include "widgets/widgets.h"
 #include <flecs.h>
 
+u_int LaunchPlan::max_id = 1;
+
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
 

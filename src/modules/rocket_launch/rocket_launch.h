@@ -6,6 +6,8 @@
 
 /// @brief Ties together a launchpad, rocket and cargo with a date to launch by
 struct LaunchPlan {
+  static u_int max_id;
+
   u_int launch_date = 0;
   bool draft = true;
 };

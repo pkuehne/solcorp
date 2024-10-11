@@ -7,6 +7,7 @@
 
 void drawManufacturingSection(flecs::entity &entity);
 void drawStorageSection(flecs::entity &entity);
+void drawLaunchpadSection(flecs::entity &entity);
 void drawRocketButtons(flecs::entity &rocket);
 void movePopup(flecs::entity &rocket);
 
@@ -56,6 +57,7 @@ void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
       ImGui::EndTabItem();
     }
     if (entity.has<Launchpad>() && ImGui::BeginTabItem("Launchpad")) {
+      drawLaunchpadSection(entity);
       ImGui::EndTabItem();
     }
 
@@ -105,6 +107,7 @@ void drawManufacturingSection(flecs::entity &entity) {
     ImGui::PopID();
   }
 }
+
 void drawStorageSection(flecs::entity &entity) {
   flecs::world world = entity.world();
   entity.children([](flecs::entity rocket) {
@@ -114,6 +117,23 @@ void drawStorageSection(flecs::entity &entity) {
     ImGui::Text("Rocket %ld", rocket.id());
     drawRocketButtons(rocket);
     ImGui::Separator();
+  });
+}
+
+/// @brief Draws the "Launchpad" tab on a building
+/// @param[in] entity The Building entity
+void drawLaunchpadSection(flecs::entity &entity) {
+  auto world = entity.world();
+  flecs::query<LaunchPlan> query =
+      world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
+  query.each([](flecs::entity planE, LaunchPlan &plan) {
+    ImGui::PushID(planE.id());
+    ImGui::Text("Plan: %s @ %d", planE.name().c_str(), plan.launch_date);
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Open")) {
+      //
+    }
+    ImGui::PopID();
   });
 }
 
@@ -135,9 +155,9 @@ void drawRocketButtons(flecs::entity &rocket) {
   }
 
   if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
-    // ImGui::OpenPopup("Schedule Launch");
     auto world = rocket.world();
     auto e = world.entity().set<LaunchPlan>({});
+    e.set_name(fmt::format("Plan {}", LaunchPlan::max_id++).c_str());
     showLaunchWindow(e);
   }
   movePopup(rocket);
