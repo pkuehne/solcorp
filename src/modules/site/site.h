@@ -1,7 +1,7 @@
 #pragma once
 
 #include <flecs.h>
-#include <string>
+#include <vector>
 
 struct Construction {
   u_int effort_remaining = 0;
@@ -9,15 +9,12 @@ struct Construction {
 };
 
 struct Site {
-  std::string name;
   u_int width = 10;
   u_int height = 10;
 };
 
 /// @brief Indicates that entity is a building
-struct Building {
-  std::string name = "";
-};
+struct Building {};
 
 struct SiteLocation {
   u_int x = 0;
@@ -26,7 +23,8 @@ struct SiteLocation {
 
 /// @brief Allows construction of rockets
 struct Manufacturing {
-  u_int lines = 1;
+  u_int maxLines = 1;
+  std::vector<flecs::entity> lines;
   u_int max_weight = 1000;
   u_int available_effort = 50;
 };
@@ -46,13 +44,12 @@ struct Launchpad {
 };
 
 // GUIs
-struct SiteWindow {
-  flecs::entity siteE;
+struct BuildingWindow {
+  flecs::entity buildingE;
 };
 
-// GUIs
-void showSiteWindow(const flecs::entity &siteE);
-void hideSiteWindow(flecs::world &world);
+void showBuildingWindow(const flecs::entity &buildingE);
+void hideBuildingWindow(flecs::world &world);
 
 struct SiteModule {
 public:

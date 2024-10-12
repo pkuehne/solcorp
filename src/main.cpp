@@ -39,37 +39,40 @@ int main(void) {
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
 
-  auto site =
-      world.entity("cape_canaveral").set<Site>({"Cape Canaveral", 10, 10});
-  world.entity()
-      .set<Building>({"Storage Hall 1"})
+  auto site = world.entity("Cape Canaveral")
+                  .set<Site>({10, 10})
+                  .set<Transform>({{0, 50}, {}});
+  world.entity("Storage Hall 1")
+      .add<Building>()
       .set<Storage>({})
       .set<SiteLocation>({0, 0})
-      .set<Position>({0, 1})
+      .set<Transform>({{0, 0}, {}})
       .set<Sprite>({"building_texture", 2})
       .child_of(site);
-  world.entity()
-      .set<Building>({"Launchpad"})
+  world.entity("Launchpad")
+      .add<Building>()
       .set<Launchpad>({})
       .set<SiteLocation>({1, 0})
-      .set<Position>({1, 1})
+      .set<Transform>({{32, 0}, {}})
       .set<Sprite>({"building_texture", 3})
       .child_of(site);
-  world.entity()
-      .set<Building>({"North Building"})
+  world.entity("North Building")
+      .add<Building>()
       .set<Office>({})
       .set<SiteLocation>({2, 0})
-      .set<Position>({2, 1})
+      .set<Transform>({{64, 0}, {}})
       .set<Sprite>({"building_texture", 1})
       .child_of(site);
-  world.entity()
-      .set<Building>({"Manufacturing A"})
-      .set<Manufacturing>({})
-      .set<Storage>({})
-      .set<SiteLocation>({1, 1})
-      .set<Position>({1, 2})
-      .set<Sprite>({"building_texture", 2})
-      .child_of(site);
+  auto e = world.entity("Manufacturing A")
+               .add<Building>()
+               .set<Manufacturing>({})
+               .set<Storage>({})
+               .set<SiteLocation>({1, 1})
+               .set<Transform>({{32, 32}, {}})
+               .set<Sprite>({"building_texture", 2})
+               .child_of(site);
+  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
+  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
 
   // Main Loop
   logger->info("Starting");

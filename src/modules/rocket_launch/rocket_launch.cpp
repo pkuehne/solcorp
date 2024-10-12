@@ -1,12 +1,16 @@
 
 #include "rocket_launch.h"
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 #include "modules/phase/phase.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+
+u_int LaunchPlan::max_id = 1;
+u_int Rocket::max_id = 1;
 
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
@@ -25,18 +29,19 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CargoHold>().member<u_int>("capacity");
   world.component<LaunchPlan>();
   world.component<LaunchWindow>()
-      .member<flecs::entity>("planE")
-      .member<int>("launchDay")
       .member<u_int>("launchPrepDays")
+      .member<int>("launchDay")
+      .member<flecs::entity>("planE")
+      .member<std::string>("name")
       .member<flecs::entity>("rocket")
-      .member<std::string>("rocketDisplay")
-      .member<flecs::entity>("launchpad")
-      .member<std::string>("launchpadDisplay");
+      .member<flecs::entity>("launchpad");
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
-  world.component<LaunchingFrom>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
+  world.component<LaunchingFrom>().add(
+      flecs::Symmetric); // Not Exclusive because each Launchpad can have
+                         // multiple Plans assigned
 
   // Register prefabs
   world.prefab<Rocket>().set<CargoHold>({1000});
@@ -53,24 +58,51 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .each(systemDrawLaunchWindow);
 }
 
-void showLaunchWindow(const flecs::entity &planE) {
-  spdlog::info("Showing LaunchWindow");
+void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
+                         flecs::entity *launchpad) {
+  u_int today = world.get<Game>()->day;
+
+  auto planE = world.entity().set<LaunchPlan>({});
+  std::string name;
+  do { // TODO: Make this a re-usable function
+    name = fmt::format("Plan {}", LaunchPlan::max_id++);
+  } while (world.lookup(name.c_str()).is_valid());
+  planE.set_name(name.c_str());
+
+  auto win = LaunchWindow();
+  win.name = name;
+  win.planE = planE;
+  win.launchDay = today + win.launchPrepDays;
+  if (rocket && rocket->is_valid()) {
+    win.rocket = *rocket;
+  }
+  if (launchpad && launchpad->is_valid()) {
+    win.launchpad = *launchpad;
+  }
+  world.entity("LaunchWindow").set<LaunchWindow>(win);
+}
+
+void showLaunchWindowEdit(const flecs::entity &planE) {
+  spdlog::debug("Showing LaunchWindow");
   if (!planE.is_alive()) {
     spdlog::error("showing launchwindow can't be done on invalid plan");
     return;
   }
 
   auto world = planE.world();
-  u_int today = world.get<Game>()->day;
+  LaunchPlan plan = planE.ensure<LaunchPlan>();
 
   auto win = LaunchWindow();
   win.planE = planE;
-  win.launchDay = today + win.launchPrepDays;
+  win.name = planE.name();
+  win.launchDay = plan.launch_date;
+  win.rocket = planE.target<LaunchingOn>();
+  win.launchpad = planE.target<LaunchingFrom>();
   world.entity("LaunchWindow").set<LaunchWindow>(win);
 }
 
 void hideLaunchWindow(flecs::world &world) {
-  spdlog::info("Hiding LaunchWindow");
+  spdlog::debug("Hiding LaunchWindow");
   auto winE = world.lookup("LaunchWindow");
   winE.destruct();
 }
@@ -117,13 +149,12 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
                                    //  .var("Site")
                                    .build();
   ;
-  flecs::query<Launchpad, Building> launchpadQuery =
-      world.query_builder<Launchpad, Building>()
-          .with<Building>()
-          //  .with(flecs::ChildOf)
-          //  .second()
-          //  .var("Site")
-          .build();
+  flecs::query<Launchpad> launchpadQuery = world.query_builder<Launchpad>()
+                                               .with<Building>()
+                                               //  .with(flecs::ChildOf)
+                                               //  .second()
+                                               //  .var("Site")
+                                               .build();
 
   if (win.planE == flecs::entity() || !win.planE.is_alive()) {
     spdlog::error("Opened LaunchWindow on non-existant launch plan");
@@ -138,6 +169,9 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   ImGui::Begin("Launch Planning");
+  ImGui::Text("Plan Name: ");
+  ImGui::SameLine();
+  ImGui::InputText(" ", &win.name);
 
   ImGui::Text("Launch Date: ");
   ImGui::SameLine();
@@ -147,14 +181,15 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   // Rocket
   ImGui::Text("Rocket: ");
   ImGui::SameLine();
-  if (ImGui::BeginCombo("##RocketCombo", win.rocketDisplay.c_str())) {
+
+  std::string rocketDisplay =
+      win.rocket.is_valid() ? win.rocket.name() : "<Select>";
+  if (ImGui::BeginCombo("##RocketCombo", rocketDisplay.c_str())) {
     rocketQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e) {
-          std::string display = fmt::format("Rocket {}", e.id());
-          if (ImGui::Selectable(display.c_str(), e == win.rocket)) {
-            win.rocketDisplay = display;
+          if (ImGui::Selectable(e.name().c_str(), e == win.rocket)) {
             win.rocket = e;
           }
         });
@@ -164,13 +199,14 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   // Launchpad
   ImGui::Text("Launchpad: ");
   ImGui::SameLine();
-  if (ImGui::BeginCombo("##Launchpad", win.launchpadDisplay.c_str())) {
+  std::string padDisplay =
+      win.launchpad.is_valid() ? win.launchpad.name() : "<Select>";
+  if (ImGui::BeginCombo("##Launchpad", padDisplay.c_str())) {
     launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
-        .each([&](flecs::entity e, Launchpad, Building &b) {
-          if (ImGui::Selectable(b.name.c_str(), e == win.launchpad)) {
-            win.launchpadDisplay = b.name;
+        .each([&](flecs::entity e, Launchpad) {
+          if (ImGui::Selectable(e.name().c_str(), e == win.launchpad)) {
             win.launchpad = e;
           }
         });
@@ -178,11 +214,16 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   std::string issue;
+  if (world.lookup(win.name.c_str()) != win.planE) {
+    issue = fmt::format("A Launch Plan named '{}' already exists", win.name);
+  }
+
   if (!win.rocket.is_valid()) {
     issue = "No rocket selected";
-  } else if (win.rocket.has<LaunchingWith>(flecs::Wildcard)) {
+  } else if (win.rocket.has<LaunchingOn>(flecs::Wildcard)) {
     issue = "Rocket is already planned for a launch";
   }
+
   if (win.launchpad.is_valid()) {
     win.launchpad.each<LaunchingFrom>([&](flecs::entity p) {
       auto plan = p.get<LaunchPlan>();
@@ -205,13 +246,19 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
     // Save LaunchPlan and close window
     LaunchPlan *plan = win.planE.get_mut<LaunchPlan>();
     plan->launch_date = win.launchDay;
-    win.planE.add<LaunchingWith>(win.rocket);
+    plan->draft = false;
+    win.planE.set_name(win.name.c_str());
+    win.planE.add<LaunchingOn>(win.rocket);
     win.planE.add<LaunchingFrom>(win.launchpad);
 
     hideLaunchWindow(world);
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
+    LaunchPlan *plan = win.planE.get_mut<LaunchPlan>();
+    if (plan && plan->draft) {
+      win.planE.destruct();
+    }
     hideLaunchWindow(world);
   }
   ImGui::End();

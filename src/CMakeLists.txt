@@ -8,6 +8,7 @@ list(APPEND SolCorpSources
     modules/render/render.cpp
     modules/simulation/simulation.cpp
     modules/site/site.cpp
+    modules/site/building_window.cpp
     modules/staff/staff.cpp
     )
 list(APPEND SolCorpHeaders

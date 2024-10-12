@@ -7,9 +7,14 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
-struct Position {
-  u_int x = 0;
-  u_int y = 0;
+struct Point {
+  int x = 0;
+  int y = 0;
+};
+
+struct Transform {
+  Point relativePosition;
+  Point worldPosition;
 };
 
 /// @brief Component to store SDL2 renderer information
