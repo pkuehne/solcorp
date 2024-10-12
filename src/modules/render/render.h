@@ -33,9 +33,16 @@ struct Texture {
 };
 
 struct Sprite {
-  std::string texture;
+  flecs::entity texture;
   int tile = 0;
+  int x = 0;
+  int y = 0;
+  int width = 0;
+  int height = 0;
 };
+
+Texture loadTexture(const std::string &, flecs::world &);
+Sprite spriteFromTileMap(flecs::world, std::string, int);
 
 struct RenderModule {
 public:
