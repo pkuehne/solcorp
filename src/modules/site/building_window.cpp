@@ -1,6 +1,7 @@
 #include "imgui.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "site.h"
+#include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
@@ -78,7 +79,7 @@ void drawManufacturingSection(flecs::entity &entity) {
 
     if (e.is_valid()) {
       // There is a rocket on the line
-      ImGui::Text("Constructing Rocket %ld", e.id());
+      ImGui::Text("Constructing %s", e.name().c_str());
 
       Construction *c = e.get_mut<Construction>();
       if (c) {
@@ -98,10 +99,12 @@ void drawManufacturingSection(flecs::entity &entity) {
       ImGui::Text(" ");
       if (ImGui::Button("Build")) {
         // Build new rocket
+        // TODO: Move to RocketLaunch Module
         e = world.entity()
                 .is_a<Rocket>()
                 .set<Construction>({300, 300})
                 .child_of(entity);
+        e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
       }
     }
     ImGui::PopID();
@@ -114,9 +117,11 @@ void drawStorageSection(flecs::entity &entity) {
     if (rocket.has<Construction>()) {
       return;
     }
-    ImGui::Text("Rocket %ld", rocket.id());
+    ImGui::PushID(rocket.id());
+    ImGui::Text("%s", rocket.name().c_str());
     drawRocketButtons(rocket);
     ImGui::Separator();
+    ImGui::PopID();
   });
 }
 
@@ -132,16 +137,14 @@ void drawLaunchpadSection(flecs::entity &entity) {
     ImGui::SameLine();
     if (ImGui::SmallButton("Open")) {
       ImGui::OpenPopup("Not Implemented");
-      // Todo: Open LaunchPlan
+      showLaunchWindowEdit(planE);
     }
-    NotImplementedPopup();
     ImGui::PopID();
   });
   ImGui::Separator();
   if (ImGui::Button("Schedule Launch")) {
-    ImGui::OpenPopup("Not Implemented");
+    showLaunchWindowAdd(world, nullptr, &entity);
   }
-  NotImplementedPopup();
 }
 
 void drawRocketButtons(flecs::entity &rocket) {
@@ -157,15 +160,12 @@ void drawRocketButtons(flecs::entity &rocket) {
   if (rocket.has<Construction>()) {
     issue = "Cannot schedule rocket while being built";
   }
-  if (rocket.has<LaunchingWith>(flecs::Wildcard)) {
+  if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
     issue = "Rocket is already scheduled";
   }
 
   if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
-    auto world = rocket.world();
-    auto e = world.entity().set<LaunchPlan>({});
-    e.set_name(fmt::format("Plan {}", LaunchPlan::max_id++).c_str());
-    showLaunchWindow(e);
+    showLaunchWindowAdd(rocket.world(), &rocket);
   }
   movePopup(rocket);
 }

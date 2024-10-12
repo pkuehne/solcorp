@@ -1,6 +1,5 @@
 #pragma once
 #include <flecs.h>
-#include <string>
 
 // Components
 
@@ -13,7 +12,9 @@ struct LaunchPlan {
 };
 
 /// @brief Prefab for a planetary launch vehicle
-struct Rocket {};
+struct Rocket {
+  static u_int max_id;
+};
 
 struct CargoHold {
   u_int capacity = 0;
@@ -31,14 +32,13 @@ struct LaunchWindow {
   u_int launchPrepDays = 5;
 
   flecs::entity rocket;
-  std::string rocketDisplay;
-
   flecs::entity launchpad;
-  std::string launchpadDisplay;
 };
 
 // GUIs
-void showLaunchWindow(const flecs::entity &planE);
+void showLaunchWindowAdd(flecs::world, flecs::entity *rocket = nullptr,
+                         flecs::entity *launchpad = nullptr);
+void showLaunchWindowEdit(const flecs::entity &planE);
 void hideLaunchWindow(flecs::world &world);
 
 struct RocketLaunchModule {
