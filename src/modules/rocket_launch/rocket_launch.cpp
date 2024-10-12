@@ -37,8 +37,10 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
-  world.component<LaunchingFrom>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
+  world.component<LaunchingFrom>().add(
+      flecs::Symmetric); // Not Exclusive because each Launchpad can have
+                         // multiple Plans assigned
 
   // Register prefabs
   world.prefab<Rocket>().set<CargoHold>({1000});
@@ -56,7 +58,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
 }
 
 void showLaunchWindow(const flecs::entity &planE) {
-  spdlog::info("Showing LaunchWindow");
+  spdlog::debug("Showing LaunchWindow");
   if (!planE.is_alive()) {
     spdlog::error("showing launchwindow can't be done on invalid plan");
     return;
@@ -72,7 +74,7 @@ void showLaunchWindow(const flecs::entity &planE) {
 }
 
 void hideLaunchWindow(flecs::world &world) {
-  spdlog::info("Hiding LaunchWindow");
+  spdlog::debug("Hiding LaunchWindow");
   auto winE = world.lookup("LaunchWindow");
   winE.destruct();
 }

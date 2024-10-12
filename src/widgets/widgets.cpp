@@ -19,3 +19,20 @@ bool ActionButton(const char *label, const char *tooltip,
   ImGui::EndDisabled();
   return retval;
 }
+
+void NotImplementedPopup() {
+  // Always center this window when appearing
+  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+  if (ImGui::BeginPopupModal("Not Implemented", NULL,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::Text("This feature has not yet been implemented!");
+
+    ImGui::SetItemDefaultFocus();
+    if (ImGui::Button("OK")) {
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
+}

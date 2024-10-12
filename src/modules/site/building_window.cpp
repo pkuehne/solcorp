@@ -12,7 +12,7 @@ void drawRocketButtons(flecs::entity &rocket);
 void movePopup(flecs::entity &rocket);
 
 void showBuildingWindow(const flecs::entity &entity) {
-  spdlog::info("Showing SiteWindow");
+  spdlog::debug("Showing BuildinggWindow");
   if (!entity.is_alive()) {
     spdlog::error("showing BuildingWindow can't be done on invalid building");
     return;
@@ -27,7 +27,7 @@ void showBuildingWindow(const flecs::entity &entity) {
 
 void hideBuildingWindow(flecs::world &world) {
 
-  spdlog::info("Hiding BuildingWindow");
+  spdlog::debug("Hiding BuildingWindow");
   auto entity = world.lookup("BuildingWindow");
   entity.destruct();
 }
@@ -127,14 +127,21 @@ void drawLaunchpadSection(flecs::entity &entity) {
   flecs::query<LaunchPlan> query =
       world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
   query.each([](flecs::entity planE, LaunchPlan &plan) {
-    ImGui::PushID(planE.id());
-    ImGui::Text("Plan: %s @ %d", planE.name().c_str(), plan.launch_date);
+    ImGui::PushID(planE.id()); // Todo: Why is this not showing two plans?
+    ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
     if (ImGui::SmallButton("Open")) {
-      //
+      ImGui::OpenPopup("Not Implemented");
+      // Todo: Open LaunchPlan
     }
+    NotImplementedPopup();
     ImGui::PopID();
   });
+  ImGui::Separator();
+  if (ImGui::Button("Schedule Launch")) {
+    ImGui::OpenPopup("Not Implemented");
+  }
+  NotImplementedPopup();
 }
 
 void drawRocketButtons(flecs::entity &rocket) {
