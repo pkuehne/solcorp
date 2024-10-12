@@ -214,7 +214,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   std::string issue;
-  if (world.lookup(win.name.c_str()).is_valid()) {
+  if (world.lookup(win.name.c_str()) != win.planE) {
     issue = fmt::format("A Launch Plan named '{}' already exists", win.name);
   }
 

@@ -39,8 +39,8 @@ int main(void) {
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
 
-  auto site = world.entity("cape_canaveral")
-                  .set<Site>({"Cape Canaveral", 10, 10})
+  auto site = world.entity("Cape Canaveral")
+                  .set<Site>({10, 10})
                   .set<Transform>({{0, 50}, {}});
   world.entity("Storage Hall 1")
       .add<Building>()

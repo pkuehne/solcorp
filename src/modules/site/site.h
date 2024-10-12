@@ -1,7 +1,6 @@
 #pragma once
 
 #include <flecs.h>
-#include <string>
 #include <vector>
 
 struct Construction {
@@ -10,7 +9,6 @@ struct Construction {
 };
 
 struct Site {
-  std::string name;
   u_int width = 10;
   u_int height = 10;
 };

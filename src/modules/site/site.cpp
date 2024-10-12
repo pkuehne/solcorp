@@ -17,10 +17,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <RocketLaunchModule>();
 
   // Register components
-  world.component<Site>()
-      .member<std::string>("name")
-      .member<u_int>("width")
-      .member<u_int>("height");
+  world.component<Site>().member<u_int>("width").member<u_int>("height");
   world.component<Building>();
   world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
   world.component<Manufacturing>();

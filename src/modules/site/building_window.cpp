@@ -118,7 +118,11 @@ void drawStorageSection(flecs::entity &entity) {
       return;
     }
     ImGui::PushID(rocket.id());
-    ImGui::Text("%s", rocket.name().c_str());
+    auto plan = rocket.target<LaunchingOn>();
+    ImGui::Text("%s %s", rocket.name().c_str(),
+                plan.is_valid()
+                    ? fmt::format("({})", plan.name().c_str()).c_str()
+                    : "");
     drawRocketButtons(rocket);
     ImGui::Separator();
     ImGui::PopID();
@@ -160,12 +164,18 @@ void drawRocketButtons(flecs::entity &rocket) {
   if (rocket.has<Construction>()) {
     issue = "Cannot schedule rocket while being built";
   }
-  if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
-    issue = "Rocket is already scheduled";
-  }
 
-  if (ActionButton("Schedule", "Schedule the rocket for launch", issue)) {
-    showLaunchWindowAdd(rocket.world(), &rocket);
+  auto target = rocket.target<LaunchingOn>();
+  std::string tooltip = "Schedule the rocket for launch";
+  if (target.is_valid()) {
+    tooltip = "Edit launch plan";
+  }
+  if (ActionButton("Schedule", tooltip.c_str(), issue)) {
+    if (target.is_valid()) {
+      showLaunchWindowEdit(target);
+    } else {
+      showLaunchWindowAdd(rocket.world(), &rocket);
+    }
   }
   movePopup(rocket);
 }
