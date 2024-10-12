@@ -1,4 +1,3 @@
-
 #include "modules/gui/gui.h"
 #include "modules/input/input.h"
 #include "modules/main_menu/main_menu.h"
@@ -47,13 +46,19 @@ int main(void) {
         auto world = iter.world();
         auto root = world.entity("Textures");
 
-        Texture t = loadTexture("textures/solcorp_buildings.png", world);
-        t.cols = 1;
-        t.rows = 4;
-        auto b = world.entity("Buildings").set<Texture>(t).child_of(root);
+        world.entity("Buildings")
+            .set<Texture>(loadTexture("textures/solcorp_buildings.png", world))
+            .child_of(root);
+      });
 
-        spdlog::error("b is Textures::Buildings = {}",
-                      world.lookup("Textures::Buildings") == b);
+  world.system("TileMap Creation")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &iter) {
+        auto world = iter.world();
+        auto texture = world.lookup("Textures::Buildings");
+
+        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 4});
       });
 
   world.system("Site Creation")
@@ -63,6 +68,7 @@ int main(void) {
         spdlog::debug("Setting up buildings");
 
         auto world = iter.world();
+        auto tm = world.lookup("BuildingTileMap");
 
         auto site = world.entity("Cape Canaveral")
                         .set<Site>({10, 10})
@@ -72,33 +78,29 @@ int main(void) {
             .set<Storage>({})
             .set<SiteLocation>({0, 0})
             .set<Transform>({{0, 0}, {}})
-            .set<Sprite>(spriteFromTileMap(world, "Buildings", 2))
+            .set<Sprite>(spriteFromTileMap(tm, 2))
             .child_of(site);
         world.entity("Launchpad")
             .add<Building>()
             .set<Launchpad>({})
             .set<SiteLocation>({1, 0})
             .set<Transform>({{32, 0}, {}})
-            .set<Sprite>(spriteFromTileMap(world, "Buildings", 3))
+            .set<Sprite>(spriteFromTileMap(tm, 3))
             .child_of(site);
         world.entity("North Building")
             .add<Building>()
             .set<Office>({})
             .set<SiteLocation>({2, 0})
             .set<Transform>({{64, 0}, {}})
-            .set<Sprite>(spriteFromTileMap(world, "Buildings", 1))
+            .set<Sprite>(spriteFromTileMap(tm, 1))
             .child_of(site);
-
-        Manufacturing m;
-        m.lines.push_back(flecs::entity());
-        m.lines.push_back(flecs::entity());
         world.entity("Manufacturing A")
             .add<Building>()
-            .set<Manufacturing>(m)
+            .emplace<Manufacturing>(Manufacturing(2))
             .set<Storage>({})
             .set<SiteLocation>({1, 1})
             .set<Transform>({{32, 32}, {}})
-            .set<Sprite>(spriteFromTileMap(world, "Buildings", 2))
+            .set<Sprite>(spriteFromTileMap(tm, 2))
             .child_of(site);
       });
 

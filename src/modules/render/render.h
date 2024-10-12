@@ -28,8 +28,12 @@ struct Texture {
   SDL_Texture *ptr = nullptr;
   int width = 0;
   int height = 0;
-  unsigned int rows = 0;
+};
+
+struct TileMap {
+  flecs::entity texture;
   unsigned int cols = 0;
+  unsigned int rows = 0;
 };
 
 struct Sprite {
@@ -42,7 +46,7 @@ struct Sprite {
 };
 
 Texture loadTexture(const std::string &, flecs::world &);
-Sprite spriteFromTileMap(flecs::world, std::string, int);
+Sprite spriteFromTileMap(flecs::entity tileMapE, int tile);
 
 struct RenderModule {
 public:

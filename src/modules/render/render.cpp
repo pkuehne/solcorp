@@ -1,5 +1,6 @@
 #include "render.h"
 #include "SDL_render.h"
+#include "flecs/addons/cpp/entity.hpp"
 #include "modules/phase/phase.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
@@ -15,10 +16,8 @@ void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
-SDL_Rect clipTileFromTexture(const Texture *, int);
 
 RenderModule::RenderModule(flecs::world &world) {
-
   world.import <PhaseModule>();
 
   initialiseGraphics(world);
@@ -32,9 +31,11 @@ RenderModule::RenderModule(flecs::world &world) {
   world.component<Texture>()
       .member<size_t>("ptr")
       .member<int>("width")
-      .member<int>("height")
-      .member<unsigned int>("rows")
-      .member<unsigned int>("cols");
+      .member<int>("height");
+  world.component<TileMap>()
+      .member<flecs::entity>("texture")
+      .member<unsigned int>("cols")
+      .member<unsigned int>("rows");
   world.component<Sprite>()
       .member<flecs::entity>("texture")
       .member<int>("tile")
@@ -155,38 +156,22 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   SDL_RenderCopy(renderer.renderer, t->ptr, &source, &destination);
 }
 
-/// @brief Extracts a n*n tile rect from a tilemap
-/// @param texture A pointer to the texture to use
-/// @param tile The tile (number wraps at row-end)
-/// @returns An SDL_Rect with the co-ordinates to clip from
-SDL_Rect clipTileFromTexture(const Texture *texture, int tile) {
-  int tileSize = texture->width / texture->cols;
-  int tileCol = tile % texture->cols;
-  int tileRow = (tile - (tileCol)) / texture->cols;
-
-  SDL_Rect source = {tileCol * tileSize, tileRow * tileSize, tileSize,
-                     tileSize};
-  return source;
-}
-
 /// @brief Extracts a tile from a tilemap and generates a Sprite component
 /// @param[in] world The flecs world
 /// @param[in] textureName The name of the texture
 /// @param[in] tile The tile number (number wraps at row-end)
 /// @returns An Sprite with the co-ordinates to clip tile from in the texture
-Sprite spriteFromTileMap(flecs::world world, std::string textureName,
-                         int tile) {
-  auto root = world.lookup("Textures");
-  auto entity = root.lookup(textureName.c_str());
-  auto texture = entity.get<Texture>();
+Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
+  auto tileMap = tileMapE.get<TileMap>();
+  auto texture = tileMap->texture.get<Texture>();
 
-  int tileWidth = texture->width / texture->cols;
-  int tileHeight = texture->height / texture->rows;
-  int tileCol = tile % texture->cols;
-  int tileRow = (tile - (tileCol)) / texture->cols;
+  int tileWidth = texture->width / tileMap->cols;
+  int tileHeight = texture->height / tileMap->rows;
+  int tileCol = tile % tileMap->cols;
+  int tileRow = (tile - (tileCol)) / tileMap->cols;
 
   Sprite sprite;
-  sprite.texture = entity;
+  sprite.texture = tileMap->texture;
   sprite.x = tileCol * tileWidth;
   sprite.y = tileRow * tileHeight;
   sprite.width = tileWidth;
