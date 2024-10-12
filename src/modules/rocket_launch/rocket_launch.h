@@ -1,5 +1,6 @@
 #pragma once
 #include <flecs.h>
+#include <string>
 
 // Components
 
@@ -27,10 +28,12 @@ struct LaunchingWith {}; /// With what payloads?
 
 // GUIs
 struct LaunchWindow {
-  flecs::entity planE;
-  int launchDay = 0;
   u_int launchPrepDays = 5;
 
+  int launchDay = 0;
+
+  flecs::entity planE;
+  std::string name = "";
   flecs::entity rocket;
   flecs::entity launchpad;
 };
