@@ -152,13 +152,14 @@ void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 void systemRenderSprite(flecs::entity, const Sprite &sprite,
                         const Transform &target, const Renderer &renderer) {
   SDL_Rect source = {sprite.x, sprite.y, sprite.width, sprite.height};
-  SDL_Rect destination = {target.worldPosition.x, target.worldPosition.y,
-                          sprite.width, sprite.height};
+  SDL_FRect destination = {
+      target.worldPosition.x * 1.0f, target.worldPosition.y * 1.0f,
+      sprite.width * sprite.scale, sprite.height * sprite.scale};
   auto t = sprite.texture.get<Texture>();
 
-  SDL_RenderCopyEx(renderer.renderer, t->ptr, &source, &destination,
-                   sprite.rotation, NULL,
-                   static_cast<SDL_RendererFlip>(sprite.flip));
+  SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
+                    sprite.rotation, NULL,
+                    static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
 /// @brief Extracts a tile from a tilemap and generates a Sprite component
