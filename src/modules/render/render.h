@@ -28,14 +28,34 @@ struct Texture {
   SDL_Texture *ptr = nullptr;
   int width = 0;
   int height = 0;
-  unsigned int rows = 0;
+};
+
+struct TileMap {
+  flecs::entity texture;
   unsigned int cols = 0;
+  unsigned int rows = 0;
+};
+
+enum SpriteFlip {
+  None = 0,
+  Horizontal = 1,
+  Vertical = 2,
 };
 
 struct Sprite {
-  std::string texture;
+  flecs::entity texture;
   int tile = 0;
+  int x = 0;
+  int y = 0;
+  int width = 0;
+  int height = 0;
+  float scale = 1.0f;
+  double rotation = 0.0f;
+  SpriteFlip flip = SpriteFlip::None;
 };
+
+Texture loadTexture(const std::string &, flecs::world &);
+Sprite spriteFromTileMap(flecs::entity tileMapE, int tile);
 
 struct RenderModule {
 public:

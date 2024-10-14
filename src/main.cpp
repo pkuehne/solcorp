@@ -1,4 +1,3 @@
-
 #include "modules/gui/gui.h"
 #include "modules/input/input.h"
 #include "modules/main_menu/main_menu.h"
@@ -15,7 +14,7 @@ int main(void) {
   auto logger = spdlog::basic_logger_mt("solcorp", "./solcorp.log", true);
   spdlog::set_default_logger(logger);
   logger->set_level(spdlog::level::debug);
-  logger->flush_on(spdlog::level::info);
+  logger->flush_on(spdlog::level::debug);
 
   flecs::world world;
 
@@ -39,40 +38,71 @@ int main(void) {
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
 
-  auto site = world.entity("Cape Canaveral")
-                  .set<Site>({10, 10})
-                  .set<Transform>({{0, 50}, {}});
-  world.entity("Storage Hall 1")
-      .add<Building>()
-      .set<Storage>({})
-      .set<SiteLocation>({0, 0})
-      .set<Transform>({{0, 0}, {}})
-      .set<Sprite>({"building_texture", 2})
-      .child_of(site);
-  world.entity("Launchpad")
-      .add<Building>()
-      .set<Launchpad>({})
-      .set<SiteLocation>({1, 0})
-      .set<Transform>({{32, 0}, {}})
-      .set<Sprite>({"building_texture", 3})
-      .child_of(site);
-  world.entity("North Building")
-      .add<Building>()
-      .set<Office>({})
-      .set<SiteLocation>({2, 0})
-      .set<Transform>({{64, 0}, {}})
-      .set<Sprite>({"building_texture", 1})
-      .child_of(site);
-  auto e = world.entity("Manufacturing A")
-               .add<Building>()
-               .set<Manufacturing>({})
-               .set<Storage>({})
-               .set<SiteLocation>({1, 1})
-               .set<Transform>({{32, 32}, {}})
-               .set<Sprite>({"building_texture", 2})
-               .child_of(site);
-  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
-  e.get_mut<Manufacturing>()->lines.push_back(flecs::entity());
+  world.system("Load Textures")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &iter) {
+        spdlog::debug("Loading textures");
+        auto world = iter.world();
+        auto root = world.entity("Textures");
+
+        world.entity("Buildings")
+            .set<Texture>(loadTexture("textures/solcorp_buildings.png", world))
+            .child_of(root);
+      });
+
+  world.system("TileMap Creation")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &iter) {
+        auto world = iter.world();
+        auto texture = world.lookup("Textures::Buildings");
+
+        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 4});
+      });
+
+  world.system("Site Creation")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &iter) {
+        spdlog::debug("Setting up buildings");
+
+        auto world = iter.world();
+        auto tm = world.lookup("BuildingTileMap");
+
+        auto site = world.entity("Cape Canaveral")
+                        .set<Site>({10, 10})
+                        .set<Transform>({{0, 50}, {}});
+        world.entity("Storage Hall 1")
+            .add<Building>()
+            .set<Storage>({})
+            .set<SiteLocation>({0, 0})
+            .set<Transform>({{0, 0}, {}})
+            .set<Sprite>(spriteFromTileMap(tm, 2))
+            .child_of(site);
+        world.entity("Launchpad")
+            .add<Building>()
+            .set<Launchpad>({})
+            .set<SiteLocation>({1, 0})
+            .set<Transform>({{32, 0}, {}})
+            .set<Sprite>(spriteFromTileMap(tm, 3))
+            .child_of(site);
+        world.entity("North Building")
+            .add<Building>()
+            .set<Office>({})
+            .set<SiteLocation>({2, 0})
+            .set<Transform>({{64, 0}, {}})
+            .set<Sprite>(spriteFromTileMap(tm, 1))
+            .child_of(site);
+        world.entity("Manufacturing A")
+            .add<Building>()
+            .emplace<Manufacturing>(Manufacturing(2))
+            .set<Storage>({})
+            .set<SiteLocation>({1, 1})
+            .set<Transform>({{32, 32}, {}})
+            .set<Sprite>(spriteFromTileMap(tm, 2))
+            .child_of(site);
+      });
 
   // Main Loop
   logger->info("Starting");

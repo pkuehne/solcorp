@@ -1,24 +1,23 @@
 #include "render.h"
+#include "SDL_render.h"
+#include "flecs/addons/cpp/entity.hpp"
 #include "modules/phase/phase.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL_ttf.h>
+#include <cstddef>
 #include <cstdlib>
 #include <flecs.h>
 
 void initialiseGraphics(flecs::world &);
 void systemApplyParentTransform(Transform &t, const Transform *parent);
-void systemLoadTextures(flecs::iter &);
 void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
-SDL_Rect clipTileFromTexture(const Texture *, int);
-Texture loadTexture(const std::string &, flecs::world &);
 
 RenderModule::RenderModule(flecs::world &world) {
-
   world.import <PhaseModule>();
 
   initialiseGraphics(world);
@@ -29,12 +28,25 @@ RenderModule::RenderModule(flecs::world &world) {
       .member<Point>("relativePosition")
       .member<Point>("worldPosition");
   world.component<Renderer>();
-  world.component<Texture>();
-  world.component<Sprite>().member<std::string>("texture").member<int>("tile");
+  world.component<Texture>()
+      .member<size_t>("ptr")
+      .member<int>("width")
+      .member<int>("height");
+  world.component<TileMap>()
+      .member<flecs::entity>("texture")
+      .member<unsigned int>("cols")
+      .member<unsigned int>("rows");
+  world.component<Sprite>()
+      .member<flecs::entity>("texture")
+      .member<int>("tile")
+      .member<int>("x")
+      .member<int>("y")
+      .member<int>("width")
+      .member<int>("height")
+      .member<double>("rotation")
+      .member<int>("flip");
 
   // Register systems
-  world.system("Load Textures").kind(flecs::OnStart).run(systemLoadTextures);
-
   world.system<Transform, const Transform *>("Apply Parent Transform")
       .term_at(1)
       .parent()
@@ -124,17 +136,6 @@ void systemApplyParentTransform(Transform &t, const Transform *parent) {
   }
 }
 
-/// @brief Initialises the Renderer and Window
-/// @param iter Access to flecs world
-void systemLoadTextures(flecs::iter &iter) {
-  auto world = iter.world();
-
-  Texture t = loadTexture("textures/solcorp_buildings.png", world);
-  t.cols = 1;
-  t.rows = 4;
-  world.entity("building_texture").set<Texture>(t);
-}
-
 /// @brief System that clears the screen before a frame update
 /// @param renderer The Render Component Singleton
 void systemRenderClear(const Renderer &r) { SDL_RenderClear(r.renderer); }
@@ -148,31 +149,41 @@ void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 /// @param sprite Sprite information to render
 /// @param target Where on screen to render the sprite
 /// @param renderer The renderer used to draw on the screen
-void systemRenderSprite(flecs::entity e, const Sprite &sprite,
+void systemRenderSprite(flecs::entity, const Sprite &sprite,
                         const Transform &target, const Renderer &renderer) {
-  const u_int tileSize = 32;
-  auto texture = e.world().lookup(sprite.texture.c_str()).get<Texture>();
-  int target_x = static_cast<int>(target.worldPosition.x);
-  int target_y = static_cast<int>(target.worldPosition.y);
-  SDL_Rect source = clipTileFromTexture(texture, sprite.tile);
-  SDL_Rect destination = {target_x, target_y, tileSize, tileSize};
+  SDL_Rect source = {sprite.x, sprite.y, sprite.width, sprite.height};
+  SDL_FRect destination = {
+      target.worldPosition.x * 1.0f, target.worldPosition.y * 1.0f,
+      sprite.width * sprite.scale, sprite.height * sprite.scale};
+  auto t = sprite.texture.get<Texture>();
 
-  // SDL_SetTextureColorMod(spite.texture, fg.Red(), fg.Green(), fg.Blue());
-  SDL_RenderCopy(renderer.renderer, texture->ptr, &source, &destination);
+  SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
+                    sprite.rotation, NULL,
+                    static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
-/// @brief Extracts a n*n tile rect from a tilemap
-/// @param texture A pointer to the texture to use
-/// @param tile The tile (number wraps at row-end)
-/// @returns An SDL_Rect with the co-ordinates to clip from
-SDL_Rect clipTileFromTexture(const Texture *texture, int tile) {
-  int tileSize = texture->width / texture->cols;
-  int tileCol = tile % texture->cols;
-  int tileRow = (tile - (tileCol)) / texture->cols;
+/// @brief Extracts a tile from a tilemap and generates a Sprite component
+/// @param[in] world The flecs world
+/// @param[in] textureName The name of the texture
+/// @param[in] tile The tile number (number wraps at row-end)
+/// @returns An Sprite with the co-ordinates to clip tile from in the texture
+Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
+  auto tileMap = tileMapE.get<TileMap>();
+  auto texture = tileMap->texture.get<Texture>();
 
-  SDL_Rect source = {tileCol * tileSize, tileRow * tileSize, tileSize,
-                     tileSize};
-  return source;
+  int tileWidth = texture->width / tileMap->cols;
+  int tileHeight = texture->height / tileMap->rows;
+  int tileCol = tile % tileMap->cols;
+  int tileRow = (tile - (tileCol)) / tileMap->cols;
+
+  Sprite sprite;
+  sprite.texture = tileMap->texture;
+  sprite.x = tileCol * tileWidth;
+  sprite.y = tileRow * tileHeight;
+  sprite.width = tileWidth;
+  sprite.height = tileHeight;
+
+  return sprite;
 }
 
 /// @brief Loads the given texture into a Texture component
@@ -182,30 +193,13 @@ SDL_Rect clipTileFromTexture(const Texture *texture, int tile) {
 Texture loadTexture(const std::string &filename, flecs::world &world) {
   Texture texture;
   const Renderer *r = world.get<Renderer>();
-
-  // Load image at specified path
-  SDL_Surface *surface = IMG_Load(filename.c_str());
-  if (surface == nullptr) {
-    spdlog::error("Unable to load image {} SDL_image Error: {}", filename,
-                  IMG_GetError());
-    throw std::runtime_error("Failed to load texture");
-  }
-  auto magenta = SDL_MapRGB(surface->format, 255, 0, 255);
-  SDL_SetColorKey(surface, SDL_TRUE, magenta); // Make it transparent
-  texture.width = surface->w;
-  texture.height = surface->h;
-
-  // Create texture from surface pixels
-  texture.ptr = SDL_CreateTextureFromSurface(r->renderer, surface);
+  texture.ptr = IMG_LoadTexture(r->renderer, filename.c_str());
   if (texture.ptr == nullptr) {
     spdlog::error("Unable to create texture from surface. SDL Error: {}",
                   SDL_GetError());
     throw std::runtime_error("Failed to create texture from surface");
   }
-  // SDL_SetTextureBlendMode(texture.ptr, SDL_BLENDMODE_BLEND);
-
-  // Get rid of old loaded surface
-  SDL_FreeSurface(surface);
+  SDL_QueryTexture(texture.ptr, NULL, NULL, &texture.width, &texture.height);
 
   return texture;
 }

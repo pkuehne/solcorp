@@ -23,10 +23,11 @@ struct SiteLocation {
 
 /// @brief Allows construction of rockets
 struct Manufacturing {
-  u_int maxLines = 1;
   std::vector<flecs::entity> lines;
   u_int max_weight = 1000;
   u_int available_effort = 50;
+
+  Manufacturing(size_t num) : lines(num) {}
 };
 
 /// @brief For rockets and payloads
