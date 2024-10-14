@@ -42,7 +42,9 @@ RenderModule::RenderModule(flecs::world &world) {
       .member<int>("x")
       .member<int>("y")
       .member<int>("width")
-      .member<int>("height");
+      .member<int>("height")
+      .member<double>("rotation")
+      .member<int>("flip");
 
   // Register systems
   world.system<Transform, const Transform *>("Apply Parent Transform")
@@ -153,7 +155,10 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   SDL_Rect destination = {target.worldPosition.x, target.worldPosition.y,
                           sprite.width, sprite.height};
   auto t = sprite.texture.get<Texture>();
-  SDL_RenderCopy(renderer.renderer, t->ptr, &source, &destination);
+
+  SDL_RenderCopyEx(renderer.renderer, t->ptr, &source, &destination,
+                   sprite.rotation, NULL,
+                   static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
 /// @brief Extracts a tile from a tilemap and generates a Sprite component
