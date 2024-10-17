@@ -5,6 +5,7 @@
 #include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
+#include "site_construction.h"
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
@@ -17,6 +18,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <RocketLaunchModule>();
 
   // Register components
+  world.component<CurrentSite>();
   world.component<Site>().member<u_int>("width").member<u_int>("height");
   world.component<Building>();
   world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
@@ -44,6 +46,11 @@ SiteModule::SiteModule(flecs::world &world) {
       .singleton()
       .kind(ValidatePhase)
       .each(systemShowBuildingWindow);
+
+  world.system<Site>("Update Construction Sites")
+      .with<constructionSiteNeedsUpdating>()
+      .kind(ValidatePhase)
+      .each(systemUpdateConstructionSiteLocations);
 }
 
 void systemShowBuildingWindow(flecs::entity e, Transform &t,

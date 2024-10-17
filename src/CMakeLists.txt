@@ -9,6 +9,7 @@ list(APPEND SolCorpSources
     modules/simulation/simulation.cpp
     modules/site/site.cpp
     modules/site/building_window.cpp
+    modules/site/site_construction.cpp
     modules/staff/staff.cpp
     )
 list(APPEND SolCorpHeaders

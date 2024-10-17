@@ -72,6 +72,7 @@ int main(void) {
 
         auto site = world.entity("Cape Canaveral")
                         .set<Site>({10, 10})
+                        .add<CurrentSite>()
                         .set<Transform>({{0, 50}, {}});
         world.entity("Storage Hall 1")
             .add<Building>()
@@ -102,6 +103,8 @@ int main(void) {
             .set<Transform>({{32, 32}, {}})
             .set<Sprite>(spriteFromTileMap(tm, 2))
             .child_of(site);
+
+        site.add<constructionSiteNeedsUpdating>();
       });
 
   // Main Loop
