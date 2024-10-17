@@ -1,5 +1,7 @@
 
 #include "site_construction.h"
+#include "construction_window.h"
+#include "modules/input/input.h"
 #include "modules/render/render.h"
 #include "site.h"
 #include "spdlog/spdlog.h"
@@ -84,16 +86,27 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
       }
 
       // Create Construction Site
-      spdlog::debug("Creating construction at {} {}", x, y);
+      spdlog::debug("Creating construction site at {} {}", x, y);
       world
           .entity(fmt::format("Construction Site {}-{}/{}",
                               currentSite.name().c_str(), x, y)
                       .c_str())
           .set<SiteLocation>({x, y})
           .set<Sprite>(spriteFromTileMap(tm, 0))
+          .add<ConstructionSite>()
           .child_of(currentSite);
     }
   }
 
   entity.remove<constructionSiteNeedsUpdating>();
+}
+
+void systemMatchClickToConstructionSite(flecs::entity e, Transform &t,
+                                        const MouseUp &mouse) {
+  // We know from the query that this is a Construction Site
+  int tileSize = 32; // SOL-39
+  if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
+      (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
+    showConstructionSiteWindow(e);
+  }
 }

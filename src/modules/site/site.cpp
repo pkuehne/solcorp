@@ -1,4 +1,6 @@
 #include "site.h"
+#include "building_window.h"
+#include "construction_window.h"
 #include "flecs/addons/cpp/entity.hpp"
 #include "modules/input/input.h"
 #include "modules/phase/phase.h"
@@ -9,8 +11,7 @@
 #include "spdlog/spdlog.h"
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
-void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
-void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win);
+void systemMatchClickToBuilding(flecs::entity, Transform &, const MouseUp &);
 void systemAddMissingTransform(flecs::entity entity, SiteLocation &location);
 
 SiteModule::SiteModule(flecs::world &world) {
@@ -42,12 +43,23 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(GuiPhase)
       .each(systemDrawBuildingWindow);
 
-  world.system<Transform, const MouseUp>("Open Building Window")
+  world.system<ConstructionSiteWindow>("Draw Construction Site Window")
+      .kind(GuiPhase)
+      .each(systemDrawConstructionSiteWindow);
+
+  world.system<Transform, const MouseUp>("Match click to Building")
       .with<Building>()
       .term_at(1)
       .singleton()
       .kind(ValidatePhase)
-      .each(systemShowBuildingWindow);
+      .each(systemMatchClickToBuilding);
+
+  world.system<Transform, const MouseUp>("Match click to Construction Site")
+      .with<ConstructionSite>()
+      .term_at(1)
+      .singleton()
+      .kind(ValidatePhase)
+      .each(systemMatchClickToConstructionSite);
 
   world.system<Site>("Update Construction Sites")
       .with<constructionSiteNeedsUpdating>()
@@ -60,8 +72,8 @@ SiteModule::SiteModule(flecs::world &world) {
       .each(systemAddMissingTransform);
 }
 
-void systemShowBuildingWindow(flecs::entity e, Transform &t,
-                              const MouseUp &mouse) {
+void systemMatchClickToBuilding(flecs::entity e, Transform &t,
+                                const MouseUp &mouse) {
   // We know from the query that this is a Building
   int tileSize = 32; // SOL-39
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
@@ -98,7 +110,7 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
 
 void systemAddMissingTransform(flecs::entity entity, SiteLocation &location) {
   spdlog::debug("Add missing Transform for {}", entity.name().c_str());
-  u_int tileSize = 32;
+  u_int tileSize = 32; // SOL-39
   auto t = Transform{Point{static_cast<int>(location.x * tileSize),
                            static_cast<int>(location.y * tileSize)},
                      Point{}};
