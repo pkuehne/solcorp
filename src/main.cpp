@@ -78,21 +78,18 @@ int main(void) {
             .add<Building>()
             .set<Storage>({})
             .set<SiteLocation>({0, 0})
-            .set<Transform>({{0, 0}, {}})
             .set<Sprite>(spriteFromTileMap(tm, 2))
             .child_of(site);
         world.entity("Launchpad")
             .add<Building>()
             .set<Launchpad>({})
             .set<SiteLocation>({1, 0})
-            .set<Transform>({{32, 0}, {}})
             .set<Sprite>(spriteFromTileMap(tm, 3))
             .child_of(site);
         world.entity("North Building")
             .add<Building>()
             .set<Office>({})
             .set<SiteLocation>({2, 0})
-            .set<Transform>({{64, 0}, {}})
             .set<Sprite>(spriteFromTileMap(tm, 1))
             .child_of(site);
         world.entity("Manufacturing A")
@@ -100,7 +97,6 @@ int main(void) {
             .emplace<Manufacturing>(Manufacturing(2))
             .set<Storage>({})
             .set<SiteLocation>({1, 1})
-            .set<Transform>({{32, 32}, {}})
             .set<Sprite>(spriteFromTileMap(tm, 2))
             .child_of(site);
 

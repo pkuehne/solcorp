@@ -6,10 +6,12 @@
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "site_construction.h"
+#include "spdlog/spdlog.h"
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
 void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win);
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -51,6 +53,11 @@ SiteModule::SiteModule(flecs::world &world) {
       .with<constructionSiteNeedsUpdating>()
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
+
+  world.system<SiteLocation>("Add missing transforms")
+      .without<Transform>()
+      .kind(UpdatePhase)
+      .each(systemAddMissingTransform);
 }
 
 void systemShowBuildingWindow(flecs::entity e, Transform &t,
@@ -87,4 +94,13 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
       rocket = flecs::entity();
     }
   }
+}
+
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location) {
+  spdlog::debug("Add missing Transform for {}", entity.name().c_str());
+  u_int tileSize = 32;
+  auto t = Transform{Point{static_cast<int>(location.x * tileSize),
+                           static_cast<int>(location.y * tileSize)},
+                     Point{}};
+  entity.set<Transform>(t);
 }

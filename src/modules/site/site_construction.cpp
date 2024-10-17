@@ -90,8 +90,6 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
                               currentSite.name().c_str(), x, y)
                       .c_str())
           .set<SiteLocation>({x, y})
-          .set<Transform>(
-              {{static_cast<int>(x * 32), static_cast<int>(y * 32)}, {}})
           .set<Sprite>(spriteFromTileMap(tm, 0))
           .child_of(currentSite);
     }
