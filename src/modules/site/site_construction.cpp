@@ -1,7 +1,6 @@
 
 #include "site_construction.h"
 #include "construction_window.h"
-#include "modules/input/input.h"
 #include "modules/render/render.h"
 #include "site.h"
 #include "spdlog/spdlog.h"
@@ -35,12 +34,8 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   std::vector<LocationInfo> locationMap(site.width * site.height,
                                         LocationInfo::Empty);
 
-  auto currentBuildings = world
-                              .query_builder<SiteLocation>()
-                              //   .with<Building>()
-                              .with<CurrentSite>()
-                              .up()
-                              .build();
+  auto currentBuildings =
+      world.query_builder<SiteLocation>().with<CurrentSite>().up().build();
 
   currentBuildings.each([&](flecs::entity, SiteLocation &location) {
     locationMap[location.y * site.height + location.x] = LocationInfo::Building;
@@ -99,14 +94,4 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   }
 
   entity.remove<constructionSiteNeedsUpdating>();
-}
-
-void systemMatchClickToConstructionSite(flecs::entity e, Transform &t,
-                                        const MouseUp &mouse) {
-  // We know from the query that this is a Construction Site
-  int tileSize = 32; // SOL-39
-  if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
-      (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
-    showConstructionSiteWindow(e);
-  }
 }

@@ -30,7 +30,7 @@ struct Manufacturing {
   u_int max_weight = 1000;
   u_int available_effort = 50;
 
-  Manufacturing(size_t num) : lines(num) {}
+  Manufacturing(size_t num = 1) : lines(num) {}
 };
 
 /// @brief For rockets and payloads
@@ -51,11 +51,6 @@ struct Launchpad {
 struct ConstructionSite {};
 
 struct constructionSiteNeedsUpdating {};
-
-// GUIs
-struct BuildingWindow {
-  flecs::entity buildingE;
-};
 
 void showBuildingWindow(const flecs::entity &buildingE);
 void hideBuildingWindow(flecs::world &world);

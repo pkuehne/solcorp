@@ -1,3 +1,4 @@
+#include "building_window.h"
 #include "imgui.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "site.h"
@@ -13,7 +14,7 @@ void drawRocketButtons(flecs::entity &rocket);
 void movePopup(flecs::entity &rocket);
 
 void showBuildingWindow(const flecs::entity &entity) {
-  spdlog::debug("Showing BuildinggWindow");
+  spdlog::debug("Showing BuildingWindow");
   if (!entity.is_alive()) {
     spdlog::error("showing BuildingWindow can't be done on invalid building");
     return;

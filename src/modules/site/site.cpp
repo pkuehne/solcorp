@@ -1,7 +1,6 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
-#include "flecs/addons/cpp/entity.hpp"
 #include "modules/input/input.h"
 #include "modules/phase/phase.h"
 #include "modules/render/render.h"
@@ -48,18 +47,11 @@ SiteModule::SiteModule(flecs::world &world) {
       .each(systemDrawConstructionSiteWindow);
 
   world.system<Transform, const MouseUp>("Match click to Building")
-      .with<Building>()
+      .with<SiteLocation>()
       .term_at(1)
       .singleton()
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
-
-  world.system<Transform, const MouseUp>("Match click to Construction Site")
-      .with<ConstructionSite>()
-      .term_at(1)
-      .singleton()
-      .kind(ValidatePhase)
-      .each(systemMatchClickToConstructionSite);
 
   world.system<Site>("Update Construction Sites")
       .with<constructionSiteNeedsUpdating>()
@@ -70,15 +62,26 @@ SiteModule::SiteModule(flecs::world &world) {
       .without<Transform>()
       .kind(UpdatePhase)
       .each(systemAddMissingTransform);
+
+  // Register Prefabs
+  world.prefab("Building")
+      .add<Building>()
+      .set<SiteLocation>({})
+      .set<Sprite>({});
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t,
                                 const MouseUp &mouse) {
-  // We know from the query that this is a Building
+  // We know from the query that this has a SiteLocation i.e. is part of a Site
+  auto world = e.world();
   int tileSize = 32; // SOL-39
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
-    showBuildingWindow(e);
+    if (e.has<Building>()) {
+      showBuildingWindow(e);
+    } else if (e.has<ConstructionSite>()) {
+      showConstructionSiteWindow(e);
+    }
   }
 }
 

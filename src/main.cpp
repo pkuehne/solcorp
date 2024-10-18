@@ -61,46 +61,69 @@ int main(void) {
         world.entity("BuildingTileMap").set<TileMap>({texture, 1, 4});
       });
 
-  world.system("Site Creation")
+  world.system("Prefab Creation")
       .kind(flecs::OnStart)
       .immediate()
       .run([](flecs::iter &iter) {
-        spdlog::debug("Setting up buildings");
+        spdlog::debug("Setting up prefabs");
 
         auto world = iter.world();
         auto tm = world.lookup("BuildingTileMap");
 
+        auto building = world.lookup("SiteModule::Building");
+        auto prefabs = world.entity("Prefabs");
+        auto buildings = world.entity("Buildings").child_of(prefabs);
+
+        world.prefab("Factory")
+            .is_a(building)
+            .child_of(buildings)
+            .set<Sprite>(spriteFromTileMap(tm, 2))
+            .emplace<Manufacturing>(Manufacturing(2))
+            .set<Storage>({});
+        world.prefab("Storage Hall")
+            .is_a(building)
+            .child_of(buildings)
+            .set<Sprite>(spriteFromTileMap(tm, 2))
+            .set<Storage>({});
+        world.prefab("Launchpad")
+            .is_a(building)
+            .child_of(buildings)
+            .set<Sprite>(spriteFromTileMap(tm, 3))
+            .set<Launchpad>({});
+        world.prefab("Office Building")
+            .is_a(building)
+            .child_of(buildings)
+            .set<Sprite>(spriteFromTileMap(tm, 1))
+            .set<Office>({});
+      });
+
+  world.system("Site Creation")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &iter) {
+        auto world = iter.world();
         auto site = world.entity("Cape Canaveral")
                         .set<Site>({10, 10})
                         .add<CurrentSite>()
                         .set<Transform>({{0, 50}, {}});
-        world.entity("Storage Hall 1")
-            .add<Building>()
-            .set<Storage>({})
-            .set<SiteLocation>({0, 0})
-            .set<Sprite>(spriteFromTileMap(tm, 2))
+        site.add<constructionSiteNeedsUpdating>();
+
+        world.entity("Manufacturing A")
+            .is_a(world.lookup("Prefabs::Buildings::Factory"))
+            .set<SiteLocation>({1, 1})
             .child_of(site);
-        world.entity("Launchpad")
-            .add<Building>()
-            .set<Launchpad>({})
+        world.entity("Storage Hall 1")
+            .is_a(world.lookup("Prefabs::Buildings::Storage Hall"))
+            .set<SiteLocation>({0, 0})
+            .child_of(site);
+        world.entity("Main Launchpad")
+            .is_a(world.lookup("Prefabs::Buildings::Launchpad"))
             .set<SiteLocation>({1, 0})
-            .set<Sprite>(spriteFromTileMap(tm, 3))
             .child_of(site);
         world.entity("North Building")
-            .add<Building>()
-            .set<Office>({})
+            .is_a(world.lookup("Prefabs::Buildings::Office Building"))
             .set<SiteLocation>({2, 0})
-            .set<Sprite>(spriteFromTileMap(tm, 1))
             .child_of(site);
-        world.entity("Manufacturing A")
-            .add<Building>()
-            .emplace<Manufacturing>(Manufacturing(2))
-            .set<Storage>({})
-            .set<SiteLocation>({1, 1})
-            .set<Sprite>(spriteFromTileMap(tm, 2))
-            .child_of(site);
-
-        site.add<constructionSiteNeedsUpdating>();
       });
 
   // Main Loop
