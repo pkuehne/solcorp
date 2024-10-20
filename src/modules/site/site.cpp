@@ -10,8 +10,10 @@
 #include "spdlog/spdlog.h"
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
-void systemMatchClickToBuilding(flecs::entity, Transform &, const MouseUp &);
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location);
+void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
+                                const MouseUp &mouse);
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
+                               Sprite &sprite);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -51,9 +53,9 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(GuiPhase)
       .each(systemDrawConstructionSiteWindow);
 
-  world.system<Transform, const MouseUp>("Match click to Building")
+  world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
-      .term_at(1)
+      .term_at(2)
       .singleton()
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
@@ -63,7 +65,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
-  world.system<SiteLocation>("Add missing transforms")
+  world.system<SiteLocation, Sprite>("Add missing transforms")
       .without<Transform>()
       .kind(UpdatePhase)
       .each(systemAddMissingTransform);
@@ -75,11 +77,11 @@ SiteModule::SiteModule(flecs::world &world) {
       .set<Sprite>({});
 }
 
-void systemMatchClickToBuilding(flecs::entity e, Transform &t,
+void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse) {
   // We know from the query that this has a SiteLocation i.e. is part of a Site
   auto world = e.world();
-  int tileSize = 32; // SOL-39
+  int tileSize = s.width;
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
     if (e.has<Building>()) {
@@ -116,9 +118,10 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
   }
 }
 
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location) {
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
+                               Sprite &sprite) {
   spdlog::debug("Add missing Transform for {}", entity.name().c_str());
-  u_int tileSize = 32; // SOL-39
+  u_int tileSize = sprite.width;
   auto t = Transform{Point{static_cast<int>(location.x * tileSize),
                            static_cast<int>(location.y * tileSize)},
                      Point{}};

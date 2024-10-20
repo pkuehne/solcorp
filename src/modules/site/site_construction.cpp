@@ -87,7 +87,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
                               currentSite.name().c_str(), x, y)
                       .c_str())
           .set<SiteLocation>({x, y})
-          .set<Sprite>(spriteFromTileMap(tm, 0))
+          .set<Sprite>(spriteFromTileMap(tm, 4))
           .add<ConstructionSite>()
           .child_of(currentSite);
     }

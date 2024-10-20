@@ -58,7 +58,7 @@ int main(void) {
         auto world = iter.world();
         auto texture = world.lookup("Textures::Buildings");
 
-        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 4});
+        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 5});
       });
 
   world.system("Prefab Creation")
