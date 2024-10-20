@@ -2,6 +2,7 @@
 
 struct ConstructionSiteWindow {
   flecs::entity buildingE;
+  bool open = true;
 };
 
 void showConstructionSiteWindow(const flecs::entity &entity);

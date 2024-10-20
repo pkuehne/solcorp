@@ -37,14 +37,15 @@ void systemDrawConstructionSiteWindow(flecs::entity winE,
   auto world = winE.world();
   auto entity = win.buildingE;
 
-  if (entity == flecs::entity() || !entity.is_alive()) {
+  if (entity == flecs::entity() || !entity.is_alive() || !win.open) {
     spdlog::error("Building is no longer valid for ConstructionSiteWindow");
     hideConstructionSiteWindow(world);
     return;
   }
 
   ImGui::Begin(
-      fmt::format("Construction Site ###ConstructionSiteWindow").c_str());
+      fmt::format("Construction Site ###ConstructionSiteWindow").c_str(),
+      &win.open);
 
   ImGui::End();
 }

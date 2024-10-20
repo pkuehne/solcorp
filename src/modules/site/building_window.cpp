@@ -37,7 +37,7 @@ void hideBuildingWindow(flecs::world &world) {
 void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
   auto world = winE.world();
   auto entity = win.buildingE;
-  if (entity == flecs::entity() || !entity.is_alive()) {
+  if (entity == flecs::entity() || !entity.is_alive() || !win.open) {
     spdlog::error("Building is no longer valid for BuildingWindow");
     hideBuildingWindow(world);
     return;
@@ -45,7 +45,8 @@ void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
 
   ImGui::Begin(
       fmt::format("Building - {}###BuildingWindow", entity.name().c_str())
-          .c_str());
+          .c_str(),
+      &win.open);
   if (ImGui::BeginTabBar("Capabilities")) {
     if (entity.has<Manufacturing>() && ImGui::BeginTabItem("Manufacturing")) {
       drawManufacturingSection(entity);

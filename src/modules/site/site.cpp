@@ -28,7 +28,12 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Storage>();
   world.component<Office>();
   world.component<Launchpad>();
-  world.component<BuildingWindow>().member<flecs::entity>("buildingE");
+  world.component<BuildingWindow>()
+      .member<flecs::entity>("buildingE")
+      .member<bool>("open");
+  world.component<ConstructionSiteWindow>()
+      .member<flecs::entity>("buildingE")
+      .member<bool>("open");
 
   // Register Systems
   auto sim = world.get<Simulation>();
