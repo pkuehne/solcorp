@@ -8,9 +8,9 @@
 #include <flecs.h>
 
 enum LocationInfo {
-  Empty = 0,
-  Building = 1,
-  Construction = 2,
+  TileEmpty = 0,
+  TileBuilding = 1,
+  TileConstruction = 2,
 };
 
 ///@brief Task launched when the location of Construction Sites needs updating
@@ -32,13 +32,20 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
       [&](flecs::entity e, CurrentSite) { currentSite = e; });
 
   std::vector<LocationInfo> locationMap(site.width * site.height,
-                                        LocationInfo::Empty);
+                                        LocationInfo::TileEmpty);
 
   auto currentBuildings =
       world.query_builder<SiteLocation>().with<CurrentSite>().up().build();
 
-  currentBuildings.each([&](flecs::entity, SiteLocation &location) {
-    locationMap[location.y * site.height + location.x] = LocationInfo::Building;
+  currentBuildings.each([&](flecs::entity e, SiteLocation &location) {
+    if (e.has<Building>()) {
+      locationMap[location.y * site.height + location.x] =
+          LocationInfo::TileBuilding;
+
+    } else if (e.has<ConstructionSite>()) {
+      locationMap[location.y * site.height + location.x] =
+          LocationInfo::TileConstruction;
+    }
   });
 
   auto loc = [&site](size_t y, size_t x) -> size_t {
@@ -56,14 +63,14 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     if (!is_valid(y, x)) {
       return;
     }
-    if (locationMap[loc(y, x)] == LocationInfo::Empty) {
-      locationMap[loc(y, x)] = LocationInfo::Construction;
+    if (locationMap[loc(y, x)] == LocationInfo::TileEmpty) {
+      locationMap[loc(y, x)] = LocationInfo::TileConstruction;
     }
   };
 
   for (size_t y = 0; y < site.height; y++) {
     for (size_t x = 0; x < site.width; x++) {
-      if (locationMap[loc(y, x)] != LocationInfo::Building) {
+      if (locationMap[loc(y, x)] != LocationInfo::TileBuilding) {
         continue;
       }
       setConstruction(y - 1, x);
@@ -76,7 +83,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   auto tm = world.lookup("BuildingTileMap");
   for (unsigned int y = 0; y < site.height; y++) {
     for (unsigned int x = 0; x < site.width; x++) {
-      if (locationMap[loc(y, x)] != LocationInfo::Construction) {
+      if (locationMap[loc(y, x)] != LocationInfo::TileConstruction) {
         continue;
       }
 
