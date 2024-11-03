@@ -1,14 +1,19 @@
 #include "site.h"
-#include "flecs/addons/cpp/entity.hpp"
+#include "building_window.h"
+#include "construction_window.h"
 #include "modules/input/input.h"
 #include "modules/phase/phase.h"
 #include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
+#include "site_construction.h"
+#include "spdlog/spdlog.h"
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
-void systemShowBuildingWindow(flecs::entity, Transform &, const MouseUp &);
-void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win);
+void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
+                                const MouseUp &mouse);
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
+                               Sprite &sprite);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -17,6 +22,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <RocketLaunchModule>();
 
   // Register components
+  world.component<CurrentSite>();
   world.component<Site>().member<u_int>("width").member<u_int>("height");
   world.component<Building>();
   world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
@@ -24,7 +30,12 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Storage>();
   world.component<Office>();
   world.component<Launchpad>();
-  world.component<BuildingWindow>().member<flecs::entity>("buildingE");
+  world.component<BuildingWindow>()
+      .member<flecs::entity>("buildingE")
+      .member<bool>("open");
+  world.component<ConstructionSiteWindow>()
+      .member<flecs::entity>("buildingE")
+      .member<bool>("open");
 
   // Register Systems
   auto sim = world.get<Simulation>();
@@ -38,21 +49,46 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(GuiPhase)
       .each(systemDrawBuildingWindow);
 
-  world.system<Transform, const MouseUp>("Open Building Window")
-      .with<Building>()
-      .term_at(1)
+  world.system<ConstructionSiteWindow>("Draw Construction Site Window")
+      .kind(GuiPhase)
+      .each(systemDrawConstructionSiteWindow);
+
+  world.system<Transform, Sprite, const MouseUp>("Match click to Building")
+      .with<SiteLocation>()
+      .term_at(2)
       .singleton()
       .kind(ValidatePhase)
-      .each(systemShowBuildingWindow);
+      .each(systemMatchClickToBuilding);
+
+  world.system<Site>("Update Construction Sites")
+      .with<constructionSiteNeedsUpdating>()
+      .kind(ValidatePhase)
+      .each(systemUpdateConstructionSiteLocations);
+
+  world.system<SiteLocation, Sprite>("Add missing transforms")
+      .without<Transform>()
+      .kind(UpdatePhase)
+      .each(systemAddMissingTransform);
+
+  // Register Prefabs
+  world.prefab("Building")
+      .add<Building>()
+      .set<SiteLocation>({})
+      .set<Sprite>({});
 }
 
-void systemShowBuildingWindow(flecs::entity e, Transform &t,
-                              const MouseUp &mouse) {
-  // We know from the query that this is a Building
-  int tileSize = 32; // SOL-39
+void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
+                                const MouseUp &mouse) {
+  // We know from the query that this has a SiteLocation i.e. is part of a Site
+  auto world = e.world();
+  int tileSize = s.width;
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
-    showBuildingWindow(e);
+    if (e.has<Building>()) {
+      showBuildingWindow(e);
+    } else if (e.has<ConstructionSite>()) {
+      showConstructionSiteWindow(e);
+    }
   }
 }
 
@@ -80,4 +116,14 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
       rocket = flecs::entity();
     }
   }
+}
+
+void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
+                               Sprite &sprite) {
+  spdlog::debug("Add missing Transform for {}", entity.name().c_str());
+  u_int tileSize = sprite.width;
+  auto t = Transform{Point{static_cast<int>(location.x * tileSize),
+                           static_cast<int>(location.y * tileSize)},
+                     Point{}};
+  entity.set<Transform>(t);
 }
