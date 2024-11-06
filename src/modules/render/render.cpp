@@ -75,7 +75,7 @@ RenderModule::RenderModule(flecs::world &world) {
 }
 
 /// @brief Initialises the Renderer and Window
-/// @param iter Access to flecs world
+/// @param world Access to flecs world
 /// @returns A Renderer Component to be added to the World
 void initialiseGraphics(flecs::world &world) {
 
@@ -138,11 +138,11 @@ void systemApplyParentTransform(Transform &t, const Transform *parent) {
 }
 
 /// @brief System that clears the screen before a frame update
-/// @param renderer The Render Component Singleton
+/// @param r The Render Component Singleton
 void systemRenderClear(const Renderer &r) { SDL_RenderClear(r.renderer); }
 
 /// @brief System to present the rendering instructions from previous systems
-/// @param renderer The Render Component Singleton
+/// @param r The Render Component Singleton
 void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 
 /// @brief System to render a given TileSprite to a RenderTarget
@@ -166,7 +166,7 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
 /// @brief Extracts a tile from a tilemap and generates a Sprite component
 /// @param[in] tileMapE The tile map entity (has a @link TileMap component)
 /// @param[in] tile The tile number (number wraps at row-end)
-/// @returns An Sprite with the co-ordinates to clip tile from in the texture
+/// @returns A Sprite with the co-ordinates to clip tile from in the texture
 Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
   auto tileMap = tileMapE.get<TileMap>();
 
@@ -184,7 +184,7 @@ Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
 }
 
 /// @brief Loads the given texture into a Texture component
-/// @param name The filename (including directory) to load
+/// @param filename The filename (including directory) to load
 /// @param world The flecs world to interact with
 /// @returns A Texture Component to be added to an entity
 Texture loadTexture(const std::string &filename, flecs::world &world) {
