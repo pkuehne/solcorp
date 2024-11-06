@@ -57,8 +57,9 @@ int main(void) {
       .run([](flecs::iter &iter) {
         auto world = iter.world();
         auto texture = world.lookup("Textures::Buildings");
-
-        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 5});
+        const uint tileSize = 32;
+        world.entity("BuildingTileMap")
+            .set<TileMap>(tileMapFromTexture(texture, tileSize));
       });
 
   world.system("Prefab Creation")
