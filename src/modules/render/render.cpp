@@ -35,7 +35,8 @@ RenderModule::RenderModule(flecs::world &world) {
   world.component<TileMap>()
       .member<flecs::entity>("texture")
       .member<unsigned int>("cols")
-      .member<unsigned int>("rows");
+      .member<unsigned int>("rows")
+      .member<unsigned int>("tileSize");
   world.component<Sprite>()
       .member<flecs::entity>("texture")
       .member<int>("tile")
@@ -74,7 +75,7 @@ RenderModule::RenderModule(flecs::world &world) {
 }
 
 /// @brief Initialises the Renderer and Window
-/// @param iter Access to flecs world
+/// @param world Access to flecs world
 /// @returns A Renderer Component to be added to the World
 void initialiseGraphics(flecs::world &world) {
 
@@ -137,11 +138,11 @@ void systemApplyParentTransform(Transform &t, const Transform *parent) {
 }
 
 /// @brief System that clears the screen before a frame update
-/// @param renderer The Render Component Singleton
+/// @param r The Render Component Singleton
 void systemRenderClear(const Renderer &r) { SDL_RenderClear(r.renderer); }
 
 /// @brief System to present the rendering instructions from previous systems
-/// @param renderer The Render Component Singleton
+/// @param r The Render Component Singleton
 void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 
 /// @brief System to render a given TileSprite to a RenderTarget
@@ -163,31 +164,27 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
 }
 
 /// @brief Extracts a tile from a tilemap and generates a Sprite component
-/// @param[in] world The flecs world
-/// @param[in] textureName The name of the texture
+/// @param[in] tileMapE The tile map entity (has a @link TileMap component)
 /// @param[in] tile The tile number (number wraps at row-end)
-/// @returns An Sprite with the co-ordinates to clip tile from in the texture
+/// @returns A Sprite with the co-ordinates to clip tile from in the texture
 Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
   auto tileMap = tileMapE.get<TileMap>();
-  auto texture = tileMap->texture.get<Texture>();
 
-  int tileWidth = texture->width / tileMap->cols;
-  int tileHeight = texture->height / tileMap->rows;
   int tileCol = tile % tileMap->cols;
   int tileRow = (tile - (tileCol)) / tileMap->cols;
 
   Sprite sprite;
   sprite.texture = tileMap->texture;
-  sprite.x = tileCol * tileWidth;
-  sprite.y = tileRow * tileHeight;
-  sprite.width = tileWidth;
-  sprite.height = tileHeight;
+  sprite.x = tileCol * tileMap->tileSize;
+  sprite.y = tileRow * tileMap->tileSize;
+  sprite.width = tileMap->tileSize;
+  sprite.height = tileMap->tileSize;
 
   return sprite;
 }
 
 /// @brief Loads the given texture into a Texture component
-/// @param name The filename (including directory) to load
+/// @param filename The filename (including directory) to load
 /// @param world The flecs world to interact with
 /// @returns A Texture Component to be added to an entity
 Texture loadTexture(const std::string &filename, flecs::world &world) {
@@ -202,4 +199,22 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
   SDL_QueryTexture(texture.ptr, NULL, NULL, &texture.width, &texture.height);
 
   return texture;
+}
+
+/// @brief Takes a texture and creates a TileMap component based on a square
+/// tile size
+/// @param[in] textureE The entity with a Texture component
+/// @param[in] tileSize The size of the tiles in the map in pixels
+/// @return A TileMap component
+TileMap tileMapFromTexture(const flecs::entity &textureE, uint tileSize) {
+  TileMap map;
+
+  auto texture = textureE.get<Texture>();
+
+  map.tileSize = tileSize;
+  map.texture = textureE;
+  map.cols = texture->width / tileSize;
+  map.rows = texture->height / tileSize;
+
+  return map;
 }

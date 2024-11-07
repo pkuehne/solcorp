@@ -57,8 +57,9 @@ int main(void) {
       .run([](flecs::iter &iter) {
         auto world = iter.world();
         auto texture = world.lookup("Textures::Buildings");
-
-        world.entity("BuildingTileMap").set<TileMap>({texture, 1, 5});
+        const uint tileSize = 32;
+        world.entity("BuildingTileMap")
+            .set<TileMap>(tileMapFromTexture(texture, tileSize));
       });
 
   world.system("Prefab Creation")
@@ -130,7 +131,7 @@ int main(void) {
   logger->info("Starting");
   world.set_target_fps(60);
   //   ecs_log_set_level(0);
-  int rcode = world.app().enable_rest().run();
+  int rcode = world.app().enable_stats().enable_rest().run();
 
   return rcode;
 }
