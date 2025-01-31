@@ -1,7 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
+#include "modules/engine/engine.h"
 #include "modules/input/input.h"
-#include "modules/phase/phase.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);
@@ -9,7 +9,7 @@ void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 
 SimulationModule::SimulationModule(flecs::world &world) {
   world.import <InputModule>();
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
 
   // Register components
   world.component<Simulation>().member<flecs::entity>("speed");

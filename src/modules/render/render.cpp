@@ -1,7 +1,7 @@
 #include "render.h"
 #include "SDL_render.h"
 #include "flecs/addons/cpp/entity.hpp"
-#include "modules/phase/phase.h"
+#include "modules/engine/engine.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -18,7 +18,7 @@ void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
 
 RenderModule::RenderModule(flecs::world &world) {
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
 
   initialiseGraphics(world);
 

@@ -1,4 +1,4 @@
-#include "phase.h"
+#include "engine.h"
 
 flecs::entity PreFramePhase;
 flecs::entity ValidatePhase;
@@ -10,7 +10,7 @@ flecs::entity RenderPhase;
 flecs::entity PostRenderPhase;
 flecs::entity PostFramePhase;
 
-PhaseModule::PhaseModule(flecs::world &world) {
+EngineModule::EngineModule(flecs::world &world) {
   // Register phases
   PreFramePhase = world.entity("PreFrame").add(flecs::Phase);
   ValidatePhase =

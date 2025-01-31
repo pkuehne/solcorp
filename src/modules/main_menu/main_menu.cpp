@@ -1,9 +1,9 @@
 #include "main_menu.h"
 #include "SDL_keycode.h"
 #include "imgui.h"
+#include "modules/engine/engine.h"
 #include "modules/gui/gui.h"
 #include "modules/input/input.h"
-#include "modules/phase/phase.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
 
@@ -13,7 +13,7 @@ void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
   world.import <InputModule>();
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
   world.import <GuiModule>();
 
   // Register components

@@ -1,8 +1,8 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
+#include "modules/engine/engine.h"
 #include "modules/input/input.h"
-#include "modules/phase/phase.h"
 #include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
@@ -17,7 +17,7 @@ void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
   world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
 

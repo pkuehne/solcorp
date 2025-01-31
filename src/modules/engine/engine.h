@@ -11,6 +11,6 @@ extern flecs::entity RenderPhase;
 extern flecs::entity PostRenderPhase;
 extern flecs::entity PostFramePhase;
 
-struct PhaseModule {
-  PhaseModule(flecs::world &);
+struct EngineModule {
+  EngineModule(flecs::world &);
 };
