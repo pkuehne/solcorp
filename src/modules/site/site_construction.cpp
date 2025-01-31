@@ -75,7 +75,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
       }
       setConstruction(y - 1, x);
       setConstruction(y + 1, x);
-      setConstruction(y, x + 1);
+      setConstruction(y, x - 1);
       setConstruction(y, x + 1);
     }
   }
