@@ -1,30 +1,30 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
-    modules/gui/gui.cpp
-    modules/input/input.cpp
+    modules/engine/engine.cpp
+    modules/engine/gui.cpp
+    modules/engine/input.cpp
+    modules/engine/render.cpp
     modules/main_menu/main_menu.cpp
-    modules/phase/phase.cpp
     modules/rocket_launch/rocket_launch.cpp
-    modules/render/render.cpp
     modules/simulation/simulation.cpp
     modules/site/site.cpp
     modules/site/building_window.cpp
     modules/site/site_construction.cpp
     modules/site/construction_window.cpp
     modules/staff/staff.cpp
-    )
+)
 list(APPEND SolCorpHeaders
     widgets/widgets.h
-    modules/gui/gui.h
-    modules/input/input.h
+    modules/engine/engine.h
+    modules/engine/gui.h
+    modules/engine/input.h
+    modules/engine/render.h
     modules/main_menu/main_menu.h
-    modules/phase/phase.h
     modules/rocket_launch/rocket_launch.h
-    modules/render/render.h
     modules/simulation/simulation.h
     modules/site/site.h
     modules/staff/staff.h
-    )
+)
 
 fetchcontent_declare(flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs
@@ -58,8 +58,7 @@ target_include_directories(solcorplib PUBLIC ${SDL2_INCLUDE_DIRS})
 target_include_directories(solcorplib PUBLIC ${SDL2IMAGE_INCLUDE_DIRS})
 target_include_directories(solcorplib PUBLIC ${SDL2TTF_INCLUDE_DIRS})
 
-set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER
-    "${SolCorpHeaders}")
+set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER "${SolCorpHeaders}")
 
 target_compile_options(solcorplib PRIVATE -Werror)
 target_compile_options(solcorplib PRIVATE -Wall)
@@ -85,13 +84,13 @@ target_compile_options(solcorp PRIVATE -Wpedantic)
 
 target_link_libraries(solcorp PRIVATE solcorplib)
 
-
 file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
 file(COPY ${TEXTURES}
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
 
 add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp
     WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
+    COMMENT Running SolCorp
 )

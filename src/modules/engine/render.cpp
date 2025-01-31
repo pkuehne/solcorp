@@ -1,7 +1,6 @@
 #include "render.h"
 #include "SDL_render.h"
-#include "flecs/addons/cpp/entity.hpp"
-#include "modules/phase/phase.h"
+#include "modules/engine/engine.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -10,17 +9,12 @@
 #include <cstdlib>
 #include <flecs.h>
 
-void initialiseGraphics(flecs::world &);
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
-
-RenderModule::RenderModule(flecs::world &world) {
-  world.import <PhaseModule>();
-
-  initialiseGraphics(world);
+void registerRender(flecs::world &world) {
 
   // Register components
   world.component<Point>().member<int>("x").member<int>("y");

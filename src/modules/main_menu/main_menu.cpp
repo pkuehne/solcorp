@@ -1,9 +1,8 @@
 #include "main_menu.h"
 #include "SDL_keycode.h"
 #include "imgui.h"
-#include "modules/gui/gui.h"
-#include "modules/input/input.h"
-#include "modules/phase/phase.h"
+#include "modules/engine/engine.h"
+#include "modules/engine/input.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
 
@@ -12,9 +11,7 @@ void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
 void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
-  world.import <InputModule>();
-  world.import <PhaseModule>();
-  world.import <GuiModule>();
+  world.import <EngineModule>();
 
   // Register components
   world.component<MainMenuBar>();

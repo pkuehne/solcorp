@@ -1,6 +1,7 @@
 #pragma once
 #include <flecs.h>
 
+// Phases
 extern flecs::entity PreFramePhase;
 extern flecs::entity ValidatePhase;
 extern flecs::entity PostValidatePhase;
@@ -11,6 +12,7 @@ extern flecs::entity RenderPhase;
 extern flecs::entity PostRenderPhase;
 extern flecs::entity PostFramePhase;
 
-struct PhaseModule {
-  PhaseModule(flecs::world &);
+// Engine Module Entry Point
+struct EngineModule {
+  EngineModule(flecs::world &);
 };

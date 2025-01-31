@@ -1,8 +1,6 @@
-#include "modules/gui/gui.h"
-#include "modules/input/input.h"
+#include "modules/engine/engine.h"
+#include "modules/engine/render.h"
 #include "modules/main_menu/main_menu.h"
-#include "modules/phase/phase.h"
-#include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
@@ -28,11 +26,8 @@ int main(void) {
         *data = value; // Assign new value to std::string
       });
 
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
   world.import <SimulationModule>();
-  world.import <RenderModule>();
-  world.import <GuiModule>();
-  world.import <InputModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();

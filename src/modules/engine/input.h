@@ -3,6 +3,7 @@
 #include <flecs.h>
 #include <map>
 
+// Input Events
 struct KeyDown {
   int key = 0;
 };
@@ -27,6 +28,4 @@ struct MouseUp {
   int button = 0;
 };
 
-struct InputModule {
-  InputModule(flecs::world &);
-};
+void registerInput(flecs::world &);

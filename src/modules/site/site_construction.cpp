@@ -1,7 +1,7 @@
 
 #include "site_construction.h"
 #include "construction_window.h"
-#include "modules/render/render.h"
+#include "modules/engine/render.h"
 #include "site.h"
 #include "spdlog/spdlog.h"
 #include <cstddef>
@@ -75,7 +75,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
       }
       setConstruction(y - 1, x);
       setConstruction(y + 1, x);
-      setConstruction(y, x + 1);
+      setConstruction(y, x - 1);
       setConstruction(y, x + 1);
     }
   }

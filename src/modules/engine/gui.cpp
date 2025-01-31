@@ -2,8 +2,8 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
-#include "modules/phase/phase.h"
-#include "modules/render/render.h"
+#include "modules/engine/engine.h"
+#include "modules/engine/render.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 
@@ -12,9 +12,8 @@ void systemGuiNewFrame(flecs::iter &);
 void systemGuiEndFrame(flecs::iter &);
 void systemRenderGUI(const Renderer &);
 
-GuiModule::GuiModule(flecs::world &world) {
-  world.import <PhaseModule>();
-  world.import <RenderModule>();
+void registerGui(flecs::world &world) {
+  world.import <EngineModule>();
 
   // Register Systems
   world.system("Initiatlise GUI").kind(flecs::OnStart).run(systemInitialiseGui);

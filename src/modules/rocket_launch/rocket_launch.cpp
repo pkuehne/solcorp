@@ -2,7 +2,7 @@
 #include "rocket_launch.h"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "modules/phase/phase.h"
+#include "modules/engine/engine.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -20,7 +20,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &);
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::info("Loading RocketLaunchModule");
 
-  world.import <PhaseModule>();
+  world.import <EngineModule>();
   world.import <SimulationModule>();
   world.import <SiteModule>();
 

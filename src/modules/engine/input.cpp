@@ -1,15 +1,13 @@
 #include "input.h"
 #include "backends/imgui_impl_sdl2.h"
-#include "modules/phase/phase.h"
+#include "modules/engine/engine.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 
+// Systems
 void systemEventHandling(flecs::iter &);
-void systemRemoveEvents(flecs::iter &);
 
-InputModule::InputModule(flecs::world &world) {
-  world.import <PhaseModule>();
-
+void registerInput(flecs::world &world) {
   // Register components
   world.component<KeyDown>().member<int>("key");
   world.component<KeyUp>().member<int>("key");

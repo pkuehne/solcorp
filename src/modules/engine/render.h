@@ -59,7 +59,6 @@ Texture loadTexture(const std::string &, flecs::world &);
 Sprite spriteFromTileMap(flecs::entity tileMapE, int tile);
 TileMap tileMapFromTexture(const flecs::entity &texture, uint tileSize);
 
-struct RenderModule {
-public:
-  RenderModule(flecs::world &);
-};
+void initialiseGraphics(flecs::world &);
+
+void registerRender(flecs::world &);

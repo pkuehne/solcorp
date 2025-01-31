@@ -1,4 +1,7 @@
-#include "phase.h"
+#include "engine.h"
+#include "gui.h"
+#include "input.h"
+#include "render.h"
 
 flecs::entity PreFramePhase;
 flecs::entity ValidatePhase;
@@ -10,7 +13,7 @@ flecs::entity RenderPhase;
 flecs::entity PostRenderPhase;
 flecs::entity PostFramePhase;
 
-PhaseModule::PhaseModule(flecs::world &world) {
+EngineModule::EngineModule(flecs::world &world) {
   // Register phases
   PreFramePhase = world.entity("PreFrame").add(flecs::Phase);
   ValidatePhase =
@@ -28,4 +31,10 @@ PhaseModule::PhaseModule(flecs::world &world) {
       world.entity("PostRender").add(flecs::Phase).depends_on(RenderPhase);
   PostFramePhase =
       world.entity("PostFrame").add(flecs::Phase).depends_on(PostRenderPhase);
+
+  initialiseGraphics(world);
+
+  registerRender(world);
+  registerInput(world);
+  registerGui(world);
 }
