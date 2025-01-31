@@ -12,7 +12,7 @@ void systemGuiNewFrame(flecs::iter &);
 void systemGuiEndFrame(flecs::iter &);
 void systemRenderGUI(const Renderer &);
 
-GuiModule::GuiModule(flecs::world &world) {
+void registerGui(flecs::world &world) {
   world.import <EngineModule>();
 
   // Register Systems
