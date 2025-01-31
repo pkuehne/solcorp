@@ -3,7 +3,6 @@
 #include "imgui.h"
 #include "modules/engine/engine.h"
 #include "modules/gui/gui.h"
-#include "modules/input/input.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
 
@@ -12,7 +11,6 @@ void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
 void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 
 MainMenuModule::MainMenuModule(flecs::world &world) {
-  world.import <InputModule>();
   world.import <EngineModule>();
   world.import <GuiModule>();
 

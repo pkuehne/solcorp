@@ -1,6 +1,5 @@
 #include "modules/engine/engine.h"
 #include "modules/gui/gui.h"
-#include "modules/input/input.h"
 #include "modules/main_menu/main_menu.h"
 #include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
@@ -32,7 +31,6 @@ int main(void) {
   world.import <SimulationModule>();
   world.import <RenderModule>();
   world.import <GuiModule>();
-  world.import <InputModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();

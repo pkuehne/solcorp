@@ -2,7 +2,6 @@
 #include "building_window.h"
 #include "construction_window.h"
 #include "modules/engine/engine.h"
-#include "modules/input/input.h"
 #include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
