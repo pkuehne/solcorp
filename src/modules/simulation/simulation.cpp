@@ -1,6 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
 #include "modules/engine/engine.h"
+#include "modules/engine/input.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);

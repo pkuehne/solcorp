@@ -1,6 +1,7 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
     modules/engine/engine.cpp
+    modules/engine/input.cpp
     modules/gui/gui.cpp
     modules/main_menu/main_menu.cpp
     modules/rocket_launch/rocket_launch.cpp
@@ -15,6 +16,7 @@ list(APPEND SolCorpSources
 list(APPEND SolCorpHeaders
     widgets/widgets.h
     modules/engine/engine.h
+    modules/engine/input.h
     modules/gui/gui.h
     modules/main_menu/main_menu.h
     modules/rocket_launch/rocket_launch.h

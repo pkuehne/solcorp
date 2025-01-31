@@ -2,6 +2,7 @@
 #include "SDL_keycode.h"
 #include "imgui.h"
 #include "modules/engine/engine.h"
+#include "modules/engine/input.h"
 #include "modules/gui/gui.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
