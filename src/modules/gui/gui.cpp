@@ -3,7 +3,7 @@
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
 #include "modules/engine/engine.h"
-#include "modules/render/render.h"
+#include "modules/engine/render.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 
@@ -14,7 +14,6 @@ void systemRenderGUI(const Renderer &);
 
 GuiModule::GuiModule(flecs::world &world) {
   world.import <EngineModule>();
-  world.import <RenderModule>();
 
   // Register Systems
   world.system("Initiatlise GUI").kind(flecs::OnStart).run(systemInitialiseGui);

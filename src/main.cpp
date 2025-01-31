@@ -1,7 +1,7 @@
 #include "modules/engine/engine.h"
+#include "modules/engine/render.h"
 #include "modules/gui/gui.h"
 #include "modules/main_menu/main_menu.h"
-#include "modules/render/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
@@ -29,7 +29,6 @@ int main(void) {
 
   world.import <EngineModule>();
   world.import <SimulationModule>();
-  world.import <RenderModule>();
   world.import <GuiModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();

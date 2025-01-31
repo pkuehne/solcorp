@@ -28,5 +28,4 @@ struct MouseUp {
   int button = 0;
 };
 
-// Systems
-void systemEventHandling(flecs::iter &);
+void registerInput(flecs::world &);

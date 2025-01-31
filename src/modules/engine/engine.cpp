@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "input.h"
 #include "modules/engine/engine.h"
+#include "modules/engine/render.h"
 
 flecs::entity PreFramePhase;
 flecs::entity ValidatePhase;
@@ -31,11 +32,8 @@ EngineModule::EngineModule(flecs::world &world) {
   PostFramePhase =
       world.entity("PostFrame").add(flecs::Phase).depends_on(PostRenderPhase);
 
-  // Register components
-  world.component<KeyDown>().member<int>("key");
-  world.component<KeyUp>().member<int>("key");
-  world.component<KeyPressed>(); //.member<std::map<int, bool>>("keys");
+  initialiseGraphics(world);
 
-  // Register systems
-  world.system("Event Handling").kind(PreFramePhase).run(systemEventHandling);
+  registerRender(world);
+  registerInput(world);
 }
