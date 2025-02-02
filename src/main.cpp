@@ -5,6 +5,7 @@
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/staff/staff.h"
+#include "modules/stats/stats.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 
@@ -27,6 +28,7 @@ int main(void) {
       });
 
   world.import <EngineModule>();
+  world.import <StatsModule>();
   world.import <SimulationModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
@@ -70,6 +72,20 @@ int main(void) {
         auto prefabs = world.entity("Prefabs");
         auto buildings = world.entity("Buildings").child_of(prefabs);
 
+        auto statsParent = world.lookup("Stats");
+        auto usesStats = world.lookup("Stats::UsesStats");
+
+        stat_create_new(world, "loading_time", "Loading Time",
+                        "The time it takes to load the cargo", 5, 0);
+        stat_create_new(world, "prep_days", "Prep Days",
+                        "The time it takes to prep the rocket", 2, 2);
+        StatBlock launchpadStats;
+        launchpadStats.values["loading_time"] = {5, 5};
+        launchpadStats.values["prep_days"] = {2, 2};
+        auto launchpadStatBlock = world.entity("LaunchpadStats")
+                                      .child_of(statsParent)
+                                      .set<StatBlock>(launchpadStats);
+
         world.prefab("Factory")
             .is_a(building)
             .child_of(buildings)
@@ -84,6 +100,7 @@ int main(void) {
         world.prefab("Launchpad")
             .is_a(building)
             .child_of(buildings)
+            .add(usesStats, launchpadStatBlock)
             .set<Sprite>(spriteFromTileMap(tm, 3))
             .set<Launchpad>({});
         world.prefab("Office Building")

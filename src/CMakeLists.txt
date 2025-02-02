@@ -12,6 +12,7 @@ list(APPEND SolCorpSources
     modules/site/site_construction.cpp
     modules/site/construction_window.cpp
     modules/staff/staff.cpp
+    modules/stats/stats.cpp
 )
 list(APPEND SolCorpHeaders
     widgets/widgets.h
@@ -24,6 +25,7 @@ list(APPEND SolCorpHeaders
     modules/simulation/simulation.h
     modules/site/site.h
     modules/staff/staff.h
+    modules/stats/stats.h
 )
 
 fetchcontent_declare(flecs
