@@ -16,6 +16,15 @@ void hideDeveloperWindow(flecs::world &world) {
   entity.destruct();
 }
 
+void child_tree(flecs::entity e) {
+  ImGui::PushID(e.id());
+  if (ImGui::TreeNode("", "%s", e.name().c_str())) {
+    e.children(child_tree);
+    ImGui::TreePop();
+  }
+  ImGui::PopID();
+};
+
 void systemDrawDeveloperWindow(flecs::entity winE, DeveloperWindow &win) {
   auto world = winE.world();
   if (!win.open) {
@@ -26,6 +35,7 @@ void systemDrawDeveloperWindow(flecs::entity winE, DeveloperWindow &win) {
 
   ImGui::Begin("Developer Tools", &win.open);
   ImGui::Checkbox("Show Metrics Window", &options->show_metrics_window);
+  world.children(child_tree);
   ImGui::End();
 
   if (options->show_metrics_window) {
