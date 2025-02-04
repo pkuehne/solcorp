@@ -90,8 +90,8 @@ void stat_draw_stat(const std::string &stat_name, const flecs::entity &entity) {
   auto stat = stat_get_stat(stat_name, entity);
 
   if (definition) {
-    ImGui::Text("%s: %.*f", definition->display.c_str(), definition->decimals,
-                stat.value);
+    ImGui::Text("\uf135 %s: %.*f", definition->display.c_str(),
+                definition->decimals, stat.value);
     if (ImGui::BeginItemTooltip()) {
       ImGui::Text("%s", definition->description.c_str());
       ImGui::Separator();

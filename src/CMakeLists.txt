@@ -6,6 +6,7 @@ list(APPEND SolCorpSources
     modules/engine/render.cpp
     modules/main_menu/main_menu.cpp
     modules/rocket_launch/rocket_launch.cpp
+    modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
     modules/site/site.cpp
     modules/site/building_window.cpp
@@ -22,6 +23,7 @@ list(APPEND SolCorpHeaders
     modules/engine/render.h
     modules/main_menu/main_menu.h
     modules/rocket_launch/rocket_launch.h
+    modules/simulation/developer_window.h
     modules/simulation/simulation.h
     modules/site/site.h
     modules/staff/staff.h
@@ -93,6 +95,6 @@ file(COPY ${TEXTURES}
 add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp
-    WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT Running SolCorp
 )
