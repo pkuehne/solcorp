@@ -75,9 +75,9 @@ void initialiseGraphics(flecs::world &world) {
 
   auto m_width = 1000;
   auto m_height = 800;
-  Uint32 flags = 0;
   auto m_tileWidth = 32;
   auto m_tileHeight = 32;
+  Uint32 flags = 0;
 
   spdlog::info("Initialising Graphics");
 
@@ -87,6 +87,7 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   Renderer r;
+  flags |= SDL_WINDOW_ALLOW_HIGHDPI;
   r.window = SDL_CreateWindow("Sol, Corp", 0, 0, m_width, m_height, flags);
   if (r.window == nullptr) {
     spdlog::error("Failed to create SDL Window: {}", SDL_GetError());
