@@ -1,6 +1,7 @@
 #include "building_window.h"
 #include "imgui.h"
 #include "modules/rocket_launch/rocket_launch.h"
+#include "modules/stats/stats.h"
 #include "site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
@@ -137,7 +138,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
   auto launchpad = entity.get<Launchpad>();
-  ImGui::Text("Max Weight: %.0f tons", launchpad->max_weight.value());
+  displayStatWithTooltip(&launchpad->max_weight);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =

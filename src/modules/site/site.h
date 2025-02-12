@@ -45,7 +45,8 @@ struct Office {
 
 /// @brief Can launch rockets
 struct Launchpad {
-  Stat max_weight = Stat("Max Weight", 1000);
+  Stat max_weight = Stat("max-weight", "Max Weight",
+                         "The maximum weight the pad can support", 1000);
 };
 
 /// @brief Indiciates the entity is a future building location

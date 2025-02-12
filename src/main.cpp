@@ -125,9 +125,18 @@ int main(void) {
 
         // Add effects
         auto effect = world.entity("Better Concrete").add<Effect>();
-        world.entity().child_of(effect).set<Modifier>({"Max Weight", 0.0, 1.1});
-
+        world.entity().child_of(effect).set<Modifier>({"max-weight", 0.0, 1.2});
         site.add<HasEffect>(effect);
+
+        auto effect2 = world.entity("Cracks detected").add<Effect>();
+        world.entity().child_of(effect2).set<Modifier>(
+            {"max-weight", 0.0, 0.3});
+        site.add<HasEffect>(effect2);
+
+        auto effect3 = world.entity("Reinforcing Struts").add<Effect>();
+        world.entity().child_of(effect3).set<Modifier>(
+            {"max-weight", 500.0, 1.0});
+        site.add<HasEffect>(effect3);
       });
 
   // Main Loop

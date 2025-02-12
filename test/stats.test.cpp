@@ -3,7 +3,7 @@
 
 class StatTest : public ::testing::Test {
 protected:
-  Stat stat = Stat("test_stat", 10.0);
+  Stat stat = Stat("test_stat", "Displ", "More Text", 10.0);
 };
 
 TEST_F(StatTest, TestBase) {
@@ -19,7 +19,7 @@ TEST_F(StatTest, TestValue) {
   Modifier mod = {"test_stat", 5.0, 2.0};
 
   // When
-  stat.addModifier(mod);
+  stat.addModifier(mod, "");
 
   // Then
   EXPECT_DOUBLE_EQ(stat.value(), 30.0);
@@ -28,7 +28,7 @@ TEST_F(StatTest, TestValue) {
 TEST_F(StatTest, TestReset) {
   // Given
   Modifier mod = {"test_stat", 5.0, 2.0};
-  stat.addModifier(mod);
+  stat.addModifier(mod, "");
 
   // When
   stat.reset();
@@ -42,7 +42,7 @@ TEST_F(StatTest, TestAddModifier) {
   Modifier mod = {"test_stat", 5.0, 2.0};
 
   // When
-  bool result = stat.addModifier(mod);
+  bool result = stat.addModifier(mod, "");
 
   // Then
   EXPECT_TRUE(result);
@@ -54,7 +54,7 @@ TEST_F(StatTest, TestAddUnrelatedModifier) {
   Modifier wrong_mod = {"wrong_stat", 5.0, 2.0};
 
   // When
-  bool result = stat.addModifier(wrong_mod);
+  bool result = stat.addModifier(wrong_mod, "");
 
   // Then
   EXPECT_FALSE(result);
