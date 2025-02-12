@@ -72,20 +72,6 @@ int main(void) {
         auto prefabs = world.entity("Prefabs");
         auto buildings = world.entity("Buildings").child_of(prefabs);
 
-        auto statsParent = world.lookup("Stats");
-        auto usesStats = world.lookup("Stats::UsesStats");
-
-        stat_create_new(world, "loading_time", "Loading Time",
-                        "The time it takes to load the cargo", 5, 0);
-        stat_create_new(world, "prep_days", "Prep Days",
-                        "The time it takes to prep the rocket", 2, 2);
-        StatBlock launchpadStats;
-        launchpadStats.values["loading_time"] = {5, 5};
-        launchpadStats.values["prep_days"] = {2, 2};
-        auto launchpadStatBlock = world.entity("LaunchpadStats")
-                                      .child_of(statsParent)
-                                      .set<StatBlock>(launchpadStats);
-
         world.prefab("Factory")
             .is_a(building)
             .child_of(buildings)
@@ -100,7 +86,6 @@ int main(void) {
         world.prefab("Launchpad")
             .is_a(building)
             .child_of(buildings)
-            .add(usesStats, launchpadStatBlock)
             .set<Sprite>(spriteFromTileMap(tm, 3))
             .set<Launchpad>({});
         world.prefab("Office Building")
@@ -137,6 +122,12 @@ int main(void) {
             .is_a(world.lookup("Prefabs::Buildings::Office Building"))
             .set<SiteLocation>({2, 0})
             .child_of(site);
+
+        // Add effects
+        auto effect = world.entity("Better Concrete").add<Effect>();
+        world.entity().child_of(effect).set<Modifier>({"Max Weight", 0.0, 1.1});
+
+        site.add<HasEffect>(effect);
       });
 
   // Main Loop

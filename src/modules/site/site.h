@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modules/stats/stats.h"
 #include <flecs.h>
 #include <vector>
 
@@ -44,7 +45,7 @@ struct Office {
 
 /// @brief Can launch rockets
 struct Launchpad {
-  u_int max_weight = 1000;
+  Stat max_weight = Stat("Max Weight", 1000);
 };
 
 /// @brief Indiciates the entity is a future building location
