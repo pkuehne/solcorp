@@ -7,7 +7,13 @@ void systemInitialiseStats(flecs::iter &iter);
 /// @brief Constructor for the StatsModule.
 /// @param[in,out] world The flecs world.
 StatsModule::StatsModule(flecs::world &world) {
+
   // Register components
+  world.component<Stat>("Stat")
+      .member<std::string>("id")
+      .member<std::string>("display")
+      .member<std::string>("description")
+      .member<double>("base");
   world.component<Effect>();
   world.component<HasEffect>();
   world.component<Modifier>()

@@ -30,7 +30,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Manufacturing>();
   world.component<Storage>();
   world.component<Office>();
-  world.component<Launchpad>();
+  world.component<Launchpad>().member<Stat>("max_weight");
   world.component<BuildingWindow>()
       .member<flecs::entity>("buildingE")
       .member<bool>("open");
