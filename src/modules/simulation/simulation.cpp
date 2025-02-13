@@ -2,6 +2,7 @@
 #include "SDL_keycode.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/input.h"
+#include "modules/lua/lua.h"
 #include "modules/simulation/developer_window.h"
 #include "spdlog/spdlog.h"
 
@@ -23,6 +24,10 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.set<Simulation>(sim);
   world.set<Game>({});
   world.set<Developer>({});
+
+  register_lua_user_type<Game>(
+      world, "Game",
+      [](sol::usertype<Game> &userType) { userType["day"] = &Game::day; });
 
   // Register systems
   world.system<Game>("Update Simulation Date")

@@ -4,6 +4,7 @@
 #include "modules/engine/engine.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
+#include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/stats/stats.h"
@@ -37,6 +38,15 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<ConstructionSiteWindow>()
       .member<flecs::entity>("buildingE")
       .member<bool>("open");
+
+  // Register Lua bindings
+  register_lua_user_type<CurrentSite>(world, "CurrentSite");
+  register_lua_user_type<Site>(world, "Site");
+  register_lua_user_type<SiteLocation>(
+      world, "SiteLocation", [](sol::usertype<SiteLocation> &userType) {
+        userType["x"] = &SiteLocation::x;
+        userType["y"] = &SiteLocation::y;
+      });
 
   // Register Systems
   auto sim = world.get<Simulation>();

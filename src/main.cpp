@@ -1,5 +1,6 @@
 #include "modules/engine/engine.h"
 #include "modules/engine/render.h"
+#include "modules/lua/lua.h"
 #include "modules/main_menu/main_menu.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
@@ -7,6 +8,7 @@
 #include "modules/staff/staff.h"
 #include "modules/stats/stats.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#define SOL_ALL_SAFETIES_ON 1
 #include "spdlog/spdlog.h"
 
 int main(void) {
@@ -27,8 +29,11 @@ int main(void) {
         *data = value; // Assign new value to std::string
       });
 
+  load_config_file();
+
   world.import <EngineModule>();
   world.import <StatsModule>();
+  world.import <LuaModule>();
   world.import <SimulationModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
@@ -138,12 +143,20 @@ int main(void) {
             {"max-weight", 500.0, 1.0});
         site.add<HasEffect>(effect3);
       });
+  world.system<Mod>("Mod on_start Event")
+      .kind(flecs::OnStart)
+      .immediate()
+      .each([](flecs::entity e, Mod &mod) {
+        auto world = e.world();
+        world.defer_suspend();
+        run_mod_handler(mod, world, "on_start");
+        world.defer_resume();
+      });
 
   // Main Loop
   logger->info("Starting");
   world.set_target_fps(60);
   //   ecs_log_set_level(0);
   int rcode = world.app().enable_stats().enable_rest().run();
-
   return rcode;
 }

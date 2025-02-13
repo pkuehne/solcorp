@@ -32,7 +32,7 @@ target_include_directories(imgui PUBLIC ./imgui/)
 target_include_directories(imgui PUBLIC ${SDL2_INCLUDE_DIRS})
 target_include_directories(imgui PUBLIC ${SDL2IMAGE_INCLUDE_DIRS})
 
-target_link_libraries(imgui ${SDL2_LIBRARIES})
-target_link_libraries(imgui ${SDL2IMAGE_LIBRARIES})
+target_link_libraries(imgui ${SDL2_LINK_LIBRARIES})
+target_link_libraries(imgui ${SDL2IMAGE_LINK_LIBRARIES})
 
 # set_target_properties(imgui PROPERTIES PUBLIC_HEADER "${imgui_headers}")
