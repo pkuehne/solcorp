@@ -6,6 +6,7 @@
 #include "modules/engine/render.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
+#include "modules/stats/stats.h"
 #include "site_construction.h"
 #include "spdlog/spdlog.h"
 
@@ -29,7 +30,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Manufacturing>();
   world.component<Storage>();
   world.component<Office>();
-  world.component<Launchpad>();
+  world.component<Launchpad>().member<Stat>("max_weight");
   world.component<BuildingWindow>()
       .member<flecs::entity>("buildingE")
       .member<bool>("open");
@@ -69,6 +70,12 @@ SiteModule::SiteModule(flecs::world &world) {
       .without<Transform>()
       .kind(UpdatePhase)
       .each(systemAddMissingTransform);
+
+  world.system<Launchpad>()
+      .kind(UpdatePhase)
+      .each([](flecs::entity e, Launchpad &pad) {
+        statsApplyModifiers(e, &pad.max_weight);
+      });
 
   // Register Prefabs
   world.prefab("Building")

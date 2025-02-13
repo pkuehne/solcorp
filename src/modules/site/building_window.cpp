@@ -1,6 +1,7 @@
 #include "building_window.h"
 #include "imgui.h"
 #include "modules/rocket_launch/rocket_launch.h"
+#include "modules/stats/stats.h"
 #include "site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
@@ -135,6 +136,11 @@ void drawStorageSection(flecs::entity &entity) {
 /// @param[in] entity The Building entity
 void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
+
+  auto launchpad = entity.get<Launchpad>();
+  displayStatWithTooltip(&launchpad->max_weight);
+
+  ImGui::Separator();
   flecs::query<LaunchPlan> query =
       world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
   query.each([](flecs::entity planE, LaunchPlan &plan) {

@@ -9,6 +9,7 @@ add_executable(unit_test
     render.test.cpp
     systems.test.cpp
     simulation.test.cpp
+    stats.test.cpp
 )
 
 target_compile_options(unit_test PUBLIC -Wall)
