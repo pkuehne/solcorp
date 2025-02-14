@@ -59,12 +59,14 @@ void load_config_file() {
 }
 
 void load_mod(flecs::world &world, const std::filesystem::path &path) {
+  auto mod_name = path.filename().string();
+  spdlog::info("Loading mod {}", mod_name);
   auto mods = world.lookup("Mods");
-  auto entity = world.entity(path.filename().c_str()).child_of(mods);
+  auto entity = world.entity(mod_name.c_str()).child_of(mods);
   auto &mod = entity.ensure<Mod>();
-  mod.name = path.filename();
+  mod.name = mod_name;
 
-  mod.state["mod_name"] = path.filename().string();
+  mod.state["mod_name"] = mod_name;
   load_mod_state(world, mod.state);
 
   auto init_file = path / "init.lua";
@@ -82,6 +84,10 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
 
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
   auto mods = world.lookup("Mods");
+  if (!mods.is_valid()) {
+    spdlog::error("Mods entity does not exist!");
+    return;
+  }
   mods.children([&](flecs::entity modE) {
     auto mod = modE.get_mut<Mod>();
     if (!mod) {

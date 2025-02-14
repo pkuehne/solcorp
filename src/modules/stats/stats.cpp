@@ -1,5 +1,6 @@
 #include "stats.h"
 #include "imgui.h"
+#include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
 
 void systemInitialiseStats(flecs::iter &iter);
@@ -21,10 +22,21 @@ StatsModule::StatsModule(flecs::world &world) {
       .member<double>("additive")
       .member<double>("multiplicative");
 
+  // Register lua types
+  register_lua_user_type<Stat>(
+      world, "Stat", [](sol::usertype<Stat> &userType) {
+        userType["base"] = sol::property(&Stat::base, &Stat::setBase);
+        userType["value"] = &Stat::value;
+        userType["id"] = &Stat::id;
+        userType["display"] = &Stat::display;
+        userType["description"] = &Stat::description;
+        userType["modifiers"] = &Stat::modifiers;
+      });
   // Register systems
 }
 
 double Stat::base() const { return m_base; }
+void Stat::setBase(double base) { m_base = base; }
 
 double Stat::value() const {
   return (m_base + m_additive_modifiers) * m_multiplicative_modifiers;

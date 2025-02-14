@@ -47,6 +47,10 @@ SiteModule::SiteModule(flecs::world &world) {
         userType["x"] = &SiteLocation::x;
         userType["y"] = &SiteLocation::y;
       });
+  register_lua_user_type<Launchpad>(
+      world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
+        userType["max_weight"] = &Launchpad::max_weight;
+      });
 
   // Register Systems
   auto sim = world.get<Simulation>();

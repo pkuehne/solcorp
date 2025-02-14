@@ -31,9 +31,9 @@ int main(void) {
 
   load_config_file();
 
+  world.import <LuaModule>();
   world.import <EngineModule>();
   world.import <StatsModule>();
-  world.import <LuaModule>();
   world.import <SimulationModule>();
   world.import <MainMenuModule>();
   world.import <SiteModule>();
