@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <memory>
 
-void load_mod_state(flecs::world &world, sol::state &mod_state);
-void load_entities_namespace(flecs::world &world, sol::state &mod_state);
+void load_mod_state(sol::state &mod_state);
+void load_entities_namespace(sol::state &mod_state);
 void load_entity_usertype(sol::state &mod_state);
 void load_component_usertypes(sol::state &mod_state);
 void load_script_table(sol::state &mod_state);
@@ -67,7 +67,7 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   mod.name = mod_name;
 
   mod.state["mod_name"] = mod_name;
-  load_mod_state(world, mod.state);
+  load_mod_state(mod.state);
 
   auto init_file = path / "init.lua";
   auto result =
@@ -82,6 +82,12 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   run_mod_handler(mod, world, "on_init");
 }
 
+/**
+ * @brief Runs a callback on very mod
+ *
+ * @param world the flecs world
+ * @param func The function to call
+ */
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
   auto mods = world.lookup("Mods");
   if (!mods.is_valid()) {
@@ -101,7 +107,7 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
 
 bool run_mod_handler(Mod &mod, flecs::world &world,
                      const std::string &handler) {
-  load_entities_namespace(world, mod.state);
+  mod.state["solcorp"]["world"] = &world;
   sol::protected_function function =
       mod.state["solcorp"]["script"]["handlers"][handler.c_str()];
 
@@ -115,14 +121,16 @@ bool run_mod_handler(Mod &mod, flecs::world &world,
   return true;
 }
 
-void load_mod_state(flecs::world &world, sol::state &mod_state) {
+void load_mod_state(sol::state &mod_state) {
   mod_state.open_libraries(sol::lib::base, sol::lib::package);
+
+  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
 
   // Set up the state with internal functions
   load_logging(mod_state);
   load_script_table(mod_state);
   load_entity_usertype(mod_state);
-  load_entities_namespace(world, mod_state);
+  load_entities_namespace(mod_state);
 }
 
 void load_logging(sol::state &mod_state) {
@@ -157,19 +165,23 @@ void load_logging(sol::state &mod_state) {
   });
 }
 
-void load_entities_namespace(flecs::world &world, sol::state &mod_state) {
+void load_entities_namespace(sol::state &mod_state) {
   auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
   auto entities = solcorp_ns["entities"].get_or_create<sol::table>();
-  entities.set_function("create", [&world](const std::string &name) {
-    return world.entity(name.c_str());
+  entities.set_function("create", [&mod_state](const std::string &name) {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    return world->entity(name.c_str());
   });
-  entities.set_function("get", [&world](const std::string &name) {
-    flecs::entity e = world.lookup(name.c_str());
+  entities.set_function("get", [&mod_state](const std::string &name) {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    flecs::entity e = world->lookup(name.c_str());
     return e;
   });
 
-  entities.set_function("GameComponent",
-                        [&world]() { return world.get_mut<Game>(); });
+  entities.set_function("GameComponent", [&mod_state]() {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    return world->get_mut<Game>();
+  });
 }
 
 void load_script_table(sol::state &mod_state) {
