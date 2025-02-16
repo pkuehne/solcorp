@@ -17,7 +17,7 @@ solcorp.script.handlers.on_start = function()
 	info("on_start called!")
 
 	local comp = solcorp.entities.GameComponent()
-	comp.day = 1
+	comp.day = 12
 	info("Day: " .. comp.day)
 
 	local site = solcorp.entities.get("Cape Canaveral")
@@ -34,4 +34,10 @@ solcorp.script.handlers.on_start = function()
 	local max_height = Stat:new()
 	max_height.base = 100
 	info("Max height: " .. max_height:value())
+
+	local concrete = solcorp.helpers.create_effect("Better Concrete2", south_pad)
+	local mod = Modifier:new()
+	mod.target_stat = "max-weight"
+	mod.multiplicative = 1.2
+	solcorp.helpers.add_modifier(concrete, mod)
 end

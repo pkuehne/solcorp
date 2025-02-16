@@ -109,7 +109,7 @@ int main(void) {
                         .set<Site>({10, 10})
                         .add<CurrentSite>()
                         .set<Transform>({{0, 50}, {}});
-        site.add<constructionSiteNeedsUpdating>();
+        site.add<ConstructionSiteNeedsUpdating>();
 
         world.entity("Manufacturing A")
             .is_a(world.lookup("Prefabs::Buildings::Factory"))

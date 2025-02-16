@@ -52,7 +52,7 @@ struct Launchpad {
 /// @brief Indiciates the entity is a future building location
 struct ConstructionSite {};
 
-struct constructionSiteNeedsUpdating {};
+struct ConstructionSiteNeedsUpdating {};
 
 void showBuildingWindow(const flecs::entity &buildingE);
 void hideBuildingWindow(flecs::world &world);

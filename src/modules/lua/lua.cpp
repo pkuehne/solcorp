@@ -1,14 +1,17 @@
 #include "lua.h"
+#include "flecs/addons/cpp/entity.hpp"
+#include "modules/engine/render.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <memory>
 
 void load_mod_state(sol::state &mod_state);
 void load_entities_namespace(sol::state &mod_state);
+void load_script_namespace(sol::state &mod_state);
+void load_helpers_namespace(sol::state &mod_state);
 void load_entity_usertype(sol::state &mod_state);
-void load_component_usertypes(sol::state &mod_state);
-void load_script_table(sol::state &mod_state);
 void load_logging(sol::state &mod_state);
 void load_mod(flecs::world &world, const std::filesystem::path &path);
 
@@ -128,9 +131,10 @@ void load_mod_state(sol::state &mod_state) {
 
   // Set up the state with internal functions
   load_logging(mod_state);
-  load_script_table(mod_state);
+  load_script_namespace(mod_state);
   load_entity_usertype(mod_state);
   load_entities_namespace(mod_state);
+  load_helpers_namespace(mod_state);
 }
 
 void load_logging(sol::state &mod_state) {
@@ -184,7 +188,66 @@ void load_entities_namespace(sol::state &mod_state) {
   });
 }
 
-void load_script_table(sol::state &mod_state) {
+void load_helpers_namespace(sol::state &mod_state) {
+  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
+  auto helpers = solcorp_ns["helpers"].get_or_create<sol::table>();
+
+  helpers.set_function("create_site", [&mod_state](const std::string name,
+                                                   u_int width, u_int height,
+                                                   bool make_current = false) {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    auto site = world->entity(name.c_str())
+                    .set<Site>({width, height})
+                    .set<Transform>({{0, 50}, {}})
+                    .add<ConstructionSiteNeedsUpdating>();
+    if (make_current) {
+      site.add<CurrentSite>();
+    }
+    return site;
+  });
+
+  helpers.set_function(
+      "instantiate_building",
+      [&mod_state](const std::string &name, const std::string &prefab, u_int x,
+                   u_int y, flecs::entity site) -> flecs::entity {
+        auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+        std::string prefabName = "Prefabs::Buildings::";
+        prefabName.append(prefab);
+        auto prefabE = world->lookup(prefabName.c_str());
+        if (!prefabE.is_valid()) {
+          spdlog::error("Prefab {} does not exist", prefabName);
+          return flecs::entity();
+        }
+
+        auto entity = world->entity(name.c_str())
+                          .is_a(world->lookup(prefabName.c_str()))
+                          .set<SiteLocation>({x, y})
+                          .child_of(site);
+        return entity;
+      });
+
+  helpers.set_function("create_effect", [&mod_state](const std::string &name,
+                                                     flecs::entity source) {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    auto effect = world->entity(name.c_str()).add<Effect>();
+    if (source.is_valid()) {
+      source.add<HasEffect>(effect);
+    }
+    return effect;
+  });
+
+  helpers.set_function(
+      "add_modifier", [&mod_state](flecs::entity effect, Modifier mod) {
+        auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+        if (!effect.is_valid()) {
+          return flecs::entity();
+        }
+        auto modifier = world->entity().child_of(effect).set<Modifier>(mod);
+        return modifier;
+      });
+}
+
+void load_script_namespace(sol::state &mod_state) {
   auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
   auto script_ns = solcorp_ns["script"].get_or_create<sol::table>();
   auto handlers_ns = script_ns["handlers"].get_or_create<sol::table>();
@@ -228,8 +291,4 @@ void load_entity_usertype(sol::state &mod_state) {
     bool retval = e.remove(compEntity);
     return retval;
   };
-}
-
-void load_component_usertypes(sol::state &mod_state) {
-  mod_state.new_usertype<Game>("Game", "day", &Game::day);
 }

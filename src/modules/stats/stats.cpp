@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
+#include <sol/forward.hpp>
 
 void systemInitialiseStats(flecs::iter &iter);
 
@@ -31,6 +32,14 @@ StatsModule::StatsModule(flecs::world &world) {
         userType["display"] = &Stat::display;
         userType["description"] = &Stat::description;
         userType["modifiers"] = &Stat::modifiers;
+      });
+  register_lua_user_type<Effect>(world, "Effect");
+
+  register_lua_user_type<Modifier>(
+      world, "Modifier", [](sol::usertype<Modifier> &userType) -> void {
+        userType["target_stat"] = &Modifier::target_stat;
+        userType["additive"] = &Modifier::additive;
+        userType["multiplicative"] = &Modifier::multiplicative;
       });
   // Register systems
 }
@@ -79,8 +88,7 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto *stat : stats) {
     stat->reset();
   }
-  for (auto ancestor = e.parent(); ancestor.is_alive();
-       ancestor = ancestor.parent()) {
+  for (auto ancestor = e; ancestor.is_alive(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
       second.children([&](flecs::entity modE) {
         const Modifier *mod = modE.get<Modifier>();

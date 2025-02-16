@@ -76,7 +76,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .each(systemMatchClickToBuilding);
 
   world.system<Site>("Update Construction Sites")
-      .with<constructionSiteNeedsUpdating>()
+      .with<ConstructionSiteNeedsUpdating>()
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
