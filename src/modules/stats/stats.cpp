@@ -41,6 +41,11 @@ StatsModule::StatsModule(flecs::world &world) {
         userType["additive"] = &Modifier::additive;
         userType["multiplicative"] = &Modifier::multiplicative;
       });
+  // Register Effect category
+  auto s = world.set_scope(0);
+  world.entity("Effects");
+  world.set(s);
+
   // Register systems
 }
 

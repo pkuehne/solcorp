@@ -100,49 +100,6 @@ int main(void) {
             .set<Office>({});
       });
 
-  world.system("Site Creation")
-      .kind(flecs::OnStart)
-      .immediate()
-      .run([](flecs::iter &iter) {
-        auto world = iter.world();
-        auto site = world.entity("Cape Canaveral")
-                        .set<Site>({10, 10})
-                        .add<CurrentSite>()
-                        .set<Transform>({{0, 50}, {}});
-        site.add<ConstructionSiteNeedsUpdating>();
-
-        world.entity("Manufacturing A")
-            .is_a(world.lookup("Prefabs::Buildings::Factory"))
-            .set<SiteLocation>({1, 1})
-            .child_of(site);
-        world.entity("Storage Hall 1")
-            .is_a(world.lookup("Prefabs::Buildings::Storage Hall"))
-            .set<SiteLocation>({0, 0})
-            .child_of(site);
-        world.entity("Main Launchpad")
-            .is_a(world.lookup("Prefabs::Buildings::Launchpad"))
-            .set<SiteLocation>({1, 0})
-            .child_of(site);
-        world.entity("North Building")
-            .is_a(world.lookup("Prefabs::Buildings::Office Building"))
-            .set<SiteLocation>({2, 0})
-            .child_of(site);
-
-        // Add effects
-        auto effect = world.entity("Better Concrete").add<Effect>();
-        world.entity().child_of(effect).set<Modifier>({"max-weight", 0.0, 1.2});
-        site.add<HasEffect>(effect);
-
-        auto effect2 = world.entity("Cracks detected").add<Effect>();
-        world.entity().child_of(effect2).set<Modifier>(
-            {"max-weight", 0.0, 0.3});
-        site.add<HasEffect>(effect2);
-
-        auto effect3 = world.entity("Reinforcing Struts").add<Effect>();
-        world.entity().child_of(effect3).set<Modifier>(
-            {"max-weight", 500.0, 1.0});
-        site.add<HasEffect>(effect3);
-      });
   world.system<Mod>("Mod on_start Event")
       .kind(flecs::OnStart)
       .immediate()

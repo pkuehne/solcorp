@@ -207,7 +207,7 @@ void load_helpers_namespace(sol::state &mod_state) {
   });
 
   helpers.set_function(
-      "instantiate_building",
+      "create_building",
       [&mod_state](const std::string &name, const std::string &prefab, u_int x,
                    u_int y, flecs::entity site) -> flecs::entity {
         auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
@@ -229,7 +229,9 @@ void load_helpers_namespace(sol::state &mod_state) {
   helpers.set_function("create_effect", [&mod_state](const std::string &name,
                                                      flecs::entity source) {
     auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    auto effect = world->entity(name.c_str()).add<Effect>();
+    auto effect = world->entity(name.c_str())
+                      .add<Effect>()
+                      .child_of((world->lookup("Effects")));
     if (source.is_valid()) {
       source.add<HasEffect>(effect);
     }

@@ -20,24 +20,29 @@ solcorp.script.handlers.on_start = function()
 	comp.day = 12
 	info("Day: " .. comp.day)
 
-	local site = solcorp.entities.get("Cape Canaveral")
-	local south_pad = solcorp.entities.create("South Launchpad (Heavy)")
-	south_pad:is_a("Buildings::Launchpad")
-	south_pad:child_of(site)
-	local location = south_pad:getSiteLocation()
-	location.x = 5
-	location.y = 5
+	-- local site = solcorp.entities.get("Cape Canaveral")
+	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
+
+	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
+	solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 0, 0, site)
+	solcorp.helpers.create_building("Main Launchpad", "Launchpad", 1, 0, site)
+	solcorp.helpers.create_building("North Building", "Office Building", 2, 0, site)
+	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launchpad", 5, 5, site)
 	local lp = south_pad:getLaunchpad()
-	info("Launchpad max weight: " .. lp.max_weight:value())
 	lp.max_weight.base = 5000
 
-	local max_height = Stat:new()
-	max_height.base = 100
-	info("Max height: " .. max_height:value())
-
-	local concrete = solcorp.helpers.create_effect("Better Concrete2", south_pad)
+	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
 	local mod = Modifier:new()
 	mod.target_stat = "max-weight"
 	mod.multiplicative = 1.2
 	solcorp.helpers.add_modifier(concrete, mod)
+
+	local cracks = solcorp.helpers.create_effect("Cracks detected", south_pad)
+	mod.multiplicative = 0.4
+	solcorp.helpers.add_modifier(cracks, mod)
+
+	local struts = solcorp.helpers.create_effect("Reinforcing Struts", site)
+	mod.multiplicative = 1.0
+	mod.additive = 500
+	solcorp.helpers.add_modifier(struts, mod)
 end
