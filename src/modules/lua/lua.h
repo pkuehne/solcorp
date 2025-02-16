@@ -22,8 +22,10 @@ void register_lua_user_type(
         [](sol::usertype<T> &) {}) {
 
   run_on_every_mod(world, [&name, &registerFunc](sol::state &state) {
+    auto solcorp_ns = state["solcorp"].get_or_create<sol::table>();
+    auto comp_ns = solcorp_ns["components"].get_or_create<sol::table>();
     sol::usertype<T> userType =
-        state.new_usertype<T>(name, sol::constructors<T()>());
+        comp_ns.new_usertype<T>(name, sol::constructors<T()>());
     registerFunc(userType);
 
     std::string getter("get");

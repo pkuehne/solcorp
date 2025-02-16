@@ -11,8 +11,7 @@ local function on_init()
 	info("Entity is enabled " .. tostring(e:enabled()))
 end
 
-solcorp.script.handlers.on_init = on_init
-solcorp.script.handlers.on_start = function()
+local function on_start()
 	local info = solcorp.logging.info
 	info("on_start called!")
 
@@ -32,7 +31,7 @@ solcorp.script.handlers.on_start = function()
 	lp.max_weight.base = 5000
 
 	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
-	local mod = Modifier:new()
+	local mod = solcorp.components.Modifier:new()
 	mod.target_stat = "max-weight"
 	mod.multiplicative = 1.2
 	solcorp.helpers.add_modifier(concrete, mod)
@@ -46,3 +45,6 @@ solcorp.script.handlers.on_start = function()
 	mod.additive = 500
 	solcorp.helpers.add_modifier(struts, mod)
 end
+
+solcorp.script.handlers.on_init = on_init
+solcorp.script.handlers.on_start = on_start
