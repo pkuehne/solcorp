@@ -4,7 +4,10 @@ list(APPEND SolCorpSources
     modules/engine/gui.cpp
     modules/engine/input.cpp
     modules/engine/render.cpp
+    modules/lua/entity.cpp
+    modules/lua/helpers.cpp
     modules/lua/lua.cpp
+    modules/lua/logging.cpp
     modules/main_menu/main_menu.cpp
     modules/rocket_launch/rocket_launch.cpp
     modules/simulation/developer_window.cpp
@@ -22,7 +25,10 @@ list(APPEND SolCorpHeaders
     modules/engine/gui.h
     modules/engine/input.h
     modules/engine/render.h
+    modules/lua/entity.h
+    modules/lua/helpers.h
     modules/lua/lua.h
+    modules/lua/logging.h
     modules/main_menu/main_menu.h
     modules/rocket_launch/rocket_launch.h
     modules/simulation/developer_window.h
