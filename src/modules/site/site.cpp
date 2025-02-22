@@ -10,6 +10,7 @@
 #include "modules/stats/stats.h"
 #include "site_construction.h"
 #include "spdlog/spdlog.h"
+#include <sol/types.hpp>
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
@@ -50,6 +51,13 @@ SiteModule::SiteModule(flecs::world &world) {
   register_lua_user_type<Launchpad>(
       world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
         userType["max_weight"] = &Launchpad::max_weight;
+      });
+  register_lua_user_type<Office>(world, "Office");
+  register_lua_user_type<Storage>(world, "Storage");
+  register_lua_user_type<Manufacturing>(
+      world, "Manufacturing", [](sol::usertype<Manufacturing> &userType) {
+        userType["new"] =
+            sol::constructors<Manufacturing(), Manufacturing(size_t)>();
       });
 
   // Register Systems

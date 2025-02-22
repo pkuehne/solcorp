@@ -1,5 +1,4 @@
 #include "modules/engine/engine.h"
-#include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/main_menu/main_menu.h"
 #include "modules/rocket_launch/rocket_launch.h"
@@ -39,76 +38,6 @@ int main(void) {
   world.import <SiteModule>();
   world.import <RocketLaunchModule>();
   world.import <StaffModule>();
-
-  world.system("Load Textures")
-      .kind(flecs::OnStart)
-      .immediate()
-      .run([](flecs::iter &iter) {
-        spdlog::debug("Loading textures");
-        auto world = iter.world();
-        auto root = world.entity("Textures");
-
-        world.entity("Buildings")
-            .set<Texture>(loadTexture("textures/solcorp_buildings.png", world))
-            .child_of(root);
-      });
-
-  world.system("TileMap Creation")
-      .kind(flecs::OnStart)
-      .immediate()
-      .run([](flecs::iter &iter) {
-        auto world = iter.world();
-        auto texture = world.lookup("Textures::Buildings");
-        const uint tileSize = 32;
-        world.entity("BuildingTileMap")
-            .set<TileMap>(tileMapFromTexture(texture, tileSize));
-      });
-
-  world.system("Prefab Creation")
-      .kind(flecs::OnStart)
-      .immediate()
-      .run([](flecs::iter &iter) {
-        spdlog::debug("Setting up prefabs");
-
-        auto world = iter.world();
-        auto tm = world.lookup("BuildingTileMap");
-
-        auto building = world.lookup("SiteModule::Building");
-        auto prefabs = world.entity("Prefabs");
-        auto buildings = world.entity("Buildings").child_of(prefabs);
-
-        world.prefab("Factory")
-            .is_a(building)
-            .child_of(buildings)
-            .set<Sprite>(spriteFromTileMap(tm, 2))
-            .emplace<Manufacturing>(Manufacturing(2))
-            .set<Storage>({});
-        world.prefab("Storage Hall")
-            .is_a(building)
-            .child_of(buildings)
-            .set<Sprite>(spriteFromTileMap(tm, 2))
-            .set<Storage>({});
-        world.prefab("Launchpad")
-            .is_a(building)
-            .child_of(buildings)
-            .set<Sprite>(spriteFromTileMap(tm, 3))
-            .set<Launchpad>({});
-        world.prefab("Office Building")
-            .is_a(building)
-            .child_of(buildings)
-            .set<Sprite>(spriteFromTileMap(tm, 1))
-            .set<Office>({});
-      });
-
-  world.system<Mod>("Mod on_start Event")
-      .kind(flecs::OnStart)
-      .immediate()
-      .each([](flecs::entity e, Mod &mod) {
-        auto world = e.world();
-        world.defer_suspend();
-        run_mod_handler(mod, world, "on_start");
-        world.defer_resume();
-      });
 
   // Main Loop
   logger->info("Starting");

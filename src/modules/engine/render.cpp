@@ -1,6 +1,7 @@
 #include "render.h"
 #include "SDL_render.h"
 #include "modules/engine/engine.h"
+#include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -40,6 +41,16 @@ void registerRender(flecs::world &world) {
       .member<int>("height")
       .member<double>("rotation")
       .member<int>("flip");
+
+  register_lua_user_type<Sprite>(world, "Sprite",
+                                 [](sol::usertype<Sprite> &userType) {
+                                   userType["x"] = &Sprite::x;
+                                   userType["y"] = &Sprite::y;
+                                   userType["width"] = &Sprite::width;
+                                   userType["height"] = &Sprite::height;
+                                   userType["rotation"] = &Sprite::rotation;
+                                   userType["flip"] = &Sprite::flip;
+                                 });
 
   // Register systems
   world.system<Transform, const Transform *>("Apply Parent Transform")

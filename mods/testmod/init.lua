@@ -19,7 +19,33 @@ local function on_start()
 	comp.day = 12
 	info("Day: " .. comp.day)
 
-	-- local site = solcorp.entities.get("Cape Canaveral")
+	-- Create Texture
+	solcorp.helpers.create_texture("Buildings", "textures/solcorp_buildings.png")
+
+	-- Create Prefabs
+	local sprite
+	local lp_prefab = solcorp.helpers.create_building_prefab("Launchpad")
+	lp_prefab:getLaunchpad()
+	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 96, 32, 32)
+	lp_prefab:setSprite(sprite)
+
+	local office_prefab = solcorp.helpers.create_building_prefab("Office Building")
+	office_prefab:getOffice()
+	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 32, 32, 32)
+	office_prefab:setSprite(sprite)
+
+	local storage_prefab = solcorp.helpers.create_building_prefab("Storage Hall")
+	storage_prefab:getStorage()
+	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
+	storage_prefab:setSprite(sprite)
+
+	local factory_prefab = solcorp.helpers.create_building_prefab("Factory")
+	local manu = solcorp.components.Manufacturing.new(2)
+	factory_prefab:setManufacturing(manu)
+	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
+	factory_prefab:setSprite(sprite)
+
+	-- Create a new site
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
 	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)

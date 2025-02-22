@@ -2,6 +2,7 @@
 #include "modules/lua/entity.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
+#include "modules/lua/systems.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <flecs.h>
@@ -19,6 +20,11 @@ LuaModule::LuaModule(flecs::world &world) {
 
   // Load mods
   load_all_mods(world);
+
+  world.system<Mod>("Mod on_start Event")
+      .kind(flecs::OnStart)
+      .immediate()
+      .each(mod_on_start);
 }
 
 void load_config_file() {

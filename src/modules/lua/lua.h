@@ -34,6 +34,24 @@ void register_lua_user_type(
       auto component = &e.ensure<T>();
       return component;
     };
+
+    std::string setter("set");
+    setter.append(name);
+    state["entity"][setter.c_str()] = [](flecs::entity &e, T &c) -> void {
+      e.emplace<T>(c);
+    };
+
+    std::string haver("has");
+    haver.append(name);
+    state["entity"][haver.c_str()] = [](flecs::entity &e) -> bool {
+      return e.has<T>();
+    };
+
+    std::string remover("remove");
+    remover.append(name);
+    state["entity"][remover.c_str()] = [](flecs::entity &e) -> bool {
+      return e.remove<T>();
+    };
   });
 }
 

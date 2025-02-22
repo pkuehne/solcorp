@@ -80,7 +80,13 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     }
   }
 
-  auto tm = world.lookup("BuildingTileMap");
+  Sprite sprite;
+  sprite.texture = world.lookup("Textures::Buildings");
+  sprite.x = 0;
+  sprite.y = 128;
+  sprite.width = 32;
+  sprite.height = 32;
+
   for (unsigned int y = 0; y < site.height; y++) {
     for (unsigned int x = 0; x < site.width; x++) {
       if (locationMap[loc(y, x)] != LocationInfo::TileConstruction) {
@@ -94,7 +100,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
                               currentSite.name().c_str(), x, y)
                       .c_str())
           .set<SiteLocation>({x, y})
-          .set<Sprite>(spriteFromTileMap(tm, 4))
+          .set<Sprite>(sprite)
           .add<ConstructionSite>()
           .child_of(currentSite);
     }
