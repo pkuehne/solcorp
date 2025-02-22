@@ -74,7 +74,9 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   auto &mod = entity.ensure<Mod>();
   mod.name = mod_name;
 
-  mod.state["mod_name"] = mod_name;
+  auto solcorp_ns = mod.state["solcorp"].get_or_create<sol::table>();
+  // This makes the name read-only
+  solcorp_ns["mod_name"] = sol::property([&mod]() { return mod.name; });
   load_mod_state(mod.state);
 
   auto init_file = path / "init.lua";

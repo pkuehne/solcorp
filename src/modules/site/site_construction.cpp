@@ -68,6 +68,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     }
   };
 
+  bool empty_site = true;
   for (size_t y = 0; y < site.height; y++) {
     for (size_t x = 0; x < site.width; x++) {
       if (locationMap[loc(y, x)] != LocationInfo::TileBuilding) {
@@ -77,11 +78,17 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
       setConstruction(y + 1, x);
       setConstruction(y, x - 1);
       setConstruction(y, x + 1);
+      empty_site = false;
     }
   }
 
+  if (empty_site) {
+    spdlog::debug("Site is empty, adding construction site");
+    setConstruction(site.height / 2, site.width / 2);
+  }
+
   Sprite sprite;
-  sprite.texture = world.lookup("Textures::Buildings");
+  sprite.texture = world.lookup("Textures::Construction");
   sprite.x = 0;
   sprite.y = 128;
   sprite.width = 32;

@@ -26,7 +26,7 @@ void load_entity_usertype(sol::state &mod_state) {
   sol::usertype<flecs::entity> flecs_entity =
       mod_state.new_usertype<flecs::entity>("entity");
   flecs_entity["id"] = &flecs::entity::id;
-  flecs_entity["destruct"] = &flecs::entity::destruct;
+  flecs_entity["destroy"] = &flecs::entity::destruct;
   flecs_entity["is_alive"] = &flecs::entity::is_alive;
   flecs_entity["name"] = &flecs::entity::name;
   flecs_entity["symbol"] = &flecs::entity::symbol;
@@ -45,19 +45,5 @@ void load_entity_usertype(sol::state &mod_state) {
       return;
     }
     e.is_a(prefab);
-  };
-
-  flecs_entity["has"] = [](flecs::entity &e, const std::string &name) {
-    auto world = e.world();
-    auto compEntity = world.lookup(name.c_str());
-    bool retval = e.has(compEntity);
-    return retval;
-  };
-
-  flecs_entity["remove"] = [](flecs::entity &e, const std::string &name) {
-    auto world = e.world();
-    auto compEntity = world.lookup(name.c_str());
-    bool retval = e.remove(compEntity);
-    return retval;
   };
 }

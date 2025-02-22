@@ -65,10 +65,19 @@ flecs::entity create_texture(sol::this_state s, const std::string &name,
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
+  // validate filename
+  if (filename.find("..") != std::string::npos) {
+    spdlog::error("Invalid filename {}", filename);
+    return flecs::entity();
+  }
+  std::string location = "mods/";
+  location.append(mod_state["solcorp"]["mod_name"]());
+  location.append("/");
+  location.append(filename);
   auto texture_node = world->entity("Textures");
   auto texture = world->entity(name.c_str())
                      .child_of(texture_node)
-                     .set<Texture>(loadTexture(filename, *world));
+                     .set<Texture>(loadTexture(location, *world));
   return texture;
 };
 

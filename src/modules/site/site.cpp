@@ -99,11 +99,27 @@ SiteModule::SiteModule(flecs::world &world) {
         statsApplyModifiers(e, &pad.max_weight);
       });
 
+  // Construction Site texture
+  auto scope = world.set_scope(0);
+  auto texture_node = world.entity("Textures");
+  auto texture =
+      world.entity("Construction")
+          .child_of(texture_node)
+          .set<Texture>(loadTexture("textures/construction.png", world));
+  world.set_scope(scope);
+
   // Register Prefabs
+  Sprite sprite;
+  sprite.x = 0;
+  sprite.y = 0;
+  sprite.width = 32;
+  sprite.height = 32;
+  sprite.texture = texture;
+
   world.prefab("Building")
       .add<Building>()
       .set<SiteLocation>({})
-      .set<Sprite>({});
+      .emplace<Sprite>(sprite);
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,

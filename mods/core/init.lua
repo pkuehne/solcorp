@@ -9,6 +9,7 @@ local function on_init()
 	info("Entity is enabled " .. tostring(e:enabled()))
 	e:enable()
 	info("Entity is enabled " .. tostring(e:enabled()))
+	e:destroy()
 end
 
 local function on_start()
@@ -20,7 +21,7 @@ local function on_start()
 	info("Day: " .. comp.day)
 
 	-- Create Texture
-	solcorp.helpers.create_texture("Buildings", "textures/solcorp_buildings.png")
+	solcorp.helpers.create_texture("Buildings", "buildings.png")
 
 	-- Create Prefabs
 	local sprite
