@@ -25,6 +25,7 @@ struct EffectModifier {
 /// Represents a modifiable stat.
 class Stat {
 public:
+  Stat() = default;
   /// @brief Constructs a new Stat object.
   ///
   /// @param id The name of the stat used to refer to it by Modifiers.
@@ -39,6 +40,7 @@ public:
   /// Gets the base value of the stat.
   /// @return The base value.
   double base() const;
+  void setBase(double base);
 
   /// Gets the current, modified value of the stat.
   /// @return The current value.

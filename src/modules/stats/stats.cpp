@@ -1,6 +1,8 @@
 #include "stats.h"
 #include "imgui.h"
+#include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
+#include <sol/forward.hpp>
 
 void systemInitialiseStats(flecs::iter &iter);
 
@@ -21,10 +23,34 @@ StatsModule::StatsModule(flecs::world &world) {
       .member<double>("additive")
       .member<double>("multiplicative");
 
+  // Register lua types
+  register_lua_user_type<Stat>(
+      world, "Stat", [](sol::usertype<Stat> &userType) {
+        userType["base"] = sol::property(&Stat::base, &Stat::setBase);
+        userType["value"] = &Stat::value;
+        userType["id"] = &Stat::id;
+        userType["display"] = &Stat::display;
+        userType["description"] = &Stat::description;
+        userType["modifiers"] = &Stat::modifiers;
+      });
+  register_lua_user_type<Effect>(world, "Effect");
+
+  register_lua_user_type<Modifier>(
+      world, "Modifier", [](sol::usertype<Modifier> &userType) -> void {
+        userType["target_stat"] = &Modifier::target_stat;
+        userType["additive"] = &Modifier::additive;
+        userType["multiplicative"] = &Modifier::multiplicative;
+      });
+  // Register Effect category
+  auto s = world.set_scope(0);
+  world.entity("Effects");
+  world.set(s);
+
   // Register systems
 }
 
 double Stat::base() const { return m_base; }
+void Stat::setBase(double base) { m_base = base; }
 
 double Stat::value() const {
   return (m_base + m_additive_modifiers) * m_multiplicative_modifiers;
@@ -67,8 +93,7 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto *stat : stats) {
     stat->reset();
   }
-  for (auto ancestor = e.parent(); ancestor.is_alive();
-       ancestor = ancestor.parent()) {
+  for (auto ancestor = e; ancestor.is_alive(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
       second.children([&](flecs::entity modE) {
         const Modifier *mod = modE.get<Modifier>();

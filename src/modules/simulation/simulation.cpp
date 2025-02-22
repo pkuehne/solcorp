@@ -2,12 +2,15 @@
 #include "SDL_keycode.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/input.h"
+#include "modules/lua/lua.h"
 #include "modules/simulation/developer_window.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);
 void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 void systemShowDeveloperWindow(flecs::iter &, size_t, const KeyDown);
+void systemModCallbackForUpdate(flecs::entity, Mod &);
+void systemModCallbackForFrame(flecs::entity, Mod &);
 
 SimulationModule::SimulationModule(flecs::world &world) {
   world.import <EngineModule>();
@@ -23,6 +26,10 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.set<Simulation>(sim);
   world.set<Game>({});
   world.set<Developer>({});
+
+  register_lua_user_type<Game>(
+      world, "Game",
+      [](sol::usertype<Game> &userType) { userType["day"] = &Game::day; });
 
   // Register systems
   world.system<Game>("Update Simulation Date")
@@ -45,6 +52,13 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<DeveloperWindow>("Draw Developer Window")
       .kind(GuiPhase)
       .each(systemDrawDeveloperWindow);
+  world.system<Mod>("Mod on_update Event")
+      .kind(UpdatePhase)
+      .tick_source(sim.speed)
+      .each(systemModCallbackForUpdate);
+  world.system<Mod>("Mod on_frame Event")
+      .kind(UpdatePhase)
+      .each(systemModCallbackForFrame);
 }
 
 void systemUpdateSimDate(Game &game) {
@@ -63,4 +77,16 @@ void systemShowDeveloperWindow(flecs::iter &it, size_t, const KeyDown event) {
   if (event.key == SDLK_d) {
     showDeveloperWindow(world);
   }
+}
+
+void systemModCallbackForUpdate(flecs::entity e, Mod &mod) {
+  auto world = e.world();
+
+  run_mod_handler(mod, world, "on_update");
+}
+
+void systemModCallbackForFrame(flecs::entity e, Mod &mod) {
+  auto world = e.world();
+
+  run_mod_handler(mod, world, "on_frame");
 }

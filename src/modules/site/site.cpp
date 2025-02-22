@@ -4,11 +4,13 @@
 #include "modules/engine/engine.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
+#include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/stats/stats.h"
 #include "site_construction.h"
 #include "spdlog/spdlog.h"
+#include <sol/types.hpp>
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
@@ -38,6 +40,26 @@ SiteModule::SiteModule(flecs::world &world) {
       .member<flecs::entity>("buildingE")
       .member<bool>("open");
 
+  // Register Lua bindings
+  register_lua_user_type<CurrentSite>(world, "CurrentSite");
+  register_lua_user_type<Site>(world, "Site");
+  register_lua_user_type<SiteLocation>(
+      world, "SiteLocation", [](sol::usertype<SiteLocation> &userType) {
+        userType["x"] = &SiteLocation::x;
+        userType["y"] = &SiteLocation::y;
+      });
+  register_lua_user_type<Launchpad>(
+      world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
+        userType["max_weight"] = &Launchpad::max_weight;
+      });
+  register_lua_user_type<Office>(world, "Office");
+  register_lua_user_type<Storage>(world, "Storage");
+  register_lua_user_type<Manufacturing>(
+      world, "Manufacturing", [](sol::usertype<Manufacturing> &userType) {
+        userType["new"] =
+            sol::constructors<Manufacturing(), Manufacturing(size_t)>();
+      });
+
   // Register Systems
   auto sim = world.get<Simulation>();
 
@@ -62,7 +84,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .each(systemMatchClickToBuilding);
 
   world.system<Site>("Update Construction Sites")
-      .with<constructionSiteNeedsUpdating>()
+      .with<ConstructionSiteNeedsUpdating>()
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
@@ -77,11 +99,27 @@ SiteModule::SiteModule(flecs::world &world) {
         statsApplyModifiers(e, &pad.max_weight);
       });
 
+  // Construction Site texture
+  auto scope = world.set_scope(0);
+  auto texture_node = world.entity("Textures");
+  auto texture =
+      world.entity("Construction")
+          .child_of(texture_node)
+          .set<Texture>(loadTexture("textures/construction.png", world));
+  world.set_scope(scope);
+
   // Register Prefabs
+  Sprite sprite;
+  sprite.x = 0;
+  sprite.y = 0;
+  sprite.width = 32;
+  sprite.height = 32;
+  sprite.texture = texture;
+
   world.prefab("Building")
       .add<Building>()
       .set<SiteLocation>({})
-      .set<Sprite>({});
+      .emplace<Sprite>(sprite);
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,

@@ -47,7 +47,7 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
       .set<SiteLocation>(*location)
       .child_of(constructionE.parent());
 
-  constructionE.parent().add<constructionSiteNeedsUpdating>();
+  constructionE.parent().add<ConstructionSiteNeedsUpdating>();
 }
 
 /// @brief System encapsulating the draw commands for the ConstructionSiteWindow
