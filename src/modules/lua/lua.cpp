@@ -121,11 +121,15 @@ bool run_mod_handler(Mod &mod, flecs::world &world,
   sol::protected_function function =
       mod.state["solcorp"]["script"]["handlers"][handler.c_str()];
 
-  spdlog::info("Running mod handler {}", handler);
+  if (!function.valid()) {
+    return true;
+  }
+  // spdlog::debug("{} - Running mod handler {}", mod.name handler);
   auto result = function();
   if (!result.valid()) {
     sol::error err = result;
-    spdlog::error("Could not run '{}' function: {}", handler, err.what());
+    spdlog::error("{} - Could not run '{}' function: {}", mod.name, handler,
+                  err.what());
     return false;
   }
   return true;

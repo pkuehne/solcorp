@@ -9,6 +9,8 @@
 void systemUpdateSimDate(Game &game);
 void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 void systemShowDeveloperWindow(flecs::iter &, size_t, const KeyDown);
+void systemModCallbackForUpdate(flecs::entity, Mod &);
+void systemModCallbackForFrame(flecs::entity, Mod &);
 
 SimulationModule::SimulationModule(flecs::world &world) {
   world.import <EngineModule>();
@@ -50,6 +52,13 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<DeveloperWindow>("Draw Developer Window")
       .kind(GuiPhase)
       .each(systemDrawDeveloperWindow);
+  world.system<Mod>("Mod on_update Event")
+      .kind(UpdatePhase)
+      .tick_source(sim.speed)
+      .each(systemModCallbackForUpdate);
+  world.system<Mod>("Mod on_frame Event")
+      .kind(UpdatePhase)
+      .each(systemModCallbackForFrame);
 }
 
 void systemUpdateSimDate(Game &game) {
@@ -68,4 +77,16 @@ void systemShowDeveloperWindow(flecs::iter &it, size_t, const KeyDown event) {
   if (event.key == SDLK_d) {
     showDeveloperWindow(world);
   }
+}
+
+void systemModCallbackForUpdate(flecs::entity e, Mod &mod) {
+  auto world = e.world();
+
+  run_mod_handler(mod, world, "on_update");
+}
+
+void systemModCallbackForFrame(flecs::entity e, Mod &mod) {
+  auto world = e.world();
+
+  run_mod_handler(mod, world, "on_frame");
 }
