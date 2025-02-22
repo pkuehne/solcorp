@@ -27,11 +27,6 @@ void registerRender(flecs::world &world) {
       .member<size_t>("ptr")
       .member<int>("width")
       .member<int>("height");
-  world.component<TileMap>()
-      .member<flecs::entity>("texture")
-      .member<unsigned int>("cols")
-      .member<unsigned int>("rows")
-      .member<unsigned int>("tileSize");
   world.component<Sprite>()
       .member<flecs::entity>("texture")
       .member<int>("tile")
@@ -169,26 +164,6 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
                     static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
-/// @brief Extracts a tile from a tilemap and generates a Sprite component
-/// @param[in] tileMapE The tile map entity (has a @link TileMap component)
-/// @param[in] tile The tile number (number wraps at row-end)
-/// @returns A Sprite with the co-ordinates to clip tile from in the texture
-Sprite spriteFromTileMap(flecs::entity tileMapE, int tile) {
-  auto tileMap = tileMapE.get<TileMap>();
-
-  int tileCol = tile % tileMap->cols;
-  int tileRow = (tile - (tileCol)) / tileMap->cols;
-
-  Sprite sprite;
-  sprite.texture = tileMap->texture;
-  sprite.x = tileCol * tileMap->tileSize;
-  sprite.y = tileRow * tileMap->tileSize;
-  sprite.width = tileMap->tileSize;
-  sprite.height = tileMap->tileSize;
-
-  return sprite;
-}
-
 /// @brief Loads the given texture into a Texture component
 /// @param filename The filename (including directory) to load
 /// @param world The flecs world to interact with
@@ -205,22 +180,4 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
   SDL_QueryTexture(texture.ptr, NULL, NULL, &texture.width, &texture.height);
 
   return texture;
-}
-
-/// @brief Takes a texture and creates a TileMap component based on a square
-/// tile size
-/// @param[in] textureE The entity with a Texture component
-/// @param[in] tileSize The size of the tiles in the map in pixels
-/// @return A TileMap component
-TileMap tileMapFromTexture(const flecs::entity &textureE, uint tileSize) {
-  TileMap map;
-
-  auto texture = textureE.get<Texture>();
-
-  map.tileSize = tileSize;
-  map.texture = textureE;
-  map.cols = texture->width / tileSize;
-  map.rows = texture->height / tileSize;
-
-  return map;
 }

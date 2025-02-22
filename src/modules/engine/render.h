@@ -30,13 +30,6 @@ struct Texture {
   int height = 0;
 };
 
-struct TileMap {
-  flecs::entity texture;
-  unsigned int cols = 0;
-  unsigned int rows = 0;
-  unsigned int tileSize = 0;
-};
-
 enum SpriteFlip {
   None = 0,
   Horizontal = 1,
@@ -56,8 +49,6 @@ struct Sprite {
 };
 
 Texture loadTexture(const std::string &, flecs::world &);
-Sprite spriteFromTileMap(flecs::entity tileMapE, int tile);
-TileMap tileMapFromTexture(const flecs::entity &texture, uint tileSize);
 
 void initialiseGraphics(flecs::world &);
 
