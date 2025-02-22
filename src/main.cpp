@@ -7,7 +7,6 @@
 #include "modules/staff/staff.h"
 #include "modules/stats/stats.h"
 #include "spdlog/sinks/basic_file_sink.h"
-#define SOL_ALL_SAFETIES_ON 1
 #include "spdlog/spdlog.h"
 
 int main(void) {

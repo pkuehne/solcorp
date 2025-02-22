@@ -54,8 +54,7 @@ local function on_start()
 	solcorp.helpers.create_building("Main Launchpad", "Launchpad", 1, 0, site)
 	solcorp.helpers.create_building("North Building", "Office Building", 2, 0, site)
 	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launchpad", 5, 5, site)
-	local lp = south_pad:getLaunchpad()
-	lp.max_weight.base = 5000
+	south_pad:getLaunchpad().max_weight.base = 5000
 
 	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
 	local mod = solcorp.components.Modifier:new()
