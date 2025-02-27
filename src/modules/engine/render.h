@@ -6,6 +6,7 @@
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
+struct TTF_Font;
 
 struct Point {
   int x = 0;
@@ -44,6 +45,21 @@ struct Sprite {
   int width = 0;
   int height = 0;
   float scale = 1.0f;
+  double rotation = 0.0f;
+  SpriteFlip flip = SpriteFlip::None;
+};
+
+struct Font {
+  TTF_Font *ptr = 0;
+  std::string name;
+  int point_size = 12;
+};
+
+struct Text {
+  std::string text;
+  flecs::entity texture;
+  int x_offset = -50;
+  int y_offset = -10;
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
 };

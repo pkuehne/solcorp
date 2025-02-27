@@ -15,6 +15,9 @@ void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
+void systemRenderText(flecs::entity, Text &, const Transform &,
+                      const Renderer &);
+
 void registerRender(flecs::world &world) {
 
   // Register components
@@ -36,6 +39,12 @@ void registerRender(flecs::world &world) {
       .member<int>("height")
       .member<double>("rotation")
       .member<int>("flip");
+  world.component<Text>()
+      .member<std::string>("text")
+      .member<int>("x_offset")
+      .member<int>("y_offset")
+      .member<double>("rotation")
+      .member<int>("flip");
 
   register_lua_user_type<Sprite>(world, "Sprite",
                                  [](sol::usertype<Sprite> &userType) {
@@ -46,6 +55,27 @@ void registerRender(flecs::world &world) {
                                    userType["rotation"] = &Sprite::rotation;
                                    userType["flip"] = &Sprite::flip;
                                  });
+  register_lua_user_type<Text>(world, "Text",
+                               [](sol::usertype<Text> &userType) {
+                                 userType["text"] = &Text::text;
+                                 userType["texture"] = &Text::texture;
+                                 userType["x_offset"] = &Text::x_offset;
+                                 userType["y_offset"] = &Text::y_offset;
+                                 userType["rotation"] = &Text::rotation;
+                                 userType["flip"] = &Text::flip;
+                               });
+
+  auto scope = world.set_scope(0);
+  world.entity("Textures");
+  auto fonts = world.entity("Fonts");
+  world.set_scope(scope);
+
+  Font defaultFont;
+  defaultFont.name = "custom-font.ttf";
+  defaultFont.point_size = 14;
+  defaultFont.ptr =
+      TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
+  world.entity("Default").set<Font>(defaultFont).child_of(fonts);
 
   // Register systems
   world.system<Transform, const Transform *>("Apply Parent Transform")
@@ -66,6 +96,12 @@ void registerRender(flecs::world &world) {
       .singleton()
       .kind(RenderPhase)
       .each(systemRenderSprite);
+
+  world.system<Text, const Transform, const Renderer>("Render Text")
+      .term_at(2)
+      .singleton()
+      .kind(RenderPhase)
+      .each(systemRenderText);
 
   world.system<const Renderer>("Render End")
       .term_at(0)
@@ -162,6 +198,42 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
                     sprite.rotation, NULL,
                     static_cast<SDL_RendererFlip>(sprite.flip));
+}
+
+void systemRenderText(flecs::entity e, Text &text, const Transform &target,
+                      const Renderer &renderer) {
+  auto world = e.world();
+
+  const Texture *t = nullptr;
+
+  if (!text.texture.is_valid()) {
+    // The texture doesn't exist, create it
+    auto font = world.lookup("Fonts::Default").get<Font>();
+    SDL_Color colour = {0, 0, 0, 0};
+    SDL_Surface *textSurface =
+        TTF_RenderText_Solid(font->ptr, text.text.c_str(), colour);
+    if (!textSurface) {
+      spdlog::error("Failed to render text surface: {}", TTF_GetError());
+      return;
+    }
+    auto texture = SDL_CreateTextureFromSurface(renderer.renderer, textSurface);
+    Texture comp{texture, textSurface->w, textSurface->h};
+    text.texture = world.entity(text.text.c_str())
+                       .child_of(world.lookup("Textures"))
+                       .set<Texture>(comp);
+    SDL_FreeSurface(textSurface);
+    t = &comp;
+  } else {
+    t = text.texture.get<Texture>();
+  }
+
+  SDL_Rect source = {0, 0, t->width, t->height};
+  SDL_FRect destination = {target.worldPosition.x * 1.0f + text.x_offset,
+                           target.worldPosition.y * 1.0f + text.y_offset,
+                           t->width * 1.0f, t->height * 1.0f};
+  SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
+                    text.rotation, NULL,
+                    static_cast<SDL_RendererFlip>(text.flip));
 }
 
 /// @brief Loads the given texture into a Texture component

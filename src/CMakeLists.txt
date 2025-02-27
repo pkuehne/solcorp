@@ -117,3 +117,10 @@ add_custom_target(run
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT Running SolCorp
 )
+
+add_custom_target(debug
+    COMMAND gdb build/src/solcorp
+    DEPENDS solcorp
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT Debugging SolCorp
+)
