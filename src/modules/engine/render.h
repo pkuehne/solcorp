@@ -9,8 +9,8 @@ struct SDL_Texture;
 struct TTF_Font;
 
 struct Point {
-  int x = 0;
-  int y = 0;
+  float x = 0;
+  float y = 0;
 };
 
 struct Transform {
@@ -58,8 +58,8 @@ struct Font {
 struct Text {
   std::string text;
   flecs::entity texture;
-  int x_offset = -50;
-  int y_offset = -10;
+  int x_offset = 0;
+  int y_offset = 0;
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
 };

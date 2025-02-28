@@ -21,7 +21,7 @@ void systemRenderText(flecs::entity, Text &, const Transform &,
 void registerRender(flecs::world &world) {
 
   // Register components
-  world.component<Point>().member<int>("x").member<int>("y");
+  world.component<Point>().member<float>("x").member<float>("y");
   world.component<Transform>()
       .member<Point>("relativePosition")
       .member<Point>("worldPosition");
@@ -46,6 +46,16 @@ void registerRender(flecs::world &world) {
       .member<double>("rotation")
       .member<int>("flip");
 
+  register_lua_user_type<Point>(world, "Point",
+                                [](sol::usertype<Point> &userType) {
+                                  userType["x"] = &Point::x;
+                                  userType["y"] = &Point::y;
+                                });
+  register_lua_user_type<Transform>(
+      world, "Transform", [](sol::usertype<Transform> &userType) {
+        userType["relativePosition"] = &Transform::relativePosition;
+        userType["worldPosition"] = &Transform::worldPosition;
+      });
   register_lua_user_type<Sprite>(world, "Sprite",
                                  [](sol::usertype<Sprite> &userType) {
                                    userType["x"] = &Sprite::x;
@@ -190,9 +200,9 @@ void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
 void systemRenderSprite(flecs::entity, const Sprite &sprite,
                         const Transform &target, const Renderer &renderer) {
   SDL_Rect source = {sprite.x, sprite.y, sprite.width, sprite.height};
-  SDL_FRect destination = {
-      target.worldPosition.x * 1.0f, target.worldPosition.y * 1.0f,
-      sprite.width * sprite.scale, sprite.height * sprite.scale};
+  SDL_FRect destination = {target.worldPosition.x, target.worldPosition.y,
+                           sprite.width * sprite.scale,
+                           sprite.height * sprite.scale};
   auto t = sprite.texture.get<Texture>();
 
   SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
@@ -211,7 +221,7 @@ void systemRenderText(flecs::entity e, Text &text, const Transform &target,
     auto font = world.lookup("Fonts::Default").get<Font>();
     SDL_Color colour = {0, 0, 0, 0};
     SDL_Surface *textSurface =
-        TTF_RenderText_Solid(font->ptr, text.text.c_str(), colour);
+        TTF_RenderText_Blended(font->ptr, text.text.c_str(), colour);
     if (!textSurface) {
       spdlog::error("Failed to render text surface: {}", TTF_GetError());
       return;

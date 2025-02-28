@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "gui.h"
 #include "input.h"
+#include "modules/engine/movement.h"
 #include "render.h"
 
 flecs::entity PreFramePhase;
@@ -37,4 +38,5 @@ EngineModule::EngineModule(flecs::world &world) {
   registerRender(world);
   registerInput(world);
   registerGui(world);
+  registerMovement(world);
 }

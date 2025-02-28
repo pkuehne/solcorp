@@ -167,8 +167,8 @@ void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
                                Sprite &sprite) {
   spdlog::debug("Add missing Transform for {}", entity.name().c_str());
   u_int tileSize = sprite.width;
-  auto t = Transform{Point{static_cast<int>(location.x * tileSize),
-                           static_cast<int>(location.y * tileSize)},
+  auto t = Transform{Point{static_cast<float>(location.x * tileSize),
+                           static_cast<float>(location.y * tileSize)},
                      Point{}};
   entity.set<Transform>(t);
 }

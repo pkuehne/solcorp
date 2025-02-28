@@ -3,6 +3,7 @@ list(APPEND SolCorpSources
     modules/engine/engine.cpp
     modules/engine/gui.cpp
     modules/engine/input.cpp
+    modules/engine/movement.cpp
     modules/engine/render.cpp
     modules/lua/entity.cpp
     modules/lua/helpers.cpp
@@ -25,6 +26,7 @@ list(APPEND SolCorpHeaders
     modules/engine/engine.h
     modules/engine/gui.h
     modules/engine/input.h
+    modules/engine/movement.h
     modules/engine/render.h
     modules/lua/entity.h
     modules/lua/helpers.h
