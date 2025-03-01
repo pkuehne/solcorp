@@ -58,21 +58,11 @@ local function on_start()
 	south_pad:getLaunchpad().max_weight.base = 5000
 
 	local e = solcorp.entities.create()
-	local text = solcorp.components.Text:new()
-	text.text = "South Launchpad"
-	text.x_offset = 0
-	text.y_offset = 0
-	e:setText(text)
-	local velocity = solcorp.components.Velocity:new()
-	velocity.y = -20
-	e:setVelocity(velocity)
-	local expire = solcorp.components.Expire:new()
-	expire.millis = 2000
-	e:setExpire(expire)
-	local t = solcorp.components.Transform:new()
-	t.relativePosition.x = 150
-	t.relativePosition.y = 150
-	e:setTransform(t)
+	e:child_of(south_pad)
+	e:getText().text = "South Launchpad"
+	e:getVelocity().y = -20
+	e:getTransform().relativePosition.y = -15
+	e:getExpire().millis = 2000
 
 	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
 	local mod = solcorp.components.Modifier:new()

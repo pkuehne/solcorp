@@ -7,16 +7,14 @@
 #include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "site_construction.h"
-#include "spdlog/spdlog.h"
 #include <sol/types.hpp>
 
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
-                               Sprite &sprite);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -88,11 +86,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
-  world.system<SiteLocation, Sprite>("Add missing transforms")
-      .without<Transform>()
-      .kind(UpdatePhase)
-      .each(systemAddMissingTransform);
-
   world.system<Launchpad>()
       .kind(UpdatePhase)
       .each([](flecs::entity e, Launchpad &pad) {
@@ -119,7 +112,15 @@ SiteModule::SiteModule(flecs::world &world) {
   world.prefab("Building")
       .add<Building>()
       .set<SiteLocation>({})
-      .emplace<Sprite>(sprite);
+      .set<Transform>({})
+      .set<Sprite>(sprite);
+
+  sprite.y = 128;
+  world.prefab("ConstructionSite")
+      .add<ConstructionSite>()
+      .set<SiteLocation>({})
+      .set<Transform>({})
+      .set<Sprite>(sprite);
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
@@ -159,16 +160,7 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
     if (construction->effort_remaining == 0) {
       rocket.remove<Construction>();
       rocket = flecs::entity();
+      instantiateBuildingNotification(world, entity, "Rocket finished");
     }
   }
-}
-
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
-                               Sprite &sprite) {
-  spdlog::debug("Add missing Transform for {}", entity.name().c_str());
-  u_int tileSize = sprite.width;
-  auto t = Transform{Point{static_cast<float>(location.x * tileSize),
-                           static_cast<float>(location.y * tileSize)},
-                     Point{}};
-  entity.set<Transform>(t);
 }

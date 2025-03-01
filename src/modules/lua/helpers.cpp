@@ -1,5 +1,6 @@
 #include "helpers.h"
 #include "modules/engine/render.h"
+#include "modules/site/helpers.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
@@ -45,19 +46,7 @@ flecs::entity create_building(sol::this_state s, const std::string &name,
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
-  std::string prefabName = "Prefabs::Buildings::";
-  prefabName.append(prefab);
-  auto prefabE = world->lookup(prefabName.c_str());
-  if (!prefabE.is_valid()) {
-    spdlog::error("Prefab {} does not exist", prefabName);
-    return flecs::entity();
-  }
-
-  auto entity = world->entity(name.c_str())
-                    .is_a(world->lookup(prefabName.c_str()))
-                    .set<SiteLocation>({x, y})
-                    .child_of(site);
-  return entity;
+  return instantiateBuilding(*world, name, prefab, x, y, site);
 };
 
 flecs::entity create_texture(sol::this_state s, const std::string &name,

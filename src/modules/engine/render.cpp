@@ -15,8 +15,10 @@ void systemRenderClear(const Renderer &);
 void systemRenderPresent(const Renderer &r);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
-void systemRenderText(flecs::entity, Text &, const Transform &,
-                      const Renderer &);
+void systemCreateTextureForText(flecs::entity e, Text &text,
+                                const Renderer &renderer);
+void systemRenderText(flecs::entity, const Text &, const Texture &,
+                      const Transform &, const Renderer &);
 
 void registerRender(flecs::world &world) {
 
@@ -41,8 +43,6 @@ void registerRender(flecs::world &world) {
       .member<int>("flip");
   world.component<Text>()
       .member<std::string>("text")
-      .member<int>("x_offset")
-      .member<int>("y_offset")
       .member<double>("rotation")
       .member<int>("flip");
 
@@ -68,9 +68,6 @@ void registerRender(flecs::world &world) {
   register_lua_user_type<Text>(world, "Text",
                                [](sol::usertype<Text> &userType) {
                                  userType["text"] = &Text::text;
-                                 userType["texture"] = &Text::texture;
-                                 userType["x_offset"] = &Text::x_offset;
-                                 userType["y_offset"] = &Text::y_offset;
                                  userType["rotation"] = &Text::rotation;
                                  userType["flip"] = &Text::flip;
                                });
@@ -95,6 +92,13 @@ void registerRender(flecs::world &world) {
       .kind(PreFramePhase)
       .each(systemApplyParentTransform);
 
+  world.system<Text, const Renderer>("Create Texture for Text")
+      .without<Texture>()
+      .term_at(1)
+      .singleton()
+      .kind(PreFramePhase)
+      .each(systemCreateTextureForText);
+
   world.system<const Renderer>("Render Begin")
       .term_at(0)
       .singleton()
@@ -107,8 +111,10 @@ void registerRender(flecs::world &world) {
       .kind(RenderPhase)
       .each(systemRenderSprite);
 
-  world.system<Text, const Transform, const Renderer>("Render Text")
-      .term_at(2)
+  world
+      .system<const Text, const Texture, const Transform, const Renderer>(
+          "Render Text")
+      .term_at(3)
       .singleton()
       .kind(RenderPhase)
       .each(systemRenderText);
@@ -210,38 +216,37 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
                     static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
-void systemRenderText(flecs::entity e, Text &text, const Transform &target,
-                      const Renderer &renderer) {
+void systemCreateTextureForText(flecs::entity e, Text &text,
+                                const Renderer &renderer) {
+
   auto world = e.world();
 
-  const Texture *t = nullptr;
+  auto font = world.lookup("Fonts::Default").get<Font>();
+  SDL_Color colour = {0, 0, 0, 0};
 
-  if (!text.texture.is_valid()) {
-    // The texture doesn't exist, create it
-    auto font = world.lookup("Fonts::Default").get<Font>();
-    SDL_Color colour = {0, 0, 0, 0};
-    SDL_Surface *textSurface =
-        TTF_RenderText_Blended(font->ptr, text.text.c_str(), colour);
-    if (!textSurface) {
-      spdlog::error("Failed to render text surface: {}", TTF_GetError());
-      return;
-    }
-    auto texture = SDL_CreateTextureFromSurface(renderer.renderer, textSurface);
-    Texture comp{texture, textSurface->w, textSurface->h};
-    text.texture = world.entity(text.text.c_str())
-                       .child_of(world.lookup("Textures"))
-                       .set<Texture>(comp);
-    SDL_FreeSurface(textSurface);
-    t = &comp;
-  } else {
-    t = text.texture.get<Texture>();
+  SDL_Surface *surface =
+      TTF_RenderText_Blended(font->ptr, text.text.c_str(), colour);
+  if (!surface) {
+    spdlog::error("Failed to render text surface: {}", TTF_GetError());
+    return;
   }
+  auto texture = SDL_CreateTextureFromSurface(renderer.renderer, surface);
+  if (!texture) {
+    spdlog::error("Failed to create text texture: {}", SDL_GetError());
+    return;
+  }
+  e.set<Texture>({texture, surface->w, surface->h});
+}
 
-  SDL_Rect source = {0, 0, t->width, t->height};
-  SDL_FRect destination = {target.worldPosition.x * 1.0f + text.x_offset,
-                           target.worldPosition.y * 1.0f + text.y_offset,
-                           t->width * 1.0f, t->height * 1.0f};
-  SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
+void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
+                      const Transform &target, const Renderer &renderer) {
+  auto world = e.world();
+
+  SDL_Rect source = {0, 0, texture.width, texture.height};
+  SDL_FRect destination = {target.worldPosition.x * 1.0f,
+                           target.worldPosition.y * 1.0f, texture.width * 1.0f,
+                           texture.height * 1.0f};
+  SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
                     text.rotation, NULL,
                     static_cast<SDL_RendererFlip>(text.flip));
 }

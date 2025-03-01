@@ -57,9 +57,6 @@ struct Font {
 
 struct Text {
   std::string text;
-  flecs::entity texture;
-  int x_offset = 0;
-  int y_offset = 0;
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
 };

@@ -2,6 +2,7 @@ list(APPEND SolCorpSources
     widgets/widgets.cpp
     modules/engine/engine.cpp
     modules/engine/gui.cpp
+    modules/engine/helpers.cpp
     modules/engine/input.cpp
     modules/engine/movement.cpp
     modules/engine/render.cpp
@@ -14,10 +15,11 @@ list(APPEND SolCorpSources
     modules/rocket_launch/rocket_launch.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
-    modules/site/site.cpp
     modules/site/building_window.cpp
-    modules/site/site_construction.cpp
     modules/site/construction_window.cpp
+    modules/site/helpers.cpp
+    modules/site/site.cpp
+    modules/site/site_construction.cpp
     modules/staff/staff.cpp
     modules/stats/stats.cpp
 )
@@ -25,6 +27,7 @@ list(APPEND SolCorpHeaders
     widgets/widgets.h
     modules/engine/engine.h
     modules/engine/gui.h
+    modules/engine/helpers.cpp
     modules/engine/input.h
     modules/engine/movement.h
     modules/engine/render.h
@@ -37,7 +40,11 @@ list(APPEND SolCorpHeaders
     modules/rocket_launch/rocket_launch.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/building_window.h
+    modules/site/construction_window.h
+    modules/site/helpers.h
     modules/site/site.h
+    modules/site/site_construction.h
     modules/staff/staff.h
     modules/stats/stats.h
 )
