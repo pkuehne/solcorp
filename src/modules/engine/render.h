@@ -8,6 +8,13 @@ struct SDL_Renderer;
 struct SDL_Texture;
 struct TTF_Font;
 
+struct Color {
+  uint8_t r = 0;
+  uint8_t g = 0;
+  uint8_t b = 0;
+  uint8_t a = 0;
+};
+
 struct Point {
   float x = 0;
   float y = 0;
@@ -57,6 +64,7 @@ struct Font {
 
 struct Text {
   std::string text;
+  Color color = {0, 0, 0, 0};
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
 };

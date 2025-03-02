@@ -23,6 +23,11 @@ void systemRenderText(flecs::entity, const Text &, const Texture &,
 void registerRender(flecs::world &world) {
 
   // Register components
+  world.component<Color>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b")
+      .member<uint8_t>("a");
   world.component<Point>().member<float>("x").member<float>("y");
   world.component<Transform>()
       .member<Point>("relativePosition")
@@ -43,9 +48,17 @@ void registerRender(flecs::world &world) {
       .member<int>("flip");
   world.component<Text>()
       .member<std::string>("text")
+      .member<Color>("color")
       .member<double>("rotation")
       .member<int>("flip");
 
+  register_lua_user_type<Color>(world, "Color",
+                                [](sol::usertype<Color> &userType) {
+                                  userType["r"] = &Color::r;
+                                  userType["g"] = &Color::g;
+                                  userType["b"] = &Color::b;
+                                  userType["a"] = &Color::a;
+                                });
   register_lua_user_type<Point>(world, "Point",
                                 [](sol::usertype<Point> &userType) {
                                   userType["x"] = &Point::x;
@@ -68,6 +81,7 @@ void registerRender(flecs::world &world) {
   register_lua_user_type<Text>(world, "Text",
                                [](sol::usertype<Text> &userType) {
                                  userType["text"] = &Text::text;
+                                 userType["color"] = &Text::color;
                                  userType["rotation"] = &Text::rotation;
                                  userType["flip"] = &Text::flip;
                                });
@@ -222,10 +236,10 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
   auto world = e.world();
 
   auto font = world.lookup("Fonts::Default").get<Font>();
-  SDL_Color colour = {0, 0, 0, 0};
+  SDL_Color color = {text.color.r, text.color.g, text.color.b, text.color.a};
 
   SDL_Surface *surface =
-      TTF_RenderText_Blended(font->ptr, text.text.c_str(), colour);
+      TTF_RenderText_Blended(font->ptr, text.text.c_str(), color);
   if (!surface) {
     spdlog::error("Failed to render text surface: {}", TTF_GetError());
     return;

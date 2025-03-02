@@ -68,12 +68,9 @@ flecs::entity instantiateBuildingNotification(flecs::world &world,
     return flecs::entity();
   }
 
-  Text t;
-  t.text = text;
-
   auto entity = world.entity()
                     .set<Transform>({{0, -30}, {}})
-                    .set<Text>(t)
+                    .set<Text>({text})
                     .set<Velocity>({0, -10})
                     .set<Expire>({1500})
                     .child_of(building);
