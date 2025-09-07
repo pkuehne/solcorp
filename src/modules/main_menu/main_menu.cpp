@@ -21,17 +21,9 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
 
   // Register Systems
   world.system<const Simulation, const Game, MainMenuBar>("Draw MainMenu")
-      .term_at(0)
-      .singleton()
-      .term_at(1)
-      .singleton()
       .kind(GuiPhase)
       .each(systemDrawMainMenu);
   world.system<Simulation, const KeyDown>("Toggle Play/Pause")
-      .term_at(0)
-      .singleton()
-      .term_at(1)
-      .singleton()
       .kind(ValidatePhase)
       .each(systemToggle);
 }

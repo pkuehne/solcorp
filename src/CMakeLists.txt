@@ -51,7 +51,7 @@ list(APPEND SolCorpHeaders
 
 fetchcontent_declare(flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs
-    GIT_TAG v4.0.0
+    GIT_TAG v4.1.1
 )
 fetchcontent_declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/

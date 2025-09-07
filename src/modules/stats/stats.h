@@ -72,7 +72,7 @@ public:
   /// @return The list of modifiers.
   const std::vector<EffectModifier> &modifiers() const;
 
-private:
+public:
   std::string m_id;                   ///< The ID of the stat.
   std::string m_display;              ///< The display name of the stat.
   std::string m_description;          ///< The description of the stat.

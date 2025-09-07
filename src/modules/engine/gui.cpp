@@ -21,8 +21,6 @@ void registerGui(flecs::world &world) {
   world.system("New GUI Frame").kind(PreFramePhase).run(systemGuiNewFrame);
   world.system("End GUI Frame").kind(PreRenderPhase).run(systemGuiEndFrame);
   world.system<const Renderer>("Render GUI")
-      .term_at(0)
-      .singleton()
       .kind(RenderPhase)
       .each(systemRenderGUI);
 }
@@ -79,8 +77,8 @@ void systemInitialiseGui(flecs::iter &iter) {
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();
-  ImGui_ImplSDL2_InitForSDLRenderer(r->window, r->renderer);
-  ImGui_ImplSDLRenderer2_Init(r->renderer);
+  ImGui_ImplSDL2_InitForSDLRenderer(r.window, r.renderer);
+  ImGui_ImplSDLRenderer2_Init(r.renderer);
   ImGui_ImplSDLRenderer2_CreateFontsTexture();
 }
 

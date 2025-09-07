@@ -44,7 +44,7 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
 
   world.entity(name.c_str())
       .is_a(prefabE)
-      .set<SiteLocation>(*location)
+      .set<SiteLocation>(location)
       .child_of(constructionE.parent());
 
   constructionE.parent().add<ConstructionSiteNeedsUpdating>();

@@ -26,15 +26,15 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
 
   // Register components
   world.component<Rocket>();
-  world.component<CargoHold>().member<u_int>("capacity");
+  world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>()
-      .member<u_int>("launchPrepDays")
-      .member<int>("launchDay")
-      .member<flecs::entity>("planE")
-      .member<std::string>("name")
-      .member<flecs::entity>("rocket")
-      .member<flecs::entity>("launchpad");
+      .member("launchPrepDays", &LaunchWindow::launchPrepDays)
+      .member("launchDay", &LaunchWindow::launchDay)
+      .member("planE", &LaunchWindow::planE)
+      .member("name", &LaunchWindow::name)
+      .member("rocket", &LaunchWindow::rocket)
+      .member("launchpad", &LaunchWindow::launchpad);
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
@@ -49,7 +49,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   // Register systems
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
-      .tick_source(sim->speed)
+      .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemLaunchRocket);
 
@@ -60,7 +60,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
                          flecs::entity *launchpad) {
-  u_int today = world.get<Game>()->day;
+  u_int today = world.get<Game>().day;
 
   auto planE = world.entity().set<LaunchPlan>({});
   std::string name;
@@ -114,7 +114,7 @@ void hideLaunchWindow(flecs::world &world) {
 /// @param plan The plan's component
 void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto world = planE.world();
-  u_int today = world.get<Game>()->day;
+  u_int today = world.get<Game>().day;
 
   if (plan.launch_date == 0 || plan.launch_date > today) {
     return;
@@ -163,7 +163,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   // auto *plan = m_entity.get_mut<LaunchPlan>();
-  u_int today = world.get<Game>()->day;
+  u_int today = world.get<Game>().day;
   if (static_cast<u_int>(win.launchDay) < today + win.launchPrepDays) {
     win.launchDay = today + win.launchPrepDays;
   }
@@ -227,8 +227,8 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   if (win.launchpad.is_valid()) {
     win.launchpad.each<LaunchingFrom>([&](flecs::entity p) {
       auto plan = p.get<LaunchPlan>();
-      if (plan->launch_date < static_cast<u_int>(win.launchDay) &&
-          plan->launch_date >= (win.launchDay - win.launchPrepDays)) {
+      if (plan.launch_date < static_cast<u_int>(win.launchDay) &&
+          plan.launch_date >= (win.launchDay - win.launchPrepDays)) {
         issue = "Another launch is already scheduled at that time";
       }
     });
@@ -244,9 +244,9 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
 
   if (ActionButton("Save", "Save Launch Plan to be executed", issue)) {
     // Save LaunchPlan and close window
-    LaunchPlan *plan = win.planE.get_mut<LaunchPlan>();
-    plan->launch_date = win.launchDay;
-    plan->draft = false;
+    auto &plan = win.planE.get_mut<LaunchPlan>();
+    plan.launch_date = win.launchDay;
+    plan.draft = false;
     win.planE.set_name(win.name.c_str());
     win.planE.add<LaunchingOn>(win.rocket);
     win.planE.add<LaunchingFrom>(win.launchpad);
@@ -255,7 +255,7 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
-    LaunchPlan *plan = win.planE.get_mut<LaunchPlan>();
+    LaunchPlan *plan = win.planE.try_get_mut<LaunchPlan>();
     if (plan && plan->draft) {
       win.planE.destruct();
     }

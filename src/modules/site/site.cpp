@@ -24,19 +24,23 @@ SiteModule::SiteModule(flecs::world &world) {
 
   // Register components
   world.component<CurrentSite>();
-  world.component<Site>().member<u_int>("width").member<u_int>("height");
+  world.component<Site>()
+      .member("width", &Site::width)
+      .member("height", &Site::height);
   world.component<Building>();
-  world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
+  world.component<SiteLocation>()
+      .member("x", &SiteLocation::x)
+      .member("y", &SiteLocation::y);
   world.component<Manufacturing>();
   world.component<Storage>();
   world.component<Office>();
-  world.component<Launchpad>().member<Stat>("max_weight");
+  world.component<Launchpad>().member("max_weight", &Launchpad::max_weight);
   world.component<BuildingWindow>()
-      .member<flecs::entity>("buildingE")
-      .member<bool>("open");
+      .member("buildingE", &BuildingWindow::buildingE)
+      .member("open", &BuildingWindow::open);
   world.component<ConstructionSiteWindow>()
-      .member<flecs::entity>("buildingE")
-      .member<bool>("open");
+      .member("buildingE", &ConstructionSiteWindow::buildingE)
+      .member("open", &ConstructionSiteWindow::open);
 
   // Register Lua bindings
   register_lua_user_type<CurrentSite>(world, "CurrentSite");
@@ -62,7 +66,7 @@ SiteModule::SiteModule(flecs::world &world) {
   auto sim = world.get<Simulation>();
 
   world.system<Manufacturing>("Update Construction")
-      .tick_source(sim->speed)
+      .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateConstruction);
 
@@ -76,8 +80,6 @@ SiteModule::SiteModule(flecs::world &world) {
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
-      .term_at(2)
-      .singleton()
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
 
@@ -146,7 +148,7 @@ void systemBuildingUpdateConstruction(flecs::entity entity,
     if (!rocket.is_valid()) {
       continue;
     }
-    Construction *construction = rocket.get_mut<Construction>();
+    Construction *construction = rocket.try_get_mut<Construction>();
     if (!construction) {
       // Remove it from the manufacturing line
       rocket = flecs::entity();

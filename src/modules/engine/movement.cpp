@@ -18,8 +18,10 @@ void systemUpdateExpiry(flecs::iter &it, size_t row, Expire &e) {
 
 void registerMovement(flecs::world &world) {
   // Register components
-  world.component<Velocity>().member<float>("x").member<float>("y");
-  world.component<Expire>().member<int>("millis");
+  world.component<Velocity>()
+      .member("x", &Velocity::x)
+      .member("y", &Velocity::y);
+  world.component<Expire>().member("millis", &Expire::millis);
 
   register_lua_user_type<Velocity>(world, "Velocity",
                                    [](sol::usertype<Velocity> &userType) {

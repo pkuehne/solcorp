@@ -7,7 +7,7 @@ project(SolCorp
     DESCRIPTION "Sol Corp"
     HOMEPAGE_URL "https://github.com/pkuehne/solcorp/"
     LANGUAGES CXX
-    )
+  )
 
 message("Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 option(SC_BUILD_TESTS "Whether to build the unit tests" ON)

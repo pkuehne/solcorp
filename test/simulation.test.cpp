@@ -14,7 +14,7 @@ public:
 
 TEST_F(SimulationModuleTests, GameDayAdvancesWhenSimulationRunning) {
   // Given
-  Game *game = world.get_mut<Game>();
+  Game *game = world.try_get_mut<Game>();
   ASSERT_EQ(game->day, 0);
 
   // When

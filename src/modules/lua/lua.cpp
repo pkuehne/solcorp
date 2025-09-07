@@ -15,8 +15,8 @@ void load_mod(flecs::world &world, const std::filesystem::path &path);
 LuaModule::LuaModule(flecs::world &world) {
   // Register components
   world.component<Mod>()
-      .member<std::string>("name")  //
-      .member<sol::state>("state"); //
+      .member("name", &Mod::name)    //
+      .member("state", &Mod::state); //
 
   // Load mods
   load_all_mods(world);
@@ -105,7 +105,7 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
     return;
   }
   mods.children([&](flecs::entity modE) {
-    auto mod = modE.get_mut<Mod>();
+    Mod *mod = modE.try_get_mut<Mod>();
     if (!mod) {
       spdlog::error("Mod {} does not have a Mod component!",
                     modE.name().c_str());

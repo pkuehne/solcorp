@@ -1,5 +1,6 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "modules/engine/engine.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
@@ -16,10 +17,14 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.import <EngineModule>();
 
   // Register components
-  world.component<Simulation>().member<flecs::entity>("speed");
-  world.component<Game>().member<u_int>("day");
-  world.component<Developer>().member<bool>("show_metrics_window");
-  world.component<DeveloperWindow>().member<bool>("open");
+  world.component<Simulation>()
+      .member("speed", &Simulation::speed)
+      .add(flecs::Singleton);
+  world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
+  world.component<Developer>()
+      .member("show_metrics_window", &Developer::show_metrics_window)
+      .add(flecs::Singleton);
+  world.component<DeveloperWindow>().member("open", &DeveloperWindow::open);
 
   // Create Singletons
   auto sim = Simulation{world.timer("SimTimer").interval(0.5f).disable()};
@@ -34,19 +39,13 @@ SimulationModule::SimulationModule(flecs::world &world) {
   // Register systems
   world.system<Game>("Update Simulation Date")
       .tick_source(sim.speed)
-      .term_at(0)
-      .singleton()
       .kind(UpdatePhase)
       .each(systemUpdateSimDate);
 
   world.system<const KeyDown>("Quit on Esc")
-      .term_at(0)
-      .singleton()
       .kind(ValidatePhase)
       .each(systemQuitOnEscape);
   world.system<const KeyDown>("Show Developer Window")
-      .term_at(0)
-      .singleton()
       .kind(ValidatePhase)
       .each(systemShowDeveloperWindow);
   world.system<DeveloperWindow>("Draw Developer Window")

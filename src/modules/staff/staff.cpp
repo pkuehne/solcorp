@@ -6,16 +6,16 @@ void systemSeedStaff(flecs::iter &it);
 StaffModule::StaffModule(flecs::world &world) {
   // Register components
   world.component<Person>()
-      .member<std::string>("first_name")
-      .member<std::string>("last_name");
+      .member("first_name", &Person::first_name)
+      .member("last_name", &Person::last_name);
 
   world.component<Employee>()
-      .member<int>("start")
-      .member<u_int>("domain_skill")
-      .member<u_int>("leadership_skill")
-      .member<u_int>("motivation");
+      .member("start", &Employee::start)
+      .member("domain_skill", &Employee::domain_skill)
+      .member("leadership_skill", &Employee::leadership_skill)
+      .member("motivation", &Employee::motivation);
 
-  world.component<Team>().member<std::string>("name");
+  world.component<Team>().member("name", &Team::name);
 
   // Register relationships
   world.component<TeamMember>().add(flecs::Transitive);

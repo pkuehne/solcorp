@@ -73,10 +73,10 @@ void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
 
 void drawManufacturingSection(flecs::entity &entity) {
   flecs::world world = entity.world();
-  Manufacturing *manu = entity.get_mut<Manufacturing>();
+  Manufacturing &manu = entity.get_mut<Manufacturing>();
 
   size_t index = 0;
-  for (flecs::entity &e : manu->lines) {
+  for (flecs::entity &e : manu.lines) {
     ImGui::PushID(index++);
     ImGui::SeparatorText(fmt::format("Line {}", index).c_str());
 
@@ -84,7 +84,7 @@ void drawManufacturingSection(flecs::entity &entity) {
       // There is a rocket on the line
       ImGui::Text("Constructing %s", e.name().c_str());
 
-      Construction *c = e.get_mut<Construction>();
+      Construction *c = e.try_get_mut<Construction>();
       if (c) {
         float completed = c->effort_total - c->effort_remaining;
         ImGui::ProgressBar(completed / c->effort_total);
@@ -138,7 +138,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
   auto launchpad = entity.get<Launchpad>();
-  displayStatWithTooltip(&launchpad->max_weight);
+  displayStatWithTooltip(&launchpad.max_weight);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =

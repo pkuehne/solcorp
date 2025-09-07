@@ -12,16 +12,16 @@ StatsModule::StatsModule(flecs::world &world) {
 
   // Register components
   world.component<Stat>("Stat")
-      .member<std::string>("id")
-      .member<std::string>("display")
-      .member<std::string>("description")
-      .member<double>("base");
+      .member("id", &Stat::m_id)
+      .member("display", &Stat::m_display)
+      .member("description", &Stat::m_description)
+      .member("base", &Stat::m_base);
   world.component<Effect>();
   world.component<HasEffect>();
   world.component<Modifier>()
-      .member<std::string>("target_stat")
-      .member<double>("additive")
-      .member<double>("multiplicative");
+      .member("target_stat", &Modifier::target_stat)
+      .member("additive", &Modifier::additive)
+      .member("multiplicative", &Modifier::multiplicative);
 
   // Register lua types
   register_lua_user_type<Stat>(
@@ -96,7 +96,7 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto ancestor = e; ancestor.is_alive(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
       second.children([&](flecs::entity modE) {
-        const Modifier *mod = modE.get<Modifier>();
+        const Modifier *mod = modE.try_get<Modifier>();
         if (mod) {
           const char *effectName = second.name().c_str();
           for (auto *stat : stats) {

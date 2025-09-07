@@ -24,33 +24,33 @@ void registerRender(flecs::world &world) {
 
   // Register components
   world.component<Color>()
-      .member<uint8_t>("r")
-      .member<uint8_t>("g")
-      .member<uint8_t>("b")
-      .member<uint8_t>("a");
+      .member("r", &Color::r)
+      .member("g", &Color::r)
+      .member("b", &Color::r)
+      .member("a", &Color::r);
   world.component<Point>().member<float>("x").member<float>("y");
   world.component<Transform>()
-      .member<Point>("relativePosition")
-      .member<Point>("worldPosition");
-  world.component<Renderer>();
+      .member("relativePosition", &Transform::relativePosition)
+      .member("worldPosition", &Transform::worldPosition);
+  world.component<Renderer>().add(flecs::Singleton);
   world.component<Texture>()
       .member<size_t>("ptr")
-      .member<int>("width")
-      .member<int>("height");
+      .member("width", &Texture::width)
+      .member("height", &Texture::height);
   world.component<Sprite>()
-      .member<flecs::entity>("texture")
-      .member<int>("tile")
-      .member<int>("x")
-      .member<int>("y")
-      .member<int>("width")
-      .member<int>("height")
-      .member<double>("rotation")
-      .member<int>("flip");
+      .member("texture", &Sprite::texture)
+      .member("tile", &Sprite::tile)
+      .member("x", &Sprite::x)
+      .member("y", &Sprite::y)
+      .member("width", &Sprite::width)
+      .member("height", &Sprite::height)
+      .member("rotation", &Sprite::rotation)
+      .member("flip", &Sprite::flip);
   world.component<Text>()
-      .member<std::string>("text")
-      .member<Color>("color")
-      .member<double>("rotation")
-      .member<int>("flip");
+      .member("text", &Text::text)
+      .member("color", &Text::color)
+      .member("rotation", &Text::rotation)
+      .member("flip", &Text::flip);
 
   register_lua_user_type<Color>(world, "Color",
                                 [](sol::usertype<Color> &userType) {
@@ -108,34 +108,24 @@ void registerRender(flecs::world &world) {
 
   world.system<Text, const Renderer>("Create Texture for Text")
       .without<Texture>()
-      .term_at(1)
-      .singleton()
       .kind(PreFramePhase)
       .each(systemCreateTextureForText);
 
   world.system<const Renderer>("Render Begin")
-      .term_at(0)
-      .singleton()
       .kind(PreRenderPhase)
       .each(systemRenderClear);
 
   world.system<const Sprite, const Transform, const Renderer>("Render Sprites")
-      .term_at(2)
-      .singleton()
       .kind(RenderPhase)
       .each(systemRenderSprite);
 
   world
       .system<const Text, const Texture, const Transform, const Renderer>(
           "Render Text")
-      .term_at(3)
-      .singleton()
       .kind(RenderPhase)
       .each(systemRenderText);
 
   world.system<const Renderer>("Render End")
-      .term_at(0)
-      .singleton()
       .kind(PostRenderPhase)
       .each(systemRenderPresent);
 }
@@ -225,7 +215,7 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
                            sprite.height * sprite.scale};
   auto t = sprite.texture.get<Texture>();
 
-  SDL_RenderCopyExF(renderer.renderer, t->ptr, &source, &destination,
+  SDL_RenderCopyExF(renderer.renderer, t.ptr, &source, &destination,
                     sprite.rotation, NULL,
                     static_cast<SDL_RendererFlip>(sprite.flip));
 }
@@ -239,7 +229,7 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
   SDL_Color color = {text.color.r, text.color.g, text.color.b, text.color.a};
 
   SDL_Surface *surface =
-      TTF_RenderText_Blended(font->ptr, text.text.c_str(), color);
+      TTF_RenderText_Blended(font.ptr, text.text.c_str(), color);
   if (!surface) {
     spdlog::error("Failed to render text surface: {}", TTF_GetError());
     return;
@@ -271,8 +261,8 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
 /// @returns A Texture Component to be added to an entity
 Texture loadTexture(const std::string &filename, flecs::world &world) {
   Texture texture;
-  const Renderer *r = world.get<Renderer>();
-  texture.ptr = IMG_LoadTexture(r->renderer, filename.c_str());
+  const Renderer r = world.get<Renderer>();
+  texture.ptr = IMG_LoadTexture(r.renderer, filename.c_str());
   if (texture.ptr == nullptr) {
     spdlog::error("Unable to create texture from surface. SDL Error: {}",
                   SDL_GetError());
