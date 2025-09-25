@@ -1,25 +1,23 @@
 #include "modules/simulation/simulation.h"
+#include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
-#include <gtest/gtest.h>
 
 extern void systemUpdateSimDate(Game &game);
 
-class SimulationModuleTests : public testing::Test {
-protected:
+SCENARIO("systemUpdateSimDate") {
   flecs::world world;
+  world.import <SimulationModule>();
 
-public:
-  SimulationModuleTests() { world.import <SimulationModule>(); }
-};
-
-TEST_F(SimulationModuleTests, GameDayAdvancesWhenSimulationRunning) {
-  // Given
-  Game *game = world.try_get_mut<Game>();
-  ASSERT_EQ(game->day, 0);
-
-  // When
-  systemUpdateSimDate(*game);
-
-  // Then
-  EXPECT_EQ(game->day, 1);
+  GIVEN("A game at day 0") {
+    Game *game = world.try_get_mut<Game>();
+    REQUIRE(game->day == 0);
+    WHEN("The system is run") {
+      systemUpdateSimDate(*game);
+      //
+      THEN("The day updates to 1") {
+        REQUIRE(game->day == 1);
+        //
+      }
+    }
+  }
 }

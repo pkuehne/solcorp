@@ -101,7 +101,7 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
   auto mods = world.lookup("Mods");
   if (!mods.is_valid()) {
-    spdlog::error("Mods entity does not exist!");
+    // spdlog::error("Mods entity does not exist!");
     return;
   }
   mods.children([&](flecs::entity modE) {

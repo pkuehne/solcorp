@@ -17,16 +17,6 @@ int main(void) {
 
   flecs::world world;
 
-  world.component<std::string>()
-      .opaque(flecs::String) // Opaque type that maps to string
-      .serialize([](const flecs::serializer *s, const std::string *data) {
-        const char *str = data->c_str();
-        return s->value(flecs::String, &str); // Forward to serializer
-      })
-      .assign_string([](std::string *data, const char *value) {
-        *data = value; // Assign new value to std::string
-      });
-
   load_config_file();
 
   world.import <LuaModule>();

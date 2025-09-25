@@ -1,5 +1,6 @@
 
 #include "rocket_launch.h"
+#include "flecs/addons/cpp/entity.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "modules/engine/engine.h"
@@ -105,6 +106,50 @@ void hideLaunchWindow(flecs::world &world) {
   spdlog::debug("Hiding LaunchWindow");
   auto winE = world.lookup("LaunchWindow");
   winE.destruct();
+}
+
+ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
+  const u_int launchPrepDays = 5;
+  u_int today = world.get<Game>().day;
+
+  if (world.lookup(plan.name.c_str()) != plan.current) {
+    return ValidationResult::Fail(
+        fmt::format("A Launch Plan named '{}' already exists", plan.name));
+  }
+  if (!plan.rocket.is_valid()) {
+    return ValidationResult::Fail("No rocket selected");
+  } else if (plan.rocket.has<LaunchingOn>(flecs::Wildcard)) {
+    // BUG: This doesn't account for the rocket being planned for *this*
+    // existing launch
+    return ValidationResult::Fail("Rocket is already planned for a launch");
+  }
+  if (!plan.launchpad.is_valid()) {
+    return ValidationResult::Fail("No launchpad selected");
+  } else {
+    bool clash = false;
+    plan.launchpad.each<LaunchingFrom>([&](flecs::entity p) {
+      auto launch = p.get<LaunchPlan>();
+      if (launch.launch_date < static_cast<u_int>(plan.launchDay) &&
+          launch.launch_date >= (plan.launchDay - launchPrepDays)) {
+        clash = true;
+      }
+    });
+    if (clash) {
+      return ValidationResult::Fail(
+          "Another launch is already scheduled at that time");
+    }
+  }
+  if (static_cast<u_int>(plan.launchDay) < today + launchPrepDays) {
+    return ValidationResult::Fail(
+        fmt::format("Launch needs to be planned at least {} days in advance",
+                    launchPrepDays));
+  }
+
+  return ValidationResult::Pass();
+}
+
+void PlannedLaunch::execute(flecs::world &) {
+  //
 }
 
 /// @brief Process LaunchPlans that are due

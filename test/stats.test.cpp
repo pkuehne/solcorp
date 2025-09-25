@@ -1,62 +1,42 @@
 #include "modules/stats/stats.h"
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
-class StatTest : public ::testing::Test {
-protected:
-  Stat stat = Stat("test_stat", "Displ", "More Text", 10.0);
-};
+SCENARIO("Stats") {
+  GIVEN("A test stat with value 10") {
+    Stat stat = Stat("test_stat", "Displ", "More Text", 10.0);
 
-TEST_F(StatTest, TestBase) {
-  // Given
-  // When
-  // Then
-  EXPECT_DOUBLE_EQ(stat.base(), 10.0);
-}
+    THEN("The base value is 10") { REQUIRE(stat.base() == 10.0); }
 
-TEST_F(StatTest, TestValue) {
-  // Given
-  EXPECT_DOUBLE_EQ(stat.value(), 10.0);
-  Modifier mod = {"test_stat", 5.0, 2.0};
+    WHEN("A multiplier mod of 2 is applied") {
+      Modifier mod = {"test_stat", 0.0, 2.0};
+      stat.addModifier(mod, "");
+      THEN("The result is 20") { REQUIRE(stat.value() == 20.0); }
+    }
 
-  // When
-  stat.addModifier(mod, "");
+    WHEN("An adder mod of 10 is applied") {
+      Modifier mod = {"test_stat", 10.0, 1.0};
+      stat.addModifier(mod, "");
+      THEN("The result is 20") { REQUIRE(stat.value() == 20.0); }
+    }
 
-  // Then
-  EXPECT_DOUBLE_EQ(stat.value(), 30.0);
-}
+    WHEN("An adder mod of 10 is applied and then reset") {
+      Modifier mod = {"test_stat", 10.0, 1.0};
+      bool result = stat.addModifier(mod, "");
+      stat.reset();
 
-TEST_F(StatTest, TestReset) {
-  // Given
-  Modifier mod = {"test_stat", 5.0, 2.0};
-  stat.addModifier(mod, "");
+      THEN("The result is again 10") {
+        REQUIRE(result == true);
+        REQUIRE(stat.value() == 10.0);
+      }
+    }
 
-  // When
-  stat.reset();
-
-  // Then
-  EXPECT_DOUBLE_EQ(stat.value(), 10.0);
-}
-
-TEST_F(StatTest, TestAddModifier) {
-  // Given
-  Modifier mod = {"test_stat", 5.0, 2.0};
-
-  // When
-  bool result = stat.addModifier(mod, "");
-
-  // Then
-  EXPECT_TRUE(result);
-  EXPECT_DOUBLE_EQ(stat.value(), 30.0);
-}
-
-TEST_F(StatTest, TestAddUnrelatedModifier) {
-  // Given
-  Modifier wrong_mod = {"wrong_stat", 5.0, 2.0};
-
-  // When
-  bool result = stat.addModifier(wrong_mod, "");
-
-  // Then
-  EXPECT_FALSE(result);
-  EXPECT_DOUBLE_EQ(stat.value(), 10.0);
+    WHEN("An unrelated modifier is added") {
+      Modifier mod = {"other_stat", 10.0, 1.0};
+      bool result = stat.addModifier(mod, "");
+      THEN("The result is again 10") {
+        REQUIRE(result == false);
+        REQUIRE(stat.value() == 10.0);
+      }
+    }
+  }
 }
