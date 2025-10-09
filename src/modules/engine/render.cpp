@@ -280,3 +280,25 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
 
   return texture;
 }
+
+Texture loadTexture(const unsigned char *data, unsigned int len,
+                    flecs::world &world) {
+  Texture texture;
+  const Renderer r = world.get<Renderer>();
+  SDL_RWops *rw = SDL_RWFromConstMem(data, static_cast<int>(len));
+  if (!rw) {
+    spdlog::error("SDL_RWFromConstMem failed: {}", SDL_GetError());
+    return texture;
+  }
+
+  SDL_Surface *surface = IMG_Load_RW(rw, 1); // 1 = free rw automatically
+  if (!surface) {
+    spdlog::error("IMG_Load_RW failed: {}", IMG_GetError());
+    return texture;
+  }
+
+  texture.ptr = SDL_CreateTextureFromSurface(r.renderer, surface);
+  SDL_FreeSurface(surface);
+
+  return texture;
+}

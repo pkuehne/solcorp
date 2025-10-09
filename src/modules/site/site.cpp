@@ -12,6 +12,9 @@
 #include "site_construction.h"
 #include <sol/types.hpp>
 
+extern unsigned char construction_png[];
+extern unsigned int construction_png_len;
+
 void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
@@ -96,11 +99,11 @@ SiteModule::SiteModule(flecs::world &world) {
 
   // Construction Site texture
   auto scope = world.set_scope(0);
-  // auto texture_node = world.entity("Textures");
-  // auto texture =
-  //     world.entity("Construction")
-  //         .child_of(texture_node)
-  //         .set<Texture>(loadTexture("textures/construction.png", world));
+  auto texture_node = world.entity("Textures");
+  auto texture = world.entity("Construction")
+                     .child_of(texture_node)
+                     .set<Texture>(loadTexture(construction_png,
+                                               construction_png_len, world));
   world.set_scope(scope);
 
   // Register Prefabs
@@ -109,7 +112,7 @@ SiteModule::SiteModule(flecs::world &world) {
   sprite.y = 0;
   sprite.width = 32;
   sprite.height = 32;
-  // sprite.texture = texture;
+  sprite.texture = texture;
 
   world.prefab("Building")
       .add<Building>()

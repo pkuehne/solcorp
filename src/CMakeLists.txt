@@ -108,6 +108,24 @@ target_link_libraries(solcorplib imgui)
 target_link_libraries(solcorplib sol2::sol2)
 target_link_libraries(solcorplib ${LUA54_LINK_LIBRARIES})
 
+# Embedded textures
+find_program(XXD xxd REQUIRED)
+set(RES_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/../textures/construction.png)
+set(RES_GEN  ${CMAKE_CURRENT_BINARY_DIR}/construction_png.cpp)
+add_custom_command(
+  OUTPUT  ${RES_GEN}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${XXD} -i -n construction_png ${RES_SRC} > ${RES_GEN}
+  DEPENDS ${RES_SRC}
+  VERBATIM
+  COMMENT "Embedding textures/construction.png -> construction_png.cpp"
+)
+
+# Object library to keep things tidy
+add_library(resources STATIC ${RES_GEN})
+target_include_directories(resources PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(solcorplib resources)
+
 # Executable
 add_executable(solcorp main.cpp)
 

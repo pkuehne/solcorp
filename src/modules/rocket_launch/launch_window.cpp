@@ -79,7 +79,6 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
     return;
   }
 
-  // auto *plan = m_entity.get_mut<LaunchPlan>();
   u_int today = world.get<Game>().day;
   if (static_cast<u_int>(win.launchDay) < today + win.launchPrepDays) {
     win.launchDay = today + win.launchPrepDays;
