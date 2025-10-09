@@ -14,8 +14,6 @@ void systemModCallbackForUpdate(flecs::entity, Mod &);
 void systemModCallbackForFrame(flecs::entity, Mod &);
 
 SimulationModule::SimulationModule(flecs::world &world) {
-  world.import <EngineModule>();
-
   // Register components
   world.component<Simulation>()
       .member("speed", &Simulation::speed)

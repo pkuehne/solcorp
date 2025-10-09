@@ -1,5 +1,6 @@
 #include "building_window.h"
 #include "imgui.h"
+#include "modules/rocket_launch/launch_window.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/stats/stats.h"
 #include "site.h"
@@ -182,7 +183,7 @@ void drawRocketButtons(flecs::entity &rocket) {
     if (target.is_valid()) {
       showLaunchWindowEdit(target);
     } else {
-      showLaunchWindowAdd(rocket.world(), &rocket);
+      showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
     }
   }
   movePopup(rocket);

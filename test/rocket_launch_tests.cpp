@@ -1,21 +1,9 @@
+#include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-// TEST_CASE("RocketLaunchModule loads correctly", "[rocket_launch]") {
-//   flecs::world world;
-//   world.import <RocketLaunchModule>();
-//   REQUIRE(world.component<Rocket>().is_valid());
-//   REQUIRE(world.component<CargoHold>().is_valid());
-//   REQUIRE(world.component<LaunchPlan>().is_valid());
-//   REQUIRE(world.component<LaunchWindow>().is_valid());
-//   REQUIRE(world.component<LaunchingWith>().is_valid());
-//   REQUIRE(world.component<LaunchingOn>().is_valid());
-//   REQUIRE(world.component<LaunchingFrom>().is_valid());
-//   REQUIRE(world.prefab<Rocket>().is_valid());
-// }
-
-SCENARIO("Rocket Launch Validation", "[rocket_launch]") {
+SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
 
@@ -26,31 +14,78 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch]") {
       ValidationResult result = launch.validate(world);
 
       THEN("It is invalid") {
-        REQUIRE(!result.ok);
-        REQUIRE(result.message == "No rocket selected");
+        CHECK(!result.ok);
+        CHECK(result.message == "No rocket selected");
       }
     }
   }
+
   GIVEN("A valid rocket") {
     auto rocket = world.entity().is_a<Rocket>();
-    PlannedLaunch launch({.rocket = rocket});
+    PlannedLaunch launch;
+    launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
       THEN("It still requires a launchpad") {
-        REQUIRE(!result.ok);
-        REQUIRE(result.message == "No launchpad selected");
+        CHECK(!result.ok);
+        CHECK(result.message == "No launchpad selected");
       }
     }
   }
+
   GIVEN("A pre-allocated rocket") {
     auto rocket = world.entity().is_a<Rocket>();
     rocket.add<LaunchingOn>(world.entity());
-    PlannedLaunch launch({.rocket = rocket});
+    PlannedLaunch launch;
+    launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
       THEN("Report the rocket is already planned") {
-        REQUIRE(!result.ok);
-        REQUIRE(result.message == "Rocket is already planned for a launch");
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket is already planned for a launch");
+      }
+    }
+  }
+
+  GIVEN("A missing launchpad") {
+    auto rocket = world.entity().is_a<Rocket>();
+    PlannedLaunch launch;
+    launch.rocket = rocket;
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("Report the launchpad  is missing") {
+        CHECK(!result.ok);
+        CHECK(result.message == "No launchpad selected");
+      }
+    }
+  }
+
+  GIVEN("A missing launchpad") {
+    auto rocket = world.entity().is_a<Rocket>();
+    PlannedLaunch launch;
+    launch.rocket = rocket;
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("Report the launchpad  is missing") {
+        CHECK(!result.ok);
+        CHECK(result.message == "No launchpad selected");
+      }
+    }
+  }
+  GIVEN("A valid plan") {
+    auto rocket = world.entity().is_a<Rocket>();
+    auto launchpad = world.entity();
+    PlannedLaunch launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.rocket = rocket;
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("It succeeds") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
       }
     }
   }

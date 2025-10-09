@@ -4,7 +4,7 @@
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 
-SCENARIO("systemApplyParentTransform") {
+SCENARIO("systemApplyParentTransform", "[system]") {
   GIVEN("A point at (10,20)") {
     Point original{10, 20};
     WHEN("A transform is applied without a parent") {

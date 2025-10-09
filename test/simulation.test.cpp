@@ -4,7 +4,7 @@
 
 extern void systemUpdateSimDate(Game &game);
 
-SCENARIO("systemUpdateSimDate") {
+SCENARIO("systemUpdateSimDate", "[system]") {
   flecs::world world;
   world.import <SimulationModule>();
 

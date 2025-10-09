@@ -1,7 +1,7 @@
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
 
-SCENARIO("Stats") {
+SCENARIO("Stats", "[stats]") {
   GIVEN("A test stat with value 10") {
     Stat stat = Stat("test_stat", "Displ", "More Text", 10.0);
 

@@ -24,7 +24,7 @@ catch_discover_tests(
 
 add_custom_target(tests
     DEPENDS unit_test
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+    COMMAND unit_test --success --colour-mode ansi -v quiet
     COMMENT "Running tests"
 )
 
