@@ -213,7 +213,15 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   SDL_FRect destination = {target.worldPosition.x, target.worldPosition.y,
                            sprite.width * sprite.scale,
                            sprite.height * sprite.scale};
+  if (!sprite.texture.is_valid()) {
+    spdlog::error("Sprite has no texture assigned");
+    return;
+  }
   auto t = sprite.texture.get<Texture>();
+  if (t.ptr == nullptr) {
+    spdlog::error("Texture pointer is null");
+    return;
+  }
 
   SDL_RenderCopyExF(renderer.renderer, t.ptr, &source, &destination,
                     sprite.rotation, NULL,
