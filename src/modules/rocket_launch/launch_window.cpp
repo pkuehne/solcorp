@@ -18,14 +18,14 @@ void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
   } while (world.lookup(name.c_str()).is_valid());
 
   auto win = LaunchWindow();
-  win.name = name;
+  win.draftPlan.name = name;
   if (rocket && rocket->is_valid()) {
-    win.rocket = *rocket;
+    win.draftPlan.rocket = *rocket;
   }
   if (launchpad && launchpad->is_valid()) {
-    win.launchpad = *launchpad;
+    win.draftPlan.launchpad = *launchpad;
   }
-  win.launchDay = today;
+  win.draftPlan.launchDay = today;
   world.entity("LaunchWindow").set<LaunchWindow>(win);
 }
 
@@ -40,10 +40,11 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   LaunchPlan plan = planE.ensure<LaunchPlan>();
 
   auto win = LaunchWindow();
-  win.name = planE.name();
-  win.launchDay = plan.launch_date;
-  win.rocket = planE.target<LaunchingOn>();
-  win.launchpad = planE.target<LaunchingFrom>();
+  win.draftPlan.name = planE.name();
+  win.draftPlan.launchDay = plan.launch_date;
+  win.draftPlan.rocket = planE.target<LaunchingOn>();
+  win.draftPlan.launchpad = planE.target<LaunchingFrom>();
+  win.planE = planE;
   world.entity("LaunchWindow").set<LaunchWindow>(win);
 }
 
@@ -73,40 +74,37 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
                                                //  .var("Site")
                                                .build();
 
-  if (win.planE == flecs::entity() || !win.planE.is_alive()) {
-    spdlog::error("Opened LaunchWindow on non-existant launch plan");
-    hideLaunchWindow(world);
-    return;
-  }
+  // bool is_edit = (win.planE == flecs::entity() || !win.planE.is_alive());
 
   u_int today = world.get<Game>().day;
-  if (static_cast<u_int>(win.launchDay) < today) {
-    win.launchDay = today;
+  if (static_cast<u_int>(win.draftPlan.launchDay) < today) {
+    win.draftPlan.launchDay = today;
   }
 
   ImGui::Begin("Launch Planning");
   ImGui::Text("Plan Name: ");
   ImGui::SameLine();
-  ImGui::InputText(" ", &win.name);
+  ImGui::InputText(" ", &win.draftPlan.name);
 
   ImGui::Text("Launch Date: ");
   ImGui::SameLine();
-  ImGui::DragInt("##LaunchDate", &win.launchDay, 1.0f, today + 5, today + 1000,
-                 "%d", ImGuiSliderFlags_AlwaysClamp);
+  ImGui::DragInt("##LaunchDate", &win.draftPlan.launchDay, 1.0f, today,
+                 today + 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
 
   // Rocket
   ImGui::Text("Rocket: ");
   ImGui::SameLine();
 
-  std::string rocketDisplay =
-      win.rocket.is_valid() ? win.rocket.name() : "<Select>";
+  std::string rocketDisplay = win.draftPlan.rocket.is_valid()
+                                  ? win.draftPlan.rocket.name()
+                                  : "<Select>";
   if (ImGui::BeginCombo("##RocketCombo", rocketDisplay.c_str())) {
     rocketQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e) {
-          if (ImGui::Selectable(e.name().c_str(), e == win.rocket)) {
-            win.rocket = e;
+          if (ImGui::Selectable(e.name().c_str(), e == win.draftPlan.rocket)) {
+            win.draftPlan.rocket = e;
           }
         });
     ImGui::EndCombo();
@@ -115,15 +113,17 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   // Launchpad
   ImGui::Text("Launchpad: ");
   ImGui::SameLine();
-  std::string padDisplay =
-      win.launchpad.is_valid() ? win.launchpad.name() : "<Select>";
+  std::string padDisplay = win.draftPlan.launchpad.is_valid()
+                               ? win.draftPlan.launchpad.name()
+                               : "<Select>";
   if (ImGui::BeginCombo("##Launchpad", padDisplay.c_str())) {
     launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e, Launchpad) {
-          if (ImGui::Selectable(e.name().c_str(), e == win.launchpad)) {
-            win.launchpad = e;
+          if (ImGui::Selectable(e.name().c_str(),
+                                e == win.draftPlan.launchpad)) {
+            win.draftPlan.launchpad = e;
           }
         });
     ImGui::EndCombo();

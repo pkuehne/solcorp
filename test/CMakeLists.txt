@@ -24,6 +24,12 @@ catch_discover_tests(
 
 add_custom_target(tests
     DEPENDS unit_test
+    COMMAND unit_test --colour-mode ansi
+    COMMENT "Running tests"
+)
+
+add_custom_target(alltests
+    DEPENDS unit_test
     COMMAND unit_test --success --colour-mode ansi -v quiet
     COMMENT "Running tests"
 )

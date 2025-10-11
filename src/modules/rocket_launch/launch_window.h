@@ -2,15 +2,15 @@
 
 #include "actions.h"
 #include <flecs.h>
-#include <string>
+// #include <string>
 
 struct LaunchWindow {
-  int launchDay = 0;
+  // int launchDay = 0;
 
   flecs::entity planE;
-  std::string name = "";
-  flecs::entity rocket;
-  flecs::entity launchpad;
+  // std::string name = "";
+  // flecs::entity rocket;
+  // flecs::entity launchpad;
   PlannedLaunch draftPlan;
 };
 

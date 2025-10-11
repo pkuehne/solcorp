@@ -47,8 +47,9 @@ ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
 
 void PlannedLaunch::execute(flecs::world &world) {
   auto plan = LaunchPlan();
-  auto planE = world.entity().set<LaunchPlan>(plan);
   plan.launch_date = launchDay;
+
+  auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);

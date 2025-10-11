@@ -91,3 +91,31 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
     }
   }
 }
+
+SCENARIO("Rocket Launch Execution", "[rocket_launch][action]") {
+  flecs::world world;
+  world.import <RocketLaunchModule>();
+
+  GIVEN("A valid plan") {
+    auto rocket = world.entity().is_a<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    PlannedLaunch launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.rocket = rocket;
+
+    WHEN("Executed") {
+      launch.execute(world);
+      THEN("A launch plan is created") {
+        REQUIRE(launch.result.is_valid());
+        CHECK(launch.result.get<LaunchPlan>().launch_date ==
+              static_cast<u_int>(launch.launchDay));
+        CHECK(launch.result.name().c_str() == launch.name);
+        CHECK(launch.result.target<LaunchingOn>() == rocket);
+        CHECK(launch.result.target<LaunchingFrom>() == launchpad);
+      }
+    }
+  }
+}

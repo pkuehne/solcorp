@@ -1,9 +1,10 @@
-
 #include "rocket_launch.h"
-#include "flecs/addons/cpp/entity.hpp"
+#include "actions.h"
 #include "launch_window.h"
+#include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 
@@ -15,20 +16,23 @@ void systemLaunchRocket(flecs::entity, LaunchPlan &);
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
-  spdlog::info("Loading RocketLaunchModule");
+  spdlog::debug("Loading RocketLaunchModule");
 
+  world.import <BaseModule>();
   world.import <SimulationModule>();
 
   // Register components
+  world.component<PlannedLaunch>("PlannedLaunch")
+      .member("name", &PlannedLaunch::name)
+      .member("launchDay", &PlannedLaunch::launchDay)
+      .member("rocket", &PlannedLaunch::rocket)
+      .member("launchpad", &PlannedLaunch::launchpad);
   world.component<Rocket>();
   world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>()
-      .member("launchDay", &LaunchWindow::launchDay)
       .member("planE", &LaunchWindow::planE)
-      .member("name", &LaunchWindow::name)
-      .member("rocket", &LaunchWindow::rocket)
-      .member("launchpad", &LaunchWindow::launchpad);
+      .member("draftPlan", &LaunchWindow::draftPlan);
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
@@ -76,7 +80,10 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 
     payloadE.destruct();
   }
+  auto launchpadE = planE.target<LaunchingFrom>();
   spdlog::info("Removing plan: {} launch_date: {} today: {}", planE.id(),
                plan.launch_date, today);
+  instantiateBuildingNotification(
+      world, launchpadE, fmt::format("{} launched", planE.name().c_str()));
   planE.destruct();
 }

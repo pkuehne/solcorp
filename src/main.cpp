@@ -1,3 +1,4 @@
+#include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/lua.h"
 #include "modules/main_menu/main_menu.h"
@@ -19,6 +20,7 @@ int main(void) {
 
   load_config_file();
 
+  world.import <BaseModule>();
   world.import <LuaModule>();
   world.import <EngineModule>();
   world.import <StatsModule>();

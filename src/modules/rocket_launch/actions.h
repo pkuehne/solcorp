@@ -26,7 +26,7 @@ struct IAction {
   virtual void execute(flecs::world &world) = 0;
 };
 
-struct PlannedLaunch : public IAction {
+struct PlannedLaunch {
   int launchDay = 0;
   flecs::entity current = flecs::entity::null();
   std::string name;
@@ -35,6 +35,6 @@ struct PlannedLaunch : public IAction {
 
   flecs::entity result = flecs::entity::null();
 
-  virtual ValidationResult validate(const flecs::world &world) const override;
-  virtual void execute(flecs::world &) override;
+  virtual ValidationResult validate(const flecs::world &world) const;
+  virtual void execute(flecs::world &);
 };
