@@ -32,10 +32,11 @@ public:
   /// @param display The display name of the stat.
   /// @param description The description of the stat.
   /// @param base The base value of the stat.
+  /// @param hib Whether higher values are better.
   Stat(const std::string &id, const std::string &display,
-       const std::string &description, double base = 0.0f)
-      : m_id(id), m_display(display), m_description(description), m_base(base) {
-  }
+       const std::string &description, double base = 0.0f, bool hib = true)
+      : m_id(id), m_display(display), m_description(description), m_base(base),
+        higher_is_better(hib) {}
 
   /// Gets the base value of the stat.
   /// @return The base value.
@@ -73,14 +74,15 @@ public:
   const std::vector<EffectModifier> &modifiers() const;
 
 public:
-  std::string m_id;                   ///< The ID of the stat.
-  std::string m_display;              ///< The display name of the stat.
-  std::string m_description;          ///< The description of the stat.
-  double m_base = 0.0f;               ///< The base value of the stat.
-  double m_additive_modifiers = 0.0f; ///< The total additive modifiers.
-  double m_multiplicative_modifiers =
-      1.0f; ///< The total multiplicative modifiers.
+  std::string m_id;                        ///< The ID of the stat.
+  std::string m_display;                   ///< The display name of the stat.
+  std::string m_description;               ///< The description of the stat.
   std::vector<EffectModifier> m_modifiers; ///< The list of modifiers.
+  double m_base = 0.0f;                    ///< The base value of the stat.
+  double m_additive_modifiers = 0.0f;      ///< The total additive modifiers.
+  double m_multiplicative_modifiers =
+      1.0f;                     ///< The total multiplicative modifiers.
+  bool higher_is_better = true; ///< Indicates if higher values are better.
 };
 
 /// Applies modifiers to the stats of an entity.

@@ -19,13 +19,13 @@ void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
 
   auto win = LaunchWindow();
   win.name = name;
-  win.launchDay = today + win.launchPrepDays;
   if (rocket && rocket->is_valid()) {
     win.rocket = *rocket;
   }
   if (launchpad && launchpad->is_valid()) {
     win.launchpad = *launchpad;
   }
+  win.launchDay = today;
   world.entity("LaunchWindow").set<LaunchWindow>(win);
 }
 
@@ -80,8 +80,8 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   }
 
   u_int today = world.get<Game>().day;
-  if (static_cast<u_int>(win.launchDay) < today + win.launchPrepDays) {
-    win.launchDay = today + win.launchPrepDays;
+  if (static_cast<u_int>(win.launchDay) < today) {
+    win.launchDay = today;
   }
 
   ImGui::Begin("Launch Planning");

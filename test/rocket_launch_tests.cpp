@@ -1,5 +1,6 @@
 #include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/rocket_launch.h"
+#include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -74,7 +75,7 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
   }
   GIVEN("A valid plan") {
     auto rocket = world.entity().is_a<Rocket>();
-    auto launchpad = world.entity();
+    auto launchpad = world.entity().add<Launchpad>();
     PlannedLaunch launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";

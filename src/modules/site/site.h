@@ -47,6 +47,9 @@ struct Office {
 struct Launchpad {
   Stat max_weight = Stat("max-weight", "Max Weight",
                          "The maximum weight the pad can support", 1000);
+  Stat prep_days =
+      Stat("prep-days", "Prep Days",
+           "Number of days required to prepare a launch", 5, false);
 };
 
 /// @brief Indiciates the entity is a future building location

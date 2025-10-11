@@ -120,20 +120,24 @@ void displayStatWithTooltip(const Stat *stat) {
     ImGui::Text("%s", stat->description().c_str());
     ImGui::Separator();
     ImGui::Text("Base Value: %.0f", stat->base());
+    constexpr ImVec4 red = ImVec4(1.0, 0.0, 0.0, 1.0);
+    constexpr ImVec4 green = ImVec4(0.0, 0.5, 0.0, 1.0);
     for (const auto &item : stat->modifiers()) {
       std::string modValue = "";
-      auto colour = ImVec4(0.0, 0.5, 0.0, 1.0);
+      ImVec4 colour;
       if (item.mod.additive > 0) {
         modValue = fmt::format("+{:.0f}", item.mod.additive);
+        colour = stat->higher_is_better ? green : red;
       } else if (item.mod.additive < 0) {
         modValue = fmt::format("{:.0f}", item.mod.additive);
-        colour = ImVec4(1.0, 0.0, 0.0, 1.0);
+        colour = stat->higher_is_better ? red : green;
       }
       if (item.mod.multiplicative > 1) {
         modValue = fmt::format("+{:.0f}%", (item.mod.multiplicative - 1) * 100);
+        colour = stat->higher_is_better ? green : red;
       } else if (item.mod.multiplicative < 1) {
         modValue = fmt::format("{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = ImVec4(1.0, 0.0, 0.0, 1.0);
+        colour = stat->higher_is_better ? red : green;
       }
       ImGui::Text("%s:", item.effectName.c_str());
       ImGui::SameLine();

@@ -37,7 +37,9 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Manufacturing>();
   world.component<Storage>();
   world.component<Office>();
-  world.component<Launchpad>().member("max_weight", &Launchpad::max_weight);
+  world.component<Launchpad>()
+      .member("max_weight", &Launchpad::max_weight)
+      .member("prep_days", &Launchpad::prep_days);
   world.component<BuildingWindow>()
       .member("buildingE", &BuildingWindow::buildingE)
       .member("open", &BuildingWindow::open);
@@ -56,6 +58,7 @@ SiteModule::SiteModule(flecs::world &world) {
   register_lua_user_type<Launchpad>(
       world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
         userType["max_weight"] = &Launchpad::max_weight;
+        userType["prep_days"] = &Launchpad::prep_days;
       });
   register_lua_user_type<Office>(world, "Office");
   register_lua_user_type<Storage>(world, "Storage");
@@ -95,6 +98,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(UpdatePhase)
       .each([](flecs::entity e, Launchpad &pad) {
         statsApplyModifiers(e, &pad.max_weight);
+        statsApplyModifiers(e, &pad.prep_days);
       });
 
   // Construction Site texture

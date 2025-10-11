@@ -24,7 +24,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>()
-      .member("launchPrepDays", &LaunchWindow::launchPrepDays)
       .member("launchDay", &LaunchWindow::launchDay)
       .member("planE", &LaunchWindow::planE)
       .member("name", &LaunchWindow::name)

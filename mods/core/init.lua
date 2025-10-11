@@ -78,6 +78,11 @@ local function on_start()
 	mod.multiplicative = 1.0
 	mod.additive = 500
 	solcorp.helpers.add_modifier(struts, mod)
+
+	mod.target_stat = "prep-days"
+	mod.multiplicative = 1.0
+	mod.additive = 3
+	solcorp.helpers.add_modifier(cracks, mod)
 end
 
 solcorp.script.handlers.on_init = on_init

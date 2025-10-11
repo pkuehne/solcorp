@@ -1,11 +1,11 @@
 #include "actions.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/site.h"
 #include "rocket_launch.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
 ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
-  const u_int launchPrepDays = 5;
   u_int today = world.get<Game>().day;
 
   if (world.lookup(name.c_str()) != current) {
@@ -21,20 +21,21 @@ ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
   }
   if (!launchpad.is_valid()) {
     return ValidationResult::Fail("No launchpad selected");
-  } else {
-    bool clash = false;
-    launchpad.each<LaunchingFrom>([&](flecs::entity p) {
-      auto launch = p.get<LaunchPlan>();
-      if (launch.launch_date < static_cast<u_int>(launchDay) &&
-          launch.launch_date >= (launchDay - launchPrepDays)) {
-        clash = true;
-      }
-    });
-    if (clash) {
-      return ValidationResult::Fail(
-          "Another launch is already scheduled at that time");
-    }
   }
+  unsigned int launchPrepDays = launchpad.get<Launchpad>().prep_days.value();
+  bool clash = false;
+  launchpad.each<LaunchingFrom>([&](flecs::entity p) {
+    auto launch = p.get<LaunchPlan>();
+    if (launch.launch_date < static_cast<u_int>(launchDay) &&
+        launch.launch_date >= (launchDay - launchPrepDays)) {
+      clash = true;
+    }
+  });
+  if (clash) {
+    return ValidationResult::Fail(
+        "Another launch is already scheduled at that time");
+  }
+
   if (static_cast<u_int>(launchDay) < today + launchPrepDays) {
     return ValidationResult::Fail(
         fmt::format("Launch needs to be planned at least {} days in advance",

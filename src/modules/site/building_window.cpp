@@ -140,6 +140,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
 
   auto launchpad = entity.get<Launchpad>();
   displayStatWithTooltip(&launchpad.max_weight);
+  displayStatWithTooltip(&launchpad.prep_days);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =

@@ -5,8 +5,6 @@
 #include <string>
 
 struct LaunchWindow {
-  u_int launchPrepDays = 5;
-
   int launchDay = 0;
 
   flecs::entity planE;
