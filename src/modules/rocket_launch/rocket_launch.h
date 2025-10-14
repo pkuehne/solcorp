@@ -26,6 +26,9 @@ struct LaunchingFrom {}; /// From which launchpad?
 struct LaunchingOn {};   /// On what  rocket
 struct LaunchingWith {}; /// With what payloads?
 
+// Systems
+void systemLaunchRocket(flecs::entity, LaunchPlan &);
+
 struct RocketLaunchModule {
   RocketLaunchModule(flecs::world &);
 };

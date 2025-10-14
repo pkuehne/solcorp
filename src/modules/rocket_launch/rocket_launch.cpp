@@ -11,8 +11,6 @@
 u_int LaunchPlan::max_id = 1;
 u_int Rocket::max_id = 1;
 
-void systemLaunchRocket(flecs::entity, LaunchPlan &);
-
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
@@ -65,24 +63,24 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto world = planE.world();
   u_int today = world.get<Game>().day;
 
-  if (plan.launch_date == 0 || plan.launch_date > today) {
+  if (plan.launch_date > today) {
     return;
   }
 
   auto rocketE = planE.target<LaunchingOn>();
   if (rocketE.is_valid()) {
-    spdlog::info("Removing rocket: {}", rocketE.id());
+    spdlog::debug("Removing rocket: {}", rocketE.id());
     rocketE.destruct();
   }
   auto payloadE = planE.target<LaunchingWith>();
   if (payloadE.is_valid()) {
-    spdlog::info("Removing payload: {}", payloadE.id());
+    spdlog::debug("Removing payload: {}", payloadE.id());
 
     payloadE.destruct();
   }
   auto launchpadE = planE.target<LaunchingFrom>();
-  spdlog::info("Removing plan: {} launch_date: {} today: {}", planE.id(),
-               plan.launch_date, today);
+  spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
+                plan.launch_date, today);
   instantiateBuildingNotification(
       world, launchpadE, fmt::format("{} launched", planE.name().c_str()));
   planE.destruct();

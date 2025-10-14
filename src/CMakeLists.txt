@@ -95,6 +95,9 @@ target_include_directories(solcorplib PUBLIC ${SDL2TTF_INCLUDE_DIRS})
 target_include_directories(solcorplib PUBLIC ${LUA54_INCLUDE_DIRS})
 
 set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER "${SolCorpHeaders}")
+target_compile_definitions(solcorplib PRIVATE
+                            SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+
 
 target_compile_options(solcorplib PRIVATE -Werror)
 target_compile_options(solcorplib PRIVATE -Wall)
