@@ -71,7 +71,7 @@ struct Text {
 
 Texture loadTexture(const std::string &, flecs::world &);
 Texture loadTexture(const unsigned char *data, unsigned int len,
-                    flecs::world &world);
+                    const flecs::world &world);
 
 void initialiseGraphics(flecs::world &);
 

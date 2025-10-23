@@ -2,7 +2,6 @@
 
 #include "modules/stats/stats.h"
 #include <flecs.h>
-#include <vector>
 
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
@@ -27,11 +26,8 @@ struct SiteLocation {
 
 /// @brief Allows construction of rockets
 struct Manufacturing {
-  std::vector<flecs::entity> lines;
   u_int max_weight = 1000;
   u_int available_effort = 50;
-
-  Manufacturing(size_t num = 1) : lines(num) {}
 };
 
 /// @brief For rockets and payloads
@@ -59,6 +55,8 @@ struct ConstructionSiteNeedsUpdating {};
 
 void showBuildingWindow(const flecs::entity &buildingE);
 void hideBuildingWindow(flecs::world &world);
+
+void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
 
 struct SiteModule {
 public:

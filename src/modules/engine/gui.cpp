@@ -3,6 +3,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
+#include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/render.h"
 #include "spdlog/spdlog.h"

@@ -41,8 +41,7 @@ local function on_start()
 	storage_prefab:setSprite(sprite)
 
 	local factory_prefab = solcorp.helpers.create_building_prefab("Factory")
-	local manu = solcorp.components.Manufacturing.new(2)
-	factory_prefab:setManufacturing(manu)
+	factory_prefab:getManufacturing()
 	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
 	factory_prefab:setSprite(sprite)
 

@@ -2,7 +2,6 @@
 #include "actions.h"
 #include "launch_window.h"
 #include "modules/base/base.h"
-#include "modules/engine/engine.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"

@@ -1,7 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
 #include "flecs/addons/cpp/c_types.hpp"
-#include "modules/engine/engine.h"
+#include "modules/base/base.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
 #include "modules/simulation/developer_window.h"

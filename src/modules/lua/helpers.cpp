@@ -35,7 +35,7 @@ flecs::entity create_building_prefab(sol::this_state s,
   }
   auto buildings = world->lookup("Prefabs::Buildings");
   auto prefab = world->prefab(name.c_str())
-                    .is_a(world->lookup("SiteModule::Building"))
+                    .is_a(world->lookup("Building"))
                     .child_of(buildings);
   return prefab;
 }

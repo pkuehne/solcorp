@@ -1,6 +1,6 @@
 #include "render.h"
 #include "SDL_render.h"
-#include "modules/engine/engine.h"
+#include "modules/base/base.h"
 #include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
 #include <SDL2/SDL.h>
@@ -282,7 +282,7 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
 }
 
 Texture loadTexture(const unsigned char *data, unsigned int len,
-                    flecs::world &world) {
+                    const flecs::world &world) {
   Texture texture;
   const Renderer r = world.get<Renderer>();
   SDL_RWops *rw = SDL_RWFromConstMem(data, static_cast<int>(len));

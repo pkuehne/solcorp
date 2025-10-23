@@ -1,7 +1,8 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
-#include "modules/engine/engine.h"
+#include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
+#include "modules/base/base.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
@@ -11,17 +12,17 @@
 #include "modules/stats/stats.h"
 #include "site_construction.h"
 #include <sol/types.hpp>
+#include <spdlog/spdlog.h>
 
 extern unsigned char construction_png[];
 extern unsigned int construction_png_len;
 
-void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
+void systemCreateSitePrefabs(flecs::iter &it);
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <EngineModule>();
   world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
 
@@ -64,17 +65,20 @@ SiteModule::SiteModule(flecs::world &world) {
   register_lua_user_type<Storage>(world, "Storage");
   register_lua_user_type<Manufacturing>(
       world, "Manufacturing", [](sol::usertype<Manufacturing> &userType) {
-        userType["new"] =
-            sol::constructors<Manufacturing(), Manufacturing(size_t)>();
+        userType["max_weight"] = &Manufacturing::max_weight;
+        userType["available_effort"] = &Manufacturing::available_effort;
       });
 
   // Register Systems
-  auto sim = world.get<Simulation>();
+  world.system("Site Create Prefabs")
+      .kind(flecs::OnStart)
+      .run(systemCreateSitePrefabs);
 
+  auto sim = world.get<Simulation>();
   world.system<Manufacturing>("Update Construction")
       .tick_source(sim.speed)
       .kind(UpdatePhase)
-      .each(systemBuildingUpdateConstruction);
+      .each(systemBuildingUpdateManufacuringProgress);
 
   world.system<BuildingWindow>("Draw Building Window")
       .kind(GuiPhase)
@@ -100,15 +104,18 @@ SiteModule::SiteModule(flecs::world &world) {
         statsApplyModifiers(e, &pad.max_weight);
         statsApplyModifiers(e, &pad.prep_days);
       });
+}
 
+void systemCreateSitePrefabs(flecs::iter &it) {
+  const flecs::world &world = it.world();
+
+  spdlog::debug("Creating Site Prefabs");
   // Construction Site texture
-  auto scope = world.set_scope(0);
   auto texture_node = world.entity("Textures");
   auto texture = world.entity("Construction")
                      .child_of(texture_node)
                      .set<Texture>(loadTexture(construction_png,
                                                construction_png_len, world));
-  world.set_scope(scope);
 
   // Register Prefabs
   Sprite sprite;
@@ -139,7 +146,9 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
   int tileSize = s.width;
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
+    spdlog::debug("Clicked on building {}", e.name().c_str());
     if (e.has<Building>()) {
+      spdlog::debug("Showing Building Window for {}", e.name().c_str());
       showBuildingWindow(e);
     } else if (e.has<ConstructionSite>()) {
       showConstructionSiteWindow(e);
@@ -147,29 +156,31 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
   }
 }
 
-void systemBuildingUpdateConstruction(flecs::entity entity,
-                                      Manufacturing &manufacturing) {
+void systemBuildingUpdateManufacuringProgress(flecs::entity entity,
+                                              Manufacturing &manufacturing) {
   flecs::world world = entity.world();
 
-  for (flecs::entity &rocket : manufacturing.lines) {
-    if (!rocket.is_valid()) {
-      continue;
+  flecs::entity rocket = flecs::entity::null();
+  entity.children([&](flecs::entity ch) {
+    if (ch.has<Construction>()) {
+      rocket = ch;
     }
-    Construction *construction = rocket.try_get_mut<Construction>();
-    if (!construction) {
-      // Remove it from the manufacturing line
-      rocket = flecs::entity();
-      continue;
-    }
-    if (manufacturing.available_effort > construction->effort_remaining) {
-      construction->effort_remaining = 0;
-    } else {
-      construction->effort_remaining -= manufacturing.available_effort;
-    }
-    if (construction->effort_remaining == 0) {
-      rocket.remove<Construction>();
-      rocket = flecs::entity();
-      instantiateBuildingNotification(world, entity, "Rocket finished");
-    }
+  });
+
+  if (!rocket.is_valid()) {
+    return;
+  }
+  Construction *construction = rocket.try_get_mut<Construction>();
+  if (!construction) {
+    return;
+  }
+  if (manufacturing.available_effort > construction->effort_remaining) {
+    construction->effort_remaining = 0;
+  } else {
+    construction->effort_remaining -= manufacturing.available_effort;
+  }
+  if (construction->effort_remaining == 0) {
+    rocket.remove<Construction>();
+    instantiateBuildingNotification(world, entity, "Rocket finished");
   }
 }

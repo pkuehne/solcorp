@@ -1,4 +1,5 @@
 #include "lua.h"
+#include "modules/base/base.h"
 #include "modules/lua/entity.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
@@ -22,7 +23,7 @@ LuaModule::LuaModule(flecs::world &world) {
   load_all_mods(world);
 
   world.system<Mod>("Mod on_start Event")
-      .kind(flecs::OnStart)
+      .kind(PostStartPhase)
       .immediate()
       .each(mod_on_start);
 }

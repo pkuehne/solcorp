@@ -114,6 +114,7 @@ SCENARIO("Rocket Launch System", "[rocket_launch][system]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
 
+  // auto sim = world.entity().set<Simulation>({1.0f, 0});
   auto site = world.entity().add<Site>().set<CurrentSite>({});
   auto launchpad = world.entity("Main Pad")
                        .is_a<Launchpad>()

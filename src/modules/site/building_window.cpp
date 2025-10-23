@@ -30,7 +30,6 @@ void showBuildingWindow(const flecs::entity &entity) {
 }
 
 void hideBuildingWindow(flecs::world &world) {
-
   spdlog::debug("Hiding BuildingWindow");
   auto entity = world.lookup("BuildingWindow");
   entity.destruct();
@@ -74,10 +73,16 @@ void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
 
 void drawManufacturingSection(flecs::entity &entity) {
   flecs::world world = entity.world();
-  Manufacturing &manu = entity.get_mut<Manufacturing>();
+  // Manufacturing &manu = entity.get_mut<Manufacturing>();
 
   size_t index = 0;
-  for (flecs::entity &e : manu.lines) {
+  {
+    flecs::entity e = flecs::entity::null();
+    entity.children([&](flecs::entity ch) {
+      if (ch.is_a<Rocket>()) {
+        e = ch;
+      }
+    });
     ImGui::PushID(index++);
     ImGui::SeparatorText(fmt::format("Line {}", index).c_str());
 
@@ -90,7 +95,7 @@ void drawManufacturingSection(flecs::entity &entity) {
         float completed = c->effort_total - c->effort_remaining;
         ImGui::ProgressBar(completed / c->effort_total);
       } else {
-        ImGui::Text(" ");
+        ImGui::ProgressBar(1.0);
       }
       drawRocketButtons(e);
       // ImGui::SameLine();
@@ -100,7 +105,7 @@ void drawManufacturingSection(flecs::entity &entity) {
     } else {
       // Nothing yet - the line is empty
       ImGui::Text("Empty Manufacturing Line");
-      ImGui::Text(" ");
+      ImGui::ProgressBar(0.0);
       if (ImGui::Button("Build")) {
         // Build new rocket
         // TODO: Move to RocketLaunch Module

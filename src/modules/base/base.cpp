@@ -1,6 +1,7 @@
 #include "base.h"
 #include <string>
 
+flecs::entity PostStartPhase;
 flecs::entity PreFramePhase;
 flecs::entity ValidatePhase;
 flecs::entity PostValidatePhase;
@@ -13,6 +14,9 @@ flecs::entity PostFramePhase;
 
 BaseModule::BaseModule(flecs::world &world) {
   // Register phases
+  PostStartPhase =
+      world.entity("PostStart").add(flecs::Phase).depends_on(flecs::OnStart);
+
   PreFramePhase = world.entity("PreFrame").add(flecs::Phase);
   ValidatePhase =
       world.entity("Validate").add(flecs::Phase).depends_on(PreFramePhase);

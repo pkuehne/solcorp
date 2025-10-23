@@ -7,6 +7,7 @@ fetchcontent_makeavailable(catch2)
 
 add_executable(unit_test
   main.cpp
+  manufacturing.test.cpp
   render.test.cpp
   rocket_launch_tests.cpp
   simulation.test.cpp
@@ -29,6 +30,7 @@ catch_discover_tests(
 # set_tests_properties(unit_test PROPERTIES ENVIRONMENT "SPDLOG_LEVEL=debug")
 
 add_custom_target(tests
+  DEPENDS unit_test
   COMMAND ${CMAKE_COMMAND} -E env
           SPDLOG_LEVEL=debug
           CTEST_OUTPUT_ON_FAILURE=1
