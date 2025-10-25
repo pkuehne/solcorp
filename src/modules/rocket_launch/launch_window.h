@@ -11,7 +11,7 @@ struct LaunchWindow {
   // std::string name = "";
   // flecs::entity rocket;
   // flecs::entity launchpad;
-  PlannedLaunch draftPlan;
+  ScheduleLaunchAction draftPlan;
 };
 
 void hideLaunchWindow(flecs::world &world);

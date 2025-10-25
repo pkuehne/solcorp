@@ -5,7 +5,8 @@
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
-ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
+ValidationResult
+ScheduleLaunchAction::validate(const flecs::world &world) const {
   u_int today = world.get<Game>().day;
 
   if (world.lookup(name.c_str()) != current) {
@@ -45,13 +46,35 @@ ValidationResult PlannedLaunch::validate(const flecs::world &world) const {
   return ValidationResult::Pass();
 }
 
-void PlannedLaunch::execute(flecs::world &world) {
-  auto plan = LaunchPlan();
-  plan.launch_date = launchDay;
+void ScheduleLaunchAction::execute(flecs::world &world) {
+  auto plan = LaunchPlan{static_cast<u_int>(launchDay)};
 
   auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
   result = planE;
+}
+
+ValidationResult MoveRocketAction::validate(const flecs::world &) const {
+  if (!rocket.is_valid()) {
+    return ValidationResult::Fail("Rocket is not valid");
+  }
+  if (rocket.has<Construction>()) {
+    return ValidationResult::Fail("Rocket is under construction");
+  }
+  if (!destination.is_valid()) {
+    return ValidationResult::Fail("Destination is not valid");
+  }
+  if (rocket.parent() == destination) {
+    return ValidationResult::Fail(
+        "Rocket is already stored in the selected destination");
+  }
+  return ValidationResult::Pass();
+}
+
+void MoveRocketAction::execute(flecs::world &world) {
+  if (!!validate(world)) {
+    rocket.child_of(destination);
+  }
 }

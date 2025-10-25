@@ -19,11 +19,11 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.import <SimulationModule>();
 
   // Register components
-  world.component<PlannedLaunch>("PlannedLaunch")
-      .member("name", &PlannedLaunch::name)
-      .member("launchDay", &PlannedLaunch::launchDay)
-      .member("rocket", &PlannedLaunch::rocket)
-      .member("launchpad", &PlannedLaunch::launchpad);
+  world.component<ScheduleLaunchAction>("PlannedLaunch")
+      .member("name", &ScheduleLaunchAction::name)
+      .member("launchDay", &ScheduleLaunchAction::launchDay)
+      .member("rocket", &ScheduleLaunchAction::rocket)
+      .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<Rocket>();
   world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();

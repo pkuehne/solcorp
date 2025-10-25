@@ -6,12 +6,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
+SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
 
   GIVEN("An empty plan") {
-    PlannedLaunch launch({});
+    ScheduleLaunchAction launch({});
 
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
@@ -25,7 +25,7 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
 
   GIVEN("A valid rocket") {
     auto rocket = world.entity().is_a<Rocket>();
-    PlannedLaunch launch;
+    ScheduleLaunchAction launch;
     launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
@@ -39,7 +39,7 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
   GIVEN("A pre-allocated rocket") {
     auto rocket = world.entity().is_a<Rocket>();
     rocket.add<LaunchingOn>(world.entity());
-    PlannedLaunch launch;
+    ScheduleLaunchAction launch;
     launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
@@ -52,7 +52,7 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
 
   GIVEN("A missing launchpad") {
     auto rocket = world.entity().is_a<Rocket>();
-    PlannedLaunch launch;
+    ScheduleLaunchAction launch;
     launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
@@ -66,7 +66,7 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
   GIVEN("A valid plan") {
     auto rocket = world.entity().is_a<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
-    PlannedLaunch launch;
+    ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
@@ -82,14 +82,14 @@ SCENARIO("Rocket Launch Validation", "[rocket_launch][action]") {
   }
 }
 
-SCENARIO("Rocket Launch Execution", "[rocket_launch][action]") {
+SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
 
   GIVEN("A valid plan") {
     auto rocket = world.entity().is_a<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
-    PlannedLaunch launch;
+    ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
@@ -114,7 +114,6 @@ SCENARIO("Rocket Launch System", "[rocket_launch][system]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
 
-  // auto sim = world.entity().set<Simulation>({1.0f, 0});
   auto site = world.entity().add<Site>().set<CurrentSite>({});
   auto launchpad = world.entity("Main Pad")
                        .is_a<Launchpad>()
@@ -158,6 +157,106 @@ SCENARIO("Rocket Launch System", "[rocket_launch][system]") {
       THEN("The rocket remains") {
         CHECK(rocket.is_alive());
         CHECK(planE.is_alive());
+      }
+    }
+  }
+}
+
+SCENARIO("MoveRocketAction Validation", "[validation][action]") {
+  flecs::world world;
+  world.import <RocketLaunchModule>();
+
+  GIVEN("An invalid Rocket entity") {
+    flecs::entity rocket = flecs::entity::null();
+    flecs::entity destination = world.entity();
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Validate is called") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result);
+        //
+      }
+    }
+  }
+
+  GIVEN("An invalid Destination ") {
+    flecs::entity rocket = world.entity().is_a<Rocket>();
+    flecs::entity destination = flecs::entity::null();
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Validate is called") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result);
+        //
+      }
+    }
+  }
+
+  GIVEN("Destination is the same as parent") {
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().is_a<Rocket>().child_of(destination);
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Validate is called") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result);
+        //
+      }
+    }
+  }
+
+  GIVEN("Rocket has Construction tag") {
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().is_a<Rocket>().add<Construction>();
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Validate is called") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result);
+        //
+      }
+    }
+  }
+
+  GIVEN("Valid rocket and destination") {
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().is_a<Rocket>();
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Validate is called") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation succeeds") {
+        CHECK(result.ok);
+        //
+      }
+    }
+  }
+}
+
+SCENARIO("MoveRocketAction Execution", "[execution][action]") {
+  flecs::world world;
+  world.import <RocketLaunchModule>();
+
+  GIVEN("A valid rocket and destination") {
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().is_a<Rocket>();
+    MoveRocketAction move = MoveRocketAction(rocket, destination);
+
+    WHEN("Move Rocket is attempted") {
+      move.execute(world);
+
+      THEN("The rocket is moved to the destination") {
+        CHECK(rocket.parent() == destination);
+        //
       }
     }
   }

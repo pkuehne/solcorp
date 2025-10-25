@@ -1,5 +1,6 @@
 #include "building_window.h"
 #include "imgui.h"
+#include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/launch_window.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/stats/stats.h"
@@ -238,10 +239,9 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::SameLine();
-  std::string issue =
-      destination == flecs::entity() ? "Invalid destination" : "";
-  if (ActionButton("Ok", nullptr, issue)) {
-    rocket.child_of(destination);
+  MoveRocketAction action{rocket, destination};
+  if (ActionButton("Ok", nullptr, action.validate(world).message)) {
+    action.execute(world);
     closePopup();
   }
   ImGui::EndPopup();
