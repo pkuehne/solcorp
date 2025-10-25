@@ -269,8 +269,12 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
 /// @returns A Texture Component to be added to an entity
 Texture loadTexture(const std::string &filename, flecs::world &world) {
   Texture texture;
-  const Renderer r = world.get<Renderer>();
-  texture.ptr = IMG_LoadTexture(r.renderer, filename.c_str());
+  const Renderer *r = world.try_get<Renderer>();
+  if (r == nullptr) {
+    spdlog::error("Renderer not set in world");
+    return texture;
+  }
+  texture.ptr = IMG_LoadTexture(r->renderer, filename.c_str());
   if (texture.ptr == nullptr) {
     spdlog::error("Unable to create texture from surface. SDL Error: {}",
                   SDL_GetError());
@@ -284,7 +288,11 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
 Texture loadTexture(const unsigned char *data, unsigned int len,
                     const flecs::world &world) {
   Texture texture;
-  const Renderer r = world.get<Renderer>();
+  const Renderer *r = world.try_get<Renderer>();
+  if (r == nullptr) {
+    spdlog::error("Renderer not set in world");
+    return texture;
+  }
   SDL_RWops *rw = SDL_RWFromConstMem(data, static_cast<int>(len));
   if (!rw) {
     spdlog::error("SDL_RWFromConstMem failed: {}", SDL_GetError());
@@ -297,7 +305,7 @@ Texture loadTexture(const unsigned char *data, unsigned int len,
     return texture;
   }
 
-  texture.ptr = SDL_CreateTextureFromSurface(r.renderer, surface);
+  texture.ptr = SDL_CreateTextureFromSurface(r->renderer, surface);
   SDL_FreeSurface(surface);
 
   return texture;

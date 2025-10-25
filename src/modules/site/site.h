@@ -24,7 +24,10 @@ struct SiteLocation {
   u_int y = 0;
 };
 
-/// @brief Allows construction of rockets
+/// @brief Marker component for facilities within a building
+struct Facility {};
+
+/// @brief Facility for constructing rockets
 struct Manufacturing {
   u_int max_weight = 1000;
   u_int available_effort = 50;
@@ -36,7 +39,9 @@ struct Storage {
 };
 
 struct Office {
-  u_int max_desks = 100;
+  Stat max_desks =
+      Stat("max-desks", "Max Desks",
+           "The maximum number of desks this facility can hold", 100);
 };
 
 /// @brief Can launch rockets
@@ -56,6 +61,7 @@ struct ConstructionSiteNeedsUpdating {};
 void showBuildingWindow(const flecs::entity &buildingE);
 void hideBuildingWindow(flecs::world &world);
 
+void systemCreateSitePrefabs(flecs::iter &);
 void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
 
 struct SiteModule {

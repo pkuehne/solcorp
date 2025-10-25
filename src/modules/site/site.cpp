@@ -19,7 +19,6 @@ extern unsigned int construction_png_len;
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
-void systemCreateSitePrefabs(flecs::iter &it);
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -35,9 +34,10 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<SiteLocation>()
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);
+  world.component<Facility>();
   world.component<Manufacturing>();
   world.component<Storage>();
-  world.component<Office>();
+  world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)
       .member("prep_days", &Launchpad::prep_days);
@@ -107,6 +107,17 @@ SiteModule::SiteModule(flecs::world &world) {
       });
 }
 
+/**
+ * @brief Registers site-related prefab entities in the ECS world.
+ *
+ * This function creates and registers prefab entities for buildings,
+ * construction sites, and facilities, along with their associated components
+ * and textures. It ensures that the necessary prefab hierarchy nodes exist,
+ * loads the construction site texture, and sets up default sprite properties
+ * for the prefabs.
+ *
+ * @param it The ECS iterator providing access to the world context.
+ */
 void systemCreateSitePrefabs(flecs::iter &it) {
   const flecs::world &world = it.world();
 
@@ -126,6 +137,7 @@ void systemCreateSitePrefabs(flecs::iter &it) {
   sprite.height = 32;
   sprite.texture = texture;
 
+  // Ensure prefab hierarchy nodes exist
   auto prefabs_node = world.lookup("Prefabs");
   if (!prefabs_node.is_valid()) {
     prefabs_node = world.entity("Prefabs");
@@ -138,7 +150,12 @@ void systemCreateSitePrefabs(flecs::iter &it) {
   if (!building_node.is_valid()) {
     building_node = world.entity("Buildings").child_of(prefabs_node);
   }
+  auto facility_node = world.lookup("Prefabs::Facilities");
+  if (!facility_node.is_valid()) {
+    facility_node = world.entity("Facilities").child_of(prefabs_node);
+  }
 
+  // Create Building prefab
   world.prefab("Building")
       .child_of(core_node)
       .add<Building>()
@@ -146,6 +163,7 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .set<Transform>({})
       .set<Sprite>(sprite);
 
+  // Create ConstructionSite prefab with adjusted sprite position
   sprite.y = 128;
   world.prefab("ConstructionSite")
       .child_of(core_node)
@@ -153,6 +171,8 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .set<SiteLocation>({})
       .set<Transform>({})
       .set<Sprite>(sprite);
+
+  world.prefab("Facility").child_of(core_node).add<Facility>();
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,

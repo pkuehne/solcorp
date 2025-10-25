@@ -11,6 +11,7 @@ add_executable(unit_test
   render.test.cpp
   rocket_launch_tests.cpp
   simulation.test.cpp
+  site.test.cpp
   stats.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
