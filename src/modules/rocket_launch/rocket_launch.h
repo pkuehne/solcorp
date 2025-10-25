@@ -28,6 +28,7 @@ struct LaunchingWith {}; /// With what payloads?
 
 // Systems
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
+void systemCreateRocketPrefabs(flecs::iter &);
 
 struct RocketLaunchModule {
   RocketLaunchModule(flecs::world &);

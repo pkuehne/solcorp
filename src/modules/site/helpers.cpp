@@ -35,7 +35,7 @@ flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
 flecs::entity instantiateConstructionSite(flecs::world &world, u_int x, u_int y,
                                           flecs::entity site) {
 
-  std::string prefabName = "ConstructionSite";
+  std::string prefabName = "Prefabs::Core::ConstructionSite";
   auto prefabE = world.lookup(prefabName.c_str());
   if (!prefabE.is_valid()) {
     spdlog::error("Prefab {} does not exist", prefabName);

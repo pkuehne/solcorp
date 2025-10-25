@@ -80,7 +80,7 @@ void drawManufacturingSection(flecs::entity &entity) {
   {
     flecs::entity e = flecs::entity::null();
     entity.children([&](flecs::entity ch) {
-      if (ch.is_a<Rocket>()) {
+      if (ch.has<Rocket>()) {
         e = ch;
       }
     });
@@ -110,8 +110,10 @@ void drawManufacturingSection(flecs::entity &entity) {
       if (ImGui::Button("Build")) {
         // Build new rocket
         // TODO: Move to RocketLaunch Module
+        auto prefab = world.lookup("Prefabs::Core::Rocket");
+        assert(prefab.is_valid());
         e = world.entity()
-                .is_a<Rocket>()
+                .is_a(prefab)
                 .set<Construction>({300, 300})
                 .child_of(entity);
         e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
@@ -152,7 +154,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
   flecs::query<LaunchPlan> query =
       world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
   query.each([](flecs::entity planE, LaunchPlan &plan) {
-    ImGui::PushID(planE.id()); // Todo: Why is this not showing two plans?
+    ImGui::PushID(planE.id());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
     if (ImGui::SmallButton("Open")) {

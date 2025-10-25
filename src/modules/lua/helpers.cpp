@@ -33,10 +33,13 @@ flecs::entity create_building_prefab(sol::this_state s,
   if (!world->lookup("Prefabs::Buildings")) {
     world->entity("Buildings").child_of(world->entity("Prefabs"));
   }
-  auto buildings = world->lookup("Prefabs::Buildings");
+  auto buildings_node = world->lookup("Prefabs::Buildings");
+  assert(buildings_node.is_valid());
+  auto building_prefab = world->lookup("Prefabs::Core::Building");
+  assert(building_prefab.is_valid());
   auto prefab = world->prefab(name.c_str())
-                    .is_a(world->lookup("Building"))
-                    .child_of(buildings);
+                    .is_a(building_prefab)
+                    .child_of(buildings_node);
   return prefab;
 }
 

@@ -72,6 +72,7 @@ SiteModule::SiteModule(flecs::world &world) {
   // Register Systems
   world.system("Site Create Prefabs")
       .kind(flecs::OnStart)
+      .immediate()
       .run(systemCreateSitePrefabs);
 
   auto sim = world.get<Simulation>();
@@ -125,7 +126,21 @@ void systemCreateSitePrefabs(flecs::iter &it) {
   sprite.height = 32;
   sprite.texture = texture;
 
+  auto prefabs_node = world.lookup("Prefabs");
+  if (!prefabs_node.is_valid()) {
+    prefabs_node = world.entity("Prefabs");
+  }
+  auto core_node = world.lookup("Prefabs::Core");
+  if (!core_node.is_valid()) {
+    core_node = world.entity("Core").child_of(world.entity("Prefabs"));
+  }
+  auto building_node = world.lookup("Prefabs::Buildings");
+  if (!building_node.is_valid()) {
+    building_node = world.entity("Buildings").child_of(prefabs_node);
+  }
+
   world.prefab("Building")
+      .child_of(core_node)
       .add<Building>()
       .set<SiteLocation>({})
       .set<Transform>({})
@@ -133,6 +148,7 @@ void systemCreateSitePrefabs(flecs::iter &it) {
 
   sprite.y = 128;
   world.prefab("ConstructionSite")
+      .child_of(core_node)
       .add<ConstructionSite>()
       .set<SiteLocation>({})
       .set<Transform>({})

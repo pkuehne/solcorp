@@ -38,10 +38,11 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
 
-  // Register prefabs
-  world.prefab<Rocket>().set<CargoHold>({1000});
-
   // Register systems
+  world.system("Create Rocket Prefabs")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateRocketPrefabs);
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)
@@ -83,4 +84,25 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   instantiateBuildingNotification(
       world, launchpadE, fmt::format("{} launched", planE.name().c_str()));
   planE.destruct();
+}
+
+void systemCreateRocketPrefabs(flecs::iter &it) {
+  const flecs::world &world = it.world();
+
+  spdlog::debug("Creating Rocket Prefabs");
+  auto prefabs_node = world.lookup("Prefabs");
+  if (!prefabs_node.is_valid()) {
+    prefabs_node = world.entity("Prefabs");
+  }
+  auto core_node = world.lookup("Prefabs::Core");
+  if (!core_node.is_valid()) {
+    core_node = world.entity("Core").child_of(world.entity("Prefabs"));
+  }
+  auto rocket_node = world.lookup("Prefabs::Rockets");
+  if (!rocket_node.is_valid()) {
+    rocket_node = world.entity("Rockets").child_of(prefabs_node);
+  }
+
+  world.prefab("Rocket").child_of(core_node).add<Rocket>().set<CargoHold>(
+      {1000});
 }

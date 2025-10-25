@@ -60,11 +60,10 @@ void hideLaunchWindow(flecs::world &world) {
 void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   auto world = winE.world();
   flecs::query<> rocketQuery = world.query_builder()
-                                   .with(flecs::IsA)
-                                   .second<Rocket>()
-                                   //  .with(flecs::ChildOf)
-                                   //  .second()
-                                   //  .var("Site")
+                                   .with<Rocket>()
+                                   // .term(flecs::ChildOf, current_site)
+                                   // .src(flecs::This)
+                                   // .up(flecs::ChildOf)
                                    .build();
   ;
   flecs::query<Launchpad> launchpadQuery = world.query_builder<Launchpad>()
