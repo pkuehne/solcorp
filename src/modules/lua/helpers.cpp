@@ -27,12 +27,6 @@ flecs::entity create_building_prefab(sol::this_state s,
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
-  if (!world->lookup("Prefabs")) {
-    world->entity("Prefabs");
-  }
-  if (!world->lookup("Prefabs::Buildings")) {
-    world->entity("Buildings").child_of(world->entity("Prefabs"));
-  }
   auto buildings_node = world->lookup("Prefabs::Buildings");
   assert(buildings_node.is_valid());
   auto building_prefab = world->lookup("Prefabs::Core::Building");
@@ -40,6 +34,29 @@ flecs::entity create_building_prefab(sol::this_state s,
   auto prefab = world->prefab(name.c_str())
                     .is_a(building_prefab)
                     .child_of(buildings_node);
+  return prefab;
+}
+
+/**
+ * @brief Creates a new facility prefab entity in the ECS world.
+ *
+ * This function creates a prefab entity with the given name, making it a child
+ * of the "Prefabs::Facilities" node and inheriting from the
+ * "Prefabs::Core::Facility" prefab.
+ *
+ * @param name The name of the new facility prefab.
+ * @return flecs::entity The created prefab entity.
+ */
+flecs::entity add_facility_to_building(sol::this_state s,
+                                       flecs::entity building,
+                                       const std::string &name) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  auto facility_prefab = world->lookup("Prefabs::Core::Facility");
+  assert(facility_prefab.is_valid());
+  auto prefab =
+      world->prefab(name.c_str()).is_a(facility_prefab).child_of(building);
   return prefab;
 }
 
@@ -128,6 +145,7 @@ void load_helpers_namespace(sol::state &mod_state) {
   helpers.set_function("create_building_prefab", create_building_prefab);
   helpers.set_function("create_site", create_site);
   helpers.set_function("create_building", create_building);
+  helpers.set_function("add_facility_to_building", add_facility_to_building);
   helpers.set_function("create_effect", create_effect);
   helpers.set_function("create_texture", create_texture);
   helpers.set_function("add_modifier", add_modifier);

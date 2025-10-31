@@ -35,8 +35,10 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);
   world.component<Facility>();
-  world.component<Manufacturing>();
-  world.component<Storage>();
+  world.component<Manufacturing>()
+      .member("max_weight", &Manufacturing::max_weight)
+      .member("available_effort", &Manufacturing::available_effort);
+  world.component<Storage>().member("max_storage", &Storage::max_storage);
   world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)

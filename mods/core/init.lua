@@ -24,37 +24,45 @@ local function on_start()
 	solcorp.helpers.create_texture("Buildings", "buildings.png")
 
 	-- Create Prefabs
+
 	local sprite
-	local lp_prefab = solcorp.helpers.create_building_prefab("Launchpad")
-	lp_prefab:getLaunchpad()
+	local building
+	local facility
+
+	building = solcorp.helpers.create_building_prefab("Launch Complex")
 	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 96, 32, 32)
-	lp_prefab:setSprite(sprite)
+	building:setSprite(sprite)
+	facility = solcorp.helpers.add_facility_to_building(building, "Launchpad A")
+	facility:getLaunchpad()
 
-	local office_prefab = solcorp.helpers.create_building_prefab("Office Building")
-	office_prefab:getOffice()
+	building = solcorp.helpers.create_building_prefab("Office Building")
 	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 32, 32, 32)
-	office_prefab:setSprite(sprite)
+	building:setSprite(sprite)
+	facility = solcorp.helpers.add_facility_to_building(building, "Floor 1")
+	facility:getOffice()
 
-	local storage_prefab = solcorp.helpers.create_building_prefab("Storage Hall")
-	storage_prefab:getStorage()
+	building = solcorp.helpers.create_building_prefab("Storage Hall")
 	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
-	storage_prefab:setSprite(sprite)
+	building:setSprite(sprite)
+	facility = solcorp.helpers.add_facility_to_building(building, "Hall 1")
+	facility:getStorage()
 
-	local factory_prefab = solcorp.helpers.create_building_prefab("Factory")
-	factory_prefab:getManufacturing()
+	building = solcorp.helpers.create_building_prefab("Factory")
 	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
-	factory_prefab:setSprite(sprite)
+	building:setSprite(sprite)
+	facility = solcorp.helpers.add_facility_to_building(building, "Line 1")
+	facility:getManufacturing()
+	facility = solcorp.helpers.add_facility_to_building(building, "Line 2")
+	facility:getManufacturing()
 
 	-- Create a new site
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
 	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
 	solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 0, 0, site)
-	solcorp.helpers.create_building("Main Launchpad", "Launchpad", 1, 0, site)
+	solcorp.helpers.create_building("Main Launchpad", "Launch Complex", 1, 0, site)
 	solcorp.helpers.create_building("North Building", "Office Building", 2, 0, site)
-
-	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launchpad", 5, 5, site)
-	south_pad:getLaunchpad().max_weight.base = 5000
+	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launch Complex", 5, 5, site)
 
 	local e = solcorp.entities.create()
 	e:child_of(south_pad)
