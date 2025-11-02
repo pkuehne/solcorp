@@ -3,6 +3,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
+#include "modules/simulation/celestial_browser.h"
 #include "modules/simulation/developer_window.h"
 #include "spdlog/spdlog.h"
 
@@ -17,11 +18,30 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.component<Simulation>()
       .member("speed", &Simulation::speed)
       .add(flecs::Singleton);
+  world.component<CelestialBody>()
+      .member("semi_major_axis", &CelestialBody::semi_major_axis)
+      .member("eccentricity", &CelestialBody::eccentricity)
+      .member("inclination", &CelestialBody::inclination)
+      .member("longitude_of_ascending_node",
+              &CelestialBody::longitude_of_ascending_node)
+      .member("argument_of_periapsis", &CelestialBody::argument_of_periapsis)
+      .member("mean_anomaly_at_epoch", &CelestialBody::mean_anomaly_at_epoch)
+      .member("retrograde", &CelestialBody::retrograde)
+      .member("radius", &CelestialBody::radius)
+      .member("gravity", &CelestialBody::gravity)
+      .member("density", &CelestialBody::density)
+      .member("mass", &CelestialBody::mass)
+      .member("gm", &CelestialBody::gm)
+      .member("rotation_period", &CelestialBody::rotation_period)
+      .member("albedo", &CelestialBody::albedo);
   world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
   world.component<Developer>()
       .member("show_metrics_window", &Developer::show_metrics_window)
       .add(flecs::Singleton);
   world.component<DeveloperWindow>().member("open", &DeveloperWindow::open);
+  world.component<Window>().member("open", &Window::open);
+  world.component<CelestialBrowser>().member("selected_body",
+                                             &CelestialBrowser::selected_body);
 
   // Create Singletons
   auto sim = Simulation{world.timer("SimTimer").interval(0.5f).disable()};
@@ -48,6 +68,9 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<DeveloperWindow>("Draw Developer Window")
       .kind(GuiPhase)
       .each(systemDrawDeveloperWindow);
+  world.system<CelestialBrowser>("Draw Celestial Browser")
+      .kind(GuiPhase)
+      .each(systemDrawCelestialBrowser);
   world.system<Mod>("Mod on_update Event")
       .kind(UpdatePhase)
       .tick_source(sim.speed)
@@ -76,6 +99,9 @@ void systemShowDeveloperWindow(flecs::iter &it, size_t, const KeyDown event) {
   auto world = it.world();
   if (event.key == SDLK_d) {
     showDeveloperWindow(world);
+  }
+  if (event.key == SDLK_b) {
+    showWindow(world, "CelestialBrowser");
   }
 }
 
