@@ -31,11 +31,16 @@ void systemDrawDeveloperWindow(flecs::entity winE, DeveloperWindow &win) {
     hideDeveloperWindow(world);
     return;
   }
-  auto options = world.get_mut<Developer>();
+  auto &options = world.get_mut<Developer>();
 
   ImGui::Begin("Developer Tools", &win.open);
   ImGui::Checkbox("Show Metrics Window", &options.show_metrics_window);
-  world.children(child_tree);
+
+  if (ImGui::BeginTabBar("Tools")) {
+    if (ImGui::BeginTabItem("Entity Tree")) {
+      world.children(child_tree);
+    }
+  }
   ImGui::End();
 
   if (options.show_metrics_window) {

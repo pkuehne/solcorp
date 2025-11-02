@@ -19,6 +19,9 @@ flecs::entity create_site(sol::this_state s, const std::string &name,
   if (make_current) {
     site.add<CurrentSite>();
   }
+  auto earth = world->lookup("Sun::Earth");
+  assert(earth.is_valid());
+  site.child_of(earth);
   return site;
 }
 
