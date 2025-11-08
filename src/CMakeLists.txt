@@ -59,7 +59,7 @@ list(APPEND SolCorpHeaders
 
 fetchcontent_declare(flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs
-    GIT_TAG v4.1.1
+    GIT_TAG v4.1.2
 )
 fetchcontent_declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/
@@ -157,7 +157,8 @@ add_custom_target(run
 )
 
 add_custom_target(debug
-    COMMAND gdb build/src/solcorp
+    COMMAND gdb $<TARGET_FILE:solcorp>
+    USES_TERMINAL
     DEPENDS solcorp
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT Debugging SolCorp

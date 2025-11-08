@@ -1,6 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
 #include "modules/base/base.h"
+#include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
 #include "modules/simulation/celestial_browser.h"
@@ -9,7 +10,7 @@
 
 void systemUpdateSimDate(Game &game);
 void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
-void systemShowDeveloperWindow(flecs::iter &, size_t, const KeyDown);
+void systemShowWindows(flecs::iter &, size_t, const KeyDown);
 void systemModCallbackForUpdate(flecs::entity, Mod &);
 void systemModCallbackForFrame(flecs::entity, Mod &);
 
@@ -35,11 +36,9 @@ SimulationModule::SimulationModule(flecs::world &world) {
       .member("rotation_period", &CelestialBody::rotation_period)
       .member("albedo", &CelestialBody::albedo);
   world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
-  world.component<Developer>()
-      .member("show_metrics_window", &Developer::show_metrics_window)
-      .add(flecs::Singleton);
-  world.component<DeveloperWindow>().member("open", &DeveloperWindow::open);
-  world.component<Window>().member("open", &Window::open);
+  world.component<Developer>().add(flecs::Singleton);
+  world.component<DeveloperWindow>().member(
+      "show_metrics_window", &DeveloperWindow::show_metrics_window);
   world.component<CelestialBrowser>().member("selected_body",
                                              &CelestialBrowser::selected_body);
 
@@ -62,15 +61,9 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<const KeyDown>("Quit on Esc")
       .kind(ValidatePhase)
       .each(systemQuitOnEscape);
-  world.system<const KeyDown>("Show Developer Window")
+  world.system<const KeyDown>("Show Windows")
       .kind(ValidatePhase)
-      .each(systemShowDeveloperWindow);
-  world.system<DeveloperWindow>("Draw Developer Window")
-      .kind(GuiPhase)
-      .each(systemDrawDeveloperWindow);
-  world.system<CelestialBrowser>("Draw Celestial Browser")
-      .kind(GuiPhase)
-      .each(systemDrawCelestialBrowser);
+      .each(systemShowWindows);
   world.system<Mod>("Mod on_update Event")
       .kind(UpdatePhase)
       .tick_source(sim.speed)
@@ -78,6 +71,10 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<Mod>("Mod on_frame Event")
       .kind(UpdatePhase)
       .each(systemModCallbackForFrame);
+  world.system("Register Windows")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemRegisterWindows);
   world.system("Generate Sol System")
       .kind(flecs::OnStart)
       .immediate()
@@ -95,13 +92,13 @@ void systemQuitOnEscape(flecs::iter &it, size_t, const KeyDown event) {
   }
 }
 
-void systemShowDeveloperWindow(flecs::iter &it, size_t, const KeyDown event) {
+void systemShowWindows(flecs::iter &it, size_t, const KeyDown event) {
   auto world = it.world();
   if (event.key == SDLK_d) {
-    showDeveloperWindow(world);
+    showWindow(world, "Developer Window");
   }
   if (event.key == SDLK_b) {
-    showWindow(world, "CelestialBrowser");
+    showWindow(world, "Celestial Browser");
   }
 }
 
@@ -115,6 +112,14 @@ void systemModCallbackForFrame(flecs::entity e, Mod &mod) {
   auto world = e.world();
 
   run_mod_handler(mod, world, "on_frame");
+}
+
+void systemRegisterWindows(flecs::iter &it) {
+  auto world = it.world();
+  registerWindow("Celestial Browser", drawCelestialBrowser, world)
+      .set<CelestialBrowser>({});
+  registerWindow("Developer Window", drawDeveloperWindow, world)
+      .set<DeveloperWindow>({});
 }
 
 void systemGenerateSolSystem(flecs::iter &it) {

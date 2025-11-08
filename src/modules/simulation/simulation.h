@@ -32,10 +32,9 @@ struct CelestialBody {
   double albedo;          // 0.0–1.0
 };
 
-struct Developer {
-  bool show_metrics_window = false;
-};
+struct Developer {};
 
+void systemRegisterWindows(flecs::iter &);
 void systemGenerateSolSystem(flecs::iter &);
 
 struct SimulationModule {

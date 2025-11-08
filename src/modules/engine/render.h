@@ -1,12 +1,12 @@
 #pragma once
 
+#include <SDL_ttf.h>
 #include <flecs.h>
 #include <string>
 
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
-struct TTF_Font;
 
 struct Color {
   uint8_t r = 0;

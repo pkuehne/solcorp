@@ -4,32 +4,6 @@
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
-void showWindow(flecs::world &world, const std::string &name) {
-  auto windows = world.lookup("Windows");
-  if (!windows.is_valid()) {
-    windows = world.entity("Windows");
-  }
-  auto winE = windows.lookup(name.c_str());
-  if (!winE.is_valid()) {
-    winE = world.entity(name.c_str()).set<Window>({true}).child_of(windows);
-    if (name == "CelestialBrowser") {
-      winE.set<CelestialBrowser>({});
-    }
-  } else {
-    winE.get_mut<Window>().open = true;
-  }
-}
-void hideWindow(flecs::world &world, const std::string &name) {
-  auto windows = world.lookup("Windows");
-  if (!windows.is_valid()) {
-    windows = world.entity("Windows");
-  }
-  auto winE = windows.lookup(name.c_str());
-  if (winE.is_valid()) {
-    winE.get_mut<Window>().open = false;
-  }
-}
-
 void drawCelestialBodyNode(flecs::entity body, CelestialBrowser &state) {
   if (!body.has<CelestialBody>()) {
     return;
@@ -85,7 +59,6 @@ void drawCelestialDetails(flecs::entity selected_body) {
       ImGui::TableSetColumnIndex(0);
       ImGui::TextUnformatted(label.data());
       ImGui::TableSetColumnIndex(1);
-      // ImGui::TextUnformatted(value.data());
       float w = ImGui::GetColumnWidth();
       float text_w = ImGui::CalcTextSize(value.data()).x;
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() + w - text_w -
@@ -114,16 +87,11 @@ void drawCelestialDetails(flecs::entity selected_body) {
   }
 }
 
-void systemDrawCelestialBrowser(flecs::entity winE, CelestialBrowser &state) {
+void drawCelestialBrowser(flecs::entity winE) {
 
-  Window &win = winE.get_mut<Window>();
-  if (!win.open) {
-    return;
-  }
-
+  CelestialBrowser &state = winE.get_mut<CelestialBrowser>();
   auto world = winE.world();
 
-  ImGui::Begin("Celestial Browser", &win.open);
   // Get full region
   float total_width = ImGui::GetContentRegionAvail().x;
   float left_width = total_width * 0.4f; // initial left pane width
@@ -147,6 +115,4 @@ void systemDrawCelestialBrowser(flecs::entity winE, CelestialBrowser &state) {
   ImGui::BeginChild("right_pane", ImVec2(0, 0), true);
   drawCelestialDetails(state.selected_body);
   ImGui::EndChild();
-
-  ImGui::End();
 }
