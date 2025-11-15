@@ -105,6 +105,7 @@ target_compile_options(solcorplib PRIVATE -Werror)
 target_compile_options(solcorplib PRIVATE -Wall)
 target_compile_options(solcorplib PRIVATE -Wextra)
 target_compile_options(solcorplib PRIVATE -Wpedantic)
+target_compile_options(solcorplib PRIVATE ${LUA54_CFLAGS})
 
 target_link_libraries(solcorplib ${SDL2_LINK_LIBRARIES})
 target_link_libraries(solcorplib ${SDL2IMAGE_LINK_LIBRARIES})
