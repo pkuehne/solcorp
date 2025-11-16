@@ -1,5 +1,8 @@
 #include "construction_window.h"
 #include "imgui.h"
+#include "modules/base/assert.h"
+#include "modules/engine/gui.h"
+#include "modules/engine/render.h"
 #include "modules/site/site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include <flecs.h>
@@ -17,18 +20,12 @@ void showConstructionSiteWindow(const flecs::entity &entity) {
 
   auto world = entity.world();
 
-  auto win = ConstructionSiteWindow();
-  win.buildingE = entity;
-  world.entity("ConstructionSiteWindow").set<ConstructionSiteWindow>(win);
-}
-
-/// @brief Wrapper to hide the ConstructionSiteWindow
-/// @param[in] world The world
-void hideConstructionSiteWindow(flecs::world &world) {
-
-  spdlog::debug("Hiding ConstructionSiteWindow");
-  auto entity = world.lookup("ConstructionSiteWindow");
-  entity.destruct();
+  auto window = showWindow(world, "Construction Site Window");
+  ASSERT(window.is_valid(),
+         "showWindow returned invalid entity for Construction Site Window");
+  auto state = window.try_get_mut<ConstructionSiteWindow>();
+  ASSERT(state, "ConstructionSiteWindow state is invalid");
+  state->buildingE = entity;
 }
 
 void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
@@ -41,10 +38,14 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
   } while (constructionE.parent().lookup(name.c_str()).is_valid());
 
   auto location = constructionE.get<SiteLocation>();
+  Transform t;
+  t.relativePosition.x = location.x * 32;
+  t.relativePosition.y = location.y * 32;
 
   world.entity(name.c_str())
       .is_a(prefabE)
       .set<SiteLocation>(location)
+      .set<Transform>(t)
       .child_of(constructionE.parent());
 
   constructionE.parent().add<ConstructionSiteNeedsUpdating>();
@@ -53,14 +54,14 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
 /// @brief System encapsulating the draw commands for the ConstructionSiteWindow
 /// @param[in] winE The entity for the window
 /// @param[in] win The Component holding the window information
-void systemDrawConstructionSiteWindow(flecs::entity winE,
-                                      ConstructionSiteWindow &win) {
+void drawConstructionSiteWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<ConstructionSiteWindow>();
   auto world = winE.world();
-  auto entity = win.buildingE;
 
-  if (entity == flecs::entity() || !entity.is_alive() || !win.open) {
+  auto buildingE = state.buildingE;
+  if (buildingE == flecs::entity() || !buildingE.is_alive()) {
     spdlog::error("Building is no longer valid for ConstructionSiteWindow");
-    hideConstructionSiteWindow(world);
+    hideWindow(world, "Construction Site Window");
     return;
   }
 
@@ -70,10 +71,7 @@ void systemDrawConstructionSiteWindow(flecs::entity winE,
     return;
   }
 
-  ImGui::SetNextWindowSize({170, 250}, ImGuiCond_FirstUseEver);
-  ImGui::Begin(
-      fmt::format("Construction Site ###ConstructionSiteWindow").c_str(),
-      &win.open);
+  // ImGui::SetNextWindowSize({170, 250}, ImGuiCond_FirstUseEver);
 
   auto buttonSize = ImGui::GetContentRegionAvail();
   buttonSize.y = 30;
@@ -83,10 +81,9 @@ void systemDrawConstructionSiteWindow(flecs::entity winE,
 
     if (ImGui::Button(fmt::format("{}", prefabE.name().c_str()).c_str(),
                       buttonSize)) {
-      buildPrefab(entity, prefabE);
+      buildPrefab(buildingE, prefabE);
+      hideWindow(world, "Construction Site Window");
     }
     ImGui::PopID();
   });
-
-  ImGui::End();
 }

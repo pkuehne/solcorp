@@ -46,9 +46,8 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("prep_days", &Launchpad::prep_days);
   world.component<BuildingWindow>().member("buildingE",
                                            &BuildingWindow::buildingE);
-  world.component<ConstructionSiteWindow>()
-      .member("buildingE", &ConstructionSiteWindow::buildingE)
-      .member("open", &ConstructionSiteWindow::open);
+  world.component<ConstructionSiteWindow>().member(
+      "buildingE", &ConstructionSiteWindow::buildingE);
 
   // Register Lua bindings
   register_lua_user_type<CurrentSite>(world, "CurrentSite");
@@ -87,10 +86,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateManufacuringProgress);
-
-  world.system<ConstructionSiteWindow>("Draw Construction Site Window")
-      .kind(GuiPhase)
-      .each(systemDrawConstructionSiteWindow);
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
@@ -182,6 +177,8 @@ void systemCreateSiteWindows(flecs::iter &it) {
   auto world = it.world();
   registerWindow("Building Window", drawBuildingWindow, world)
       .set<BuildingWindow>({});
+  registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
+      .set<ConstructionSiteWindow>({});
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
