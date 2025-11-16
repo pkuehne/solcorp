@@ -9,8 +9,8 @@ struct Window {
   std::function<void(flecs::entity)> content_renderer;
 };
 
-void showWindow(flecs::world &world, const std::string &name);
-void hideWindow(flecs::world &world, const std::string &name);
+flecs::entity showWindow(flecs::world &world, const std::string &name);
+flecs::entity hideWindow(flecs::world &world, const std::string &name);
 flecs::entity
 registerWindow(std::string name,
                std::function<void(flecs::entity)> content_renderer,

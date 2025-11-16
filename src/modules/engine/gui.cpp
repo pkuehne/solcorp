@@ -110,7 +110,7 @@ void systemRenderGUI(const Renderer &r) {
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r.renderer);
 }
 
-void showWindow(flecs::world &world, const std::string &name) {
+flecs::entity showWindow(flecs::world &world, const std::string &name) {
   auto windows = world.lookup("Windows");
   if (!windows.is_valid()) {
     windows = world.entity("Windows");
@@ -118,11 +118,12 @@ void showWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to show window '{}' but it does not exist", name);
-    return;
+    return flecs::entity();
   }
   winE.get_mut<Window>().open = true;
+  return winE;
 }
-void hideWindow(flecs::world &world, const std::string &name) {
+flecs::entity hideWindow(flecs::world &world, const std::string &name) {
   auto windows = world.lookup("Windows");
   if (!windows.is_valid()) {
     windows = world.entity("Windows");
@@ -130,9 +131,10 @@ void hideWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to hide window '{}' but it does not exist", name);
-    return;
+    return flecs::entity();
   }
   winE.get_mut<Window>().open = false;
+  return winE;
 }
 
 flecs::entity

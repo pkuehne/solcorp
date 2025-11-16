@@ -3,6 +3,7 @@
 #include "construction_window.h"
 #include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
 #include "modules/base/base.h"
+#include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
@@ -43,9 +44,8 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)
       .member("prep_days", &Launchpad::prep_days);
-  world.component<BuildingWindow>()
-      .member("buildingE", &BuildingWindow::buildingE)
-      .member("open", &BuildingWindow::open);
+  world.component<BuildingWindow>().member("buildingE",
+                                           &BuildingWindow::buildingE);
   world.component<ConstructionSiteWindow>()
       .member("buildingE", &ConstructionSiteWindow::buildingE)
       .member("open", &ConstructionSiteWindow::open);
@@ -77,15 +77,16 @@ SiteModule::SiteModule(flecs::world &world) {
       .immediate()
       .run(systemCreateSitePrefabs);
 
+  world.system("Site Create Site Windows")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateSiteWindows);
+
   auto sim = world.get<Simulation>();
   world.system<Manufacturing>("Update Construction")
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateManufacuringProgress);
-
-  world.system<BuildingWindow>("Draw Building Window")
-      .kind(GuiPhase)
-      .each(systemDrawBuildingWindow);
 
   world.system<ConstructionSiteWindow>("Draw Construction Site Window")
       .kind(GuiPhase)
@@ -175,6 +176,12 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .set<Sprite>(sprite);
 
   world.prefab("Facility").child_of(core_node).add<Facility>();
+}
+
+void systemCreateSiteWindows(flecs::iter &it) {
+  auto world = it.world();
+  registerWindow("Building Window", drawBuildingWindow, world)
+      .set<BuildingWindow>({});
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,

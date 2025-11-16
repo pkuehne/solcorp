@@ -30,6 +30,7 @@ list(APPEND SolCorpSources
 list(APPEND SolCorpHeaders
     widgets/widgets.h
     modules/base/base.h
+    modules/base/assert.h
     modules/engine/engine.h
     modules/engine/gui.h
     modules/engine/helpers.cpp

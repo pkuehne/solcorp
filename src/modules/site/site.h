@@ -58,10 +58,8 @@ struct ConstructionSite {};
 
 struct ConstructionSiteNeedsUpdating {};
 
-void showBuildingWindow(const flecs::entity &buildingE);
-void hideBuildingWindow(flecs::world &world);
-
 void systemCreateSitePrefabs(flecs::iter &);
+void systemCreateSiteWindows(flecs::iter &it);
 void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
 
 struct SiteModule {

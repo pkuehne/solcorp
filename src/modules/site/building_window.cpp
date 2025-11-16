@@ -1,5 +1,7 @@
 #include "building_window.h"
 #include "imgui.h"
+#include "modules/base/assert.h"
+#include "modules/engine/gui.h"
 #include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/launch_window.h"
 #include "modules/rocket_launch/rocket_launch.h"
@@ -24,35 +26,29 @@ void showBuildingWindow(const flecs::entity &entity) {
   }
 
   auto world = entity.world();
-
-  auto win = BuildingWindow();
-  win.buildingE = entity;
-  world.entity("BuildingWindow").set<BuildingWindow>(win);
+  auto window = showWindow(world, "Building Window");
+  ASSERT(window.is_valid(),
+         "showWindow returned invalid entity for Building Window");
+  auto state = window.try_get_mut<BuildingWindow>();
+  ASSERT(state, "BuildingWindow state is invalid");
+  state->buildingE = entity;
 }
 
-void hideBuildingWindow(flecs::world &world) {
-  spdlog::debug("Hiding BuildingWindow");
-  auto entity = world.lookup("BuildingWindow");
-  entity.destruct();
-}
-
-void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
+void drawBuildingWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<BuildingWindow>();
   auto world = winE.world();
-  auto entity = win.buildingE;
-  if (entity == flecs::entity() || !entity.is_alive() || !win.open) {
+
+  auto buildingE = state.buildingE;
+  if (buildingE == flecs::entity() || !buildingE.is_alive()) {
     spdlog::error("Building is no longer valid for BuildingWindow");
-    hideBuildingWindow(world);
+    hideWindow(world, "Building Window");
     return;
   }
 
-  ImGui::Begin(
-      fmt::format("Building - {}###BuildingWindow", entity.name().c_str())
-          .c_str(),
-      &win.open);
   if (ImGui::BeginTabBar("Facilities")) {
     auto query = world.query_builder()
                      .with<Facility>()
-                     .with(flecs::ChildOf, entity)
+                     .with(flecs::ChildOf, buildingE)
                      .build();
 
     query.each([](flecs::entity facilityE) {
@@ -78,8 +74,6 @@ void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
     });
     ImGui::EndTabBar();
   }
-
-  ImGui::End();
 }
 
 void drawManufacturingSection(flecs::entity &entity) {
