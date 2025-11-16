@@ -23,6 +23,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   // Remove the old sites
   entity.children([](flecs::entity e) {
     if (e.has<ConstructionSite>()) {
+      spdlog::debug("Removing old construction site {}", e.name().c_str());
       e.destruct();
     }
   });
@@ -40,12 +41,10 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
 
   currentBuildings.each([&](flecs::entity e, SiteLocation &location) {
     if (e.has<Building>()) {
+      spdlog::debug("Found building {} at {} {}", e.name().c_str(), location.x,
+                    location.y);
       locationMap[location.y * site.height + location.x] =
           LocationInfo::TileBuilding;
-
-    } else if (e.has<ConstructionSite>()) {
-      locationMap[location.y * site.height + location.x] =
-          LocationInfo::TileConstruction;
     }
   });
 
