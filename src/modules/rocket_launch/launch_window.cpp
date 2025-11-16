@@ -1,6 +1,8 @@
 #include "launch_window.h"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "modules/base/assert.h"
+#include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
@@ -10,23 +12,26 @@
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
                          flecs::entity *launchpad) {
-  u_int today = world.get<Game>().day;
-
   std::string name;
   do { // TODO: Make this a re-usable function
     name = fmt::format("Plan {}", LaunchPlan::max_id++);
   } while (world.lookup(name.c_str()).is_valid());
 
-  auto win = LaunchWindow();
-  win.draftPlan.name = name;
+  auto window = showWindow(world, "Mission Plan");
+  ASSERT(window.is_valid(),
+         "showWindow returned invalid entity for Mission Plan");
+  auto state = window.try_get_mut<LaunchWindow>();
+  ASSERT(state, "BuildingWindow state is invalid");
+
+  state->draftPlan.name = name;
   if (rocket && rocket->is_valid()) {
-    win.draftPlan.rocket = *rocket;
+    state->draftPlan.rocket = *rocket;
   }
   if (launchpad && launchpad->is_valid()) {
-    win.draftPlan.launchpad = *launchpad;
+    state->draftPlan.launchpad = *launchpad;
   }
-  win.draftPlan.launchDay = today;
-  world.entity("LaunchWindow").set<LaunchWindow>(win);
+  u_int today = world.get<Game>().day;
+  state->draftPlan.launchDay = today;
 }
 
 void showLaunchWindowEdit(const flecs::entity &planE) {
@@ -39,25 +44,24 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   auto world = planE.world();
   LaunchPlan plan = planE.ensure<LaunchPlan>();
 
-  auto win = LaunchWindow();
-  win.draftPlan.name = planE.name();
-  win.draftPlan.launchDay = plan.launch_date;
-  win.draftPlan.rocket = planE.target<LaunchingOn>();
-  win.draftPlan.launchpad = planE.target<LaunchingFrom>();
-  win.planE = planE;
-  world.entity("LaunchWindow").set<LaunchWindow>(win);
-}
+  auto window = showWindow(world, "Mission Plan");
+  ASSERT(window.is_valid(),
+         "showWindow returned invalid entity for Mission Plan");
+  auto state = window.try_get_mut<LaunchWindow>();
+  ASSERT(state, "BuildingWindow state is invalid");
 
-void hideLaunchWindow(flecs::world &world) {
-  spdlog::debug("Hiding LaunchWindow");
-  auto winE = world.lookup("LaunchWindow");
-  winE.destruct();
+  state->draftPlan.name = planE.name();
+  state->draftPlan.launchDay = plan.launch_date;
+  state->draftPlan.rocket = planE.target<LaunchingOn>();
+  state->draftPlan.launchpad = planE.target<LaunchingFrom>();
+  state->draftPlan.current = planE;
 }
 
 /// @brief Draws the Launch Planning window
 /// @param winE Entity for the window
 /// @param win LaunchWindow component
-void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
+void drawLaunchWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<LaunchWindow>();
   auto world = winE.world();
   flecs::query<> rocketQuery = world.query_builder()
                                    .with<Rocket>()
@@ -67,43 +71,41 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
                                    .build();
   ;
   flecs::query<Launchpad> launchpadQuery = world.query_builder<Launchpad>()
-                                               .with<Building>()
+                                               .with<Facility>()
                                                //  .with(flecs::ChildOf)
                                                //  .second()
                                                //  .var("Site")
                                                .build();
 
-  // bool is_edit = (win.planE == flecs::entity() || !win.planE.is_alive());
-
   u_int today = world.get<Game>().day;
-  if (static_cast<u_int>(win.draftPlan.launchDay) < today) {
-    win.draftPlan.launchDay = today;
+  if (static_cast<u_int>(state.draftPlan.launchDay) < today) {
+    state.draftPlan.launchDay = today;
   }
 
-  ImGui::Begin("Launch Planning");
   ImGui::Text("Plan Name: ");
   ImGui::SameLine();
-  ImGui::InputText(" ", &win.draftPlan.name);
+  ImGui::InputText(" ", &state.draftPlan.name);
 
   ImGui::Text("Launch Date: ");
   ImGui::SameLine();
-  ImGui::DragInt("##LaunchDate", &win.draftPlan.launchDay, 1.0f, today,
+  ImGui::DragInt("##LaunchDate", &state.draftPlan.launchDay, 1.0f, today,
                  today + 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
 
   // Rocket
   ImGui::Text("Rocket: ");
   ImGui::SameLine();
 
-  std::string rocketDisplay = win.draftPlan.rocket.is_valid()
-                                  ? win.draftPlan.rocket.name()
+  std::string rocketDisplay = state.draftPlan.rocket.is_valid()
+                                  ? state.draftPlan.rocket.name()
                                   : "<Select>";
   if (ImGui::BeginCombo("##RocketCombo", rocketDisplay.c_str())) {
     rocketQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e) {
-          if (ImGui::Selectable(e.name().c_str(), e == win.draftPlan.rocket)) {
-            win.draftPlan.rocket = e;
+          if (ImGui::Selectable(e.name().c_str(),
+                                e == state.draftPlan.rocket)) {
+            state.draftPlan.rocket = e;
           }
         });
     ImGui::EndCombo();
@@ -112,31 +114,31 @@ void systemDrawLaunchWindow(flecs::entity winE, LaunchWindow &win) {
   // Launchpad
   ImGui::Text("Launchpad: ");
   ImGui::SameLine();
-  std::string padDisplay = win.draftPlan.launchpad.is_valid()
-                               ? win.draftPlan.launchpad.name()
+  std::string padDisplay = state.draftPlan.launchpad.is_valid()
+                               ? state.draftPlan.launchpad.parent().name()
                                : "<Select>";
   if (ImGui::BeginCombo("##Launchpad", padDisplay.c_str())) {
     launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
         .each([&](flecs::entity e, Launchpad) {
-          if (ImGui::Selectable(e.name().c_str(),
-                                e == win.draftPlan.launchpad)) {
-            win.draftPlan.launchpad = e;
+          if (ImGui::Selectable(e.parent().name().c_str(),
+                                e == state.draftPlan.launchpad)) {
+            state.draftPlan.launchpad = e;
           }
         });
     ImGui::EndCombo();
   }
 
-  auto valid = win.draftPlan.validate(world);
+  auto valid = state.draftPlan.validate(world);
   if (ActionButton("Save", "Save Launch Plan to be executed", valid.message)) {
     // Save LaunchPlan and close window
-    win.draftPlan.execute(world);
-    hideLaunchWindow(world);
+    state.draftPlan.execute(world);
+    hideWindow(world, "Mission Plan");
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
-    hideLaunchWindow(world);
+    hideWindow(world, "Mission Plan");
   }
   ImGui::End();
 }

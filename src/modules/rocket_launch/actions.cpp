@@ -9,15 +9,18 @@ ValidationResult
 ScheduleLaunchAction::validate(const flecs::world &world) const {
   u_int today = world.get<Game>().day;
 
-  if (world.lookup(name.c_str()) != current) {
+  flecs::entity existing = world.lookup(name.c_str());
+  if (existing.is_valid() && existing != current) {
     return ValidationResult::Fail(
         fmt::format("A Launch Plan named '{}' already exists", name));
   }
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("No rocket selected");
+  }
+  if (current.is_valid() && rocket.has<LaunchingOn>(current)) {
+    // Rocket is already planned for this launch
   } else if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
-    // BUG: This doesn't account for the rocket being planned for *this*
-    // existing launch
+    // Rocket is planned for another launch
     return ValidationResult::Fail("Rocket is already planned for a launch");
   }
   if (!launchpad.is_valid()) {
@@ -47,6 +50,10 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
 }
 
 void ScheduleLaunchAction::execute(flecs::world &world) {
+  if (current.is_valid()) {
+    spdlog::debug("Removing existing launch plan: {}", current.id());
+    current.destruct();
+  }
   auto plan = LaunchPlan{static_cast<u_int>(launchDay)};
 
   auto planE = world.entity().set<LaunchPlan>(plan);

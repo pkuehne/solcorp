@@ -2,6 +2,7 @@
 #include "actions.h"
 #include "launch_window.h"
 #include "modules/base/base.h"
+#include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
@@ -27,9 +28,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<Rocket>();
   world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();
-  world.component<LaunchWindow>()
-      .member("planE", &LaunchWindow::planE)
-      .member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
@@ -48,10 +47,14 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemLaunchRocket);
-
-  world.system<LaunchWindow>("Draw LaunchWindow")
-      .kind(GuiPhase)
-      .each(systemDrawLaunchWindow);
+  world.system("Rocket Launch Create Windows")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &it) {
+        auto world = it.world();
+        registerWindow("Mission Plan", drawLaunchWindow, world)
+            .set<LaunchWindow>({});
+      });
 }
 
 /// @brief Process LaunchPlans that are due

@@ -63,6 +63,48 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
     }
   }
 
+  GIVEN("A new plan and an existing plan with the same name") {
+    world.entity("Test Plan").set<LaunchPlan>({});
+
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("Report the name clash") {
+        CHECK(!result.ok);
+        CHECK(result.message ==
+              "A Launch Plan named 'Test Plan' already exists");
+      }
+    }
+  }
+
+  GIVEN("A new plan with an attached rocket") {
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    world.entity("Other Test Plan")
+        .set<LaunchPlan>({})
+        .add<LaunchingOn>(rocket);
+
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("Report the pre-allocated rocket") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket is already planned for a launch");
+      }
+    }
+  }
+
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
@@ -71,10 +113,67 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
-    launch.rocket = rocket;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
       THEN("It succeeds") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+  }
+
+  GIVEN("The current plan with the same name") {
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.current = world.entity("Test Plan").set<LaunchPlan>({});
+
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("The validation passes") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+  }
+
+  GIVEN("The current plan with a different name") {
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan Bravo";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.current = world.entity("Test Plan").set<LaunchPlan>({});
+
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("The validation passes") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+  }
+
+  GIVEN("The current plan with an attached rocket") {
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.current = world.entity("Test Plan").set<LaunchPlan>({});
+    launch.current.add<LaunchingOn>(rocket);
+
+    WHEN("Validated") {
+      ValidationResult result = launch.validate(world);
+      THEN("The validation passes") {
         CHECK(result.ok);
         CHECK(result.message == "");
       }
@@ -100,6 +199,31 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
       launch.execute(world);
       THEN("A launch plan is created") {
         REQUIRE(launch.result.is_valid());
+        CHECK(launch.result.get<LaunchPlan>().launch_date ==
+              static_cast<u_int>(launch.launchDay));
+        CHECK(launch.result.name().c_str() == launch.name);
+        CHECK(launch.result.target<LaunchingOn>() == rocket);
+        CHECK(launch.result.target<LaunchingFrom>() == launchpad);
+      }
+    }
+  }
+
+  GIVEN("The same plan executed twice") {
+    auto rocket = world.entity().add<Rocket>();
+    auto launchpad = world.entity().add<Launchpad>();
+    ScheduleLaunchAction launch;
+    launch.launchDay = 10;
+    launch.name = "Test Plan";
+    launch.rocket = rocket;
+    launch.launchpad = launchpad;
+    launch.rocket = rocket;
+    launch.current = world.entity("Test Plan").set<LaunchPlan>({});
+
+    WHEN("Executed") {
+      launch.execute(world);
+      THEN("A launch plan is created") {
+        REQUIRE(launch.result.is_valid());
+        REQUIRE(launch.current.is_alive() == false);
         CHECK(launch.result.get<LaunchPlan>().launch_date ==
               static_cast<u_int>(launch.launchDay));
         CHECK(launch.result.name().c_str() == launch.name);
