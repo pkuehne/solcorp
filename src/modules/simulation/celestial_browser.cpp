@@ -1,6 +1,7 @@
 #include "celestial_browser.h"
 #include "imgui.h"
 #include "simulation.h"
+#include "modules/engine/gui.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
@@ -85,6 +86,10 @@ void drawCelestialDetails(flecs::entity selected_body) {
 
     ImGui::EndTable();
   }
+}
+
+void showCelestialBrowser(flecs::world &world) {
+  showWindow(world, "Celestial Browser");
 }
 
 void drawCelestialBrowser(flecs::entity winE) {

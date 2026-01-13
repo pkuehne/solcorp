@@ -95,10 +95,10 @@ void systemQuitOnEscape(flecs::iter &it, size_t, const KeyDown event) {
 void systemShowWindows(flecs::iter &it, size_t, const KeyDown event) {
   auto world = it.world();
   if (event.key == SDLK_d) {
-    showWindow(world, "Developer Window");
+    showDeveloperWindow(world);
   }
   if (event.key == SDLK_b) {
-    showWindow(world, "Celestial Browser");
+    showCelestialBrowser(world);
   }
 }
 

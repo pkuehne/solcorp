@@ -1,7 +1,12 @@
 #include "developer_window.h"
 #include "imgui.h"
+#include "modules/engine/gui.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
+
+void showDeveloperWindow(flecs::world &world) {
+  showWindow(world, "Developer Window");
+}
 
 void child_tree(flecs::entity e) {
   ImGui::PushID(e.id());
