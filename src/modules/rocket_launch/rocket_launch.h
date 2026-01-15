@@ -26,6 +26,9 @@ struct Payload {
 struct LaunchingFrom {}; /// From which launchpad?
 struct LaunchingOn {};   /// On what  rocket
 struct LaunchingWith {}; /// With what payloads?
+struct CanLiftTo {
+  u_int max_mass; // in kg
+}; /// To which orbit can this rocket lift and how much mass?
 
 // Systems
 void systemLaunchRocket(flecs::entity, LaunchPlan &);

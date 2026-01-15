@@ -27,10 +27,10 @@ void showBuildingWindow(const flecs::entity &entity) {
 
   auto world = entity.world();
   auto window = showWindow(world, "Building Window");
-  ASSERT(window.is_valid(),
-         "showWindow returned invalid entity for Building Window");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Building Window");
   auto state = window.try_get_mut<BuildingWindow>();
-  ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "BuildingWindow state is invalid");
   state->buildingE = entity;
 }
 

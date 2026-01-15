@@ -18,10 +18,10 @@ void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
   } while (world.lookup(name.c_str()).is_valid());
 
   auto window = showWindow(world, "Mission Plan");
-  ASSERT(window.is_valid(),
-         "showWindow returned invalid entity for Mission Plan");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
-  ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "BuildingWindow state is invalid");
 
   state->draftPlan.name = name;
   if (rocket && rocket->is_valid()) {
@@ -45,10 +45,10 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   LaunchPlan plan = planE.ensure<LaunchPlan>();
 
   auto window = showWindow(world, "Mission Plan");
-  ASSERT(window.is_valid(),
-         "showWindow returned invalid entity for Mission Plan");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
-  ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "BuildingWindow state is invalid");
 
   state->draftPlan.name = planE.name();
   state->draftPlan.launchDay = plan.launch_date;

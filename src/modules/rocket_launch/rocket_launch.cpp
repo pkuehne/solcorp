@@ -1,6 +1,7 @@
 #include "rocket_launch.h"
 #include "actions.h"
 #include "launch_window.h"
+#include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
@@ -27,6 +28,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<Rocket>();
+  world.component<Payload>();
+  world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
 
@@ -42,10 +45,10 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
         userType["launch_date"] = &LaunchPlan::launch_date;
       });
-  register_lua_user_type<Rocket>(world, "Rocket",
-                                 [](sol::usertype<Rocket> &userType) {
+  // register_lua_user_type<Rocket>(world, "Rocket",
+  //                                [](sol::usertype<Rocket> &userType) {
 
-                                 });
+  //                                });
   register_lua_user_type<Payload>(world, "Payload",
                                   [](sol::usertype<Payload> &userType) {
                                     userType["mass"] = &Payload::mass;
@@ -120,5 +123,25 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
     rocket_node = world.entity("Rockets").child_of(prefabs_node);
   }
 
-  world.prefab("Rocket").child_of(core_node).add<Rocket>();
+  // Baseline LEO (200 km, equatorial)
+
+  // Example rocket prefab capabilities
+  auto rocket = world.prefab("Rocket").child_of(core_node).add<Rocket>();
+
+  flecs::entity leo = world.lookup("Sun::Earth::Low Orbit");
+  if (leo.is_valid()) {
+    rocket.set<CanLiftTo>(leo, {6'300});
+  }
+  flecs::entity sso = world.lookup("Sun::Earth::Polar Orbit");
+  if (sso.is_valid()) {
+    rocket.set<CanLiftTo>(sso, {5'600});
+  }
+  flecs::entity gto = world.lookup("Sun::Earth::Transfer Orbit");
+  if (gto.is_valid()) {
+    rocket.set<CanLiftTo>(gto, {3'300});
+  }
+  flecs::entity geo = world.lookup("Sun::Earth::Synchronous Orbit");
+  if (geo.is_valid()) {
+    rocket.set<CanLiftTo>(geo, {1'300});
+  }
 }

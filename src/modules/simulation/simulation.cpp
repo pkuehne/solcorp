@@ -158,6 +158,17 @@ void systemGenerateSolSystem(flecs::iter &it) {
                            7.342e22, 4.902801e12, 2360591.0, 0.11})
       .child_of(earth);
 
+  world.entity("Low Orbit").set<TargetOrbit>({200'000.0, 0.0}).child_of(earth);
+  world.entity("Polar Orbit")
+      .set<TargetOrbit>({200'000.0, deg2rad(90.0)})
+      .child_of(earth);
+  world.entity("Transfer Orbit")
+      .set<TargetOrbit>({35'786'000.0, 0.0})
+      .child_of(earth);
+  world.entity("Synchronous Orbit")
+      .set<TargetOrbit>({35'786'000.0, 0.0})
+      .child_of(earth);
+
   auto mars = world.entity("Mars")
                   .set<CelestialBody>(
                       {227939366344.5385, 0.0933941, 0.03228859115900383,

@@ -32,6 +32,11 @@ struct CelestialBody {
   double albedo;          // 0.0–1.0
 };
 
+struct TargetOrbit {
+  double altitude;    // metres
+  double inclination; // Radians
+};
+
 struct Developer {};
 
 void systemRegisterWindows(flecs::iter &);

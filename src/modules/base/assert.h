@@ -10,7 +10,7 @@
 #define DEBUG_BREAK() ((void)0)
 #endif
 
-#define ASSERT(expr, msg)                                                      \
+#define SC_ASSERT(expr, msg)                                                   \
   do {                                                                         \
     if (!(expr)) {                                                             \
       std::cerr << "Assertion failed:\n"                                       \
