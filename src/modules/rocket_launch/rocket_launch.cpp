@@ -3,6 +3,7 @@
 #include "launch_window.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
+#include "modules/lua/lua.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
@@ -26,7 +27,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<Rocket>();
-  world.component<CargoHold>().member("capacity", &CargoHold::capacity);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
 
@@ -36,6 +36,20 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<LaunchingFrom>().add(
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
+
+  // Register Lua bindings
+  register_lua_user_type<LaunchPlan>(
+      world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
+        userType["launch_date"] = &LaunchPlan::launch_date;
+      });
+  register_lua_user_type<Rocket>(world, "Rocket",
+                                 [](sol::usertype<Rocket> &userType) {
+
+                                 });
+  register_lua_user_type<Payload>(world, "Payload",
+                                  [](sol::usertype<Payload> &userType) {
+                                    userType["mass"] = &Payload::mass;
+                                  });
 
   // Register systems
   world.system("Create Rocket Prefabs")
@@ -106,6 +120,5 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
     rocket_node = world.entity("Rockets").child_of(prefabs_node);
   }
 
-  world.prefab("Rocket").child_of(core_node).add<Rocket>().set<CargoHold>(
-      {1000});
+  world.prefab("Rocket").child_of(core_node).add<Rocket>();
 }

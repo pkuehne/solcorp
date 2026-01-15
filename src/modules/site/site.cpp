@@ -1,7 +1,6 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
-#include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"

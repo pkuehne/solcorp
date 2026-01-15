@@ -269,7 +269,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                        .set<SiteLocation>({0, 0})
                        .set<Transform>({})
                        .set<Sprite>({});
-  auto rocket = world.entity("Falcon 9").add<Rocket>().set<CargoHold>({1000});
+  auto rocket = world.entity("Falcon 9").add<Rocket>();
 
   GIVEN("A launch plan due today") {
     u_int today = world.get<Game>().day;

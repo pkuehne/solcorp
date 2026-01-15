@@ -9,7 +9,6 @@ struct LaunchPlan {
   static u_int max_id;
 
   u_int launch_date = 0;
-  bool draft = true;
 };
 
 /// @brief Prefab for a planetary launch vehicle
@@ -17,8 +16,10 @@ struct Rocket {
   static u_int max_id;
 };
 
-struct CargoHold {
-  u_int capacity = 0;
+struct Payload {
+  static u_int max_id;
+
+  u_int mass; /// in kg
 };
 
 // Relationships
