@@ -90,6 +90,13 @@ local function on_start()
 	mod.multiplicative = 1.0
 	mod.additive = 3
 	solcorp.helpers.add_modifier(cracks, mod)
+
+	-- Create a rocket prefab
+	local rocket = solcorp.helpers.create_rocket_prefab("Falcon 1")
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Low Orbit", 6300)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Polar Orbit", 5600)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Transfer Orbit", 3300)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Synchronous Orbit", 1300)
 end
 
 solcorp.script.handlers.on_init = on_init

@@ -39,20 +39,23 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<LaunchingFrom>().add(
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
+  world.component<CanLiftTo>().add(flecs::Symmetric);
 
   // Register Lua bindings
   register_lua_user_type<LaunchPlan>(
       world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
         userType["launch_date"] = &LaunchPlan::launch_date;
       });
-  // register_lua_user_type<Rocket>(world, "Rocket",
-  //                                [](sol::usertype<Rocket> &userType) {
-
-  //                                });
+  register_lua_user_type<Rocket>(world, "Rocket",
+                                 [](sol::usertype<Rocket> &) {});
   register_lua_user_type<Payload>(world, "Payload",
                                   [](sol::usertype<Payload> &userType) {
                                     userType["mass"] = &Payload::mass;
                                   });
+  register_lua_user_type<CanLiftTo>(
+      world, "CanLiftTo", [](sol::usertype<CanLiftTo> &userType) {
+        userType["max_mass"] = &CanLiftTo::max_mass;
+      });
 
   // Register systems
   world.system("Create Rocket Prefabs")
@@ -123,25 +126,6 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
     rocket_node = world.entity("Rockets").child_of(prefabs_node);
   }
 
-  // Baseline LEO (200 km, equatorial)
-
-  // Example rocket prefab capabilities
-  auto rocket = world.prefab("Rocket").child_of(core_node).add<Rocket>();
-
-  flecs::entity leo = world.lookup("Sun::Earth::Low Orbit");
-  if (leo.is_valid()) {
-    rocket.set<CanLiftTo>(leo, {6'300});
-  }
-  flecs::entity sso = world.lookup("Sun::Earth::Polar Orbit");
-  if (sso.is_valid()) {
-    rocket.set<CanLiftTo>(sso, {5'600});
-  }
-  flecs::entity gto = world.lookup("Sun::Earth::Transfer Orbit");
-  if (gto.is_valid()) {
-    rocket.set<CanLiftTo>(gto, {3'300});
-  }
-  flecs::entity geo = world.lookup("Sun::Earth::Synchronous Orbit");
-  if (geo.is_valid()) {
-    rocket.set<CanLiftTo>(geo, {1'300});
-  }
+  // Base Rocket Prefab
+  world.prefab("Rocket").child_of(core_node).add<Rocket>();
 }
