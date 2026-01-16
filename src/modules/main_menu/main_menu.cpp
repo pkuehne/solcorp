@@ -5,6 +5,7 @@
 #include "modules/engine/input.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
+#include <modules/simulation/celestial_browser.h>
 
 void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
@@ -36,6 +37,12 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     ImGui::Text("Day: %3d", game.day);
     if (ImGui::Button(sim.speed.enabled() ? "||" : ">")) {
       sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
+    }
+    if (ImGui::BeginMenu("Windows")) {
+      if (ImGui::MenuItem("Celestial Browser")) {
+        showCelestialBrowser(world);
+      }
+      ImGui::EndMenu();
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();
