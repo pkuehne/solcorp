@@ -3,6 +3,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
+#include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/render.h"
 #include "spdlog/spdlog.h"
@@ -12,19 +13,21 @@ void systemInitialiseGui(flecs::iter &iter);
 void systemGuiNewFrame(flecs::iter &);
 void systemGuiEndFrame(flecs::iter &);
 void systemRenderGUI(const Renderer &);
+void systemRenderWindow(flecs::entity winE, Window &win);
 
 void registerGui(flecs::world &world) {
   world.import <EngineModule>();
+
+  world.component<Window>().member("open", &Window::open);
 
   // Register Systems
   world.system("Initialise GUI").kind(flecs::OnStart).run(systemInitialiseGui);
   world.system("New GUI Frame").kind(PreFramePhase).run(systemGuiNewFrame);
   world.system("End GUI Frame").kind(PreRenderPhase).run(systemGuiEndFrame);
   world.system<const Renderer>("Render GUI")
-      .term_at(0)
-      .singleton()
       .kind(RenderPhase)
       .each(systemRenderGUI);
+  world.system<Window>("Render Window").kind(GuiPhase).each(systemRenderWindow);
 }
 
 /// @brief Creates and initialises the GUI system
@@ -79,9 +82,11 @@ void systemInitialiseGui(flecs::iter &iter) {
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();
-  ImGui_ImplSDL2_InitForSDLRenderer(r->window, r->renderer);
-  ImGui_ImplSDLRenderer2_Init(r->renderer);
+  ImGui_ImplSDL2_InitForSDLRenderer(r.window, r.renderer);
+  ImGui_ImplSDLRenderer2_Init(r.renderer);
   ImGui_ImplSDLRenderer2_CreateFontsTexture();
+
+  world.entity("Windows");
 }
 
 /// @brief Task that creates a new ImGui Frame
@@ -103,4 +108,60 @@ void systemGuiEndFrame(flecs::iter &) {
 /// @param renderer The Render Component Singleton
 void systemRenderGUI(const Renderer &r) {
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r.renderer);
+}
+
+flecs::entity showWindow(flecs::world &world, const std::string &name) {
+  auto windows = world.lookup("Windows");
+  if (!windows.is_valid()) {
+    windows = world.entity("Windows");
+  }
+  auto winE = windows.lookup(name.c_str());
+  if (!winE.is_valid()) {
+    spdlog::warn("Tried to show window '{}' but it does not exist", name);
+    return flecs::entity();
+  }
+  winE.get_mut<Window>().open = true;
+  return winE;
+}
+flecs::entity hideWindow(flecs::world &world, const std::string &name) {
+  auto windows = world.lookup("Windows");
+  if (!windows.is_valid()) {
+    windows = world.entity("Windows");
+  }
+  auto winE = windows.lookup(name.c_str());
+  if (!winE.is_valid()) {
+    spdlog::warn("Tried to hide window '{}' but it does not exist", name);
+    return flecs::entity();
+  }
+  winE.get_mut<Window>().open = false;
+  return winE;
+}
+
+flecs::entity
+registerWindow(std::string name,
+               std::function<void(flecs::entity)> content_renderer,
+               flecs::world &world) {
+  spdlog::info("Registering Window '{}'", name);
+  if (!world.lookup("Windows").is_valid()) {
+    throw std::runtime_error(
+        "Tried to register window before Windows parent entity was created");
+  }
+  return world.entity(name.c_str())
+      .set<Window>({false, content_renderer})
+      .child_of(world.lookup("Windows"));
+}
+
+void systemRenderWindow(flecs::entity winE, Window &win) {
+  if (!win.open) {
+    return;
+  }
+
+  ImGui::Begin(winE.name().c_str(), &win.open);
+  if (win.content_renderer) {
+    win.content_renderer(winE);
+  } else {
+    spdlog::warn("Window '{}' has no content renderer set",
+                 winE.name().c_str());
+  }
+  ImGui::End();
 }

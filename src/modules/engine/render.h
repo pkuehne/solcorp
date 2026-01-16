@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL_ttf.h>
 #include <flecs.h>
 #include <string>
 
@@ -7,9 +8,16 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
+struct Color {
+  uint8_t r = 0;
+  uint8_t g = 0;
+  uint8_t b = 0;
+  uint8_t a = 0;
+};
+
 struct Point {
-  int x = 0;
-  int y = 0;
+  float x = 0;
+  float y = 0;
 };
 
 struct Transform {
@@ -48,7 +56,22 @@ struct Sprite {
   SpriteFlip flip = SpriteFlip::None;
 };
 
+struct Font {
+  TTF_Font *ptr = 0;
+  std::string name;
+  int point_size = 12;
+};
+
+struct Text {
+  std::string text;
+  Color color = {0, 0, 0, 0};
+  double rotation = 0.0f;
+  SpriteFlip flip = SpriteFlip::None;
+};
+
 Texture loadTexture(const std::string &, flecs::world &);
+Texture loadTexture(const unsigned char *data, unsigned int len,
+                    const flecs::world &world);
 
 void initialiseGraphics(flecs::world &);
 

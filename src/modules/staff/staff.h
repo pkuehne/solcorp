@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modules/stats/stats.h"
 #include <flecs.h>
 #include <string>
 
@@ -12,9 +13,13 @@ struct Person {
 /// @brief An Employee of the company
 struct Employee {
   int start = 0;
-  u_int domain_skill = 50;
-  u_int leadership_skill = 0;
-  u_int motivation = 100;
+  Stat motivation = Stat("motivation", "Motivation",
+                         "How well motivated this employee is", 50.0);
+  Stat leadership_skill =
+      Stat("leadership_skill", "Leadership Skills",
+           "How good this person is at leading others", 0.0);
+  Stat domain_skill = Stat("domains_skills", "Domain Skills",
+                           "How good this person is at their job", 0.0);
 };
 
 /// @brief A team in the company

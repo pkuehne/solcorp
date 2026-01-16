@@ -3,9 +3,8 @@
 #include <flecs.h>
 
 struct DeveloperWindow {
-  bool open = true;
+  bool show_metrics_window = false;
 };
 
 void showDeveloperWindow(flecs::world &world);
-void hideDeveloperWindow(flecs::world &world);
-void systemDrawDeveloperWindow(flecs::entity winE, DeveloperWindow &win);
+void drawDeveloperWindow(flecs::entity winE);

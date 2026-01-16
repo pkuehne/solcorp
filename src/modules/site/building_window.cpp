@@ -1,5 +1,9 @@
 #include "building_window.h"
 #include "imgui.h"
+#include "modules/base/assert.h"
+#include "modules/engine/gui.h"
+#include "modules/rocket_launch/actions.h"
+#include "modules/rocket_launch/launch_window.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/stats/stats.h"
 #include "site.h"
@@ -22,96 +26,100 @@ void showBuildingWindow(const flecs::entity &entity) {
   }
 
   auto world = entity.world();
-
-  auto win = BuildingWindow();
-  win.buildingE = entity;
-  world.entity("BuildingWindow").set<BuildingWindow>(win);
+  auto window = showWindow(world, "Building Window");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Building Window");
+  auto state = window.try_get_mut<BuildingWindow>();
+  SC_ASSERT(state, "BuildingWindow state is invalid");
+  state->buildingE = entity;
 }
 
-void hideBuildingWindow(flecs::world &world) {
-
-  spdlog::debug("Hiding BuildingWindow");
-  auto entity = world.lookup("BuildingWindow");
-  entity.destruct();
-}
-
-void systemDrawBuildingWindow(flecs::entity winE, BuildingWindow &win) {
+void drawBuildingWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<BuildingWindow>();
   auto world = winE.world();
-  auto entity = win.buildingE;
-  if (entity == flecs::entity() || !entity.is_alive() || !win.open) {
+
+  auto buildingE = state.buildingE;
+  if (buildingE == flecs::entity() || !buildingE.is_alive()) {
     spdlog::error("Building is no longer valid for BuildingWindow");
-    hideBuildingWindow(world);
+    hideWindow(world, "Building Window");
     return;
   }
 
-  ImGui::Begin(
-      fmt::format("Building - {}###BuildingWindow", entity.name().c_str())
-          .c_str(),
-      &win.open);
-  if (ImGui::BeginTabBar("Capabilities")) {
-    if (entity.has<Manufacturing>() && ImGui::BeginTabItem("Manufacturing")) {
-      drawManufacturingSection(entity);
-      ImGui::EndTabItem();
-    }
-    if (entity.has<Storage>() && ImGui::BeginTabItem("Storage")) {
-      drawStorageSection(entity);
-      ImGui::EndTabItem();
-    }
-    if (entity.has<Office>() && ImGui::BeginTabItem("Office")) {
-      ImGui::EndTabItem();
-    }
-    if (entity.has<Launchpad>() && ImGui::BeginTabItem("Launchpad")) {
-      drawLaunchpadSection(entity);
-      ImGui::EndTabItem();
-    }
+  if (ImGui::BeginTabBar("Facilities")) {
+    auto query = world.query_builder()
+                     .with<Facility>()
+                     .with(flecs::ChildOf, buildingE)
+                     .build();
 
+    query.each([](flecs::entity facilityE) {
+      if (ImGui::BeginTabItem(facilityE.name().c_str())) {
+        if (facilityE.has<Manufacturing>()) {
+          ImGui::SeparatorText("Manufacturing");
+          drawManufacturingSection(facilityE);
+        }
+        if (facilityE.has<Storage>()) {
+          ImGui::SeparatorText("Storage");
+          drawStorageSection(facilityE);
+        }
+        if (facilityE.has<Office>()) {
+          ImGui::SeparatorText("Offices");
+          // Currently no office section
+        }
+        if (facilityE.has<Launchpad>()) {
+          ImGui::SeparatorText("Launchpad");
+          drawLaunchpadSection(facilityE);
+        }
+        ImGui::EndTabItem();
+      }
+    });
     ImGui::EndTabBar();
   }
-
-  ImGui::End();
 }
 
 void drawManufacturingSection(flecs::entity &entity) {
   flecs::world world = entity.world();
-  Manufacturing *manu = entity.get_mut<Manufacturing>();
 
-  size_t index = 0;
-  for (flecs::entity &e : manu->lines) {
-    ImGui::PushID(index++);
-    ImGui::SeparatorText(fmt::format("Line {}", index).c_str());
-
-    if (e.is_valid()) {
-      // There is a rocket on the line
-      ImGui::Text("Constructing %s", e.name().c_str());
-
-      Construction *c = e.get_mut<Construction>();
-      if (c) {
-        float completed = c->effort_total - c->effort_remaining;
-        ImGui::ProgressBar(completed / c->effort_total);
-      } else {
-        ImGui::Text(" ");
-      }
-      drawRocketButtons(e);
-      // ImGui::SameLine();
-      // if (ImGui::SmallButton("X")) {
-      //   e.remove<Construction>();
-      // }
-    } else {
-      // Nothing yet - the line is empty
-      ImGui::Text("Empty Manufacturing Line");
-      ImGui::Text(" ");
-      if (ImGui::Button("Build")) {
-        // Build new rocket
-        // TODO: Move to RocketLaunch Module
-        e = world.entity()
-                .is_a<Rocket>()
-                .set<Construction>({300, 300})
-                .child_of(entity);
-        e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
-      }
+  flecs::entity e = flecs::entity::null();
+  entity.children([&](flecs::entity ch) {
+    if (ch.has<Rocket>()) {
+      e = ch;
     }
-    ImGui::PopID();
+  });
+  ImGui::PushID(entity.id());
+
+  if (e.is_valid()) {
+    // There is a rocket on the line
+    ImGui::Text("Constructing %s", e.name().c_str());
+
+    Construction *c = e.try_get_mut<Construction>();
+    if (c) {
+      float completed = c->effort_total - c->effort_remaining;
+      ImGui::ProgressBar(completed / c->effort_total);
+    } else {
+      ImGui::ProgressBar(1.0);
+    }
+    drawRocketButtons(e);
+    // ImGui::SameLine();
+    // if (ImGui::SmallButton("X")) {
+    //   e.remove<Construction>();
+    // }
+  } else {
+    // Nothing yet - the line is empty
+    ImGui::Text("Empty Manufacturing Line");
+    ImGui::ProgressBar(0.0);
+    if (ImGui::Button("Build")) {
+      // Build new rocket
+      // TODO: Move to RocketLaunch Module
+      auto prefab = world.lookup("Prefabs::Core::Rocket");
+      assert(prefab.is_valid());
+      e = world.entity()
+              .is_a(prefab)
+              .set<Construction>({300, 300})
+              .child_of(entity);
+      e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
+    }
   }
+  ImGui::PopID();
 }
 
 void drawStorageSection(flecs::entity &entity) {
@@ -138,13 +146,14 @@ void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
   auto launchpad = entity.get<Launchpad>();
-  displayStatWithTooltip(&launchpad->max_weight);
+  displayStatWithTooltip(&launchpad.max_weight);
+  displayStatWithTooltip(&launchpad.prep_days);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =
       world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
   query.each([](flecs::entity planE, LaunchPlan &plan) {
-    ImGui::PushID(planE.id()); // Todo: Why is this not showing two plans?
+    ImGui::PushID(planE.id());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
     if (ImGui::SmallButton("Open")) {
@@ -182,7 +191,7 @@ void drawRocketButtons(flecs::entity &rocket) {
     if (target.is_valid()) {
       showLaunchWindowEdit(target);
     } else {
-      showLaunchWindowAdd(rocket.world(), &rocket);
+      showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
     }
   }
   movePopup(rocket);
@@ -194,25 +203,29 @@ void movePopup(flecs::entity &rocket) {
   }
   auto world = rocket.world();
   auto source = rocket.parent();
-
+  while (!source.has<Site>()) {
+    if (source.parent() == flecs::entity()) {
+      spdlog::error("Error: Could not find Site for this rocket");
+      return;
+    }
+    source = source.parent();
+  }
   ImGui::Text("Where to?");
   ImGui::SameLine();
   static flecs::entity destination;
   static std::string display = "<Select one>";
 
-  flecs::query<> storageBuildings = world.query_builder()
-                                        .with<Storage>()
-                                        .with(flecs::ChildOf, source.parent())
-                                        .build();
+  auto storageFacilities =
+      world.query_builder().with<Storage>().with<Site>().up().build();
 
   if (ImGui::BeginCombo("##StorageCombo", display.c_str())) {
-    storageBuildings.each([&](flecs::entity s) {
+    storageFacilities.each([&](flecs::entity s) {
       if (s == source) {
         ImGui::BeginDisabled();
       }
-      if (ImGui::Selectable(s.name().c_str(), destination == s)) {
+      if (ImGui::Selectable(s.parent().name().c_str(), destination == s)) {
         destination = s;
-        display = s.name();
+        display = s.parent().name();
       }
       if (s == source) {
         ImGui::EndDisabled();
@@ -231,10 +244,9 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::SameLine();
-  std::string issue =
-      destination == flecs::entity() ? "Invalid destination" : "";
-  if (ActionButton("Ok", nullptr, issue)) {
-    rocket.child_of(destination);
+  MoveRocketAction action{rocket, destination};
+  if (ActionButton("Ok", nullptr, action.validate(world).message)) {
+    action.execute(world);
     closePopup();
   }
   ImGui::EndPopup();

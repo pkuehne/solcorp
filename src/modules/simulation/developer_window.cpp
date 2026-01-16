@@ -1,19 +1,11 @@
 #include "developer_window.h"
 #include "imgui.h"
-#include "modules/simulation/simulation.h"
+#include "modules/engine/gui.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
 void showDeveloperWindow(flecs::world &world) {
-  spdlog::info("Showing Developer Window");
-  auto win = DeveloperWindow();
-  world.entity("DeveloperWindow").set<DeveloperWindow>(win);
-}
-
-void hideDeveloperWindow(flecs::world &world) {
-  spdlog::debug("Hiding DeveloperWindow");
-  auto entity = world.lookup("DeveloperWindow");
-  entity.destruct();
+  showWindow(world, "Developer Window");
 }
 
 void child_tree(flecs::entity e) {
@@ -25,20 +17,18 @@ void child_tree(flecs::entity e) {
   ImGui::PopID();
 };
 
-void systemDrawDeveloperWindow(flecs::entity winE, DeveloperWindow &win) {
+void drawDeveloperWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<DeveloperWindow>();
   auto world = winE.world();
-  if (!win.open) {
-    hideDeveloperWindow(world);
-    return;
+  ImGui::Checkbox("Show Metrics Window", &state.show_metrics_window);
+
+  if (ImGui::BeginTabBar("Tools")) {
+    if (ImGui::BeginTabItem("Entity Tree")) {
+      world.children(child_tree);
+    }
   }
-  auto options = world.get_mut<Developer>();
 
-  ImGui::Begin("Developer Tools", &win.open);
-  ImGui::Checkbox("Show Metrics Window", &options->show_metrics_window);
-  world.children(child_tree);
-  ImGui::End();
-
-  if (options->show_metrics_window) {
+  if (state.show_metrics_window) {
     ImGui::ShowMetricsWindow();
   }
 }

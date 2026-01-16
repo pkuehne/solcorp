@@ -4,3 +4,4 @@ build/
 *.ttf
 *.log
 *.ini
+.direnv

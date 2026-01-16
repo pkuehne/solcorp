@@ -1,7 +1,8 @@
 
 #include "site_construction.h"
 #include "construction_window.h"
-#include "modules/engine/render.h"
+// #include "modules/engine/render.h"
+#include "modules/site/helpers.h"
 #include "site.h"
 #include "spdlog/spdlog.h"
 #include <cstddef>
@@ -22,6 +23,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   // Remove the old sites
   entity.children([](flecs::entity e) {
     if (e.has<ConstructionSite>()) {
+      spdlog::debug("Removing old construction site {}", e.name().c_str());
       e.destruct();
     }
   });
@@ -39,12 +41,10 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
 
   currentBuildings.each([&](flecs::entity e, SiteLocation &location) {
     if (e.has<Building>()) {
+      spdlog::debug("Found building {} at {} {}", e.name().c_str(), location.x,
+                    location.y);
       locationMap[location.y * site.height + location.x] =
           LocationInfo::TileBuilding;
-
-    } else if (e.has<ConstructionSite>()) {
-      locationMap[location.y * site.height + location.x] =
-          LocationInfo::TileConstruction;
     }
   });
 
@@ -87,13 +87,6 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     setConstruction(site.height / 2, site.width / 2);
   }
 
-  Sprite sprite;
-  sprite.texture = world.lookup("Textures::Construction");
-  sprite.x = 0;
-  sprite.y = 128;
-  sprite.width = 32;
-  sprite.height = 32;
-
   for (unsigned int y = 0; y < site.height; y++) {
     for (unsigned int x = 0; x < site.width; x++) {
       if (locationMap[loc(y, x)] != LocationInfo::TileConstruction) {
@@ -102,14 +95,7 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
 
       // Create Construction Site
       spdlog::debug("Creating construction site at {} {}", x, y);
-      world
-          .entity(fmt::format("Construction Site {}-{}/{}",
-                              currentSite.name().c_str(), x, y)
-                      .c_str())
-          .set<SiteLocation>({x, y})
-          .set<Sprite>(sprite)
-          .add<ConstructionSite>()
-          .child_of(currentSite);
+      instantiateConstructionSite(world, x, y, currentSite);
     }
   }
 

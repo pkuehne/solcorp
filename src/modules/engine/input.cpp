@@ -1,6 +1,7 @@
 #include "input.h"
 #include "backends/imgui_impl_sdl2.h"
-#include "modules/engine/engine.h"
+#include "flecs/addons/cpp/c_types.hpp"
+#include "modules/base/base.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 
@@ -9,9 +10,11 @@ void systemEventHandling(flecs::iter &);
 
 void registerInput(flecs::world &world) {
   // Register components
-  world.component<KeyDown>().member<int>("key");
-  world.component<KeyUp>().member<int>("key");
-  world.component<KeyPressed>(); //.member<std::map<int, bool>>("keys");
+  world.component<KeyDown>().member("key", &KeyDown::key).add(flecs::Singleton);
+  world.component<KeyUp>().member("key", &KeyUp::key).add(flecs::Singleton);
+  world.component<KeyPressed>().add(flecs::Singleton);
+  world.component<MouseDown>().add(flecs::Singleton);
+  world.component<MouseUp>().add(flecs::Singleton);
 
   // Register systems
   world.system("Event Handling").kind(PreFramePhase).run(systemEventHandling);

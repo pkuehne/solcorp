@@ -12,16 +12,16 @@ StatsModule::StatsModule(flecs::world &world) {
 
   // Register components
   world.component<Stat>("Stat")
-      .member<std::string>("id")
-      .member<std::string>("display")
-      .member<std::string>("description")
-      .member<double>("base");
+      .member("id", &Stat::m_id)
+      .member("display", &Stat::m_display)
+      .member("description", &Stat::m_description)
+      .member("base", &Stat::m_base);
   world.component<Effect>();
   world.component<HasEffect>();
   world.component<Modifier>()
-      .member<std::string>("target_stat")
-      .member<double>("additive")
-      .member<double>("multiplicative");
+      .member("target_stat", &Modifier::target_stat)
+      .member("additive", &Modifier::additive)
+      .member("multiplicative", &Modifier::multiplicative);
 
   // Register lua types
   register_lua_user_type<Stat>(
@@ -96,7 +96,7 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto ancestor = e; ancestor.is_alive(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
       second.children([&](flecs::entity modE) {
-        const Modifier *mod = modE.get<Modifier>();
+        const Modifier *mod = modE.try_get<Modifier>();
         if (mod) {
           const char *effectName = second.name().c_str();
           for (auto *stat : stats) {
@@ -120,20 +120,24 @@ void displayStatWithTooltip(const Stat *stat) {
     ImGui::Text("%s", stat->description().c_str());
     ImGui::Separator();
     ImGui::Text("Base Value: %.0f", stat->base());
+    constexpr ImVec4 red = ImVec4(1.0, 0.0, 0.0, 1.0);
+    constexpr ImVec4 green = ImVec4(0.0, 0.5, 0.0, 1.0);
     for (const auto &item : stat->modifiers()) {
       std::string modValue = "";
-      auto colour = ImVec4(0.0, 0.5, 0.0, 1.0);
+      ImVec4 colour;
       if (item.mod.additive > 0) {
         modValue = fmt::format("+{:.0f}", item.mod.additive);
+        colour = stat->higher_is_better ? green : red;
       } else if (item.mod.additive < 0) {
         modValue = fmt::format("{:.0f}", item.mod.additive);
-        colour = ImVec4(1.0, 0.0, 0.0, 1.0);
+        colour = stat->higher_is_better ? red : green;
       }
       if (item.mod.multiplicative > 1) {
         modValue = fmt::format("+{:.0f}%", (item.mod.multiplicative - 1) * 100);
+        colour = stat->higher_is_better ? green : red;
       } else if (item.mod.multiplicative < 1) {
         modValue = fmt::format("{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = ImVec4(1.0, 0.0, 0.0, 1.0);
+        colour = stat->higher_is_better ? red : green;
       }
       ImGui::Text("%s:", item.effectName.c_str());
       ImGui::SameLine();

@@ -2,7 +2,6 @@
 
 #include "modules/stats/stats.h"
 #include <flecs.h>
-#include <vector>
 
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
@@ -25,13 +24,13 @@ struct SiteLocation {
   u_int y = 0;
 };
 
-/// @brief Allows construction of rockets
+/// @brief Marker component for facilities within a building
+struct Facility {};
+
+/// @brief Facility for constructing rockets
 struct Manufacturing {
-  std::vector<flecs::entity> lines;
   u_int max_weight = 1000;
   u_int available_effort = 50;
-
-  Manufacturing(size_t num = 1) : lines(num) {}
 };
 
 /// @brief For rockets and payloads
@@ -40,13 +39,18 @@ struct Storage {
 };
 
 struct Office {
-  u_int max_desks = 100;
+  Stat max_desks =
+      Stat("max-desks", "Max Desks",
+           "The maximum number of desks this facility can hold", 100);
 };
 
 /// @brief Can launch rockets
 struct Launchpad {
   Stat max_weight = Stat("max-weight", "Max Weight",
                          "The maximum weight the pad can support", 1000);
+  Stat prep_days =
+      Stat("prep-days", "Prep Days",
+           "Number of days required to prepare a launch", 5, false);
 };
 
 /// @brief Indiciates the entity is a future building location
@@ -54,8 +58,9 @@ struct ConstructionSite {};
 
 struct ConstructionSiteNeedsUpdating {};
 
-void showBuildingWindow(const flecs::entity &buildingE);
-void hideBuildingWindow(flecs::world &world);
+void systemCreateSitePrefabs(flecs::iter &);
+void systemCreateSiteWindows(flecs::iter &it);
+void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
 
 struct SiteModule {
 public:

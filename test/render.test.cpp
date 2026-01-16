@@ -1,44 +1,38 @@
 #include "modules/engine/render.h"
+#include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
-#include <gtest/gtest.h>
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 
-class RenderModuleTests : public testing::Test {
-protected:
-  flecs::world world;
+SCENARIO("systemApplyParentTransform", "[system]") {
+  GIVEN("A point at (10,20)") {
+    Point original{10, 20};
+    WHEN("A transform is applied without a parent") {
+      Transform t{original, {}};
 
-public:
-  //   RenderModuleTests() { world.import <RenderModule>(); }
-};
+      systemApplyParentTransform(t, nullptr);
 
-TEST_F(RenderModuleTests, TransformWithoutParentAppliesRelativeToWorld) {
-  // Given
-  Point original{10, 20};
-  Transform t{original, {}};
+      THEN("The world position is the same as the relative position") {
+        REQUIRE(t.relativePosition.x == original.x);
+        REQUIRE(t.relativePosition.y == original.y);
+        REQUIRE(t.worldPosition.x == original.x);
+        REQUIRE(t.worldPosition.y == original.y);
+      }
+    }
 
-  // When
-  systemApplyParentTransform(t, nullptr);
+    WHEN("A transform is applied with a parent at (10,20)") {
+      Transform t{original, {}};
+      Transform p{original, original};
 
-  // Then
-  EXPECT_EQ(t.relativePosition.x, original.x);
-  EXPECT_EQ(t.relativePosition.y, original.y);
-  EXPECT_EQ(t.worldPosition.x, original.x);
-  EXPECT_EQ(t.worldPosition.y, original.y);
-}
+      systemApplyParentTransform(t, &p);
 
-TEST_F(RenderModuleTests, TransformWithParentAppliesRelativeToParentWorld) {
-  // Given
-  Point original{10, 20};
-  Transform t{original, {}};
-  Transform p{original, original};
-
-  // When
-  systemApplyParentTransform(t, &p);
-
-  // Then
-  EXPECT_EQ(t.relativePosition.x, original.x);
-  EXPECT_EQ(t.relativePosition.y, original.y);
-  EXPECT_EQ(t.worldPosition.x, original.x * 2);
-  EXPECT_EQ(t.worldPosition.y, original.y * 2);
+      THEN("The world position is the sum of the relative and parent "
+           "positions") {
+        REQUIRE(t.relativePosition.x == original.x);
+        REQUIRE(t.relativePosition.y == original.y);
+        REQUIRE(t.worldPosition.x == original.x * 2);
+        REQUIRE(t.worldPosition.y == original.y * 2);
+      }
+    }
+  }
 }

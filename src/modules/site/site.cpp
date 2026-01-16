@@ -1,44 +1,52 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
-#include "modules/engine/engine.h"
+#include "modules/base/base.h"
+#include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "site_construction.h"
-#include "spdlog/spdlog.h"
 #include <sol/types.hpp>
+#include <spdlog/spdlog.h>
 
-void systemBuildingUpdateConstruction(flecs::entity, Manufacturing &);
+extern unsigned char construction_png[];
+extern unsigned int construction_png_len;
+
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
-                               Sprite &sprite);
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <EngineModule>();
   world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
 
   // Register components
   world.component<CurrentSite>();
-  world.component<Site>().member<u_int>("width").member<u_int>("height");
+  world.component<Site>()
+      .member("width", &Site::width)
+      .member("height", &Site::height);
   world.component<Building>();
-  world.component<SiteLocation>().member<u_int>("x").member<u_int>("y");
-  world.component<Manufacturing>();
-  world.component<Storage>();
-  world.component<Office>();
-  world.component<Launchpad>().member<Stat>("max_weight");
-  world.component<BuildingWindow>()
-      .member<flecs::entity>("buildingE")
-      .member<bool>("open");
-  world.component<ConstructionSiteWindow>()
-      .member<flecs::entity>("buildingE")
-      .member<bool>("open");
+  world.component<SiteLocation>()
+      .member("x", &SiteLocation::x)
+      .member("y", &SiteLocation::y);
+  world.component<Facility>();
+  world.component<Manufacturing>()
+      .member("max_weight", &Manufacturing::max_weight)
+      .member("available_effort", &Manufacturing::available_effort);
+  world.component<Storage>().member("max_storage", &Storage::max_storage);
+  world.component<Office>().member("max_desks", &Office::max_desks);
+  world.component<Launchpad>()
+      .member("max_weight", &Launchpad::max_weight)
+      .member("prep_days", &Launchpad::prep_days);
+  world.component<BuildingWindow>().member("buildingE",
+                                           &BuildingWindow::buildingE);
+  world.component<ConstructionSiteWindow>().member(
+      "buildingE", &ConstructionSiteWindow::buildingE);
 
   // Register Lua bindings
   register_lua_user_type<CurrentSite>(world, "CurrentSite");
@@ -51,35 +59,35 @@ SiteModule::SiteModule(flecs::world &world) {
   register_lua_user_type<Launchpad>(
       world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
         userType["max_weight"] = &Launchpad::max_weight;
+        userType["prep_days"] = &Launchpad::prep_days;
       });
   register_lua_user_type<Office>(world, "Office");
   register_lua_user_type<Storage>(world, "Storage");
   register_lua_user_type<Manufacturing>(
       world, "Manufacturing", [](sol::usertype<Manufacturing> &userType) {
-        userType["new"] =
-            sol::constructors<Manufacturing(), Manufacturing(size_t)>();
+        userType["max_weight"] = &Manufacturing::max_weight;
+        userType["available_effort"] = &Manufacturing::available_effort;
       });
 
   // Register Systems
+  world.system("Site Create Prefabs")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateSitePrefabs);
+
+  world.system("Site Create Site Windows")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateSiteWindows);
+
   auto sim = world.get<Simulation>();
-
   world.system<Manufacturing>("Update Construction")
-      .tick_source(sim->speed)
+      .tick_source(sim.speed)
       .kind(UpdatePhase)
-      .each(systemBuildingUpdateConstruction);
-
-  world.system<BuildingWindow>("Draw Building Window")
-      .kind(GuiPhase)
-      .each(systemDrawBuildingWindow);
-
-  world.system<ConstructionSiteWindow>("Draw Construction Site Window")
-      .kind(GuiPhase)
-      .each(systemDrawConstructionSiteWindow);
+      .each(systemBuildingUpdateManufacuringProgress);
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
-      .term_at(2)
-      .singleton()
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
 
@@ -88,25 +96,35 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
-  world.system<SiteLocation, Sprite>("Add missing transforms")
-      .without<Transform>()
-      .kind(UpdatePhase)
-      .each(systemAddMissingTransform);
-
   world.system<Launchpad>()
       .kind(UpdatePhase)
       .each([](flecs::entity e, Launchpad &pad) {
         statsApplyModifiers(e, &pad.max_weight);
+        statsApplyModifiers(e, &pad.prep_days);
       });
+}
 
+/**
+ * @brief Registers site-related prefab entities in the ECS world.
+ *
+ * This function creates and registers prefab entities for buildings,
+ * construction sites, and facilities, along with their associated components
+ * and textures. It ensures that the necessary prefab hierarchy nodes exist,
+ * loads the construction site texture, and sets up default sprite properties
+ * for the prefabs.
+ *
+ * @param it The ECS iterator providing access to the world context.
+ */
+void systemCreateSitePrefabs(flecs::iter &it) {
+  const flecs::world &world = it.world();
+
+  spdlog::debug("Creating Site Prefabs");
   // Construction Site texture
-  auto scope = world.set_scope(0);
   auto texture_node = world.entity("Textures");
-  auto texture =
-      world.entity("Construction")
-          .child_of(texture_node)
-          .set<Texture>(loadTexture("textures/construction.png", world));
-  world.set_scope(scope);
+  auto texture = world.entity("Construction")
+                     .child_of(texture_node)
+                     .set<Texture>(loadTexture(construction_png,
+                                               construction_png_len, world));
 
   // Register Prefabs
   Sprite sprite;
@@ -116,10 +134,50 @@ SiteModule::SiteModule(flecs::world &world) {
   sprite.height = 32;
   sprite.texture = texture;
 
+  // Ensure prefab hierarchy nodes exist
+  auto prefabs_node = world.lookup("Prefabs");
+  if (!prefabs_node.is_valid()) {
+    prefabs_node = world.entity("Prefabs");
+  }
+  auto core_node = world.lookup("Prefabs::Core");
+  if (!core_node.is_valid()) {
+    core_node = world.entity("Core").child_of(world.entity("Prefabs"));
+  }
+  auto building_node = world.lookup("Prefabs::Buildings");
+  if (!building_node.is_valid()) {
+    building_node = world.entity("Buildings").child_of(prefabs_node);
+  }
+  auto facility_node = world.lookup("Prefabs::Facilities");
+  if (!facility_node.is_valid()) {
+    facility_node = world.entity("Facilities").child_of(prefabs_node);
+  }
+
+  // Create Building prefab
   world.prefab("Building")
+      .child_of(core_node)
       .add<Building>()
       .set<SiteLocation>({})
-      .emplace<Sprite>(sprite);
+      .set<Transform>({})
+      .set<Sprite>(sprite);
+
+  // Create ConstructionSite prefab with adjusted sprite position
+  sprite.y = 128;
+  world.prefab("ConstructionSite")
+      .child_of(core_node)
+      .add<ConstructionSite>()
+      .set<SiteLocation>({})
+      .set<Transform>({})
+      .set<Sprite>(sprite);
+
+  world.prefab("Facility").child_of(core_node).add<Facility>();
+}
+
+void systemCreateSiteWindows(flecs::iter &it) {
+  auto world = it.world();
+  registerWindow("Building Window", drawBuildingWindow, world)
+      .set<BuildingWindow>({});
+  registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
+      .set<ConstructionSiteWindow>({});
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
@@ -129,7 +187,9 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
   int tileSize = s.width;
   if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
       (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
+    spdlog::debug("Clicked on building {}", e.name().c_str());
     if (e.has<Building>()) {
+      spdlog::debug("Showing Building Window for {}", e.name().c_str());
       showBuildingWindow(e);
     } else if (e.has<ConstructionSite>()) {
       showConstructionSiteWindow(e);
@@ -137,38 +197,31 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
   }
 }
 
-void systemBuildingUpdateConstruction(flecs::entity entity,
-                                      Manufacturing &manufacturing) {
+void systemBuildingUpdateManufacuringProgress(flecs::entity entity,
+                                              Manufacturing &manufacturing) {
   flecs::world world = entity.world();
 
-  for (flecs::entity &rocket : manufacturing.lines) {
-    if (!rocket.is_valid()) {
-      continue;
+  flecs::entity rocket = flecs::entity::null();
+  entity.children([&](flecs::entity ch) {
+    if (ch.has<Construction>()) {
+      rocket = ch;
     }
-    Construction *construction = rocket.get_mut<Construction>();
-    if (!construction) {
-      // Remove it from the manufacturing line
-      rocket = flecs::entity();
-      continue;
-    }
-    if (manufacturing.available_effort > construction->effort_remaining) {
-      construction->effort_remaining = 0;
-    } else {
-      construction->effort_remaining -= manufacturing.available_effort;
-    }
-    if (construction->effort_remaining == 0) {
-      rocket.remove<Construction>();
-      rocket = flecs::entity();
-    }
-  }
-}
+  });
 
-void systemAddMissingTransform(flecs::entity entity, SiteLocation &location,
-                               Sprite &sprite) {
-  spdlog::debug("Add missing Transform for {}", entity.name().c_str());
-  u_int tileSize = sprite.width;
-  auto t = Transform{Point{static_cast<int>(location.x * tileSize),
-                           static_cast<int>(location.y * tileSize)},
-                     Point{}};
-  entity.set<Transform>(t);
+  if (!rocket.is_valid()) {
+    return;
+  }
+  Construction *construction = rocket.try_get_mut<Construction>();
+  if (!construction) {
+    return;
+  }
+  if (manufacturing.available_effort > construction->effort_remaining) {
+    construction->effort_remaining = 0;
+  } else {
+    construction->effort_remaining -= manufacturing.available_effort;
+  }
+  if (construction->effort_remaining == 0) {
+    rocket.remove<Construction>();
+    instantiateBuildingNotification(world, entity, "Rocket finished");
+  }
 }
