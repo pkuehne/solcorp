@@ -7,6 +7,7 @@
 #include <flecs.h>
 #include <modules/rocket_launch/launch_window.h>
 #include <modules/simulation/celestial_browser.h>
+#include <modules/simulation/developer_window.h>
 
 void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
@@ -45,6 +46,9 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       }
       if (ImGui::MenuItem("Launch Planner")) {
         showLaunchWindowAdd(world);
+      }
+      if (ImGui::MenuItem("Developer Window")) {
+        showDeveloperWindow(world);
       }
       ImGui::EndMenu();
     }
