@@ -299,6 +299,73 @@ Sprite clip_sprite_from_texture(sol::this_state s, const std::string &texture,
   return sprite;
 }
 
+/// @brief Creates a Contract entity in the ECS world.
+/// @param s
+/// @param client The name of the client for the contract
+/// @param description A brief description of the contract
+/// @param upfront_payment The upfront payment amount
+/// @param completion_payment The payment amount upon completion
+/// @return
+flecs::entity create_contract(sol::this_state s, const std::string &name,
+                              const std::string &client,
+                              const std::string &description,
+                              float upfront_payment, float completion_payment) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  auto contract_entity =
+      world->entity(name.c_str())
+          .set<Contract>(
+              {client, description, upfront_payment, completion_payment});
+  return contract_entity;
+}
+
+/// @brief Creates a Payload entity and associates it with a Contract.
+/// @param s
+/// @param contract The contract to associate the payload with
+/// @param name The name of the payload entity
+/// @param mass  The mass of the payload in kg
+/// @return The created Payload entity
+flecs::entity create_contract_payload(sol::this_state s, flecs::entity contract,
+                                      const std::string &name, u_int mass,
+                                      const std::string &target_orbit_name) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  auto payload_entity = world->entity(name.c_str()).set<Payload>({mass});
+  contract.add<ContractPayload>(payload_entity);
+  if (!target_orbit_name.empty()) {
+    auto orbit_entity = world->lookup(target_orbit_name.c_str());
+    if (orbit_entity.is_valid()) {
+      contract.add<ContractTargetOrbit>(orbit_entity);
+    } else {
+      spdlog::error("Orbit {} not found", target_orbit_name);
+    }
+  }
+  return payload_entity;
+}
+
+/// @brief Retrieves all contracts in the ECS world.
+///
+/// Queries the ECS world for all entities with a Contract component and
+/// returns them in a Lua table. The table keys are sequential integers
+/// starting from 1.
+///
+/// @param s The Lua state handle (injected by sol2).
+/// @return A Lua table containing all contract entities.
+sol::table get_all_contracts(sol::this_state s) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  sol::table contracts_table = mod_state.create_table();
+
+  int index = 1;
+  world->query_builder<Contract>().build().each(
+      [&](flecs::entity e, Contract &) { contracts_table[index++] = e; });
+
+  return contracts_table;
+}
+
 /// @brief Registers helper functions into the Lua environment.
 ///
 /// Sets up the solcorp.helpers namespace and binds C++ helper functions for
@@ -331,4 +398,7 @@ void load_helpers_namespace(sol::state &mod_state) {
   helpers.set_function("create_rocket_prefab", create_rocket_prefab);
   helpers.set_function("add_target_orbit_to_rocket",
                        add_target_orbit_to_rocket);
+  helpers.set_function("create_contract", create_contract);
+  helpers.set_function("create_contract_payload", create_contract_payload);
+  helpers.set_function("get_all_contracts", get_all_contracts);
 }

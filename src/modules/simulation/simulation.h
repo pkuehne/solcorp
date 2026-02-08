@@ -1,14 +1,7 @@
 #pragma once
 
+#include "modules/base/base.h"
 #include <flecs.h>
-
-struct Simulation {
-  flecs::entity speed;
-};
-
-struct Game {
-  u_int day = 0;
-};
 
 /// \brief Represents a celestial body with orbital and physical parameters.
 /// All parameters are in SI units unless otherwise specified. Angles in radians

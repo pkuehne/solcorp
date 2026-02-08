@@ -5,7 +5,6 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
@@ -19,7 +18,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
   world.import <BaseModule>();
-  world.import <SimulationModule>();
 
   // Register components
   world.component<ScheduleLaunchAction>("PlannedLaunch")
@@ -32,6 +30,15 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<Contract>()
+      .member("client", &Contract::client)
+      .member("description", &Contract::description)
+      .member("upfront_payment", &Contract::upfront_payment)
+      .member("completion_payment", &Contract::completion_payment)
+      .member("status", &Contract::status)
+      .member("failed", &Contract::failed);
+  world.component<ContractPayload>();
+  world.component<ContractTargetOrbit>();
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
@@ -56,6 +63,26 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       world, "CanLiftTo", [](sol::usertype<CanLiftTo> &userType) {
         userType["max_mass"] = &CanLiftTo::max_mass;
       });
+  register_lua_user_type<Contract>(
+      world, "Contract", [](sol::usertype<Contract> &userType) {
+        userType["client"] = &Contract::client;
+        userType["description"] = &Contract::description;
+        userType["upfront_payment"] = &Contract::upfront_payment;
+        userType["completion_payment"] = &Contract::completion_payment;
+        userType["status"] = &Contract::status;
+        userType["failed"] = &Contract::failed;
+      });
+  register_lua_enum_table<ContractStatus>(
+      world, "ContractStatus", [](sol::table &enumTable) {
+        enumTable["Open"] = ContractStatus::Open;
+        enumTable["Accepted"] = ContractStatus::Accepted;
+        enumTable["Closed"] = ContractStatus::Closed;
+      });
+  register_lua_user_type<ContractPayload>(
+      world, "ContractPayload", [](sol::usertype<ContractPayload> &) {});
+  register_lua_user_type<ContractTargetOrbit>(
+      world, "ContractTargetOrbit",
+      [](sol::usertype<ContractTargetOrbit> &) {});
 
   // Register systems
   world.system("Create Rocket Prefabs")

@@ -3,7 +3,6 @@
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/engine/input.h"
-#include "modules/simulation/simulation.h"
 #include <flecs.h>
 #include <modules/rocket_launch/launch_window.h>
 #include <modules/simulation/celestial_browser.h>

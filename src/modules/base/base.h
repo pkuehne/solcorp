@@ -17,6 +17,14 @@ extern flecs::entity PostFramePhase;
 constexpr double pi = 3.14159265358979323846;
 constexpr double deg2rad(double deg) { return deg * pi / 180.0; }
 
+struct Simulation {
+  flecs::entity speed;
+};
+
+struct Game {
+  u_int day = 0;
+};
+
 struct BaseModule {
   BaseModule(flecs::world &world);
 };

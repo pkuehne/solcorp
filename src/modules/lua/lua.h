@@ -55,6 +55,17 @@ void register_lua_user_type(
   });
 }
 
+template <typename T>
+void register_lua_enum_table(
+    flecs::world &world, const std::string &name,
+    const std::function<void(sol::table &)> &registerFunc) {
+  run_on_every_mod(world, [&name, &registerFunc](sol::state &state) {
+    sol::table enum_table = state.create_table();
+    registerFunc(enum_table);
+    state[name] = enum_table;
+  });
+}
+
 struct LuaModule {
 public:
   LuaModule(flecs::world &);

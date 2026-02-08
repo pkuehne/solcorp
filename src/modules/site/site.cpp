@@ -7,7 +7,6 @@
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "site_construction.h"
@@ -22,7 +21,6 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
 
   // Register components
