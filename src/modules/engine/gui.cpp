@@ -77,7 +77,7 @@ void systemInitialiseGui(flecs::iter &iter) {
   builder.BuildRanges(&ranges);
 
   ImFontConfig config;
-  io.Fonts->AddFontFromFileTTF("custom-font.ttf", dpi_scaling * 18.0f, &config,
+  io.Fonts->AddFontFromFileTTF("external/imgui/misc/fonts/Roboto-Medium.ttf", dpi_scaling * 18.0f, &config,
                                ranges.Data);
   io.Fonts->Build();
 

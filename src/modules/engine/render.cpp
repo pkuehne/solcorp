@@ -1,5 +1,6 @@
 #include "render.h"
 #include "SDL_render.h"
+#include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
@@ -92,10 +93,13 @@ void registerRender(flecs::world &world) {
   world.set_scope(scope);
 
   Font defaultFont;
-  defaultFont.name = "custom-font.ttf";
+  defaultFont.name = "external/imgui/misc/fonts/Roboto-Medium.ttf";
   defaultFont.point_size = 14;
   defaultFont.ptr =
       TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
+  SC_ASSERT(defaultFont.ptr != nullptr,
+            "Failed to load font '" + defaultFont.name + "': " +
+                TTF_GetError());
   world.entity("Default").set<Font>(defaultFont).child_of(fonts);
 
   // Register systems
@@ -232,8 +236,18 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
                                 const Renderer &renderer) {
 
   auto world = e.world();
+  auto df = world.lookup("Fonts::Default");
+  if (!df) {
+    spdlog::error("Default font not found in world");
+    return;
+  }
 
-  auto font = world.lookup("Fonts::Default").get<Font>();
+  auto font = df.get<Font>();
+  if (!font.ptr) {
+    spdlog::warn("Cannot render text: default font not loaded");
+    e.remove<Text>();
+    return;
+  }
   SDL_Color color = {text.color.r, text.color.g, text.color.b, text.color.a};
 
   SDL_Surface *surface =
