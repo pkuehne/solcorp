@@ -89,6 +89,13 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .kind(flecs::OnStart)
       .immediate()
       .run(systemCreateRocketPrefabs);
+  world.system("Create Contract Node")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &it) {
+        auto world = it.world();
+        world.entity("Contracts");
+      });
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)

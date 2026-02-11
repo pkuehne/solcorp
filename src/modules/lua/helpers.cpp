@@ -313,10 +313,21 @@ flecs::entity create_contract(sol::this_state s, const std::string &name,
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
+  auto contracts_node = world->lookup("Contracts");
+  SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
+
+  // Check name doesn't already exist
+  auto existing = contracts_node.lookup(name.c_str());
+  if (existing.is_valid()) {
+    spdlog::warn("Entity with name {} already exists", name);
+    return existing;
+  }
+
   auto contract_entity =
       world->entity(name.c_str())
           .set<Contract>(
-              {client, description, upfront_payment, completion_payment});
+              {client, description, upfront_payment, completion_payment})
+          .child_of(contracts_node);
   return contract_entity;
 }
 

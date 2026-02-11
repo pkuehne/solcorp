@@ -105,7 +105,12 @@ local function get_random_contract_name()
         "Deploy Space Station Module",
         "Deliver Cargo Pod",
         "Transport Crew",
-        "Repair Orbital Platform"
+        "Repair Orbital Platform",
+		"Conduct Space Experiment",
+		"Resupply Space Station",
+		"Test New Rocket",
+		"Satellite Servicing Mission",
+		"Space Tourism Flight",
     }
     return names[math.random(1, #names)]
 end
