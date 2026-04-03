@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(cmake:*)",
-      "Bash(nix develop:*)"
+      "Bash(nix develop:*)",
+      "Bash(git:*)",
+      "Bash(just build:*)",
+      "Bash(just test:*)"
     ]
   }
 }

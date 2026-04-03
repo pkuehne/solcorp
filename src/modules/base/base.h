@@ -17,6 +17,18 @@ extern flecs::entity PostFramePhase;
 constexpr double pi = 3.14159265358979323846;
 constexpr double deg2rad(double deg) { return deg * pi / 180.0; }
 
+/// @brief Returns the nearest ancestor of e (inclusive) that has component T,
+/// or a null entity if none is found.
+template <typename T>
+flecs::entity findAncestorWith(flecs::entity e) {
+  for (auto it = e; it.is_alive(); it = it.parent()) {
+    if (it.has<T>()) {
+      return it;
+    }
+  }
+  return flecs::entity::null();
+}
+
 struct Simulation {
   flecs::entity speed;
 };

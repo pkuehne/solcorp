@@ -1,5 +1,6 @@
 #include "rocket_launch.h"
 #include "actions.h"
+#include "active_launches_window.h"
 #include "launch_window.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
@@ -108,6 +109,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
         auto world = it.world();
         registerWindow("Mission Plan", drawLaunchWindow, world)
             .set<LaunchWindow>({});
+        registerWindow("Active Launches", drawActiveLaunchesWindow, world)
+            .set<ActiveLaunchesWindow>({});
       });
 }
 

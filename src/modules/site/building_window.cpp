@@ -1,6 +1,7 @@
 #include "building_window.h"
 #include "imgui.h"
 #include "modules/base/assert.h"
+#include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/launch_window.h"
@@ -202,13 +203,10 @@ void movePopup(flecs::entity &rocket) {
     return;
   }
   auto world = rocket.world();
-  auto source = rocket.parent();
-  while (!source.has<Site>()) {
-    if (source.parent() == flecs::entity()) {
-      spdlog::error("Error: Could not find Site for this rocket");
-      return;
-    }
-    source = source.parent();
+  auto source = findAncestorWith<Site>(rocket.parent());
+  if (!source.is_valid()) {
+    spdlog::error("Error: Could not find Site for this rocket");
+    return;
   }
   ImGui::Text("Where to?");
   ImGui::SameLine();

@@ -139,6 +139,9 @@ local function create_contracts()
         return
     end
 
+	if math.random() < 0.9 then
+		return
+	end
 	info("Creating new contract...")
 	local contract = solcorp.helpers.create_contract(get_random_contract_name(), get_random_company_name(), "Launch a satellite into low Earth orbit.", 50000, 150000)
 	solcorp.helpers.create_contract_payload(contract, "Satellite " .. math.random(100, 10000), 500, "Sun::Earth::Low Orbit")

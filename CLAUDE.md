@@ -145,6 +145,7 @@ Tests use Catch2 v3.6.0 and are in [test/](test/):
 - `simulation.test.cpp` - Orbital mechanics tests
 - `site.test.cpp` - Construction/site tests
 - `rocket_launch_tests.cpp` - Launch system tests
+- `active_launches_tests.cpp` - Active launches filter logic tests
 - `stats.test.cpp` - Statistics tests
 - etc.
 
@@ -154,6 +155,12 @@ Run with environment variables:
 ```bash
 SPDLOG_LEVEL=debug cmake --build build --target unit_tests
 ```
+
+### What to test
+
+Test business logic wherever possible, even when it lives inside UI code. ImGui rendering is not testable, but logic embedded in draw functions — filtering, validation, state transitions — should be extracted into free functions and tested. This has caught real bugs (e.g. `is_valid()` vs `is_alive()` on deleted filter entities).
+
+The pattern: extract the logic into a named free function, declare it in the header, test it directly. Keep the draw function as a thin caller.
 
 ## Code Organization
 
@@ -210,6 +217,14 @@ solcorp.logging.error("message")
 2. **Flecs REST API**: Enabled via `.enable_rest()` - inspect ECS state at runtime
 3. **Developer Windows**: ImGui inspector windows (see [src/modules/simulation/developer_window.h](src/modules/simulation/developer_window.h))
 4. **Clangd**: LSP support for code navigation (in Nix shell)
+
+## Architecture Decision Records (ADRs)
+
+Major architectural decisions should be documented as ADRs in [docs/adr/](docs/adr/). Each ADR captures the context, decision, alternatives considered, and tradeoffs accepted — the "why" that isn't visible in the code.
+
+Use the format `docs/adr/NNN-short-title.md` (e.g. `001-ecs-with-flecs.md`). A minimal ADR needs only: **Context**, **Decision**, and **Consequences**.
+
+When proposing or reviewing a change that affects core architecture (new framework, new module pattern, data model shift, build tooling), create or reference an ADR.
 
 ## Critical Implementation Notes
 

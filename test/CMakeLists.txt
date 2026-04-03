@@ -9,6 +9,8 @@ add_executable(unit_test
   main.cpp
   manufacturing.test.cpp
   render.test.cpp
+  active_launches_tests.cpp
+  base_tests.cpp
   rocket_launch_tests.cpp
   simulation.test.cpp
   site.test.cpp
