@@ -4,8 +4,9 @@
 #include "modules/base/base.h"
 #include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_render.h>
 #include <SDL_ttf.h>
 #include <cstddef>
 #include <cstdlib>
@@ -22,36 +23,6 @@ void systemRenderText(flecs::entity, const Text &, const Texture &,
                       const Transform &, const Renderer &);
 
 void registerRender(flecs::world &world) {
-
-  // Register components
-  world.component<Color>()
-      .member("r", &Color::r)
-      .member("g", &Color::r)
-      .member("b", &Color::r)
-      .member("a", &Color::r);
-  world.component<Point>().member<float>("x").member<float>("y");
-  world.component<Transform>()
-      .member("relativePosition", &Transform::relativePosition)
-      .member("worldPosition", &Transform::worldPosition);
-  world.component<Renderer>().add(flecs::Singleton);
-  world.component<Texture>()
-      .member<size_t>("ptr")
-      .member("width", &Texture::width)
-      .member("height", &Texture::height);
-  world.component<Sprite>()
-      .member("texture", &Sprite::texture)
-      .member("tile", &Sprite::tile)
-      .member("x", &Sprite::x)
-      .member("y", &Sprite::y)
-      .member("width", &Sprite::width)
-      .member("height", &Sprite::height)
-      .member("rotation", &Sprite::rotation)
-      .member("flip", &Sprite::flip);
-  world.component<Text>()
-      .member("text", &Text::text)
-      .member("color", &Text::color)
-      .member("rotation", &Text::rotation)
-      .member("flip", &Text::flip);
 
   register_lua_user_type<Color>(world, "Color",
                                 [](sol::usertype<Color> &userType) {
@@ -97,9 +68,9 @@ void registerRender(flecs::world &world) {
   defaultFont.point_size = 14;
   defaultFont.ptr =
       TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
-  SC_ASSERT(defaultFont.ptr != nullptr,
-            "Failed to load font '" + defaultFont.name + "': " +
-                TTF_GetError());
+  SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +
+                                            defaultFont.name +
+                                            "': " + TTF_GetError());
   world.entity("Default").set<Font>(defaultFont).child_of(fonts);
 
   // Register systems

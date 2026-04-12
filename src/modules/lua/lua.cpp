@@ -15,9 +15,8 @@ void load_mod(flecs::world &world, const std::filesystem::path &path);
 
 LuaModule::LuaModule(flecs::world &world) {
   // Register components
-  world.component<Mod>()
-      .member("name", &Mod::name)    //
-      .member("state", &Mod::state); //
+  world.component<Mod>().member("name", &Mod::name); //
+  //.member("state", &Mod::state); //
 
   // Load mods
   load_all_mods(world);

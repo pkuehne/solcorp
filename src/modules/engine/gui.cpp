@@ -16,9 +16,7 @@ void systemRenderGUI(const Renderer &);
 void systemRenderWindow(flecs::entity winE, Window &win);
 
 void registerGui(flecs::world &world) {
-  world.import <EngineModule>();
-
-  world.component<Window>().member("open", &Window::open);
+  world.import<EngineModule>();
 
   // Register Systems
   world.system("Initialise GUI").kind(flecs::OnStart).run(systemInitialiseGui);
@@ -77,8 +75,8 @@ void systemInitialiseGui(flecs::iter &iter) {
   builder.BuildRanges(&ranges);
 
   ImFontConfig config;
-  io.Fonts->AddFontFromFileTTF("external/imgui/misc/fonts/Roboto-Medium.ttf", dpi_scaling * 18.0f, &config,
-                               ranges.Data);
+  io.Fonts->AddFontFromFileTTF("external/imgui/misc/fonts/Roboto-Medium.ttf",
+                               dpi_scaling * 18.0f, &config, ranges.Data);
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();

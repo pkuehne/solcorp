@@ -22,6 +22,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.import<BaseModule>();
 
   // Register components
+  world.component<ContractFilterStatus>();
   world.component<ScheduleLaunchAction>("PlannedLaunch")
       .member("name", &ScheduleLaunchAction::name)
       .member("launchDay", &ScheduleLaunchAction::launchDay)
@@ -41,6 +42,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("statusFilter", &ContractsWindow::statusFilter)
       .member("showCompleted", &ContractsWindow::showCompleted)
       .member("pendingDelete", &ContractsWindow::pendingDelete);
+  world.component<ContractTargetOrbit>();
+  world.component<ContractStatus>();
   world.component<Contract>()
       .member("client", &Contract::client)
       .member("description", &Contract::description)
@@ -49,9 +52,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("status", &Contract::status)
       .member("failed", &Contract::failed);
   world.component<ContractPayload>();
-  world.component<ContractTargetOrbit>();
-  world.component<ContractStatus>();
-  world.component<ContractFilterStatus>();
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);

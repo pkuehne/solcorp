@@ -25,6 +25,7 @@ struct CelestialBody {
   double albedo;          // 0.0–1.0
 };
 
+/// @brief Represents a target orbit for a spacecraft or satellite.
 struct TargetOrbit {
   double altitude;    // metres
   double inclination; // Radians

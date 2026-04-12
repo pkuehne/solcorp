@@ -20,24 +20,24 @@ TEST_CASE("contractMatchesFilter filters by status", "[contracts_window]") {
                                    });
 
   flecs::entity acceptedContract = world.entity("AcceptedContract")
-                                        .set<Contract>({
-                                            "TestClient",
-                                            "TestDesc",
-                                            1000.0f,
-                                            2000.0f,
-                                            ContractStatus::Accepted,
-                                            false,
-                                        });
+                                       .set<Contract>({
+                                           "TestClient",
+                                           "TestDesc",
+                                           1000.0f,
+                                           2000.0f,
+                                           ContractStatus::Accepted,
+                                           false,
+                                       });
 
   flecs::entity closedContract = world.entity("ClosedContract")
-                                      .set<Contract>({
-                                          "TestClient",
-                                          "TestDesc",
-                                          1000.0f,
-                                          2000.0f,
-                                          ContractStatus::Closed,
-                                          false,
-                                      });
+                                     .set<Contract>({
+                                         "TestClient",
+                                         "TestDesc",
+                                         1000.0f,
+                                         2000.0f,
+                                         ContractStatus::Closed,
+                                         false,
+                                     });
 
   SECTION("All filter matches all statuses") {
     ContractsWindow state{ContractFilterStatus::All, true};
@@ -75,7 +75,8 @@ TEST_CASE("contractMatchesFilter filters by status", "[contracts_window]") {
   }
 }
 
-TEST_CASE("setupLaunchForContract creates necessary entities", "[contracts_window]") {
+TEST_CASE("setupLaunchForContract creates necessary entities",
+          "[contracts_window]") {
   flecs::world world;
   world.import<BaseModule>();
   world.import<SimulationModule>();

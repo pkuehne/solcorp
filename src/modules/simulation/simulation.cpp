@@ -37,6 +37,9 @@ SimulationModule::SimulationModule(flecs::world &world) {
       "show_metrics_window", &DeveloperWindow::show_metrics_window);
   world.component<CelestialBrowser>().member("selected_body",
                                              &CelestialBrowser::selected_body);
+  world.component<TargetOrbit>()
+      .member("altitude", &TargetOrbit::altitude)
+      .member("inclination", &TargetOrbit::inclination);
 
   // Create Singletons
   world.set<Developer>({});
