@@ -5,6 +5,7 @@
 #include "modules/engine/input.h"
 #include <flecs.h>
 #include <modules/rocket_launch/active_launches_window.h>
+#include <modules/rocket_launch/contracts_window.h>
 #include <modules/rocket_launch/launch_window.h>
 #include <modules/simulation/celestial_browser.h>
 #include <modules/simulation/developer_window.h>
@@ -49,6 +50,9 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       }
       if (ImGui::MenuItem("Active Launches")) {
         showActiveLaunchesWindow(world);
+      }
+      if (ImGui::MenuItem("Contracts")) {
+        showContractsWindow(world);
       }
       if (ImGui::MenuItem("Developer Window")) {
         showDeveloperWindow(world);

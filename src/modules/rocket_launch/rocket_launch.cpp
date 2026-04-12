@@ -1,6 +1,7 @@
 #include "rocket_launch.h"
 #include "actions.h"
 #include "active_launches_window.h"
+#include "contracts_window.h"
 #include "launch_window.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
@@ -18,7 +19,7 @@ u_int Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import <BaseModule>();
+  world.import<BaseModule>();
 
   // Register components
   world.component<ScheduleLaunchAction>("PlannedLaunch")
@@ -31,6 +32,15 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<ActiveLaunchesWindow>()
+      .member("filterSite", &ActiveLaunchesWindow::filterSite)
+      .member("filterPad", &ActiveLaunchesWindow::filterPad)
+      .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
+      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel);
+  world.component<ContractsWindow>()
+      .member("statusFilter", &ContractsWindow::statusFilter)
+      .member("showCompleted", &ContractsWindow::showCompleted)
+      .member("pendingDelete", &ContractsWindow::pendingDelete);
   world.component<Contract>()
       .member("client", &Contract::client)
       .member("description", &Contract::description)
@@ -40,6 +50,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("failed", &Contract::failed);
   world.component<ContractPayload>();
   world.component<ContractTargetOrbit>();
+  world.component<ContractStatus>();
+  world.component<ContractFilterStatus>();
 
   // Register relationships
   world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
@@ -111,6 +123,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
             .set<LaunchWindow>({});
         registerWindow("Active Launches", drawActiveLaunchesWindow, world)
             .set<ActiveLaunchesWindow>({});
+        registerWindow("Contracts Window", drawContractsWindow, world)
+            .set<ContractsWindow>({});
       });
 }
 

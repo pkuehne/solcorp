@@ -17,6 +17,7 @@ list(APPEND SolCorpSources
     modules/rocket_launch/actions.cpp
     modules/rocket_launch/launch_window.cpp
     modules/rocket_launch/active_launches_window.cpp
+    modules/rocket_launch/contracts_window.cpp
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
@@ -48,6 +49,7 @@ list(APPEND SolCorpHeaders
     modules/rocket_launch/actions.h
     modules/rocket_launch/launch_window.h
     modules/rocket_launch/active_launches_window.h
+    modules/rocket_launch/contracts_window.h
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h

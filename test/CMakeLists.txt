@@ -10,6 +10,7 @@ add_executable(unit_test
   manufacturing.test.cpp
   render.test.cpp
   active_launches_tests.cpp
+  contracts_window.test.cpp
   base_tests.cpp
   rocket_launch_tests.cpp
   simulation.test.cpp

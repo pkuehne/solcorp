@@ -1,0 +1,261 @@
+#include "contracts_window.h"
+#include "imgui.h"
+#include "launch_window.h"
+#include "modules/base/base.h"
+#include "modules/engine/gui.h"
+#include "modules/simulation/simulation.h"
+#include "rocket_launch.h"
+#include <flecs.h>
+#include <spdlog/spdlog.h>
+
+bool contractMatchesFilter(flecs::entity contractE,
+                           const ContractsWindow &state) {
+  const Contract *contract = contractE.try_get<Contract>();
+  if (!contract) {
+    return false;
+  }
+
+  // Filter by status
+  if (state.statusFilter != ContractFilterStatus::All) {
+    switch (state.statusFilter) {
+    case ContractFilterStatus::Open:
+      if (contract->status != ContractStatus::Open)
+        return false;
+      break;
+    case ContractFilterStatus::Accepted:
+      if (contract->status != ContractStatus::Accepted)
+        return false;
+      break;
+    case ContractFilterStatus::Closed:
+      if (contract->status != ContractStatus::Closed)
+        return false;
+      break;
+    case ContractFilterStatus::All:
+      break;
+    }
+  }
+
+  // Filter completed contracts
+  if (!state.showCompleted && contract->status == ContractStatus::Closed) {
+    return false;
+  }
+
+  return true;
+}
+
+flecs::entity setupLaunchForContract(flecs::entity contractE) {
+  auto world = contractE.world();
+
+  // Create a new launch plan
+  std::string planName =
+      fmt::format("Launch_{}", contractE.name().c_str() + 1); // Strip #
+  flecs::entity planE = world.entity(planName.c_str()).add<LaunchPlan>();
+
+  // Create a payload for this contract
+  u_int payloadMass = 1000; // Default mass; could be extracted from contract
+  flecs::entity payloadE = world.entity().set<Payload>({payloadMass});
+
+  // Set up relationships
+  planE.add<LaunchingWith>(payloadE);
+  contractE.add<ContractPayload>(payloadE);
+  contractE.add<ContractTargetOrbit>(
+      world.lookup("TargetOrbits::LowEarth")); // Default orbit
+
+  spdlog::debug("Created launch plan {} for contract {}", planE.id(),
+                contractE.id());
+
+  return planE;
+}
+
+void showContractsWindow(flecs::world &world) {
+  showWindow(world, "Contracts Window");
+}
+
+void drawContractsWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<ContractsWindow>();
+  auto world = winE.world();
+
+  flecs::query<Contract> contractQuery =
+      world.query_builder<Contract>().build();
+
+  // --- Filters ---
+  ImGui::SetNextItemWidth(150.0f);
+  if (ImGui::BeginCombo("##StatusFilter", "Status")) {
+    if (ImGui::Selectable("All",
+                          state.statusFilter == ContractFilterStatus::All)) {
+      state.statusFilter = ContractFilterStatus::All;
+    }
+    if (ImGui::Selectable("Open",
+                          state.statusFilter == ContractFilterStatus::Open)) {
+      state.statusFilter = ContractFilterStatus::Open;
+    }
+    if (ImGui::Selectable("Accepted", state.statusFilter ==
+                                          ContractFilterStatus::Accepted)) {
+      state.statusFilter = ContractFilterStatus::Accepted;
+    }
+    if (ImGui::Selectable("Closed",
+                          state.statusFilter == ContractFilterStatus::Closed)) {
+      state.statusFilter = ContractFilterStatus::Closed;
+    }
+    ImGui::EndCombo();
+  }
+
+  ImGui::SameLine();
+  ImGui::Checkbox("Show Completed", &state.showCompleted);
+
+  ImGui::Separator();
+
+  // --- Table ---
+  ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                               ImGuiTableFlags_SizingStretchProp |
+                               ImGuiTableFlags_ScrollY;
+  if (ImGui::BeginTable("contracts", 10, tableFlags)) {
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupColumn("Name");
+    ImGui::TableSetupColumn("Client");
+    ImGui::TableSetupColumn("Description");
+    ImGui::TableSetupColumn("Status");
+    ImGui::TableSetupColumn("Upfront Payment", ImGuiTableColumnFlags_WidthFixed,
+                            100.0f);
+    ImGui::TableSetupColumn("Completion", ImGuiTableColumnFlags_WidthFixed,
+                            100.0f);
+    ImGui::TableSetupColumn("Failed", ImGuiTableColumnFlags_WidthFixed, 45.0f);
+    ImGui::TableSetupColumn("Launch Plan", ImGuiTableColumnFlags_WidthFixed,
+                            80.0f);
+    ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed,
+                            120.0f);
+    ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+    ImGui::TableHeadersRow();
+
+    bool openDeleteModal = false;
+    contractQuery.each([&](flecs::entity contractE, Contract &contract) {
+      if (!contractMatchesFilter(contractE, state)) {
+        return;
+      }
+
+      // Check if this contract has a launch plan
+      flecs::entity payloadE = flecs::entity::null();
+      bool hasLaunchPlan = false;
+      world.query_builder().with<ContractPayload>(contractE).build().each(
+          [&](flecs::entity payloadETemp) { payloadE = payloadETemp; });
+
+      if (payloadE.is_valid()) {
+        world.query_builder().with<LaunchingWith>(payloadE).build().each(
+            [&](flecs::entity) { hasLaunchPlan = true; });
+      }
+
+      ImGui::TableNextRow();
+      ImGui::PushID(contractE.name().c_str());
+
+      ImGui::TableSetColumnIndex(0);
+      ImGui::TextUnformatted(contractE.name().c_str());
+
+      ImGui::TableSetColumnIndex(1);
+      ImGui::TextUnformatted(contract.client.c_str());
+
+      ImGui::TableSetColumnIndex(2);
+      ImGui::TextUnformatted(contract.description.c_str());
+
+      ImGui::TableSetColumnIndex(3);
+      const char *statusStr = contract.status == ContractStatus::Open ? "Open"
+                              : contract.status == ContractStatus::Accepted
+                                  ? "Accepted"
+                                  : "Closed";
+      ImGui::TextUnformatted(statusStr);
+
+      ImGui::TableSetColumnIndex(4);
+      ImGui::Text("%.2f", contract.upfront_payment);
+
+      ImGui::TableSetColumnIndex(5);
+      ImGui::Text("%.2f", contract.completion_payment);
+
+      ImGui::TableSetColumnIndex(6);
+      ImGui::TextUnformatted(contract.failed ? "Yes" : "No");
+
+      ImGui::TableSetColumnIndex(7);
+      if (hasLaunchPlan) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Planned");
+      } else if (contract.status == ContractStatus::Accepted) {
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "No Plan");
+      } else {
+        ImGui::TextUnformatted("-");
+      }
+
+      ImGui::TableSetColumnIndex(8);
+      bool buttonDisabled = contract.status == ContractStatus::Closed ||
+                            contract.status == ContractStatus::Accepted;
+
+      if (buttonDisabled) {
+        ImGui::BeginDisabled();
+      }
+
+      if (ImGui::SmallButton("Accept")) {
+        contract.status = ContractStatus::Accepted;
+        spdlog::debug("Contract {} accepted", contractE.id());
+      }
+
+      if (buttonDisabled) {
+        ImGui::EndDisabled();
+      }
+
+      ImGui::SameLine();
+      if (ImGui::SmallButton("Reject")) {
+        contract.status = ContractStatus::Closed;
+        contract.failed = true;
+        spdlog::debug("Contract {} rejected", contractE.id());
+      }
+
+      ImGui::SameLine();
+      if (ImGui::SmallButton("Plan")) {
+        if (!hasLaunchPlan) {
+          setupLaunchForContract(contractE);
+        }
+        spdlog::debug("Launch plan setup for contract {}", contractE.id());
+      }
+
+      ImGui::TableSetColumnIndex(9);
+      if (contract.status == ContractStatus::Closed) {
+        if (ImGui::SmallButton("Delete")) {
+          state.pendingDelete = contractE;
+          openDeleteModal = true;
+        }
+      }
+
+      ImGui::PopID();
+    });
+
+    ImGui::EndTable();
+
+    if (openDeleteModal) {
+      ImGui::OpenPopup("Confirm Delete Contract");
+    }
+  }
+
+  // --- Delete confirmation modal ---
+  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  if (ImGui::BeginPopupModal("Confirm Delete Contract", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (state.pendingDelete.is_valid() && state.pendingDelete.is_alive()) {
+      ImGui::Text("Delete contract '%s'?", state.pendingDelete.name().c_str());
+      ImGui::Text("This action cannot be undone.");
+      ImGui::Separator();
+      if (ImGui::Button("Yes, Delete")) {
+        state.pendingDelete.destruct();
+        state.pendingDelete = flecs::entity::null();
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Keep")) {
+        state.pendingDelete = flecs::entity::null();
+        ImGui::CloseCurrentPopup();
+      }
+    } else {
+      state.pendingDelete = flecs::entity::null();
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
+
+  ImGui::End();
+}
