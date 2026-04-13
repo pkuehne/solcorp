@@ -25,6 +25,9 @@ SiteModule::SiteModule(flecs::world &world) {
 
   // Register components
   world.component<CurrentSite>();
+  world.component<Construction>()
+      .member("effort_remaining", &Construction::effort_remaining)
+      .member("effort_total", &Construction::effort_total);
   world.component<ConstructionSiteNeedsUpdating>();
   world.component<Site>()
       .member("width", &Site::width)
