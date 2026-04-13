@@ -343,7 +343,8 @@ flecs::entity create_contract_payload(sol::this_state s, flecs::entity contract,
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
-  auto payload_entity = world->entity(name.c_str()).set<Payload>({mass});
+  auto payload_entity =
+      world->entity(name.c_str()).set<Payload>({mass}).child_of(contract);
   contract.add<ContractPayload>(payload_entity);
   if (!target_orbit_name.empty()) {
     auto orbit_entity = world->lookup(target_orbit_name.c_str());

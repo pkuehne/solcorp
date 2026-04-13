@@ -150,7 +150,7 @@ end
 
 local function on_update()
 	-- update function
-	print("on_update called!")
+	-- print("on_update called!")
 	create_contracts()
 end
 
