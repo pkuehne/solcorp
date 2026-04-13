@@ -110,9 +110,10 @@ void drawManufacturingSection(flecs::entity &entity) {
     ImGui::ProgressBar(0.0);
     if (ImGui::Button("Build")) {
       // Build new rocket
-      // TODO: Move to RocketLaunch Module
-      auto prefab = world.lookup("Prefabs::Core::Rocket");
-      assert(prefab.is_valid());
+      // TODO: Move to RocketLaunch Module and make selectable from a list of
+      // rocket prefabs instead of hardcoding Falcon 1 here
+      auto prefab = world.lookup("Prefabs::Rockets::Falcon 1");
+      SC_ASSERT(prefab.is_valid(), "Rocket prefab not found");
       e = world.entity()
               .is_a(prefab)
               .set<Construction>({300, 300})

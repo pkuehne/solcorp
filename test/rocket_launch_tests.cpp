@@ -8,7 +8,7 @@
 
 SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("An empty plan") {
     ScheduleLaunchAction launch({});
@@ -108,11 +108,14 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
+    launch.targetOrbit = orbit;
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
       THEN("It succeeds") {
@@ -125,11 +128,14 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("The current plan with the same name") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
+    launch.targetOrbit = orbit;
     launch.current = world.entity("Test Plan").set<LaunchPlan>({});
 
     WHEN("Validated") {
@@ -144,11 +150,14 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("The current plan with a different name") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan Bravo";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
+    launch.targetOrbit = orbit;
     launch.current = world.entity("Test Plan").set<LaunchPlan>({});
 
     WHEN("Validated") {
@@ -163,11 +172,14 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("The current plan with an attached rocket") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
+    launch.targetOrbit = orbit;
     launch.current = world.entity("Test Plan").set<LaunchPlan>({});
     launch.current.add<LaunchingOn>(rocket);
 
@@ -183,17 +195,20 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
 SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
     launch.rocket = rocket;
+    launch.targetOrbit = orbit;
 
     WHEN("Executed") {
       launch.execute(world);
@@ -201,6 +216,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
         REQUIRE(launch.result.is_valid());
         CHECK(launch.result.get<LaunchPlan>().launch_date ==
               static_cast<u_int>(launch.launchDay));
+        CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
         CHECK(launch.result.target<LaunchingFrom>() == launchpad);
@@ -211,12 +227,15 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   GIVEN("The same plan executed twice") {
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
+    auto orbit = world.entity("LEO");
+    rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
     launch.launchpad = launchpad;
     launch.rocket = rocket;
+    launch.targetOrbit = orbit;
     launch.current = world.entity("Test Plan").set<LaunchPlan>({});
 
     WHEN("Executed") {
@@ -226,6 +245,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
         REQUIRE(launch.current.is_alive() == false);
         CHECK(launch.result.get<LaunchPlan>().launch_date ==
               static_cast<u_int>(launch.launchDay));
+        CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
         CHECK(launch.result.target<LaunchingFrom>() == launchpad);
@@ -236,7 +256,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
 
 SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("An empty world") {
     auto system = world.system("Create Rocket Prefabs")
@@ -260,7 +280,7 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
 
 SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   auto site = world.entity().add<Site>().set<CurrentSite>({});
   auto launchpad = world.entity("Main Pad")
@@ -312,7 +332,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
 
 SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("An invalid Rocket entity") {
     flecs::entity rocket = flecs::entity::null();
@@ -392,7 +412,7 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
 
 SCENARIO("MoveRocketAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("A valid rocket and destination") {
     flecs::entity destination = world.entity();

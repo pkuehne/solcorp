@@ -5,8 +5,7 @@
 #include "render.h"
 #include <cstddef>
 
-EngineModule::EngineModule(flecs::world &world) {
-  // Register components
+void registerEngineComponents(flecs::world &world) {
   world.component<Color>()
       .member("r", &Color::r)
       .member("g", &Color::g)
@@ -53,6 +52,10 @@ EngineModule::EngineModule(flecs::world &world) {
       .member("x", &Velocity::x)
       .member("y", &Velocity::y);
   world.component<Expire>().member("millis", &Expire::millis);
+}
+
+EngineModule::EngineModule(flecs::world &world) {
+  registerEngineComponents(world);
 
   initialiseGraphics(world);
 

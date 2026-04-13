@@ -46,6 +46,27 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
                     launchPrepDays));
   }
 
+  if (!targetOrbit.is_valid()) {
+    return ValidationResult::Fail("No target orbit selected");
+  }
+  if (!rocket.has<CanLiftTo>(targetOrbit)) {
+    return ValidationResult::Fail(
+        "Rocket cannot lift payload to selected orbit");
+  }
+
+  // Check total payload mass
+  u_int totalMass = 0;
+  for (const auto &payload : payloads) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      totalMass += payload.get<Payload>().mass;
+    }
+  }
+  auto maxMass = rocket.get<CanLiftTo>(targetOrbit).max_mass;
+  if (totalMass > maxMass) {
+    return ValidationResult::Fail(fmt::format(
+        "Total payload mass {} kg exceeds maximum {} kg", totalMass, maxMass));
+  }
+
   return ValidationResult::Pass();
 }
 
@@ -54,12 +75,20 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
     spdlog::debug("Removing existing launch plan: {}", current.id());
     current.destruct();
   }
-  auto plan = LaunchPlan{static_cast<u_int>(launchDay)};
+  auto plan = LaunchPlan{static_cast<u_int>(launchDay), targetOrbit};
 
   auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
+
+  // Add payloads to the plan
+  for (const auto &payload : payloads) {
+    if (payload.is_valid()) {
+      planE.add<LaunchingWith>(payload);
+    }
+  }
+
   result = planE;
 }
 
