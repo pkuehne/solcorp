@@ -33,27 +33,18 @@ jobs:
           restore-keys: fetchcontent-
 
       - name: Configure
-        run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+        run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF
 
       - name: Build
         run: nix develop --command cmake --build build --parallel
 
-      - name: Upload test binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-binary
-          path: |
-            build/CTestTestfile.cmake
-            build/test/CTestTestfile.cmake
-            build/test/unit_test
-          retention-days: 1
-
   test:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v14
@@ -61,13 +52,18 @@ jobs:
       - name: Set up Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Download test binary
-        uses: actions/download-artifact@v4
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
         with:
-          name: test-binary
+          path: build/_deps
+          key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-
 
-      - name: Fix permissions
-        run: chmod +x build/test/unit_test
+      - name: Configure
+        run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+
+      - name: Build
+        run: nix develop --command cmake --build build --target unit_test --parallel
 
       - name: Test
         run: nix develop --command ctest --test-dir build -C Release --output-on-failure
