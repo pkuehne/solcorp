@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -33,7 +37,7 @@ jobs:
         run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
 
       - name: Build
-        run: nix develop --command cmake --build build
+        run: nix develop --command cmake --build build --parallel
 
       - name: Test
         run: nix develop --command ctest --test-dir build -C Release --output-on-failure
