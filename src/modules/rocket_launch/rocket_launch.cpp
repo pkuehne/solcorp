@@ -11,6 +11,7 @@
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <vector>
 
 u_int LaunchPlan::max_id = 1;
 u_int Rocket::max_id = 1;
@@ -53,10 +54,10 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("completion_payment", &Contract::completion_payment)
       .member("status", &Contract::status)
       .member("failed", &Contract::failed);
-  world.component<ContractPayload>();
+  world.component<ContractPayload>().add(flecs::Symmetric);
 
   // Register relationships
-  world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
+  world.component<LaunchingWith>().add(flecs::Symmetric);
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingFrom>().add(
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
@@ -148,12 +149,41 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
     spdlog::debug("Removing rocket: {}", rocketE.id());
     rocketE.destruct();
   }
-  auto payloadE = planE.target<LaunchingWith>();
-  if (payloadE.is_valid()) {
-    spdlog::debug("Removing payload: {}", payloadE.id());
+  std::vector<flecs::entity> payloads;
+  planE.each<LaunchingWith>([&](flecs::entity payload) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      payloads.push_back(payload);
+    }
+  });
 
-    payloadE.destruct();
+  for (auto payload : payloads) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      spdlog::debug("Removing payload: {}", payload.name().c_str());
+      // TODO: This should also complete the contract associated with this
+      // payload, if there is one.
+      auto contractE = payload.target<ContractPayload>();
+      SC_ASSERT(contractE.is_valid() && contractE.has<Contract>(),
+                "Payload {} has ContractPayload relationship to invalid or "
+                "non-contract entity");
+
+      auto &contract = contractE.get_mut<Contract>();
+      if (contractE.target<ContractTargetOrbit>() != plan.target_orbit) {
+        spdlog::info(
+            "Contract {} failed because payload {} was launched to wrong orbit",
+            contractE.name().c_str(), payload.name().c_str());
+        contract.failed = true;
+      }
+      contract.status = ContractStatus::Closed;
+
+      // TODO: Transfer the completion payment
+      payload.destruct();
+      // TODO: We should probably also instantiate a notification for the
+      // payload being launched, but that requires some refactoring of the
+      // notification system to allow for multiple notifications in the same
+      // tick
+    }
   }
+
   auto launchpadE = planE.target<LaunchingFrom>();
   spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
                 plan.launch_date, today);

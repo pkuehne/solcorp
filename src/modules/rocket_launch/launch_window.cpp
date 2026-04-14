@@ -141,8 +141,6 @@ void drawLaunchWindow(flecs::entity winE) {
     ImGui::EndCombo();
   }
 
-  ImGui::Separator();
-
   // Target Orbit Selection
   ImGui::Text("Target Orbit: ");
   ImGui::SameLine();
@@ -194,36 +192,41 @@ void drawLaunchWindow(flecs::entity winE) {
       world.query_builder<Contract>().build();
 
   contractQuery.each([&](flecs::entity contractE, Contract &contract) {
-    if (contract.status == ContractStatus::Accepted) {
-      contractE.each<ContractPayload>([&](flecs::entity payloadE) {
-        if (payloadE.is_valid() && payloadE.has<Payload>()) {
-          auto &payload = payloadE.get<Payload>();
-          bool isSelected =
-              std::find(state.draftPlan.payloads.begin(),
-                        state.draftPlan.payloads.end(),
-                        payloadE) != state.draftPlan.payloads.end();
-
-          std::string label = std::string(payloadE.name()) + " (" +
-                              std::to_string(payload.mass) + " kg) - " +
-                              contract.client;
-
-          if (ImGui::Selectable(label.c_str(), isSelected)) {
-            if (isSelected) {
-              // Remove payload
-              state.draftPlan.payloads.erase(
-                  std::remove(state.draftPlan.payloads.begin(),
-                              state.draftPlan.payloads.end(), payloadE),
-                  state.draftPlan.payloads.end());
-            } else {
-              // Check if adding this payload would exceed capacity
-              if (totalMass + payload.mass <= maxMass) {
-                state.draftPlan.payloads.push_back(payloadE);
-              }
-            }
-          }
-        }
-      });
+    if (contract.status != ContractStatus::Accepted) {
+      return; // Skip non-accepted contracts
     }
+    contractE.each<ContractPayload>([&](flecs::entity payloadE) {
+      if (!payloadE.is_valid() && !payloadE.has<Payload>()) {
+        return; // Skip invalid payloads
+      }
+      bool alreadyAssigned =
+          payloadE.has<LaunchingWith>() &&
+          payloadE.target<LaunchingWith>() != state.draftPlan.current;
+
+      auto &payload = payloadE.get<Payload>();
+      bool isSelected = std::find(state.draftPlan.payloads.begin(),
+                                  state.draftPlan.payloads.end(),
+                                  payloadE) != state.draftPlan.payloads.end();
+
+      std::string label = std::string(payloadE.name()) + " (" +
+                          std::to_string(payload.mass) + " kg) - " +
+                          contract.client;
+
+      ImGui::BeginDisabled(alreadyAssigned);
+      if (ImGui::Selectable(label.c_str(), isSelected)) {
+        if (isSelected) {
+          // Remove payload
+          state.draftPlan.payloads.erase(
+              std::remove(state.draftPlan.payloads.begin(),
+                          state.draftPlan.payloads.end(), payloadE),
+              state.draftPlan.payloads.end());
+        } else {
+          // Add payload
+          state.draftPlan.payloads.push_back(payloadE);
+        }
+        ImGui::EndDisabled();
+      }
+    });
   });
 
   ImGui::Separator();

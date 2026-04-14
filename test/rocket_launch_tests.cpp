@@ -291,21 +291,124 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                        .set<Sprite>({});
   auto rocket = world.entity("Falcon 9").add<Rocket>();
 
-  GIVEN("A launch plan due today") {
+  GIVEN("A launch plan due today with multiple payloads and matching contract "
+        "orbit") {
     u_int today = world.get<Game>().day;
+    auto targetOrbit = world.entity("LEO");
+    auto contractA = world.entity("Contract A1")
+                         .set<Contract>({
+                             "Client",
+                             "Description",
+                             1000.0f,
+                             2000.0f,
+                             ContractStatus::Accepted,
+                             false,
+                         });
+    auto contractB = world.entity("Contract A2")
+                         .set<Contract>({
+                             "Client",
+                             "Description",
+                             1000.0f,
+                             2000.0f,
+                             ContractStatus::Accepted,
+                             false,
+                         });
+    contractA.add<ContractTargetOrbit>(targetOrbit);
+    contractB.add<ContractTargetOrbit>(targetOrbit);
+    auto payloadA = world.entity("Payload A1").set<Payload>({1000});
+    auto payloadB = world.entity("Payload A2").set<Payload>({2000});
+    contractA.add<ContractPayload>(payloadA);
+    contractB.add<ContractPayload>(payloadB);
+
     auto planE = world.entity("Test Plan")
-                     .set<LaunchPlan>({today})
+                     .set<LaunchPlan>({today, targetOrbit})
                      .add<LaunchingOn>(rocket)
-                     .add<LaunchingFrom>(launchpad);
+                     .add<LaunchingFrom>(launchpad)
+                     .add<LaunchingWith>(payloadA)
+                     .add<LaunchingWith>(payloadB);
     REQUIRE(planE.is_valid());
     REQUIRE(planE.get<LaunchPlan>().launch_date == today);
     REQUIRE(rocket.is_valid());
+    REQUIRE(payloadA.is_valid());
+    REQUIRE(payloadB.is_valid());
+    REQUIRE(contractA.is_valid());
+    REQUIRE(contractB.is_valid());
 
     WHEN("The launch system runs") {
       systemLaunchRocket(planE, planE.get_mut<LaunchPlan>());
-      THEN("The rocket is removed") {
+      THEN("The rocket and all payloads are removed and contracts are closed") {
         CHECK(!rocket.is_alive());
+        CHECK(!payloadA.is_alive());
+        CHECK(!payloadB.is_alive());
         CHECK(!planE.is_alive());
+        CHECK(contractA.is_alive());
+        CHECK(contractB.is_alive());
+        CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractA.get<Contract>().failed == false);
+        CHECK(contractB.get<Contract>().failed == false);
+      }
+    }
+  }
+
+  GIVEN(
+      "A launch plan due today with multiple payloads and mismatched contract "
+      "orbit") {
+    u_int today = world.get<Game>().day;
+    auto launchedOrbit = world.entity("LEO");
+    auto contractOrbit = world.entity("GTO");
+    auto contractA = world.entity("Contract B1")
+                         .set<Contract>({
+                             "Client",
+                             "Description",
+                             1000.0f,
+                             2000.0f,
+                             ContractStatus::Accepted,
+                             false,
+                         });
+    auto contractB = world.entity("Contract B2")
+                         .set<Contract>({
+                             "Client",
+                             "Description",
+                             1000.0f,
+                             2000.0f,
+                             ContractStatus::Accepted,
+                             false,
+                         });
+    contractA.add<ContractTargetOrbit>(contractOrbit);
+    contractB.add<ContractTargetOrbit>(contractOrbit);
+    auto payloadA = world.entity("Payload B1").set<Payload>({1000});
+    auto payloadB = world.entity("Payload B2").set<Payload>({2000});
+    contractA.add<ContractPayload>(payloadA);
+    contractB.add<ContractPayload>(payloadB);
+
+    auto planE = world.entity("Test Plan 2")
+                     .set<LaunchPlan>({today, launchedOrbit})
+                     .add<LaunchingOn>(rocket)
+                     .add<LaunchingFrom>(launchpad)
+                     .add<LaunchingWith>(payloadA)
+                     .add<LaunchingWith>(payloadB);
+    REQUIRE(planE.is_valid());
+    REQUIRE(planE.get<LaunchPlan>().launch_date == today);
+    REQUIRE(rocket.is_valid());
+    REQUIRE(payloadA.is_valid());
+    REQUIRE(payloadB.is_valid());
+    REQUIRE(contractA.is_valid());
+    REQUIRE(contractB.is_valid());
+
+    WHEN("The launch system runs") {
+      systemLaunchRocket(planE, planE.get_mut<LaunchPlan>());
+      THEN("All contracts are marked failed and closed") {
+        CHECK(!rocket.is_alive());
+        CHECK(!payloadA.is_alive());
+        CHECK(!payloadB.is_alive());
+        CHECK(!planE.is_alive());
+        CHECK(contractA.is_alive());
+        CHECK(contractB.is_alive());
+        CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractA.get<Contract>().failed == true);
+        CHECK(contractB.get<Contract>().failed == true);
       }
     }
   }
