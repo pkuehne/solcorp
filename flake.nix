@@ -72,6 +72,8 @@
           wl-clipboard
           wayland-utils
           mesa-demos
+          stylua
+          lua54Packages.luacheck
         ];
 
         platformLibs = if pkgs.stdenv.isLinux then
