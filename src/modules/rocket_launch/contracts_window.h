@@ -2,6 +2,9 @@
 
 #include <flecs.h>
 
+// Forward declaration to avoid circular dependency with rocket_launch.h
+struct Contract;
+
 enum class ContractFilterStatus : uint8_t { All = 0, Open, Accepted, Closed };
 
 struct ContractsWindow {
@@ -24,3 +27,21 @@ bool contractMatchesFilter(flecs::entity contractE,
 /// @param contractE The contract entity
 /// @param world The flecs world
 flecs::entity setupLaunchForContract(flecs::entity contractE);
+
+/// @brief Returns true if the accept button should be disabled for the given
+/// contract.
+/// @param contract The contract to check
+/// @return True if the accept button should be disabled, false otherwise
+bool acceptButtonDisabled(const Contract &contract);
+
+/// @brief Returns true if the reject button should be disabled for the given
+/// contract.
+/// @param contract The contract to check
+/// @return True if the reject button should be disabled, false otherwise
+bool rejectButtonDisabled(const Contract &contract);
+
+/// @brief Returns true if the plan button should be disabled for the given
+/// contract.
+/// @param contract The contract to check
+/// @return True if the plan button should be disabled, false otherwise
+bool planButtonDisabled(const Contract &contract);

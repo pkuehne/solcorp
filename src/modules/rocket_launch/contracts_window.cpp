@@ -43,6 +43,19 @@ bool contractMatchesFilter(flecs::entity contractE,
   return true;
 }
 
+bool acceptButtonDisabled(const Contract &contract) {
+  return contract.status == ContractStatus::Closed ||
+         contract.status == ContractStatus::Accepted;
+}
+
+bool rejectButtonDisabled(const Contract &contract) {
+  return contract.status == ContractStatus::Closed;
+}
+
+bool planButtonDisabled(const Contract &contract) {
+  return contract.status != ContractStatus::Accepted;
+}
+
 flecs::entity setupLaunchForContract(flecs::entity contractE) {
   auto world = contractE.world();
 
@@ -115,9 +128,9 @@ void drawContractsWindow(flecs::entity winE) {
     ImGui::TableSetupColumn("Client");
     ImGui::TableSetupColumn("Description");
     ImGui::TableSetupColumn("Status");
-    ImGui::TableSetupColumn("Upfront Payment", ImGuiTableColumnFlags_WidthFixed,
+    ImGui::TableSetupColumn("Total Payment", ImGuiTableColumnFlags_WidthFixed,
                             100.0f);
-    ImGui::TableSetupColumn("Completion", ImGuiTableColumnFlags_WidthFixed,
+    ImGui::TableSetupColumn("Target Orbit", ImGuiTableColumnFlags_WidthFixed,
                             100.0f);
     ImGui::TableSetupColumn("Failed", ImGuiTableColumnFlags_WidthFixed, 45.0f);
     ImGui::TableSetupColumn("Launch Plan", ImGuiTableColumnFlags_WidthFixed,
@@ -164,10 +177,13 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(statusStr);
 
       ImGui::TableSetColumnIndex(4);
-      ImGui::Text("%.2f", contract.upfront_payment);
+      ImGui::Text("%.2f",
+                  contract.upfront_payment + contract.completion_payment);
 
       ImGui::TableSetColumnIndex(5);
-      ImGui::Text("%.2f", contract.completion_payment);
+      auto targetOrbit = contractE.target<ContractTargetOrbit>();
+      ImGui::Text("%s",
+                  targetOrbit.is_valid() ? targetOrbit.name().c_str() : "-");
 
       ImGui::TableSetColumnIndex(6);
       ImGui::TextUnformatted(contract.failed ? "Yes" : "No");
@@ -182,36 +198,32 @@ void drawContractsWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(8);
-      bool buttonDisabled = contract.status == ContractStatus::Closed ||
-                            contract.status == ContractStatus::Accepted;
 
-      if (buttonDisabled) {
-        ImGui::BeginDisabled();
-      }
-
+      ImGui::BeginDisabled(acceptButtonDisabled(contract));
       if (ImGui::SmallButton("Accept")) {
         contract.status = ContractStatus::Accepted;
         spdlog::debug("Contract {} accepted", contractE.id());
       }
-
-      if (buttonDisabled) {
-        ImGui::EndDisabled();
-      }
+      ImGui::EndDisabled();
 
       ImGui::SameLine();
+      ImGui::BeginDisabled(rejectButtonDisabled(contract));
       if (ImGui::SmallButton("Reject")) {
         contract.status = ContractStatus::Closed;
         contract.failed = true;
         spdlog::debug("Contract {} rejected", contractE.id());
       }
+      ImGui::EndDisabled();
 
       ImGui::SameLine();
+      ImGui::BeginDisabled(planButtonDisabled(contract));
       if (ImGui::SmallButton("Plan")) {
         if (!hasLaunchPlan) {
           setupLaunchForContract(contractE);
         }
         spdlog::debug("Launch plan setup for contract {}", contractE.id());
       }
+      ImGui::EndDisabled();
 
       ImGui::TableSetColumnIndex(9);
       if (contract.status == ContractStatus::Closed) {

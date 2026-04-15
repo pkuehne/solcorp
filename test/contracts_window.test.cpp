@@ -4,105 +4,223 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-TEST_CASE("contractMatchesFilter filters by status", "[contracts_window]") {
-  flecs::world world;
-  world.import<RocketLaunchModule>();
+SCENARIO("setupLaunchForContract creates necessary entities",
+         "[contracts_window]") {
+  GIVEN("an accepted contract") {
+    flecs::world world;
+    world.import<BaseModule>();
+    world.import<SimulationModule>();
+    world.import<RocketLaunchModule>();
 
-  // Create test contracts with different statuses
-  flecs::entity openContract = world.entity("OpenContract")
-                                   .set<Contract>({
-                                       "TestClient",
-                                       "TestDesc",
-                                       1000.0f,
-                                       2000.0f,
-                                       ContractStatus::Open,
-                                       false,
-                                   });
+    flecs::entity contract = world.entity("TestContract")
+                                 .set<Contract>({
+                                     "TestClient",
+                                     "TestDesc",
+                                     1000.0f,
+                                     2000.0f,
+                                     ContractStatus::Accepted,
+                                     false,
+                                 });
 
-  flecs::entity acceptedContract = world.entity("AcceptedContract")
-                                       .set<Contract>({
-                                           "TestClient",
-                                           "TestDesc",
-                                           1000.0f,
-                                           2000.0f,
-                                           ContractStatus::Accepted,
-                                           false,
-                                       });
+    WHEN("setupLaunchForContract is called") {
+      flecs::entity planE = setupLaunchForContract(contract);
 
-  flecs::entity closedContract = world.entity("ClosedContract")
-                                     .set<Contract>({
-                                         "TestClient",
-                                         "TestDesc",
-                                         1000.0f,
-                                         2000.0f,
-                                         ContractStatus::Closed,
-                                         false,
-                                     });
+      THEN("a launch plan entity is created") {
+        REQUIRE(planE.is_valid());
+        REQUIRE(planE.has<LaunchPlan>());
+      }
 
-  SECTION("All filter matches all statuses") {
-    ContractsWindow state{ContractFilterStatus::All, true};
-    REQUIRE(contractMatchesFilter(openContract, state));
-    REQUIRE(contractMatchesFilter(acceptedContract, state));
-    REQUIRE(contractMatchesFilter(closedContract, state));
-  }
+      THEN("a payload entity is created and linked from the plan") {
+        flecs::entity payloadE = planE.target<LaunchingWith>();
+        REQUIRE(payloadE.is_valid());
+        REQUIRE(payloadE.has<Payload>());
+      }
 
-  SECTION("Open filter matches only Open") {
-    ContractsWindow state{ContractFilterStatus::Open, true};
-    REQUIRE(contractMatchesFilter(openContract, state));
-    REQUIRE(!contractMatchesFilter(acceptedContract, state));
-    REQUIRE(!contractMatchesFilter(closedContract, state));
-  }
-
-  SECTION("Accepted filter matches only Accepted") {
-    ContractsWindow state{ContractFilterStatus::Accepted, true};
-    REQUIRE(!contractMatchesFilter(openContract, state));
-    REQUIRE(contractMatchesFilter(acceptedContract, state));
-    REQUIRE(!contractMatchesFilter(closedContract, state));
-  }
-
-  SECTION("Closed filter matches only Closed") {
-    ContractsWindow state{ContractFilterStatus::Closed, true};
-    REQUIRE(!contractMatchesFilter(openContract, state));
-    REQUIRE(!contractMatchesFilter(acceptedContract, state));
-    REQUIRE(contractMatchesFilter(closedContract, state));
-  }
-
-  SECTION("showCompleted=false hides closed contracts") {
-    ContractsWindow state{ContractFilterStatus::All, false};
-    REQUIRE(contractMatchesFilter(openContract, state));
-    REQUIRE(contractMatchesFilter(acceptedContract, state));
-    REQUIRE(!contractMatchesFilter(closedContract, state));
+      THEN("the contract is linked to the created payload") {
+        flecs::entity payloadE = planE.target<LaunchingWith>();
+        REQUIRE(contract.target<ContractPayload>() == payloadE);
+      }
+    }
   }
 }
 
-TEST_CASE("setupLaunchForContract creates necessary entities",
-          "[contracts_window]") {
+SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   flecs::world world;
   world.import<BaseModule>();
   world.import<SimulationModule>();
   world.import<RocketLaunchModule>();
 
-  flecs::entity contract = world.entity("TestContract")
-                               .set<Contract>({
-                                   "TestClient",
-                                   "TestDesc",
-                                   1000.0f,
-                                   2000.0f,
-                                   ContractStatus::Accepted,
-                                   false,
-                               });
+  // Create test contracts with different statuses
+  world.entity("OpenContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Open,
+          false,
+      });
 
-  flecs::entity planE = setupLaunchForContract(contract);
+  world.entity("AcceptedContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Accepted,
+          false,
+      });
 
-  // Verify plan was created
-  REQUIRE(planE.is_valid());
-  REQUIRE(planE.has<LaunchPlan>());
+  world.entity("ClosedContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Closed,
+          false,
+      });
+  world.entity("FailedContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Closed,
+          true,
+      });
 
-  // Verify payload was created and linked
-  flecs::entity payloadE = planE.target<LaunchingWith>();
-  REQUIRE(payloadE.is_valid());
-  REQUIRE(payloadE.has<Payload>());
+  WHEN("ContractsWindow with All filter and showCompleted=true") {
+    ContractsWindow state{ContractFilterStatus::All, true};
+    THEN("All contracts match the filter") {
+      REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("ClosedContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("FailedContract"), state));
+    }
+  }
 
-  // Verify relationships were set up
-  REQUIRE(contract.target<ContractPayload>() == payloadE);
+  WHEN("ContractsWindow with Open filter") {
+    ContractsWindow state{ContractFilterStatus::Open, true};
+    THEN("Only Open contracts match the filter") {
+      REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("AcceptedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("ClosedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("FailedContract"), state));
+    }
+  }
+
+  WHEN("ContractsWindow with showCompleted=false") {
+    ContractsWindow state{ContractFilterStatus::All, false};
+    THEN("Closed contracts do not match the filter") {
+      REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("ClosedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("FailedContract"), state));
+    }
+  }
+
+  WHEN("ContractsWindow with Closed filter") {
+    ContractsWindow state{ContractFilterStatus::Closed, true};
+    THEN("Only Closed contracts match the filter") {
+      REQUIRE(!contractMatchesFilter(world.entity("OpenContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("AcceptedContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("ClosedContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("FailedContract"), state));
+    }
+  }
+
+  WHEN("ContractsWindow with Accepted filter") {
+    ContractsWindow state{ContractFilterStatus::Accepted, true};
+    THEN("Only Accepted contracts match the filter") {
+      REQUIRE(!contractMatchesFilter(world.entity("OpenContract"), state));
+      REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("ClosedContract"), state));
+      REQUIRE(!contractMatchesFilter(world.entity("FailedContract"), state));
+    }
+  }
+}
+
+SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
+  flecs::world world;
+  world.import<BaseModule>();
+  world.import<SimulationModule>();
+  world.import<RocketLaunchModule>();
+
+  // Create test contracts with different statuses
+  world.entity("OpenContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Open,
+          false,
+      });
+
+  world.entity("AcceptedContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Accepted,
+          false,
+      });
+
+  world.entity("ClosedContract")
+      .set<Contract>({
+          "TestClient",
+          "TestDesc",
+          1000.0f,
+          2000.0f,
+          ContractStatus::Closed,
+          false,
+      });
+
+  GIVEN("An Open Contract") {
+    Contract &contract = world.entity("OpenContract").get_mut<Contract>();
+    THEN("Accept button is enabled") {
+      REQUIRE(!acceptButtonDisabled(contract));
+    }
+    THEN("Reject button is enabled") {
+      REQUIRE(!rejectButtonDisabled(contract));
+    }
+    THEN("Plan button is disabled") { REQUIRE(planButtonDisabled(contract)); }
+  }
+
+  GIVEN("An Accepted Contract") {
+    Contract &contract = world.entity("AcceptedContract").get_mut<Contract>();
+    THEN("Accept button is disabled") {
+      REQUIRE(acceptButtonDisabled(contract));
+    }
+    THEN("Reject button is enabled") {
+      REQUIRE(!rejectButtonDisabled(contract));
+    }
+    THEN("Plan button is enabled") { REQUIRE(!planButtonDisabled(contract)); }
+  }
+
+  GIVEN("A failed Closed Contract") {
+    Contract &contract = world.entity("ClosedContract").get_mut<Contract>();
+    contract.failed = true;
+    THEN("Accept button is disabled") {
+      REQUIRE(acceptButtonDisabled(contract));
+    }
+    THEN("Reject button is disabled") {
+      REQUIRE(rejectButtonDisabled(contract));
+    }
+    THEN("Plan button is disabled") { REQUIRE(planButtonDisabled(contract)); }
+  }
+
+  GIVEN("A successful Closed Contract") {
+    Contract &contract = world.entity("ClosedContract").get_mut<Contract>();
+    contract.failed = false;
+    THEN("Accept button is disabled") {
+      REQUIRE(acceptButtonDisabled(contract));
+    }
+    THEN("Reject button is disabled") {
+      REQUIRE(rejectButtonDisabled(contract));
+    }
+    THEN("Plan button is disabled") { REQUIRE(planButtonDisabled(contract)); }
+  }
 }
