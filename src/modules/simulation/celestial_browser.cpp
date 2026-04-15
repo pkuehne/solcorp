@@ -1,7 +1,7 @@
 #include "celestial_browser.h"
 #include "imgui.h"
-#include "simulation.h"
 #include "modules/engine/gui.h"
+#include "simulation.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
