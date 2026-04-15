@@ -25,8 +25,7 @@ bool contractMatchesFilter(flecs::entity contractE,
 /// @brief Find or create a launch plan for a contract.
 /// Creates a new LaunchPlan, Payload, and sets up the relationships.
 /// @param contractE The contract entity
-/// @param world The flecs world
-flecs::entity setupLaunchForContract(flecs::entity contractE);
+void setupLaunchForContract(flecs::entity contractE);
 
 /// @brief Returns true if the accept button should be disabled for the given
 /// contract.

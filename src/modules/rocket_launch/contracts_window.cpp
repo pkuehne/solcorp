@@ -56,28 +56,10 @@ bool planButtonDisabled(const Contract &contract) {
   return contract.status != ContractStatus::Accepted;
 }
 
-flecs::entity setupLaunchForContract(flecs::entity contractE) {
+void setupLaunchForContract(flecs::entity contractE) {
   auto world = contractE.world();
 
-  // Create a new launch plan
-  std::string planName =
-      fmt::format("Launch_{}", contractE.name().c_str() + 1); // Strip #
-  flecs::entity planE = world.entity(planName.c_str()).add<LaunchPlan>();
-
-  // Create a payload for this contract
-  u_int payloadMass = 1000; // Default mass; could be extracted from contract
-  flecs::entity payloadE = world.entity().set<Payload>({payloadMass});
-
-  // Set up relationships
-  planE.add<LaunchingWith>(payloadE);
-  contractE.add<ContractPayload>(payloadE);
-  contractE.add<ContractTargetOrbit>(
-      world.lookup("TargetOrbits::LowEarth")); // Default orbit
-
-  spdlog::debug("Created launch plan {} for contract {}", planE.id(),
-                contractE.id());
-
-  return planE;
+  showLaunchWindowAdd(world);
 }
 
 void showContractsWindow(flecs::world &world) {
@@ -133,10 +115,9 @@ void drawContractsWindow(flecs::entity winE) {
     ImGui::TableSetupColumn("Target Orbit", ImGuiTableColumnFlags_WidthFixed,
                             100.0f);
     ImGui::TableSetupColumn("Failed", ImGuiTableColumnFlags_WidthFixed, 45.0f);
-    ImGui::TableSetupColumn("Launch Plan", ImGuiTableColumnFlags_WidthFixed,
-                            80.0f);
+
     ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed,
-                            120.0f);
+                            180.0f);
     ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed, 50.0f);
     ImGui::TableHeadersRow();
 
@@ -148,13 +129,15 @@ void drawContractsWindow(flecs::entity winE) {
 
       // Check if this contract has a launch plan
       flecs::entity payloadE = flecs::entity::null();
-      bool hasLaunchPlan = false;
+      flecs::entity launchPlanE = flecs::entity::null();
       world.query_builder().with<ContractPayload>(contractE).build().each(
           [&](flecs::entity payloadETemp) { payloadE = payloadETemp; });
 
       if (payloadE.is_valid()) {
         world.query_builder().with<LaunchingWith>(payloadE).build().each(
-            [&](flecs::entity) { hasLaunchPlan = true; });
+            [&](flecs::entity launchPlanETemp) {
+              launchPlanE = launchPlanETemp;
+            });
       }
 
       ImGui::TableNextRow();
@@ -189,15 +172,6 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(contract.failed ? "Yes" : "No");
 
       ImGui::TableSetColumnIndex(7);
-      if (hasLaunchPlan) {
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Planned");
-      } else if (contract.status == ContractStatus::Accepted) {
-        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "No Plan");
-      } else {
-        ImGui::TextUnformatted("-");
-      }
-
-      ImGui::TableSetColumnIndex(8);
 
       ImGui::BeginDisabled(acceptButtonDisabled(contract));
       if (ImGui::SmallButton("Accept")) {
@@ -217,15 +191,16 @@ void drawContractsWindow(flecs::entity winE) {
 
       ImGui::SameLine();
       ImGui::BeginDisabled(planButtonDisabled(contract));
-      if (ImGui::SmallButton("Plan")) {
-        if (!hasLaunchPlan) {
+      if (ImGui::SmallButton(launchPlanE.is_valid() ? "Edit" : "Plan")) {
+        if (launchPlanE.is_valid()) {
+          showLaunchWindowEdit(launchPlanE);
+        } else {
           setupLaunchForContract(contractE);
         }
-        spdlog::debug("Launch plan setup for contract {}", contractE.id());
       }
       ImGui::EndDisabled();
 
-      ImGui::TableSetColumnIndex(9);
+      ImGui::TableSetColumnIndex(8);
       if (contract.status == ContractStatus::Closed) {
         if (ImGui::SmallButton("Delete")) {
           state.pendingDelete = contractE;
