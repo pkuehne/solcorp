@@ -3,9 +3,9 @@
 #include <flecs.h>
 
 struct ActiveLaunchesWindow {
-  flecs::entity filterSite    = flecs::entity::null();
-  flecs::entity filterPad     = flecs::entity::null();
-  flecs::entity filterOrbit   = flecs::entity::null();
+  flecs::entity filterSite = flecs::entity::null();
+  flecs::entity filterPad = flecs::entity::null();
+  flecs::entity filterOrbit = flecs::entity::null();
   flecs::entity pendingCancel = flecs::entity::null();
 };
 
