@@ -126,7 +126,7 @@ local function get_random_company_name()
 		"Nova Launch Systems",
 		"Interstellar Logistics",
 		"AstroTech Solutions",
-		"Celestial Enterprises"
+		"Celestial Enterprises",
 	}
 	return names[math.random(1, #names)]
 end
@@ -143,9 +143,16 @@ local function create_contracts()
 		return
 	end
 	info("Creating new contract...")
-	local contract = solcorp.helpers.create_contract(get_random_contract_name(), get_random_company_name(),
-		"Launch a satellite into low Earth orbit.", 50000, 150000)
-	solcorp.helpers.create_contract_payload(contract, "Satellite " .. math.random(100, 10000), 500,
+	local contract = solcorp.helpers.create_contract(
+		get_random_contract_name(),
+		get_random_company_name(),
+		"Launch a satellite into low Earth orbit.",
+		50000,
+		150000)
+	solcorp.helpers.create_contract_payload(
+		contract,
+		"Satellite " .. math.random(100, 10000),
+		500,
 		"Sun::Earth::Low Orbit")
 	info("Contract created with ID: " .. contract:id())
 end
