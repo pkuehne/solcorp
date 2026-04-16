@@ -148,12 +148,14 @@ local function create_contracts()
 		get_random_company_name(),
 		"Launch a satellite into low Earth orbit.",
 		50000,
-		150000)
+		150000
+	)
 	solcorp.helpers.create_contract_payload(
 		contract,
 		"Satellite " .. math.random(100, 10000),
 		500,
-		"Sun::Earth::Low Orbit")
+		"Sun::Earth::Low Orbit"
+	)
 	info("Contract created with ID: " .. contract:id())
 end
 
