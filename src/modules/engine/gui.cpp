@@ -121,6 +121,7 @@ flecs::entity showWindow(flecs::world &world, const std::string &name) {
   winE.get_mut<Window>().open = true;
   return winE;
 }
+
 flecs::entity hideWindow(flecs::world &world, const std::string &name) {
   auto windows = world.lookup("Windows");
   if (!windows.is_valid()) {
@@ -140,13 +141,13 @@ registerWindow(std::string name,
                std::function<void(flecs::entity)> content_renderer,
                flecs::world &world) {
   spdlog::info("Registering Window '{}'", name);
-  if (!world.lookup("Windows").is_valid()) {
-    throw std::runtime_error(
-        "Tried to register window before Windows parent entity was created");
+  auto windows = world.lookup("Windows");
+  if (!windows.is_valid()) {
+    windows = world.entity("Windows");
   }
   return world.entity(name.c_str())
       .set<Window>({false, content_renderer})
-      .child_of(world.lookup("Windows"));
+      .child_of(windows);
 }
 
 void systemRenderWindow(flecs::entity winE, Window &win) {

@@ -56,10 +56,21 @@ bool planButtonDisabled(const Contract &contract) {
   return contract.status != ContractStatus::Accepted;
 }
 
-void setupLaunchForContract(flecs::entity contractE) {
-  auto world = contractE.world();
+ScheduleLaunchAction setupLaunchForPayload(flecs::entity payloadE) {
+  auto world = payloadE.world();
 
-  showLaunchWindowAdd(world);
+  auto draftPlan = ScheduleLaunchAction{};
+  draftPlan.payloads.push_back(payloadE);
+
+  // Find the contract that has this payload and get the target orbit from it
+  world.query_builder().with<ContractPayload>(payloadE).build().each(
+      [&draftPlan](flecs::entity contractE) {
+        draftPlan.targetOrbit = contractE.target<ContractTargetOrbit>();
+      });
+
+  showLaunchWindowAdd(world, draftPlan);
+
+  return draftPlan;
 }
 
 void showContractsWindow(flecs::world &world) {
@@ -195,7 +206,7 @@ void drawContractsWindow(flecs::entity winE) {
         if (launchPlanE.is_valid()) {
           showLaunchWindowEdit(launchPlanE);
         } else {
-          setupLaunchForContract(contractE);
+          setupLaunchForPayload(payloadE);
         }
       }
       ImGui::EndDisabled();

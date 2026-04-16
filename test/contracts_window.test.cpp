@@ -1,15 +1,16 @@
 #include "modules/rocket_launch/contracts_window.h"
+#include "modules/rocket_launch/actions.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("setupLaunchForContract creates necessary entities",
+SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
+         "and opens the launch window with the plan loaded",
          "[contracts_window]") {
   GIVEN("an accepted contract") {
     flecs::world world;
     world.import<BaseModule>();
-    world.import<SimulationModule>();
     world.import<RocketLaunchModule>();
 
     flecs::entity contract = world.entity("TestContract")
@@ -21,24 +22,19 @@ SCENARIO("setupLaunchForContract creates necessary entities",
                                      ContractStatus::Accepted,
                                      false,
                                  });
+    auto targetOrbit = world.entity("LEO");
+    contract.add<ContractTargetOrbit>(targetOrbit);
+    auto payload = world.entity("TestPayload").set<Payload>({1000});
+    contract.add<ContractPayload>(payload);
+    world.progress();
 
-    WHEN("setupLaunchForContract is called") {
-      flecs::entity planE = setupLaunchForContract(contract);
+    WHEN("setupLaunchForPayload is called with the contract payload") {
+      auto plan = setupLaunchForPayload(payload);
 
-      THEN("a launch plan entity is created") {
-        REQUIRE(planE.is_valid());
-        REQUIRE(planE.has<LaunchPlan>());
-      }
-
-      THEN("a payload entity is created and linked from the plan") {
-        flecs::entity payloadE = planE.target<LaunchingWith>();
-        REQUIRE(payloadE.is_valid());
-        REQUIRE(payloadE.has<Payload>());
-      }
-
-      THEN("the contract is linked to the created payload") {
-        flecs::entity payloadE = planE.target<LaunchingWith>();
-        REQUIRE(contract.target<ContractPayload>() == payloadE);
+      THEN("a launch plan is created with the payload and target orbit from "
+           "the contract") {
+        REQUIRE(plan.payloads[0] == payload);
+        REQUIRE(plan.targetOrbit == targetOrbit);
       }
     }
   }
@@ -47,7 +43,6 @@ SCENARIO("setupLaunchForContract creates necessary entities",
 SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   flecs::world world;
   world.import<BaseModule>();
-  world.import<SimulationModule>();
   world.import<RocketLaunchModule>();
 
   // Create test contracts with different statuses
@@ -144,7 +139,6 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
 SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   flecs::world world;
   world.import<BaseModule>();
-  world.import<SimulationModule>();
   world.import<RocketLaunchModule>();
 
   // Create test contracts with different statuses

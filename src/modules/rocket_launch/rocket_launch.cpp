@@ -22,6 +22,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
   world.import<BaseModule>();
+
   registerEngineComponents(world);
 
   // Register components

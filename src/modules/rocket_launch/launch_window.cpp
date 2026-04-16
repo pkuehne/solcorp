@@ -13,26 +13,48 @@
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
                          flecs::entity *launchpad) {
-  std::string name;
-  do { // TODO: Make this a re-usable function
-    name = fmt::format("Plan {}", LaunchPlan::max_id++);
-  } while (world.lookup(name.c_str()).is_valid());
 
   auto window = showWindow(world, "Mission Plan");
   SC_ASSERT(window.is_valid(),
             "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
-  SC_ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "Mission Plan state is invalid");
 
-  state->draftPlan.name = name;
+  ScheduleLaunchAction draftPlan;
   if (rocket && rocket->is_valid()) {
-    state->draftPlan.rocket = *rocket;
+    draftPlan.rocket = *rocket;
   }
   if (launchpad && launchpad->is_valid()) {
-    state->draftPlan.launchpad = *launchpad;
+    draftPlan.launchpad = *launchpad;
   }
+
+  showLaunchWindowAdd(world, draftPlan);
+}
+
+void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
+
+  auto window = showWindow(world, "Mission Plan");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Mission Plan");
+  auto state = window.try_get_mut<LaunchWindow>();
+  SC_ASSERT(state, "LaunchWindow state is invalid");
+
+  state->draftPlan = draftPlan;
+
+  // Default the plan to today
   u_int today = world.get<Game>().day;
-  state->draftPlan.launchDay = today;
+  if (state->draftPlan.launchDay < static_cast<int>(today)) {
+    state->draftPlan.launchDay = today;
+  }
+
+  // Set the name if not already set
+  if (state->draftPlan.name.empty()) {
+    std::string name;
+    do { // TODO: Make this a re-usable function
+      name = fmt::format("Plan {}", LaunchPlan::max_id++);
+    } while (world.lookup(name.c_str()).is_valid());
+    state->draftPlan.name = name;
+  }
 }
 
 void showLaunchWindowEdit(const flecs::entity &planE) {
