@@ -239,6 +239,8 @@ void drawLaunchWindow(flecs::entity winE) {
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
+    // clear draft plan and close window
+    state.draftPlan = ScheduleLaunchAction{};
     hideWindow(world, "Mission Plan");
   }
   ImGui::End();
