@@ -100,25 +100,25 @@ local function on_start()
 end
 
 local function get_random_contract_name()
-    local names = {
-        "Launch Satellite",
-        "Deploy Space Station Module",
-        "Deliver Cargo Pod",
-        "Transport Crew",
-        "Repair Orbital Platform",
+	local names = {
+		"Launch Satellite",
+		"Deploy Space Station Module",
+		"Deliver Cargo Pod",
+		"Transport Crew",
+		"Repair Orbital Platform",
 		"Conduct Space Experiment",
 		"Resupply Space Station",
 		"Test New Rocket",
 		"Satellite Servicing Mission",
 		"Space Tourism Flight",
-    }
-    return names[math.random(1, #names)]
+	}
+	return names[math.random(1, #names)]
 end
 
 local function get_random_company_name()
-    local names = {
-        "SpaceY",
-        "Galactic Ventures",
+	local names = {
+		"SpaceY",
+		"Galactic Ventures",
 		"Orbital Dynamics",
 		"Stellar Freight",
 		"CosmoCorp",
@@ -127,24 +127,26 @@ local function get_random_company_name()
 		"Interstellar Logistics",
 		"AstroTech Solutions",
 		"Celestial Enterprises"
-    }
-    return names[math.random(1, #names)]
+	}
+	return names[math.random(1, #names)]
 end
 
 local function create_contracts()
 	local info = solcorp.logging.info
 	info("Checking number of contracts...")
 	local contracts = solcorp.helpers.get_all_contracts()
-    if #contracts >= 5 then
-        return
-    end
+	if #contracts >= 5 then
+		return
+	end
 
 	if math.random() < 0.9 then
 		return
 	end
 	info("Creating new contract...")
-	local contract = solcorp.helpers.create_contract(get_random_contract_name(), get_random_company_name(), "Launch a satellite into low Earth orbit.", 50000, 150000)
-	solcorp.helpers.create_contract_payload(contract, "Satellite " .. math.random(100, 10000), 500, "Sun::Earth::Low Orbit")
+	local contract = solcorp.helpers.create_contract(get_random_contract_name(), get_random_company_name(),
+		"Launch a satellite into low Earth orbit.", 50000, 150000)
+	solcorp.helpers.create_contract_payload(contract, "Satellite " .. math.random(100, 10000), 500,
+		"Sun::Earth::Low Orbit")
 	info("Contract created with ID: " .. contract:id())
 end
 
