@@ -11,14 +11,11 @@
 void systemUpdateSimDate(Game &game);
 void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 void systemShowWindows(flecs::iter &, size_t, const KeyDown);
-void systemModCallbackForUpdate(flecs::entity, Mod &);
-void systemModCallbackForFrame(flecs::entity, Mod &);
 
 SimulationModule::SimulationModule(flecs::world &world) {
+  world.import<BaseModule>();
+
   // Register components
-  world.component<Simulation>()
-      .member("speed", &Simulation::speed)
-      .add(flecs::Singleton);
   world.component<CelestialBody>()
       .member("semi_major_axis", &CelestialBody::semi_major_axis)
       .member("eccentricity", &CelestialBody::eccentricity)
@@ -35,18 +32,19 @@ SimulationModule::SimulationModule(flecs::world &world) {
       .member("gm", &CelestialBody::gm)
       .member("rotation_period", &CelestialBody::rotation_period)
       .member("albedo", &CelestialBody::albedo);
-  world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
   world.component<Developer>().add(flecs::Singleton);
   world.component<DeveloperWindow>().member(
       "show_metrics_window", &DeveloperWindow::show_metrics_window);
   world.component<CelestialBrowser>().member("selected_body",
                                              &CelestialBrowser::selected_body);
+  world.component<TargetOrbit>()
+      .member("altitude", &TargetOrbit::altitude)
+      .member("inclination", &TargetOrbit::inclination);
 
   // Create Singletons
-  auto sim = Simulation{world.timer("SimTimer").interval(0.5f).disable()};
-  world.set<Simulation>(sim);
-  world.set<Game>({});
   world.set<Developer>({});
+
+  auto sim = world.get<Simulation>();
 
   register_lua_user_type<Game>(
       world, "Game",
@@ -64,13 +62,6 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.system<const KeyDown>("Show Windows")
       .kind(ValidatePhase)
       .each(systemShowWindows);
-  world.system<Mod>("Mod on_update Event")
-      .kind(UpdatePhase)
-      .tick_source(sim.speed)
-      .each(systemModCallbackForUpdate);
-  world.system<Mod>("Mod on_frame Event")
-      .kind(UpdatePhase)
-      .each(systemModCallbackForFrame);
   world.system("Register Windows")
       .kind(flecs::OnStart)
       .immediate()
@@ -100,18 +91,6 @@ void systemShowWindows(flecs::iter &it, size_t, const KeyDown event) {
   if (event.key == SDLK_b) {
     showCelestialBrowser(world);
   }
-}
-
-void systemModCallbackForUpdate(flecs::entity e, Mod &mod) {
-  auto world = e.world();
-
-  run_mod_handler(mod, world, "on_update");
-}
-
-void systemModCallbackForFrame(flecs::entity e, Mod &mod) {
-  auto world = e.world();
-
-  run_mod_handler(mod, world, "on_frame");
 }
 
 void systemRegisterWindows(flecs::iter &it) {

@@ -16,6 +16,8 @@ list(APPEND SolCorpSources
     modules/rocket_launch/rocket_launch.cpp
     modules/rocket_launch/actions.cpp
     modules/rocket_launch/launch_window.cpp
+    modules/rocket_launch/active_launches_window.cpp
+    modules/rocket_launch/contracts_window.cpp
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
@@ -46,6 +48,8 @@ list(APPEND SolCorpHeaders
     modules/rocket_launch/rocket_launch.h
     modules/rocket_launch/actions.h
     modules/rocket_launch/launch_window.h
+    modules/rocket_launch/active_launches_window.h
+    modules/rocket_launch/contracts_window.h
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
@@ -100,7 +104,7 @@ target_include_directories(solcorplib PUBLIC ${LUA54_INCLUDE_DIRS})
 set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER "${SolCorpHeaders}")
 target_compile_definitions(solcorplib PRIVATE
                             SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
-
+target_compile_definitions(solcorplib PRIVATE FLECS_CPP_NO_AUTO_REGISTRATION)
 
 target_compile_options(solcorplib PRIVATE -Werror)
 target_compile_options(solcorplib PRIVATE -Wall)

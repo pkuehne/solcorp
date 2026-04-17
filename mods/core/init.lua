@@ -90,9 +90,82 @@ local function on_start()
 	mod.multiplicative = 1.0
 	mod.additive = 3
 	solcorp.helpers.add_modifier(cracks, mod)
+
+	-- Create a rocket prefab
+	local rocket = solcorp.helpers.create_rocket_prefab("Falcon 1")
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Low Orbit", 6300)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Polar Orbit", 5600)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Transfer Orbit", 3300)
+	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Synchronous Orbit", 1300)
+end
+
+local function get_random_contract_name()
+	local names = {
+		"Launch Satellite",
+		"Deploy Space Station Module",
+		"Deliver Cargo Pod",
+		"Transport Crew",
+		"Repair Orbital Platform",
+		"Conduct Space Experiment",
+		"Resupply Space Station",
+		"Test New Rocket",
+		"Satellite Servicing Mission",
+		"Space Tourism Flight",
+	}
+	return names[math.random(1, #names)]
+end
+
+local function get_random_company_name()
+	local names = {
+		"SpaceY",
+		"Galactic Ventures",
+		"Orbital Dynamics",
+		"Stellar Freight",
+		"CosmoCorp",
+		"AeroSpace Inc.",
+		"Nova Launch Systems",
+		"Interstellar Logistics",
+		"AstroTech Solutions",
+		"Celestial Enterprises",
+	}
+	return names[math.random(1, #names)]
+end
+
+local function create_contracts()
+	local info = solcorp.logging.info
+	info("Checking number of contracts...")
+	local contracts = solcorp.helpers.get_all_contracts()
+	if #contracts >= 5 then
+		return
+	end
+
+	if math.random() < 0.9 then
+		return
+	end
+	info("Creating new contract...")
+	local contract = solcorp.helpers.create_contract(
+		get_random_contract_name(),
+		get_random_company_name(),
+		"Launch a satellite into low Earth orbit.",
+		50000,
+		150000
+	)
+	solcorp.helpers.create_contract_payload(
+		contract,
+		"Satellite " .. math.random(100, 10000),
+		500,
+		"Sun::Earth::Low Orbit"
+	)
+	info("Contract created with ID: " .. contract:id())
+end
+
+local function on_update()
+	-- update function
+	-- print("on_update called!")
+	create_contracts()
 end
 
 solcorp.script.handlers.on_init = on_init
 solcorp.script.handlers.on_start = on_start
 solcorp.script.handlers.on_frame = nil
-solcorp.script.handlers.on_update = nil
+solcorp.script.handlers.on_update = on_update

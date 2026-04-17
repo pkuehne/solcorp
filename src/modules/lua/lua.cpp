@@ -15,9 +15,8 @@ void load_mod(flecs::world &world, const std::filesystem::path &path);
 
 LuaModule::LuaModule(flecs::world &world) {
   // Register components
-  world.component<Mod>()
-      .member("name", &Mod::name)    //
-      .member("state", &Mod::state); //
+  world.component<Mod>().member("name", &Mod::name); //
+  //.member("state", &Mod::state); //
 
   // Load mods
   load_all_mods(world);
@@ -26,6 +25,16 @@ LuaModule::LuaModule(flecs::world &world) {
       .kind(PostStartPhase)
       .immediate()
       .each(mod_on_start);
+
+  world.system<Mod>("Mod on_frame Event")
+      .kind(flecs::OnUpdate)
+      .each(mod_on_frame);
+
+  auto sim = world.get<Simulation>();
+  world.system<Mod>("Mod on_update Event")
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each(mod_on_update);
 }
 
 void load_config_file() {
@@ -137,7 +146,7 @@ bool run_mod_handler(Mod &mod, flecs::world &world,
 }
 
 void load_mod_state(sol::state &mod_state) {
-  mod_state.open_libraries(sol::lib::base, sol::lib::package);
+  mod_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::math);
 
   auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
 

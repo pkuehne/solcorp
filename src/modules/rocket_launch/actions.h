@@ -2,6 +2,7 @@
 
 #include <flecs.h>
 #include <string>
+#include <vector>
 
 struct ValidationResult {
   bool ok = false;
@@ -32,6 +33,9 @@ struct ScheduleLaunchAction : public IAction {
   std::string name;
   flecs::entity rocket = flecs::entity::null();
   flecs::entity launchpad = flecs::entity::null();
+  flecs::entity targetOrbit =
+      flecs::entity::null();           ///< Target orbit from CanLiftTo
+  std::vector<flecs::entity> payloads; ///< Payloads to launch
 
   flecs::entity result = flecs::entity::null();
 

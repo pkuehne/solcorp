@@ -3,8 +3,12 @@
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/engine/input.h"
-#include "modules/simulation/simulation.h"
 #include <flecs.h>
+#include <modules/rocket_launch/active_launches_window.h>
+#include <modules/rocket_launch/contracts_window.h>
+#include <modules/rocket_launch/launch_window.h>
+#include <modules/simulation/celestial_browser.h>
+#include <modules/simulation/developer_window.h>
 
 void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
@@ -36,6 +40,24 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     ImGui::Text("Day: %3d", game.day);
     if (ImGui::Button(sim.speed.enabled() ? "||" : ">")) {
       sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
+    }
+    if (ImGui::BeginMenu("Windows")) {
+      if (ImGui::MenuItem("Celestial Browser")) {
+        showCelestialBrowser(world);
+      }
+      if (ImGui::MenuItem("Launch Planner")) {
+        showLaunchWindowAdd(world);
+      }
+      if (ImGui::MenuItem("Active Launches")) {
+        showActiveLaunchesWindow(world);
+      }
+      if (ImGui::MenuItem("Contracts")) {
+        showContractsWindow(world);
+      }
+      if (ImGui::MenuItem("Developer Window")) {
+        showDeveloperWindow(world);
+      }
+      ImGui::EndMenu();
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();

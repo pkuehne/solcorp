@@ -1,14 +1,17 @@
 #include "rocket_launch.h"
 #include "actions.h"
+#include "active_launches_window.h"
+#include "contracts_window.h"
 #include "launch_window.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
+#include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <vector>
 
 u_int LaunchPlan::max_id = 1;
 u_int Rocket::max_id = 1;
@@ -18,47 +21,98 @@ u_int Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import <BaseModule>();
-  world.import <SimulationModule>();
+  world.import<BaseModule>();
+
+  registerEngineComponents(world);
 
   // Register components
+  world.component<ContractFilterStatus>();
   world.component<ScheduleLaunchAction>("PlannedLaunch")
       .member("name", &ScheduleLaunchAction::name)
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<Rocket>();
-  world.component<Payload>();
+  world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<ActiveLaunchesWindow>()
+      .member("filterSite", &ActiveLaunchesWindow::filterSite)
+      .member("filterPad", &ActiveLaunchesWindow::filterPad)
+      .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
+      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel);
+  world.component<ContractsWindow>()
+      .member("statusFilter", &ContractsWindow::statusFilter)
+      .member("showCompleted", &ContractsWindow::showCompleted)
+      .member("pendingDelete", &ContractsWindow::pendingDelete);
+  world.component<ContractTargetOrbit>();
+  world.component<ContractStatus>();
+  world.component<Contract>()
+      .member("client", &Contract::client)
+      .member("description", &Contract::description)
+      .member("upfront_payment", &Contract::upfront_payment)
+      .member("completion_payment", &Contract::completion_payment)
+      .member("status", &Contract::status)
+      .member("failed", &Contract::failed);
+  world.component<ContractPayload>().add(flecs::Symmetric);
 
   // Register relationships
-  world.component<LaunchingWith>().add(flecs::Exclusive).add(flecs::Symmetric);
+  world.component<LaunchingWith>().add(flecs::Symmetric);
   world.component<LaunchingOn>().add(flecs::Exclusive).add(flecs::Symmetric);
   world.component<LaunchingFrom>().add(
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
+  world.component<CanLiftTo>().add(flecs::Symmetric);
 
   // Register Lua bindings
   register_lua_user_type<LaunchPlan>(
       world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
         userType["launch_date"] = &LaunchPlan::launch_date;
       });
-  // register_lua_user_type<Rocket>(world, "Rocket",
-  //                                [](sol::usertype<Rocket> &userType) {
-
-  //                                });
+  register_lua_user_type<Rocket>(world, "Rocket",
+                                 [](sol::usertype<Rocket> &) {});
   register_lua_user_type<Payload>(world, "Payload",
                                   [](sol::usertype<Payload> &userType) {
                                     userType["mass"] = &Payload::mass;
                                   });
+  register_lua_user_type<CanLiftTo>(
+      world, "CanLiftTo", [](sol::usertype<CanLiftTo> &userType) {
+        userType["max_mass"] = &CanLiftTo::max_mass;
+      });
+  register_lua_user_type<Contract>(
+      world, "Contract", [](sol::usertype<Contract> &userType) {
+        userType["client"] = &Contract::client;
+        userType["description"] = &Contract::description;
+        userType["upfront_payment"] = &Contract::upfront_payment;
+        userType["completion_payment"] = &Contract::completion_payment;
+        userType["status"] = &Contract::status;
+        userType["failed"] = &Contract::failed;
+      });
+  register_lua_enum_table<ContractStatus>(
+      world, "ContractStatus", [](sol::table &enumTable) {
+        enumTable["Open"] = ContractStatus::Open;
+        enumTable["Accepted"] = ContractStatus::Accepted;
+        enumTable["Closed"] = ContractStatus::Closed;
+      });
+  register_lua_user_type<ContractPayload>(
+      world, "ContractPayload", [](sol::usertype<ContractPayload> &) {});
+  register_lua_user_type<ContractTargetOrbit>(
+      world, "ContractTargetOrbit",
+      [](sol::usertype<ContractTargetOrbit> &) {});
 
   // Register systems
   world.system("Create Rocket Prefabs")
       .kind(flecs::OnStart)
       .immediate()
       .run(systemCreateRocketPrefabs);
+  world.system("Create Contract Node")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run([](flecs::iter &it) {
+        auto world = it.world();
+        world.entity("Contracts");
+      });
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)
@@ -71,6 +125,10 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
         auto world = it.world();
         registerWindow("Mission Plan", drawLaunchWindow, world)
             .set<LaunchWindow>({});
+        registerWindow("Active Launches", drawActiveLaunchesWindow, world)
+            .set<ActiveLaunchesWindow>({});
+        registerWindow("Contracts Window", drawContractsWindow, world)
+            .set<ContractsWindow>({});
       });
 }
 
@@ -92,12 +150,41 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
     spdlog::debug("Removing rocket: {}", rocketE.id());
     rocketE.destruct();
   }
-  auto payloadE = planE.target<LaunchingWith>();
-  if (payloadE.is_valid()) {
-    spdlog::debug("Removing payload: {}", payloadE.id());
+  std::vector<flecs::entity> payloads;
+  planE.each<LaunchingWith>([&](flecs::entity payload) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      payloads.push_back(payload);
+    }
+  });
 
-    payloadE.destruct();
+  for (auto payload : payloads) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      spdlog::debug("Removing payload: {}", payload.name().c_str());
+      // TODO: This should also complete the contract associated with this
+      // payload, if there is one.
+      auto contractE = payload.target<ContractPayload>();
+      SC_ASSERT(contractE.is_valid() && contractE.has<Contract>(),
+                "Payload {} has ContractPayload relationship to invalid or "
+                "non-contract entity");
+
+      auto &contract = contractE.get_mut<Contract>();
+      if (contractE.target<ContractTargetOrbit>() != plan.target_orbit) {
+        spdlog::info(
+            "Contract {} failed because payload {} was launched to wrong orbit",
+            contractE.name().c_str(), payload.name().c_str());
+        contract.failed = true;
+      }
+      contract.status = ContractStatus::Closed;
+
+      // TODO: Transfer the completion payment
+      payload.destruct();
+      // TODO: We should probably also instantiate a notification for the
+      // payload being launched, but that requires some refactoring of the
+      // notification system to allow for multiple notifications in the same
+      // tick
+    }
   }
+
   auto launchpadE = planE.target<LaunchingFrom>();
   spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
                 plan.launch_date, today);
@@ -123,25 +210,6 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
     rocket_node = world.entity("Rockets").child_of(prefabs_node);
   }
 
-  // Baseline LEO (200 km, equatorial)
-
-  // Example rocket prefab capabilities
-  auto rocket = world.prefab("Rocket").child_of(core_node).add<Rocket>();
-
-  flecs::entity leo = world.lookup("Sun::Earth::Low Orbit");
-  if (leo.is_valid()) {
-    rocket.set<CanLiftTo>(leo, {6'300});
-  }
-  flecs::entity sso = world.lookup("Sun::Earth::Polar Orbit");
-  if (sso.is_valid()) {
-    rocket.set<CanLiftTo>(sso, {5'600});
-  }
-  flecs::entity gto = world.lookup("Sun::Earth::Transfer Orbit");
-  if (gto.is_valid()) {
-    rocket.set<CanLiftTo>(gto, {3'300});
-  }
-  flecs::entity geo = world.lookup("Sun::Earth::Synchronous Orbit");
-  if (geo.is_valid()) {
-    rocket.set<CanLiftTo>(geo, {1'300});
-  }
+  // Base Rocket Prefab
+  world.prefab("Rocket").child_of(core_node).add<Rocket>();
 }

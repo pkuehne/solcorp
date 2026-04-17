@@ -2,12 +2,12 @@
 #include "building_window.h"
 #include "construction_window.h"
 #include "modules/base/base.h"
+#include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/rocket_launch/rocket_launch.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "site_construction.h"
@@ -22,11 +22,19 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import <SimulationModule>();
-  world.import <RocketLaunchModule>();
+  world.import<BaseModule>();
+  world.import<StatsModule>();
+  registerEngineComponents(world);
+
+  world.import<RocketLaunchModule>();
 
   // Register components
   world.component<CurrentSite>();
+  world.component<Construction>()
+      .member("effort_remaining", &Construction::effort_remaining)
+      .member("effort_total", &Construction::effort_total);
+  world.component<ConstructionSite>();
+  world.component<ConstructionSiteNeedsUpdating>();
   world.component<Site>()
       .member("width", &Site::width)
       .member("height", &Site::height);

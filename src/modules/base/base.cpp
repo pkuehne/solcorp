@@ -34,6 +34,15 @@ BaseModule::BaseModule(flecs::world &world) {
   PostFramePhase =
       world.entity("PostFrame").add(flecs::Phase).depends_on(PostRenderPhase);
 
+  // Game clock
+  world.component<Simulation>()
+      .member("speed", &Simulation::speed)
+      .add(flecs::Singleton);
+  world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
+  auto sim = Simulation{world.timer("SimTimer").interval(0.5f).disable()};
+  world.set<Simulation>(sim);
+  world.set<Game>({});
+
   world.component<std::string>()
       .opaque(flecs::String) // Opaque type that maps to string
       .serialize([](const flecs::serializer *s, const std::string *data) {

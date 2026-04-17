@@ -2,6 +2,10 @@
 #include <cstdlib>
 #include <iostream>
 
+#ifndef SC_ASSERT_BREAK_ON_FAIL
+#define SC_ASSERT_BREAK_ON_FAIL 0
+#endif
+
 #if defined(_MSC_VER)
 #define DEBUG_BREAK() __debugbreak()
 #elif defined(__GNUC__)
@@ -18,7 +22,9 @@
                 << "  Msg:  " << msg << "\n"                                   \
                 << "  File: " << __FILE__ << ":" << __LINE__ << "\n";          \
       std::cerr.flush();                                                       \
-      DEBUG_BREAK();                                                           \
-      std::abort();                                                            \
+      if (SC_ASSERT_BREAK_ON_FAIL) {                                           \
+        DEBUG_BREAK();                                                         \
+      }                                                                        \
+      std::exit(EXIT_FAILURE);                                                 \
     }                                                                          \
   } while (0)

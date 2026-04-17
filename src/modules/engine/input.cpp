@@ -9,13 +9,6 @@
 void systemEventHandling(flecs::iter &);
 
 void registerInput(flecs::world &world) {
-  // Register components
-  world.component<KeyDown>().member("key", &KeyDown::key).add(flecs::Singleton);
-  world.component<KeyUp>().member("key", &KeyUp::key).add(flecs::Singleton);
-  world.component<KeyPressed>().add(flecs::Singleton);
-  world.component<MouseDown>().add(flecs::Singleton);
-  world.component<MouseUp>().add(flecs::Singleton);
-
   // Register systems
   world.system("Event Handling").kind(PreFramePhase).run(systemEventHandling);
 }

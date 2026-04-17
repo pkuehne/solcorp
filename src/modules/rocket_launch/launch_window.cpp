@@ -7,31 +7,54 @@
 #include "modules/site/site.h"
 #include "rocket_launch.h"
 #include "widgets/widgets.h"
+#include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
                          flecs::entity *launchpad) {
-  std::string name;
-  do { // TODO: Make this a re-usable function
-    name = fmt::format("Plan {}", LaunchPlan::max_id++);
-  } while (world.lookup(name.c_str()).is_valid());
 
   auto window = showWindow(world, "Mission Plan");
   SC_ASSERT(window.is_valid(),
             "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
-  SC_ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "Mission Plan state is invalid");
 
-  state->draftPlan.name = name;
+  ScheduleLaunchAction draftPlan;
   if (rocket && rocket->is_valid()) {
-    state->draftPlan.rocket = *rocket;
+    draftPlan.rocket = *rocket;
   }
   if (launchpad && launchpad->is_valid()) {
-    state->draftPlan.launchpad = *launchpad;
+    draftPlan.launchpad = *launchpad;
   }
+
+  showLaunchWindowAdd(world, draftPlan);
+}
+
+void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
+
+  auto window = showWindow(world, "Mission Plan");
+  SC_ASSERT(window.is_valid(),
+            "showWindow returned invalid entity for Mission Plan");
+  auto state = window.try_get_mut<LaunchWindow>();
+  SC_ASSERT(state, "LaunchWindow state is invalid");
+
+  state->draftPlan = draftPlan;
+
+  // Default the plan to today
   u_int today = world.get<Game>().day;
-  state->draftPlan.launchDay = today;
+  if (state->draftPlan.launchDay < static_cast<int>(today)) {
+    state->draftPlan.launchDay = today;
+  }
+
+  // Set the name if not already set
+  if (state->draftPlan.name.empty()) {
+    std::string name;
+    do { // TODO: Make this a re-usable function
+      name = fmt::format("Plan {}", LaunchPlan::max_id++);
+    } while (world.lookup(name.c_str()).is_valid());
+    state->draftPlan.name = name;
+  }
 }
 
 void showLaunchWindowEdit(const flecs::entity &planE) {
@@ -54,7 +77,14 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   state->draftPlan.launchDay = plan.launch_date;
   state->draftPlan.rocket = planE.target<LaunchingOn>();
   state->draftPlan.launchpad = planE.target<LaunchingFrom>();
+  state->draftPlan.targetOrbit = plan.target_orbit;
   state->draftPlan.current = planE;
+
+  // Load existing payloads
+  state->draftPlan.payloads.clear();
+  planE.each<LaunchingWith>([&](flecs::entity payload) {
+    state->draftPlan.payloads.push_back(payload);
+  });
 }
 
 /// @brief Draws the Launch Planning window
@@ -106,6 +136,9 @@ void drawLaunchWindow(flecs::entity winE) {
           if (ImGui::Selectable(e.name().c_str(),
                                 e == state.draftPlan.rocket)) {
             state.draftPlan.rocket = e;
+            // Clear target orbit when rocket changes
+            state.draftPlan.targetOrbit = flecs::entity::null();
+            state.draftPlan.payloads.clear();
           }
         });
     ImGui::EndCombo();
@@ -130,6 +163,96 @@ void drawLaunchWindow(flecs::entity winE) {
     ImGui::EndCombo();
   }
 
+  // Target Orbit Selection
+  ImGui::Text("Target Orbit: ");
+  ImGui::SameLine();
+
+  std::string orbitDisplay = state.draftPlan.targetOrbit.is_valid()
+                                 ? state.draftPlan.targetOrbit.name()
+                                 : "<Select>";
+  if (ImGui::BeginCombo("##TargetOrbit", orbitDisplay.c_str())) {
+    if (state.draftPlan.rocket.is_valid()) {
+      // List all orbits this rocket can reach
+      state.draftPlan.rocket.each<CanLiftTo>([&](flecs::entity orbit) {
+        if (ImGui::Selectable(orbit.name().c_str(),
+                              orbit == state.draftPlan.targetOrbit)) {
+          state.draftPlan.targetOrbit = orbit;
+        }
+      });
+    }
+    ImGui::EndCombo();
+  }
+
+  // Payload information and selection
+  u_int maxMass = 0;
+  if (state.draftPlan.rocket.is_valid() &&
+      state.draftPlan.targetOrbit.is_valid()) {
+    maxMass = state.draftPlan.rocket.get<CanLiftTo>(state.draftPlan.targetOrbit)
+                  .max_mass;
+  }
+
+  ImGui::Separator();
+  ImGui::Text("Payloads");
+
+  // Display current payload mass
+  u_int totalMass = 0;
+  for (const auto &payload : state.draftPlan.payloads) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      totalMass += payload.get<Payload>().mass;
+    }
+  }
+  u_int remainingMass = (totalMass > maxMass) ? 0 : (maxMass - totalMass);
+
+  ImGui::Text("Current Mass: %u / %u kg", totalMass, maxMass);
+  ImGui::Text("Remaining Capacity: %u kg", remainingMass);
+
+  ImGui::Spacing();
+  ImGui::Text("Available Payloads from Contracts:");
+
+  // Query for accepted contracts with payloads
+  flecs::query<Contract> contractQuery =
+      world.query_builder<Contract>().build();
+
+  contractQuery.each([&](flecs::entity contractE, Contract &contract) {
+    if (contract.status != ContractStatus::Accepted) {
+      return; // Skip non-accepted contracts
+    }
+    contractE.each<ContractPayload>([&](flecs::entity payloadE) {
+      if (!payloadE.is_valid() && !payloadE.has<Payload>()) {
+        return; // Skip invalid payloads
+      }
+      bool alreadyAssigned =
+          payloadE.has<LaunchingWith>() &&
+          payloadE.target<LaunchingWith>() != state.draftPlan.current;
+
+      auto &payload = payloadE.get<Payload>();
+      bool isSelected = std::find(state.draftPlan.payloads.begin(),
+                                  state.draftPlan.payloads.end(),
+                                  payloadE) != state.draftPlan.payloads.end();
+
+      std::string label = std::string(payloadE.name()) + " (" +
+                          std::to_string(payload.mass) + " kg) - " +
+                          contract.client;
+
+      ImGui::BeginDisabled(alreadyAssigned);
+      if (ImGui::Selectable(label.c_str(), isSelected)) {
+        if (isSelected) {
+          // Remove payload
+          state.draftPlan.payloads.erase(
+              std::remove(state.draftPlan.payloads.begin(),
+                          state.draftPlan.payloads.end(), payloadE),
+              state.draftPlan.payloads.end());
+        } else {
+          // Add payload
+          state.draftPlan.payloads.push_back(payloadE);
+        }
+        ImGui::EndDisabled();
+      }
+    });
+  });
+
+  ImGui::Separator();
+
   auto valid = state.draftPlan.validate(world);
   if (ActionButton("Save", "Save Launch Plan to be executed", valid.message)) {
     // Save LaunchPlan and close window
@@ -138,6 +261,8 @@ void drawLaunchWindow(flecs::entity winE) {
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
+    // clear draft plan and close window
+    state.draftPlan = ScheduleLaunchAction{};
     hideWindow(world, "Mission Plan");
   }
   ImGui::End();
