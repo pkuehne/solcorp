@@ -9,6 +9,7 @@
 #include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
 #include "modules/site/helpers.h"
+#include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 #include <vector>
@@ -21,11 +22,14 @@ u_int Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import<BaseModule>();
+  world.import <BaseModule>();
 
   registerEngineComponents(world);
 
   // Register components
+  world.component<Construction>()
+      .member("effort_remaining", &Construction::effort_remaining)
+      .member("effort_total", &Construction::effort_total);
   world.component<ContractFilterStatus>();
   world.component<ScheduleLaunchAction>("PlannedLaunch")
       .member("name", &ScheduleLaunchAction::name)

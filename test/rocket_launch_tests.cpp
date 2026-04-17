@@ -8,7 +8,7 @@
 
 SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("An empty plan") {
     ScheduleLaunchAction launch({});
@@ -195,7 +195,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
 SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
@@ -256,7 +256,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
 
 SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("An empty world") {
     auto system = world.system("Create Rocket Prefabs")
@@ -280,9 +280,9 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
 
 SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
-  auto site = world.entity().add<Site>().set<CurrentSite>({});
+  auto site = world.entity().add<Site>().add<CurrentSite>();
   auto launchpad = world.entity("Main Pad")
                        .is_a<Launchpad>()
                        .child_of(site)
@@ -435,7 +435,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
 
 SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("An invalid Rocket entity") {
     flecs::entity rocket = flecs::entity::null();
@@ -515,7 +515,7 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
 
 SCENARIO("MoveRocketAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("A valid rocket and destination") {
     flecs::entity destination = world.entity();

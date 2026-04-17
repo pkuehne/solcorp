@@ -11,9 +11,7 @@ SCENARIO("findAncestorWith", "[base][util]") {
   GIVEN("An entity that itself has the component") {
     auto e = world.entity().add<Marker>();
 
-    THEN("It returns itself") {
-      CHECK(findAncestorWith<Marker>(e) == e);
-    }
+    THEN("It returns itself") { CHECK(findAncestorWith<Marker>(e) == e); }
   }
 
   GIVEN("An entity whose direct parent has the component") {

@@ -93,7 +93,7 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto *stat : stats) {
     stat->reset();
   }
-  for (auto ancestor = e; ancestor.is_alive(); ancestor = ancestor.parent()) {
+  for (auto ancestor = e; ancestor.is_valid(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
       second.children([&](flecs::entity modE) {
         const Modifier *mod = modE.try_get<Modifier>();

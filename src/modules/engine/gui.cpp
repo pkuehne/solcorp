@@ -16,7 +16,7 @@ void systemRenderGUI(const Renderer &);
 void systemRenderWindow(flecs::entity winE, Window &win);
 
 void registerGui(flecs::world &world) {
-  world.import<EngineModule>();
+  world.import <EngineModule>();
 
   // Register Systems
   world.system("Initialise GUI").kind(flecs::OnStart).run(systemInitialiseGui);

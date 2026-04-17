@@ -20,7 +20,7 @@ constexpr double deg2rad(double deg) { return deg * pi / 180.0; }
 /// @brief Returns the nearest ancestor of e (inclusive) that has component T,
 /// or a null entity if none is found.
 template <typename T> flecs::entity findAncestorWith(flecs::entity e) {
-  for (auto it = e; it.is_alive(); it = it.parent()) {
+  for (auto it = e; it.is_valid(); it = it.parent()) {
     if (it.has<T>()) {
       return it;
     }

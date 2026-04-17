@@ -265,5 +265,4 @@ void drawLaunchWindow(flecs::entity winE) {
     state.draftPlan = ScheduleLaunchAction{};
     hideWindow(world, "Mission Plan");
   }
-  ImGui::End();
 }

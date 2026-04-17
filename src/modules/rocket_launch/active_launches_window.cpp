@@ -244,6 +244,4 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     }
     ImGui::EndPopup();
   }
-
-  ImGui::End();
 }
