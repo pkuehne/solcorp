@@ -1,6 +1,7 @@
 #include "simulation.h"
 #include "SDL_keycode.h"
 #include "modules/base/base.h"
+#include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
@@ -14,6 +15,8 @@ void systemShowWindows(flecs::iter &, size_t, const KeyDown);
 
 SimulationModule::SimulationModule(flecs::world &world) {
   world.import<BaseModule>();
+
+  registerEngineComponents(world);
 
   // Register components
   world.component<CelestialBody>()
@@ -42,7 +45,7 @@ SimulationModule::SimulationModule(flecs::world &world) {
       .member("inclination", &TargetOrbit::inclination);
 
   // Create Singletons
-  world.set<Developer>({});
+  world.add<Developer>();
 
   auto sim = world.get<Simulation>();
 

@@ -254,6 +254,4 @@ void drawContractsWindow(flecs::entity winE) {
     }
     ImGui::EndPopup();
   }
-
-  ImGui::End();
 }

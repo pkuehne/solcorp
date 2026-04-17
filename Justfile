@@ -1,8 +1,15 @@
+
+help:
+    @just --list
+
+init:
+    cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
+
 build:
-    cd build && ninja
+    cmake --build build --target all --parallel
 
 test:
-    cd build && ninja unit_tests
+    cmake --build build --target unit_tests --parallel
 
 run:
-    cd build && ninja run
+    cmake --build build --target run --parallel

@@ -38,7 +38,7 @@ void register_lua_user_type(
     std::string setter("set");
     setter.append(name);
     state["entity"][setter.c_str()] = [](flecs::entity &e, T &c) -> void {
-      e.emplace<T>(c);
+      e.set<T>(c);
     };
 
     std::string haver("has");
