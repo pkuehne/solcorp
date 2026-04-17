@@ -29,7 +29,7 @@ struct ActiveLaunchesFixture {
   flecs::entity plan3; // pad1, no payload
 
   ActiveLaunchesFixture() {
-    world.import<RocketLaunchModule>();
+    world.import <RocketLaunchModule>();
 
     site1 = world.entity("Site A").add<Site>();
     site2 = world.entity("Site B").add<Site>();
@@ -106,9 +106,7 @@ SCENARIO("planMatchesFilters - site filter", "[filter][active_launches]") {
     ActiveLaunchesWindow state;
     state.filterSite = f.site2;
 
-    THEN("Plans on site2 pass") {
-      CHECK(planMatchesFilters(f.plan2, state));
-    }
+    THEN("Plans on site2 pass") { CHECK(planMatchesFilters(f.plan2, state)); }
     THEN("Plans on site1 are excluded") {
       CHECK(!planMatchesFilters(f.plan1, state));
       CHECK(!planMatchesFilters(f.plan3, state));
@@ -136,9 +134,7 @@ SCENARIO("planMatchesFilters - pad filter", "[filter][active_launches]") {
     ActiveLaunchesWindow state;
     state.filterPad = f.pad2;
 
-    THEN("Plans on pad2 pass") {
-      CHECK(planMatchesFilters(f.plan2, state));
-    }
+    THEN("Plans on pad2 pass") { CHECK(planMatchesFilters(f.plan2, state)); }
     THEN("Plans on pad1 are excluded") {
       CHECK(!planMatchesFilters(f.plan1, state));
       CHECK(!planMatchesFilters(f.plan3, state));
@@ -234,7 +230,8 @@ SCENARIO("planMatchesFilters - dead filter entities",
 
   GIVEN("filterPad is set then the pad entity is destroyed") {
     auto tempBuilding = f.world.entity().child_of(f.site1);
-    auto filterPad = f.world.entity().add<Launchpad>().add<Facility>().child_of(tempBuilding);
+    auto filterPad = f.world.entity().add<Launchpad>().add<Facility>().child_of(
+        tempBuilding);
     ActiveLaunchesWindow state;
     state.filterPad = filterPad;
     filterPad.destruct();

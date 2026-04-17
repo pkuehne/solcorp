@@ -22,11 +22,11 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 
 SiteModule::SiteModule(flecs::world &world) {
 
-  world.import<BaseModule>();
-  world.import<StatsModule>();
+  world.import <BaseModule>();
+  world.import <StatsModule>();
   registerEngineComponents(world);
 
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   // Register components
   world.component<CurrentSite>();

@@ -13,3 +13,18 @@ test:
 
 run:
     cmake --build build --target run --parallel
+
+format: format-cpp format-lua
+
+format-cpp:
+    find src test \( -name "*.cpp" -o -name "*.h" \) -print0 | xargs -0 -r clang-format -i
+
+format-lua:
+    stylua config.lua mods/
+
+lint: lint-cpp lint-lua 
+
+lint-cpp:
+
+lint-lua:
+    luacheck config.lua mods/
