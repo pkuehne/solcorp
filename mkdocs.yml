@@ -16,6 +16,7 @@ nav:
     - Systems & Phases: architecture/systems-and-phases.md
     - Flecs Relationships: architecture/flecs-relationships.md
     - UI & Widgets: architecture/ui-and-widgets.md
+    - Rocket Module: architecture/rocket-module.md
   - ADRs:
     - Index: adr/README.md
     - "001 - ECS with Flecs": adr/001-ecs-with-flecs.md

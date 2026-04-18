@@ -35,4 +35,4 @@ For features that are not yet implemented, the `NotImplementedPopup` popup provi
 
 ## Testing UI Logic
 
-ImGui rendering is not unit-testable, but logic embedded in draw functions **should be extracted** into free functions, declared in the header, and tested with Catch2. This pattern has caught real bugs. See the [testing guidance in CLAUDE.md](../../CLAUDE.md).
+ImGui rendering is not unit-testable, but logic embedded in draw functions **should be extracted** into free functions, declared in the header, and tested with Catch2. This pattern has caught real bugs.
