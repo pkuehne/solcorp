@@ -46,6 +46,7 @@ struct Contract {
 struct LaunchingFrom {}; ///< From which launchpad?
 struct LaunchingOn {};   ///< On what  rocket
 struct LaunchingWith {}; ///< With what payloads?
+
 /// @brief Which orbits can this rocket lift to and with how much mass?
 struct CanLiftTo {
   u_int max_mass; // in kg
