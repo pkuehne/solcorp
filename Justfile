@@ -28,3 +28,6 @@ lint-cpp:
 
 lint-lua:
     luacheck config.lua mods/
+
+docs:
+    python3 -m http.server 8000 --directory docs

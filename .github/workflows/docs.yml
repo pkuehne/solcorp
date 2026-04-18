@@ -5,25 +5,12 @@ on:
       - main
     paths:
       - docs/**
-      - mkdocs.yml
-  pull_request:
 permissions:
   contents: read
   pages: write
   id-token: write
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - run: pip install mkdocs-material
-      - run: mkdocs build --strict
-
   deploy:
-    needs: validate
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
@@ -31,13 +18,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-      - run: pip install mkdocs-material
-      - run: mkdocs build
+          submodules: recursive
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site/
+          path: docs/
       - uses: actions/deploy-pages@v5
         id: deployment
