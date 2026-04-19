@@ -8,5 +8,6 @@ SolCorp is a space simulation game where you manage a launch corporation — bui
 |---------|-------------|
 | [Gameplay](gameplay/README.md) | Core game mechanics and systems |
 | [Architecture](architecture/README.md) | Technical design, ECS patterns, and module system |
+| [Design](design/README.md) | In-depth design documents for major systems |
 | [ADRs](adr/README.md) | Architecture Decision Records |
 | [Modding](modding/README.md) | Lua modding API and guide |

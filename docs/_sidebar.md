@@ -6,6 +6,10 @@
   - [Contracts & Launches](gameplay/contracts-and-launches.md)
   - [Simulation](gameplay/simulation.md)
 
+- Design
+  - [Finance System](design/finance-system.md)
+  - [Personnel & Company](design/personnel-and-company.md)
+
 - Architecture
   - [Overview](architecture/README.md)
   - [ECS & Modules](architecture/ecs-and-modules.md)
