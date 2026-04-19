@@ -19,7 +19,7 @@
   - [001 - ECS with Flecs](adr/001-ecs-with-flecs.md)
   - [002 - Stats and Modifiers](adr/002-stats-and-modifiers.md)
   - [003 - Finance System](adr/003-finance-system.md)
-
+  - [004 - UI Action Pattern](adr/004-action-pattern.md)
 - Modding
   - [Overview](modding/README.md)
   - [Getting Started](modding/getting-started.md)
