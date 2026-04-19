@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flecs.h>
+#include <numbers>
 
 // Phases
 extern flecs::entity PostStartPhase;
@@ -14,8 +15,7 @@ extern flecs::entity RenderPhase;
 extern flecs::entity PostRenderPhase;
 extern flecs::entity PostFramePhase;
 
-constexpr double pi = 3.14159265358979323846;
-constexpr double deg2rad(double deg) { return deg * pi / 180.0; }
+consteval double deg2rad(double deg) { return deg * std::numbers::pi / 180.0; }
 
 /// @brief Returns the nearest ancestor of e (inclusive) that has component T,
 /// or a null entity if none is found.
