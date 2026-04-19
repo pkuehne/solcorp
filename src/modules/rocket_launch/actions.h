@@ -1,31 +1,8 @@
 #pragma once
 
+#include "../base/action.h"
 #include <flecs.h>
-#include <string>
 #include <vector>
-
-struct ValidationResult {
-  bool ok = false;
-  std::string message;
-
-  static ValidationResult Pass() { return {true, {}}; }
-  static ValidationResult Fail(const std::string &msg) {
-    return {false, std::move(msg)};
-  }
-  static ValidationResult Issue(const std::string &msg) {
-    if (!msg.empty()) {
-      return Fail(msg);
-    }
-    return Pass();
-  }
-  explicit operator bool() const noexcept { return ok; }
-};
-
-struct IAction {
-  virtual ~IAction() = default;
-  virtual ValidationResult validate(const flecs::world &world) const = 0;
-  virtual void execute(flecs::world &world) = 0;
-};
 
 struct ScheduleLaunchAction : public IAction {
   int launchDay = 0;

@@ -6,6 +6,10 @@
   - [Contracts & Launches](gameplay/contracts-and-launches.md)
   - [Simulation](gameplay/simulation.md)
 
+- Design
+  - [Finance System](design/finance-system.md)
+  - [Personnel & Company](design/personnel-and-company.md)
+
 - Architecture
   - [Overview](architecture/README.md)
   - [ECS & Modules](architecture/ecs-and-modules.md)
@@ -18,7 +22,10 @@
   - [Index](adr/README.md)
   - [001 - ECS with Flecs](adr/001-ecs-with-flecs.md)
   - [002 - Stats and Modifiers](adr/002-stats-and-modifiers.md)
-
+  - [003 - Finance System](adr/003-finance-system.md)
+  - [004 - UI Action Pattern](adr/004-action-pattern.md)
+  - [005 - Game Calendar System](adr/005-game-calendar.md)
+  
 - Modding
   - [Overview](modding/README.md)
   - [Getting Started](modding/getting-started.md)
