@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SolCorp is a C++17 space simulation game built on an **Entity Component System (ECS)** architecture using Flecs v4.1.2. The project features modular game systems, ImGui UI, Lua scripting for mods, and SDL2 graphics.
+SolCorp is a C++20 space simulation game built on an **Entity Component System (ECS)** architecture using Flecs v4.1.2. The project features modular game systems, ImGui UI, Lua scripting for mods, and SDL2 graphics.
 
 ## Build Commands
 
@@ -229,7 +229,7 @@ When proposing or reviewing a change that affects core architecture (new framewo
 ## Critical Implementation Notes
 
 ### Compilation
-- C++17 standard
+- C++20 standard
 - Strict flags: `-Wall -Wextra -Wpedantic -Werror`
 - `#pragma once` for header guards
 
