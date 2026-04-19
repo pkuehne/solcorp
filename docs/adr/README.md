@@ -16,3 +16,4 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 | [002](/adr/002-stats-and-modifiers.md) | Stats and Modifiers | Accepted |
 | [003](/adr/003-finance-system.md) | Finance System | Proposed |
 | [004](/adr/004-action-pattern.md) | UI Action Pattern | Accepted |
+| [005](/adr/005-game-calendar.md) | Game Calendar System | Accepted |
