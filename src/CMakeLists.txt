@@ -103,7 +103,8 @@ target_include_directories(solcorplib PUBLIC ${LUA54_INCLUDE_DIRS})
 
 set_target_properties(solcorplib PROPERTIES PUBLIC_HEADER "${SolCorpHeaders}")
 target_compile_definitions(solcorplib PRIVATE
-                            SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+                            SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
+                            SC_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(solcorplib PRIVATE FLECS_CPP_NO_AUTO_REGISTRATION)
 
 target_compile_options(solcorplib PRIVATE -Werror)

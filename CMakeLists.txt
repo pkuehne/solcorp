@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
-if(NOT DEFINED ENV{BUILD_NUMBER})
-  set(ENV{BUILD_NUMBER} 0)
-endif()
+
+set(SC_VERSION 0.0.1) # x-release-please-version
 project(SolCorp
-    VERSION 0.0.1.$ENV{BUILD_NUMBER}
+    VERSION ${SC_VERSION}
     DESCRIPTION "Sol Corp"
     HOMEPAGE_URL "https://github.com/pkuehne/solcorp/"
     LANGUAGES CXX

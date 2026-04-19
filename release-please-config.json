@@ -4,6 +4,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
+      "extra-files": ["CMakeLists.txt"],
       "bump-minor-pre-major": true,
       "prerelease": true,
       "changelog-sections": [
