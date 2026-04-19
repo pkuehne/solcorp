@@ -12,5 +12,6 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [001](001-ecs-with-flecs.md) | ECS with Flecs | Accepted |
-| [002](002-stats-and-modifiers.md) | Stats and Modifiers | Accepted |
+| [001](/adr/001-ecs-with-flecs.md) | ECS with Flecs | Accepted |
+| [002](/adr/002-stats-and-modifiers.md) | Stats and Modifiers | Accepted |
+| [003](/adr/003-finance-system.md) | Finance System | Proposed |

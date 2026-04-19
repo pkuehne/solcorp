@@ -18,6 +18,7 @@
   - [Index](adr/README.md)
   - [001 - ECS with Flecs](adr/001-ecs-with-flecs.md)
   - [002 - Stats and Modifiers](adr/002-stats-and-modifiers.md)
+  - [003 - Finance System](adr/003-finance-system.md)
 
 - Modding
   - [Overview](modding/README.md)
