@@ -12,14 +12,15 @@ SCENARIO("acceptContract and rejectContract update balance",
   world.import <RocketLaunchModule>();
   world.add<Company>();
 
-  auto contractE = world.entity("TestContract").set<Contract>({
-      "Client",
-      "Description",
-      500.0f,
-      1000.0f,
-      ContractStatus::Open,
-      false,
-  });
+  auto contractE = world.entity("TestContract")
+                       .set<Contract>({
+                           "Client",
+                           "Description",
+                           500.0f,
+                           1000.0f,
+                           ContractStatus::Open,
+                           false,
+                       });
 
   GIVEN("An open contract") {
     WHEN("acceptContract is called") {

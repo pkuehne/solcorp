@@ -14,7 +14,7 @@ void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 void systemShowWindows(flecs::iter &, size_t, const KeyDown);
 
 SimulationModule::SimulationModule(flecs::world &world) {
-  world.import<BaseModule>();
+  world.import <BaseModule>();
 
   registerEngineComponents(world);
 

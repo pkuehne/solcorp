@@ -23,7 +23,7 @@ u_int Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import<BaseModule>();
+  world.import <BaseModule>();
 
   registerEngineComponents(world);
 
