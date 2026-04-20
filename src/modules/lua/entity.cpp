@@ -16,9 +16,14 @@ void load_entities_namespace(sol::state &mod_state) {
     return e;
   });
 
-  entities.set_function("GameComponent", [&mod_state]() {
+  entities.set_function("Game", [&mod_state]() -> Game * {
     auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    return world->get_mut<Game>();
+    return &world->get_mut<Game>();
+  });
+
+  entities.set_function("Company", [&mod_state]() -> Company * {
+    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+    return &world->get_mut<Company>();
   });
 }
 

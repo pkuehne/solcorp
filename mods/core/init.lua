@@ -3,6 +3,7 @@ local function on_init()
 	print("on_init called!")
 	local info = solcorp.logging.info
 	info("on_init called!")
+
 	local e = solcorp.entities.create("mod_entity")
 	info("Entity: " .. e:id())
 	e:disable()
@@ -16,9 +17,12 @@ local function on_start()
 	local info = solcorp.logging.info
 	info("on_start called!")
 
-	local comp = solcorp.entities.GameComponent()
-	comp.day = 12
-	info("Day: " .. comp.day)
+	local company = solcorp.entities.Company()
+	company.name = "Solar Corporation"
+	company.balance = 1000 * 1000
+
+	local comp = solcorp.entities.Game()
+	comp.day = 1
 
 	-- Create Texture
 	solcorp.helpers.create_texture("Buildings", "buildings.png")
