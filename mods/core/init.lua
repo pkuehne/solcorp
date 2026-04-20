@@ -19,7 +19,7 @@ local function on_start()
 
 	local company = solcorp.entities.Company()
 	company.name = "Solar Corporation"
-	company.balance = 1000 * 1000
+	company.balance = 10 * 1000 * 1000
 
 	local comp = solcorp.entities.Game()
 	comp.day = 1
