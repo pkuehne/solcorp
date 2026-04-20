@@ -14,7 +14,7 @@ void systemQuitOnEscape(flecs::iter &, size_t, const KeyDown);
 void systemShowWindows(flecs::iter &, size_t, const KeyDown);
 
 SimulationModule::SimulationModule(flecs::world &world) {
-  world.import <BaseModule>();
+  world.import<BaseModule>();
 
   registerEngineComponents(world);
 
@@ -44,16 +44,27 @@ SimulationModule::SimulationModule(flecs::world &world) {
       .member("altitude", &TargetOrbit::altitude)
       .member("inclination", &TargetOrbit::inclination);
 
+  world.component<Company>()
+      .member("name", &Company::name)
+      .member("balance", &Company::balance)
+      .add(flecs::Singleton);
+
   // Create Singletons
   world.add<Developer>();
-
-  auto sim = world.get<Simulation>();
+  world.add<Company>();
 
   register_lua_user_type<Game>(
       world, "Game",
       [](sol::usertype<Game> &userType) { userType["day"] = &Game::day; });
 
+  register_lua_user_type<Company>(world, "Company",
+                                  [](sol::usertype<Company> &userType) {
+                                    userType["name"] = &Company::name;
+                                    userType["balance"] = &Company::balance;
+                                  });
+
   // Register systems
+  auto sim = world.get<Simulation>();
   world.system<Game>("Update Simulation Date")
       .tick_source(sim.speed)
       .kind(UpdatePhase)
