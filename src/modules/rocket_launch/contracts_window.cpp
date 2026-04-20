@@ -187,6 +187,7 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::BeginDisabled(acceptButtonDisabled(contract));
       if (ImGui::SmallButton("Accept")) {
         contract.status = ContractStatus::Accepted;
+        world.get_mut<Company>().balance += contract.upfront_payment;
         spdlog::debug("Contract {} accepted", contractE.id());
       }
       ImGui::EndDisabled();
@@ -194,6 +195,9 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::SameLine();
       ImGui::BeginDisabled(rejectButtonDisabled(contract));
       if (ImGui::SmallButton("Reject")) {
+        if (contract.status == ContractStatus::Accepted) {
+          world.get_mut<Company>().balance -= contract.upfront_payment;
+        }
         contract.status = ContractStatus::Closed;
         contract.failed = true;
         spdlog::debug("Contract {} rejected", contractE.id());

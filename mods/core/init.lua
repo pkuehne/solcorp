@@ -151,8 +151,8 @@ local function create_contracts()
 		get_random_contract_name(),
 		get_random_company_name(),
 		"Launch a satellite into low Earth orbit.",
-		50000,
-		150000
+		4 * 1000 * 1000,
+		4 * 1000 * 1000
 	)
 	solcorp.helpers.create_contract_payload(
 		contract,

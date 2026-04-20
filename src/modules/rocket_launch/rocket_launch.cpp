@@ -12,6 +12,7 @@
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <modules/simulation/simulation.h>
 #include <vector>
 
 u_int LaunchPlan::max_id = 1;
@@ -22,7 +23,7 @@ u_int Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import <BaseModule>();
+  world.import<BaseModule>();
 
   registerEngineComponents(world);
 
@@ -161,6 +162,8 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
     }
   });
 
+  Company &company = world.get_mut<Company>();
+
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
       spdlog::debug("Removing payload: {}", payload.name().c_str());
@@ -177,10 +180,11 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
             "Contract {} failed because payload {} was launched to wrong orbit",
             contractE.name().c_str(), payload.name().c_str());
         contract.failed = true;
+      } else {
+        company.balance += contract.completion_payment;
       }
       contract.status = ContractStatus::Closed;
 
-      // TODO: Transfer the completion payment
       payload.destruct();
       // TODO: We should probably also instantiate a notification for the
       // payload being launched, but that requires some refactoring of the
