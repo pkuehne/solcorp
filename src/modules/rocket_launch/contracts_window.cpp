@@ -56,6 +56,21 @@ bool planButtonDisabled(const Contract &contract) {
   return contract.status != ContractStatus::Accepted;
 }
 
+void acceptContract(flecs::world &world, flecs::entity contractE) {
+  Contract &contract = contractE.get_mut<Contract>();
+  contract.status = ContractStatus::Accepted;
+  world.get_mut<Company>().balance += contract.upfront_payment;
+}
+
+void rejectContract(flecs::world &world, flecs::entity contractE) {
+  Contract &contract = contractE.get_mut<Contract>();
+  if (contract.status == ContractStatus::Accepted) {
+    world.get_mut<Company>().balance -= contract.upfront_payment;
+  }
+  contract.status = ContractStatus::Closed;
+  contract.failed = true;
+}
+
 ScheduleLaunchAction setupLaunchForPayload(flecs::entity payloadE) {
   auto world = payloadE.world();
 
@@ -186,8 +201,7 @@ void drawContractsWindow(flecs::entity winE) {
 
       ImGui::BeginDisabled(acceptButtonDisabled(contract));
       if (ImGui::SmallButton("Accept")) {
-        contract.status = ContractStatus::Accepted;
-        world.get_mut<Company>().balance += contract.upfront_payment;
+        acceptContract(world, contractE);
         spdlog::debug("Contract {} accepted", contractE.id());
       }
       ImGui::EndDisabled();
@@ -195,11 +209,7 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::SameLine();
       ImGui::BeginDisabled(rejectButtonDisabled(contract));
       if (ImGui::SmallButton("Reject")) {
-        if (contract.status == ContractStatus::Accepted) {
-          world.get_mut<Company>().balance -= contract.upfront_payment;
-        }
-        contract.status = ContractStatus::Closed;
-        contract.failed = true;
+        rejectContract(world, contractE);
         spdlog::debug("Contract {} rejected", contractE.id());
       }
       ImGui::EndDisabled();

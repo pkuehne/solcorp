@@ -281,6 +281,7 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
 SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
+  world.add<Company>();
 
   auto site = world.entity().add<Site>().add<CurrentSite>();
   auto launchpad = world.entity("Main Pad")
@@ -348,6 +349,9 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
         CHECK(contractA.get<Contract>().failed == false);
         CHECK(contractB.get<Contract>().failed == false);
       }
+      THEN("The completion payments are added to the company balance") {
+        CHECK(world.get<Company>().balance == 4000);
+      }
     }
   }
 
@@ -409,6 +413,9 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
         CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
         CHECK(contractA.get<Contract>().failed == true);
         CHECK(contractB.get<Contract>().failed == true);
+      }
+      THEN("No payment is added to the company balance") {
+        CHECK(world.get<Company>().balance == 0);
       }
     }
   }
