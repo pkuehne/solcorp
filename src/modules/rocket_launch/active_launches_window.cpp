@@ -97,7 +97,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     const TargetOrbit *o = state.filterOrbit.try_get<TargetOrbit>();
     if (o) {
       orbitDisplay = fmt::format("{:.0f} km / {:.1f}°", o->altitude / 1000.0,
-                                 o->inclination * 180.0 / pi);
+                                 o->inclination * 180.0 / std::numbers::pi);
     }
   }
   ImGui::SetNextItemWidth(200.0f);
@@ -108,7 +108,8 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     orbitQuery.each([&](flecs::entity orbitE, TargetOrbit &orbit) {
       std::string label =
           fmt::format("{} - {:.0f} km / {:.1f}°", orbitE.name().c_str(),
-                      orbit.altitude / 1000.0, orbit.inclination * 180.0 / pi);
+                      orbit.altitude / 1000.0,
+                      orbit.inclination * 180.0 / std::numbers::pi);
       if (ImGui::Selectable(label.c_str(), orbitE == state.filterOrbit)) {
         state.filterOrbit = orbitE;
       }
@@ -186,10 +187,10 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       if (orbitE.is_valid()) {
         const TargetOrbit *orbit = orbitE.try_get<TargetOrbit>();
         if (orbit) {
-          ImGui::TextUnformatted(fmt::format("{:.0f} km / {:.1f}°",
-                                             orbit->altitude / 1000.0,
-                                             orbit->inclination * 180.0 / pi)
-                                     .c_str());
+          ImGui::TextUnformatted(
+              fmt::format("{:.0f} km / {:.1f}°", orbit->altitude / 1000.0,
+                          orbit->inclination * 180.0 / std::numbers::pi)
+                  .c_str());
         }
       } else {
         ImGui::TextUnformatted("-");

@@ -230,18 +230,15 @@ void drawLaunchWindow(flecs::entity winE) {
                                   state.draftPlan.payloads.end(),
                                   payloadE) != state.draftPlan.payloads.end();
 
-      std::string label = std::string(payloadE.name()) + " (" +
-                          std::to_string(payload.mass) + " kg) - " +
-                          contract.client;
+      std::string label =
+          std::format("{} ({} kg) - {}", payloadE.name().c_str(), payload.mass,
+                      contract.client);
 
       ImGui::BeginDisabled(alreadyAssigned);
       if (ImGui::Selectable(label.c_str(), isSelected)) {
         if (isSelected) {
           // Remove payload
-          state.draftPlan.payloads.erase(
-              std::remove(state.draftPlan.payloads.begin(),
-                          state.draftPlan.payloads.end(), payloadE),
-              state.draftPlan.payloads.end());
+          std::erase(state.draftPlan.payloads, payloadE);
         } else {
           // Add payload
           state.draftPlan.payloads.push_back(payloadE);

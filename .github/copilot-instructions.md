@@ -1,7 +1,7 @@
 # SolCorp AI Coding Agent Instructions
 
 ## Project Overview
-SolCorp is a C++17/CMake-based space simulation game using an **Entity Component System (ECS)** architecture with Flecs. The project features modular game logic, ImGui UI, Lua scripting, and SDL2 graphics. Build system uses CMake with Ninja, and tests use Catch2.
+SolCorp is a C++20/CMake-based space simulation game using an **Entity Component System (ECS)** architecture with Flecs. The project features modular game logic, ImGui UI, Lua scripting, and SDL2 graphics. Build system uses CMake with Ninja, and tests use Catch2.
 
 ## Architecture
 
@@ -42,7 +42,7 @@ cmake --build build --target unit_tests  # Run unit tests
 ### Development Environment
 - **Nix Flake**: [flake.nix](flake.nix) provides reproducible dev shell with SDL2, lua5.4, imgui, catch2, gcc, gdb, clangd
 - **Fetched Dependencies**: Flecs, spdlog, sol3 (Lua), Catch2 – all via FetchContent in CMake
-- **Compile Settings**: C++17 standard, errors on warnings (`-Werror`), strict flags (`-Wall -Wextra -Wpedantic`)
+- **Compile Settings**: C++20 standard, errors on warnings (`-Werror`), strict flags (`-Wall -Wextra -Wpedantic`)
 
 ### Testing
 - **Framework**: Catch2 v3.6.0
