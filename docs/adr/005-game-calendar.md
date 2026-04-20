@@ -58,7 +58,7 @@ Saturday and Sunday are non-working days. Holidays are out of scope for now; if 
 
 ### Negative
 
-- Requires C++20 (`<chrono>` date types). The project already targets C++17 with `-std=c++17`; this ADR accepts bumping to C++20. 
+- ~~Requires C++20 (`<chrono>` date types). The project already targets C++17 with `-std=c++17`; this ADR accepts bumping to C++20.~~ C++20 support is now available in all target platforms, so we can use `<chrono>` features without issue. Ref: https://github.com/pkuehne/solcorp/pull/71
 - Business-day iteration is O(n) in the number of days added. Acceptable at game scales; would need a formula-based approach for very large jumps.
 - No holiday support. Teams working across national boundaries would need an extension.
 

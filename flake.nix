@@ -1,6 +1,6 @@
 {
   description =
-    "Dev shell for a C++17 SDL2/Flecs/ImGui/Lua project (CMake + Ninja)";
+    "Dev shell for a C++20 SDL2/Flecs/ImGui/Lua project (CMake + Ninja)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";

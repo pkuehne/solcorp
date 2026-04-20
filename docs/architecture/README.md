@@ -1,6 +1,6 @@
 # Architecture
 
-SolCorp is a C++17 game built on an Entity Component System (ECS) using [Flecs v4.1.2](https://www.flecs.dev/).
+SolCorp is a C++20 game built on an Entity Component System (ECS) using [Flecs v4.1.2](https://www.flecs.dev/).
 
 ## Contents
 

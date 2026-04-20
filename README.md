@@ -5,7 +5,7 @@
 [![Release Please](https://img.shields.io/github/actions/workflow/status/pkuehne/solcorp/release-please.yml?branch=main&label=release-please)](https://github.com/pkuehne/solcorp/actions/workflows/release-please.yml)
 [![License](https://img.shields.io/github/license/pkuehne/solcorp)](https://github.com/pkuehne/solcorp/blob/main/LICENSE.md)
 
-[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)](https://isocpp.org/)
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=c%2B%2B&logoColor=white)](https://isocpp.org/)
 [![SDL2](https://img.shields.io/badge/SDL-2-0f80cc?logo=sdl&logoColor=white)](https://www.libsdl.org/)
 [![Dear ImGui](https://img.shields.io/badge/Dear%20ImGui-1.90+-4B5562)](https://github.com/ocornut/imgui)
 [![Lua](https://img.shields.io/badge/Lua-5.4-2C2D72?logo=lua&logoColor=white)](https://www.lua.org/)
