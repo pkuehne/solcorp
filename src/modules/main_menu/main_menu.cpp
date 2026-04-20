@@ -9,6 +9,7 @@
 #include <modules/rocket_launch/launch_window.h>
 #include <modules/simulation/celestial_browser.h>
 #include <modules/simulation/developer_window.h>
+#include <modules/simulation/simulation.h>
 
 void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
@@ -34,6 +35,11 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
 void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
                         const Game game, MainMenuBar) {
   auto world = winE.world();
+  auto company = world.get<Company>();
+
+  if (company.balance < 0) {
+    ImGui::OpenPopup("Game Over");
+  }
 
   if (ImGui::BeginMainMenuBar()) {
     ImGui::PushItemWidth(-FLT_MIN);
@@ -41,6 +47,8 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     if (ImGui::Button(sim.speed.enabled() ? "||" : ">")) {
       sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
     }
+    ImGui::Text(" %s ", company.name.c_str());
+    ImGui::Text(" $ %ld ", company.balance);
     if (ImGui::BeginMenu("Windows")) {
       if (ImGui::MenuItem("Celestial Browser")) {
         showCelestialBrowser(world);
@@ -61,6 +69,16 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();
+  }
+
+  if (ImGui::BeginPopupModal("Game Over", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::Text("Your balance is negative. The corporation is bankrupt.");
+    if (ImGui::Button("OK")) {
+      ImGui::CloseCurrentPopup();
+      world.quit();
+    }
+    ImGui::EndPopup();
   }
 }
 

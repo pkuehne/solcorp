@@ -2,6 +2,7 @@
 
 #include "modules/base/base.h"
 #include <flecs.h>
+#include <string>
 
 /// \brief Represents a celestial body with orbital and physical parameters.
 /// All parameters are in SI units unless otherwise specified. Angles in radians
@@ -32,6 +33,11 @@ struct TargetOrbit {
 };
 
 struct Developer {};
+
+struct Company {
+  std::string name;
+  int64_t balance = 0;
+};
 
 void systemRegisterWindows(flecs::iter &);
 void systemGenerateSolSystem(flecs::iter &);

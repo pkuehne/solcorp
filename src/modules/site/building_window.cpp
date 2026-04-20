@@ -12,6 +12,7 @@
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <modules/simulation/simulation.h>
 
 void drawManufacturingSection(flecs::entity &entity);
 void drawStorageSection(flecs::entity &entity);
@@ -106,9 +107,13 @@ void drawManufacturingSection(flecs::entity &entity) {
     // }
   } else {
     // Nothing yet - the line is empty
+    const int rocket_cost = 5'000'000;
+    Company &company = world.get_mut<Company>();
     ImGui::Text("Empty Manufacturing Line");
     ImGui::ProgressBar(0.0);
-    if (ImGui::Button("Build")) {
+
+    if (ActionButton("Build", "Start building a new rocket on this line",
+                     company.balance < rocket_cost ? "Not enough funds" : "")) {
       // Build new rocket
       // TODO: Move to RocketLaunch Module and make selectable from a list of
       // rocket prefabs instead of hardcoding Falcon 1 here
@@ -119,6 +124,7 @@ void drawManufacturingSection(flecs::entity &entity) {
               .set<Construction>({300, 300})
               .child_of(entity);
       e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
+      company.balance -= rocket_cost;
     }
   }
   ImGui::PopID();

@@ -46,3 +46,11 @@ bool rejectButtonDisabled(const Contract &contract);
 /// @param contract The contract to check
 /// @return True if the plan button should be disabled, false otherwise
 bool planButtonDisabled(const Contract &contract);
+
+/// @brief Accepts a contract: sets status to Accepted and credits upfront
+/// payment to the company balance.
+void acceptContract(flecs::world &world, flecs::entity contractE);
+
+/// @brief Rejects a contract: sets status to Closed/failed and refunds the
+/// upfront payment if the contract was previously Accepted.
+void rejectContract(flecs::world &world, flecs::entity contractE);
