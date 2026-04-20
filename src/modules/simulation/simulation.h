@@ -36,7 +36,7 @@ struct Developer {};
 
 struct Company {
   std::string name;
-  uint64_t balance = 0;
+  int64_t balance = 0;
 };
 
 void systemRegisterWindows(flecs::iter &);

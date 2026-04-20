@@ -37,6 +37,10 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
   auto world = winE.world();
   auto company = world.get<Company>();
 
+  if (company.balance < 0) {
+    ImGui::OpenPopup("Game Over");
+  }
+
   if (ImGui::BeginMainMenuBar()) {
     ImGui::PushItemWidth(-FLT_MIN);
     ImGui::Text("Day: %3d", game.day);
@@ -65,6 +69,16 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     }
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();
+  }
+
+  if (ImGui::BeginPopupModal("Game Over", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::Text("Your balance is negative. The corporation is bankrupt.");
+    if (ImGui::Button("OK")) {
+      ImGui::CloseCurrentPopup();
+      world.quit();
+    }
+    ImGui::EndPopup();
   }
 }
 
