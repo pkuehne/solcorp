@@ -1,5 +1,6 @@
 #include "helpers.h"
 #include "modules/base/assert.h"
+#include <filesystem>
 #include "modules/engine/render.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
@@ -197,10 +198,10 @@ flecs::entity create_texture(sol::this_state s, const std::string &name,
     spdlog::error("Invalid filename {}", filename);
     return flecs::entity();
   }
-  std::string location = "mods/";
-  location.append(mod_state["solcorp"]["mod_name"]());
-  location.append("/");
-  location.append(filename);
+  auto location = (std::filesystem::path("mods") /
+                   std::string(mod_state["solcorp"]["mod_name"]()) /
+                   filename)
+                      .string();
   auto texture_node = world->entity("Textures");
   auto texture = world->entity(name.c_str())
                      .child_of(texture_node)
