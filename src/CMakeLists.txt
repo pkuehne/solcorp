@@ -107,10 +107,11 @@ target_compile_definitions(solcorplib PRIVATE
                             SC_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(solcorplib PRIVATE FLECS_CPP_NO_AUTO_REGISTRATION)
 
-target_compile_options(solcorplib PRIVATE -Werror)
-target_compile_options(solcorplib PRIVATE -Wall)
-target_compile_options(solcorplib PRIVATE -Wextra)
-target_compile_options(solcorplib PRIVATE -Wpedantic)
+if(MSVC)
+  target_compile_options(solcorplib PRIVATE /WX /W4 /permissive-)
+else()
+  target_compile_options(solcorplib PRIVATE -Werror -Wall -Wextra -Wpedantic)
+endif()
 target_compile_options(solcorplib PRIVATE ${LUA54_CFLAGS})
 
 target_link_libraries(solcorplib ${SDL2_LINK_LIBRARIES})
@@ -147,10 +148,11 @@ add_executable(solcorp main.cpp)
 
 target_include_directories(solcorp PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-target_compile_options(solcorp PRIVATE -Werror)
-target_compile_options(solcorp PRIVATE -Wall)
-target_compile_options(solcorp PRIVATE -Wextra)
-target_compile_options(solcorp PRIVATE -Wpedantic)
+if(MSVC)
+  target_compile_options(solcorp PRIVATE /WX /W4 /permissive-)
+else()
+  target_compile_options(solcorp PRIVATE -Werror -Wall -Wextra -Wpedantic)
+endif()
 
 target_link_libraries(solcorp PRIVATE solcorplib)
 

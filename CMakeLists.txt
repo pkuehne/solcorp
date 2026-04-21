@@ -15,7 +15,11 @@ set(COVERAGE_PERCENTAGE 90 CACHE STRING "Minimum Coverage number to succeed")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_compile_options(-fdiagnostics-color=always)
+if(MSVC)
+  add_compile_options(/diagnostics:color)
+else()
+  add_compile_options(-fdiagnostics-color=always)
+endif()
 
 include(FetchContent)
 
