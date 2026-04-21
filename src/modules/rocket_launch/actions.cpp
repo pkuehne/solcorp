@@ -7,7 +7,7 @@
 
 ValidationResult
 ScheduleLaunchAction::validate(const flecs::world &world) const {
-  u_int today = world.get<Game>().day;
+  uint32_t today = world.get<Game>().day;
 
   flecs::entity existing = world.lookup(name.c_str());
   if (existing.is_valid() && existing != current) {
@@ -30,7 +30,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
     auto launch = p.get<LaunchPlan>();
-    if (launch.launch_date < static_cast<u_int>(launchDay) &&
+    if (launch.launch_date < static_cast<uint32_t>(launchDay) &&
         launch.launch_date >= (launchDay - launchPrepDays)) {
       clash = true;
     }
@@ -40,7 +40,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
         "Another launch is already scheduled at that time");
   }
 
-  if (static_cast<u_int>(launchDay) < today + launchPrepDays) {
+  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays) {
     return ValidationResult::Fail(
         fmt::format("Launch needs to be planned at least {} days in advance",
                     launchPrepDays));
@@ -55,7 +55,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   }
 
   // Check total payload mass
-  u_int totalMass = 0;
+  uint32_t totalMass = 0;
   for (const auto &payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
       totalMass += payload.get<Payload>().mass;
@@ -75,7 +75,7 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
     spdlog::debug("Removing existing launch plan: {}", current.id());
     current.destruct();
   }
-  auto plan = LaunchPlan{static_cast<u_int>(launchDay), targetOrbit};
+  auto plan = LaunchPlan{static_cast<uint32_t>(launchDay), targetOrbit};
 
   auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());

@@ -42,7 +42,7 @@ void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
   state->draftPlan = draftPlan;
 
   // Default the plan to today
-  u_int today = world.get<Game>().day;
+  uint32_t today = world.get<Game>().day;
   if (state->draftPlan.launchDay < static_cast<int>(today)) {
     state->draftPlan.launchDay = today;
   }
@@ -107,8 +107,8 @@ void drawLaunchWindow(flecs::entity winE) {
                                                //  .var("Site")
                                                .build();
 
-  u_int today = world.get<Game>().day;
-  if (static_cast<u_int>(state.draftPlan.launchDay) < today) {
+  uint32_t today = world.get<Game>().day;
+  if (static_cast<uint32_t>(state.draftPlan.launchDay) < today) {
     state.draftPlan.launchDay = today;
   }
 
@@ -184,7 +184,7 @@ void drawLaunchWindow(flecs::entity winE) {
   }
 
   // Payload information and selection
-  u_int maxMass = 0;
+  uint32_t maxMass = 0;
   if (state.draftPlan.rocket.is_valid() &&
       state.draftPlan.targetOrbit.is_valid()) {
     maxMass = state.draftPlan.rocket.get<CanLiftTo>(state.draftPlan.targetOrbit)
@@ -195,13 +195,13 @@ void drawLaunchWindow(flecs::entity winE) {
   ImGui::Text("Payloads");
 
   // Display current payload mass
-  u_int totalMass = 0;
+  uint32_t totalMass = 0;
   for (const auto &payload : state.draftPlan.payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
       totalMass += payload.get<Payload>().mass;
     }
   }
-  u_int remainingMass = (totalMass > maxMass) ? 0 : (maxMass - totalMass);
+  uint32_t remainingMass = (totalMass > maxMass) ? 0 : (maxMass - totalMass);
 
   ImGui::Text("Current Mass: %u / %u kg", totalMass, maxMass);
   ImGui::Text("Remaining Capacity: %u kg", remainingMass);

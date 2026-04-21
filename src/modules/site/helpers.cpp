@@ -5,7 +5,7 @@
 #include "spdlog/spdlog.h"
 
 flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
-                                  const std::string &prefab, u_int x, u_int y,
+                                  const std::string &prefab, uint32_t x, uint32_t y,
                                   flecs::entity site) {
 
   std::string prefabName = "Prefabs::Buildings::";
@@ -32,7 +32,7 @@ flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
   return entity;
 };
 
-flecs::entity instantiateConstructionSite(flecs::world &world, u_int x, u_int y,
+flecs::entity instantiateConstructionSite(flecs::world &world, uint32_t x, uint32_t y,
                                           flecs::entity site) {
 
   std::string prefabName = "Prefabs::Core::ConstructionSite";

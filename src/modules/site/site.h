@@ -1,27 +1,28 @@
 #pragma once
 
 #include "modules/stats/stats.h"
+#include <cstdint>
 #include <flecs.h>
 
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
 
 struct Construction {
-  u_int effort_remaining = 0;
-  u_int effort_total = 0;
+  uint32_t effort_remaining = 0;
+  uint32_t effort_total = 0;
 };
 
 struct Site {
-  u_int width = 10;
-  u_int height = 10;
+  uint32_t width = 10;
+  uint32_t height = 10;
 };
 
 /// @brief Indicates that entity is a building
 struct Building {};
 
 struct SiteLocation {
-  u_int x = 0;
-  u_int y = 0;
+  uint32_t x = 0;
+  uint32_t y = 0;
 };
 
 /// @brief Marker component for facilities within a building
@@ -29,13 +30,13 @@ struct Facility {};
 
 /// @brief Facility for constructing rockets
 struct Manufacturing {
-  u_int max_weight = 1000;
-  u_int available_effort = 50;
+  uint32_t max_weight = 1000;
+  uint32_t available_effort = 50;
 };
 
 /// @brief For rockets and payloads
 struct Storage {
-  u_int max_storage = 1000;
+  uint32_t max_storage = 1000;
 };
 
 struct Office {
