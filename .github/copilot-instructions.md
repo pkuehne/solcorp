@@ -53,7 +53,7 @@ cmake --build build --target unit_tests  # Run unit tests
 ### Code Organization
 - **Headers** (`*.h`): Pragma once guards, component structs + system signatures
 - **Source** (`*.cpp`): System implementations, module constructors
-- **Build Artifacts**: Embedded texture `construction.png` → `construction_png.cpp` via xxd
+- **Build Artifacts**: Embedded texture `construction.png` → `construction_png.cpp` via `cmake/embed_resource.cmake` (pure CMake, cross-platform)
 - **ImGui Config**: [imgui.ini](imgui.ini) auto-generated at runtime
 
 ## Common Patterns & Conventions
