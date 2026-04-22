@@ -63,15 +63,18 @@ list(APPEND SolCorpHeaders
 )
 
 fetchcontent_declare(flecs
+    SYSTEM
     GIT_REPOSITORY https://github.com/SanderMertens/flecs
     GIT_TAG v4.1.2
 )
 fetchcontent_declare(spdlog
+    SYSTEM
     GIT_REPOSITORY https://github.com/gabime/spdlog/
     GIT_TAG v1.x
 )
 fetchcontent_declare(sol3
-  GIT_REPOSITORY https://github.com/ThePhD/sol2/
+    SYSTEM
+    GIT_REPOSITORY https://github.com/ThePhD/sol2/
     GIT_TAG develop
 )
 
@@ -82,12 +85,28 @@ fetchcontent_makeavailable(flecs spdlog sol3)
 
 add_compile_definitions(SC_VERSION="${PROJECT_VERSION}")
 
-# Add SDL2 depndencies
-include(FindPkgConfig)
-pkg_search_module(SDL2 REQUIRED sdl2)
-pkg_search_module(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
-pkg_search_module(SDL2TTF REQUIRED SDL2_ttf>=2.0.14)
-pkg_search_module(LUA54 REQUIRED lua5.4)
+# Add SDL2 dependencies
+if(WIN32)
+  find_package(SDL2 REQUIRED CONFIG)
+  find_package(SDL2_image REQUIRED CONFIG)
+  find_package(SDL2_ttf REQUIRED CONFIG)
+  find_package(Lua 5.4 REQUIRED)
+  set(SDL2_INCLUDE_DIRS "")
+  set(SDL2_LINK_LIBRARIES SDL2::SDL2)
+  set(SDL2IMAGE_INCLUDE_DIRS "")
+  set(SDL2IMAGE_LINK_LIBRARIES SDL2_image::SDL2_image)
+  set(SDL2TTF_INCLUDE_DIRS "")
+  set(SDL2TTF_LINK_LIBRARIES SDL2_ttf::SDL2_ttf)
+  set(LUA54_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+  set(LUA54_LINK_LIBRARIES ${LUA_LIBRARIES})
+  set(LUA54_CFLAGS "")
+else()
+  include(FindPkgConfig)
+  pkg_search_module(SDL2 REQUIRED sdl2)
+  pkg_search_module(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
+  pkg_search_module(SDL2TTF REQUIRED SDL2_ttf>=2.0.14)
+  pkg_search_module(LUA54 REQUIRED lua5.4)
+endif()
 
 # Library
 # Create an object library that is not linked, but serves as a collection of
@@ -108,7 +127,7 @@ target_compile_definitions(solcorplib PRIVATE
 target_compile_definitions(solcorplib PRIVATE FLECS_CPP_NO_AUTO_REGISTRATION)
 
 if(MSVC)
-  target_compile_options(solcorplib PRIVATE /WX /W4 /permissive-)
+  target_compile_options(solcorplib PRIVATE /WX /W4 /permissive- /wd4244)
 else()
   target_compile_options(solcorplib PRIVATE -Werror -Wall -Wextra -Wpedantic)
 endif()
@@ -167,10 +186,12 @@ add_custom_target(run
     COMMENT Running SolCorp
 )
 
-add_custom_target(debug
-    COMMAND gdb $<TARGET_FILE:solcorp>
-    USES_TERMINAL
-    DEPENDS solcorp
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT Debugging SolCorp
-)
+if(NOT WIN32)
+  add_custom_target(debug
+      COMMAND gdb $<TARGET_FILE:solcorp>
+      USES_TERMINAL
+      DEPENDS solcorp
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMENT Debugging SolCorp
+  )
+endif()

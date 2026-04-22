@@ -1,3 +1,4 @@
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 
 help:
     @just --list

@@ -20,11 +20,20 @@ list(APPEND imgui_headers
     imgui/misc/cpp/imgui_stdlib.cpp
 )
 
-# Add SDL2 depndencies
-include(FindPkgConfig)
-pkg_search_module(SDL2 REQUIRED sdl2)
-pkg_search_module(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
-pkg_search_module(SDL2TTF REQUIRED SDL2_ttf>=2.0.14)
+# Add SDL2 dependencies
+if(WIN32)
+  find_package(SDL2 REQUIRED CONFIG)
+  find_package(SDL2_image REQUIRED CONFIG)
+  set(SDL2_INCLUDE_DIRS "")
+  set(SDL2_LINK_LIBRARIES SDL2::SDL2)
+  set(SDL2IMAGE_INCLUDE_DIRS "")
+  set(SDL2IMAGE_LINK_LIBRARIES SDL2_image::SDL2_image)
+else()
+  include(FindPkgConfig)
+  pkg_search_module(SDL2 REQUIRED sdl2)
+  pkg_search_module(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
+  pkg_search_module(SDL2TTF REQUIRED SDL2_ttf>=2.0.14)
+endif()
 
 add_library(imgui STATIC "${imgui_sources}")
 target_include_directories(imgui PUBLIC ./imgui/)
