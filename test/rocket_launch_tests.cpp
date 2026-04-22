@@ -215,7 +215,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
       THEN("A launch plan is created") {
         REQUIRE(launch.result.is_valid());
         CHECK(launch.result.get<LaunchPlan>().launch_date ==
-              static_cast<u_int>(launch.launchDay));
+              static_cast<uint32_t>(launch.launchDay));
         CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
@@ -244,7 +244,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
         REQUIRE(launch.result.is_valid());
         REQUIRE(launch.current.is_alive() == false);
         CHECK(launch.result.get<LaunchPlan>().launch_date ==
-              static_cast<u_int>(launch.launchDay));
+              static_cast<uint32_t>(launch.launchDay));
         CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
@@ -294,7 +294,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
 
   GIVEN("A launch plan due today with multiple payloads and matching contract "
         "orbit") {
-    u_int today = world.get<Game>().day;
+    uint32_t today = world.get<Game>().day;
     auto targetOrbit = world.entity("LEO");
     auto contractA = world.entity("Contract A1")
                          .set<Contract>({
@@ -358,7 +358,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   GIVEN(
       "A launch plan due today with multiple payloads and mismatched contract "
       "orbit") {
-    u_int today = world.get<Game>().day;
+    uint32_t today = world.get<Game>().day;
     auto launchedOrbit = world.entity("LEO");
     auto contractOrbit = world.entity("GTO");
     auto contractA = world.entity("Contract B1")
@@ -421,7 +421,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   }
 
   GIVEN("A launch plan not due yet") {
-    u_int today = world.get<Game>().day;
+    uint32_t today = world.get<Game>().day;
     auto planE = world.entity("Test Plan")
                      .set<LaunchPlan>({today + 1})
                      .add<LaunchingOn>(rocket)

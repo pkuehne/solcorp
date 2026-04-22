@@ -69,7 +69,7 @@ void load_all_mods(flecs::world &world) {
     auto init_file = entry.path() / "init.lua";
     if (!std::filesystem::exists(init_file)) {
       spdlog::error("Mod in mods/{}/ does not have an init.lua file",
-                    entry.path().filename().c_str());
+                    entry.path().filename().string());
       continue;
     }
     load_mod(world, entry.path());

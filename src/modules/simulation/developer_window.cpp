@@ -11,7 +11,7 @@ void showDeveloperWindow(flecs::world &world) {
 void child_tree(flecs::entity e) {
   ImGui::PushID(e.id());
   if (ImGui::TreeNode("", "%s", e.name().c_str())) {
-    e.children(child_tree);
+    e.children([](flecs::entity e) { child_tree(e); });
     ImGui::TreePop();
   }
   ImGui::PopID();
@@ -24,8 +24,8 @@ void drawDeveloperWindow(flecs::entity winE) {
 
   if (ImGui::BeginTabBar("Tools")) {
     if (ImGui::BeginTabItem("Entity Tree")) {
-      world.children(child_tree);
     }
+    world.children([](flecs::entity e) { child_tree(e); });
   }
 
   if (state.show_metrics_window) {

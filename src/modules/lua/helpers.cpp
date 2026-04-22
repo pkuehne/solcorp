@@ -1,10 +1,10 @@
 #include "helpers.h"
 #include "modules/base/assert.h"
-#include <filesystem>
 #include "modules/engine/render.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
+#include <filesystem>
 #include <flecs.h>
 #include <modules/rocket_launch/rocket_launch.h>
 #include <sol/types.hpp>
@@ -198,10 +198,11 @@ flecs::entity create_texture(sol::this_state s, const std::string &name,
     spdlog::error("Invalid filename {}", filename);
     return flecs::entity();
   }
-  auto location = (std::filesystem::path("mods") /
-                   std::string(mod_state["solcorp"]["mod_name"]()) /
-                   filename)
-                      .string();
+  auto location =
+      (std::filesystem::path("mods") /
+       std::string(mod_state["solcorp"]["mod_name"]().get<std::string>()) /
+       filename)
+          .string();
   auto texture_node = world->entity("Textures");
   auto texture = world->entity(name.c_str())
                      .child_of(texture_node)
@@ -278,7 +279,8 @@ flecs::entity add_modifier(sol::this_state s, flecs::entity effect,
 /// @note The texture name is automatically prefixed with "Textures::" when
 ///       looking it up in the world.
 Sprite clip_sprite_from_texture(sol::this_state s, const std::string &texture,
-                                uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+                                uint32_t x, uint32_t y, uint32_t width,
+                                uint32_t height) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
