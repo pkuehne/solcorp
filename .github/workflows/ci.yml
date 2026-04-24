@@ -92,15 +92,13 @@ jobs:
           path: build/_deps
           key: fetchcontent-windows-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-windows-
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Configure
-        shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
       - name: Build
-        shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           cmake --build build --parallel
 
   test-windows:
@@ -121,20 +119,16 @@ jobs:
           path: build/_deps
           key: fetchcontent-windows-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-windows-
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Configure
-        shell: cmd
-        run: | 
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
-      - name: Build
-        shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Build
+        run: |
           cmake --build build --target unit_test --parallel
       - name: Test
-        shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           ctest --test-dir build -C Release --output-on-failure
 
   format:
