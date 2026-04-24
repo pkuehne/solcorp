@@ -211,7 +211,9 @@ void systemGenerateSolSystem(flecs::iter &it) {
       })
       .child_of(earth);
 
-  world.entity("Low Orbit").set<TargetOrbit>({.altitude = 200'000.0, .inclination = 0.0}).child_of(earth);
+  world.entity("Low Orbit")
+      .set<TargetOrbit>({.altitude = 200'000.0, .inclination = 0.0})
+      .child_of(earth);
   world.entity("Polar Orbit")
       .set<TargetOrbit>({.altitude = 200'000.0, .inclination = deg2rad(90.0)})
       .child_of(earth);

@@ -68,7 +68,7 @@ local function on_start()
 	solcorp.helpers.create_building("North Building", "Office Building", 2, 0, site)
 	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launch Complex", 5, 5, site)
 
-	local e = solcorp.entities.create()
+	local e = solcorp.entities.create("south_launchpad")
 	e:child_of(south_pad)
 	e:getText().text = "South Launchpad"
 	e:getVelocity().y = -20

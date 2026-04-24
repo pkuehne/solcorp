@@ -90,8 +90,6 @@
           # Keep this out; it breaks transitive .pc discovery
           # PKG_CONFIG_PATH = ...
 
-          CXXFLAGS = "-std=gnu++17";
-
           shellHook = ''
             # Prefer WSLg sockets
             if [ -S /mnt/wslg/runtime-dir/wayland-0 ]; then

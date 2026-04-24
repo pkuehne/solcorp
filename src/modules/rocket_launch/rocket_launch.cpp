@@ -15,8 +15,8 @@
 #include <modules/simulation/simulation.h>
 #include <vector>
 
-u_int LaunchPlan::max_id = 1;
-u_int Rocket::max_id = 1;
+uint32_t LaunchPlan::max_id = 1;
+uint32_t Rocket::max_id = 1;
 
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
@@ -144,7 +144,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
 /// @param plan The plan's component
 void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto world = planE.world();
-  u_int today = world.get<Game>().day;
+  uint32_t today = world.get<Game>().day;
 
   if (plan.launch_date > today) {
     return;

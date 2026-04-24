@@ -4,6 +4,7 @@
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
+#include <filesystem>
 #include <flecs.h>
 #include <modules/rocket_launch/rocket_launch.h>
 #include <sol/types.hpp>
@@ -24,7 +25,7 @@
 /// @note The site is automatically positioned at coordinates (0, 50).
 /// @note This function asserts that Sun::Earth entity exists in the world.
 flecs::entity create_site(sol::this_state s, const std::string &name,
-                          u_int width, u_int height,
+                          uint32_t width, uint32_t height,
                           bool make_current = false) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
@@ -136,7 +137,7 @@ flecs::entity add_facility_to_building(sol::this_state s,
 /// @return A flecs::entity representing the newly created building.
 /// @note Retrieves the ECS world from the Lua state's solcorp module.
 flecs::entity create_building(sol::this_state s, const std::string &name,
-                              const std::string &prefab, u_int x, u_int y,
+                              const std::string &prefab, uint32_t x, uint32_t y,
                               flecs::entity site) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
@@ -162,7 +163,7 @@ flecs::entity create_building(sol::this_state s, const std::string &name,
 flecs::entity add_target_orbit_to_rocket(sol::this_state s,
                                          const flecs::entity rocket,
                                          const std::string &orbit_name,
-                                         u_int max_mass) {
+                                         uint32_t max_mass) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
@@ -197,10 +198,11 @@ flecs::entity create_texture(sol::this_state s, const std::string &name,
     spdlog::error("Invalid filename {}", filename);
     return flecs::entity();
   }
-  std::string location = "mods/";
-  location.append(mod_state["solcorp"]["mod_name"]());
-  location.append("/");
-  location.append(filename);
+  auto location =
+      (std::filesystem::path("mods") /
+       std::string(mod_state["solcorp"]["mod_name"]().get<std::string>()) /
+       filename)
+          .string();
   auto texture_node = world->entity("Textures");
   auto texture = world->entity(name.c_str())
                      .child_of(texture_node)
@@ -277,7 +279,8 @@ flecs::entity add_modifier(sol::this_state s, flecs::entity effect,
 /// @note The texture name is automatically prefixed with "Textures::" when
 ///       looking it up in the world.
 Sprite clip_sprite_from_texture(sol::this_state s, const std::string &texture,
-                                u_int x, u_int y, u_int width, u_int height) {
+                                uint32_t x, uint32_t y, uint32_t width,
+                                uint32_t height) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
 
@@ -338,7 +341,7 @@ flecs::entity create_contract(sol::this_state s, const std::string &name,
 /// @param mass  The mass of the payload in kg
 /// @return The created Payload entity
 flecs::entity create_contract_payload(sol::this_state s, flecs::entity contract,
-                                      const std::string &name, u_int mass,
+                                      const std::string &name, uint32_t mass,
                                       const std::string &target_orbit_name) {
   sol::state_view mod_state(s);
   auto world = mod_state["solcorp"]["world"].get<flecs::world *>();

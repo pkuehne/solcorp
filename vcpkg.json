@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "sdl2",
+    "sdl2-image",
+    "sdl2-ttf",
+    "lua"
+  ],
+  "overrides": [
+    { "name": "lua", "version": "5.4.7" }
+  ],
+  "builtin-baseline": "9bdf622306cc71f2e605154578976af66c59af43"
+}

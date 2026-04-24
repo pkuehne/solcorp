@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <flecs.h>
 #include <numbers>
 
@@ -33,7 +34,7 @@ struct Simulation {
 };
 
 struct Game {
-  u_int day = 0;
+  uint32_t day = 0;
 };
 
 struct BaseModule {

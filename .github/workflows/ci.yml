@@ -1,4 +1,4 @@
-name: CI
+name: Code Validation
 
 on:
   push:
@@ -15,7 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-linux:
+    name: "Build (Linux)"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,7 +43,8 @@ jobs:
       - name: Build
         run: nix develop --command cmake --build build --parallel
 
-  test:
+  test-linux:
+    name: "Test (Linux)"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -72,7 +74,65 @@ jobs:
       - name: Test
         run: nix develop --command ctest --test-dir build -C Release --output-on-failure
 
+  build-windows:
+    name: "Build (Windows)"
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v5
+        with:
+          path: build/_deps
+          key: fetchcontent-windows-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-windows-
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+  test-windows:
+    name: "Test (Windows)"
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v5
+        with:
+          path: build/_deps
+          key: fetchcontent-windows-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-windows-
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Build
+        run: |
+          cmake --build build --target unit_test --parallel
+      - name: Test
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
+
   format:
+    name: "Formatting"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -84,13 +144,14 @@ jobs:
       - name: Set up Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      - name: Check formatting
+      - name: Check C++ formatting
         run: nix develop --command bash -c 'find src test -name "*.cpp" -o -name "*.h" -print0 | xargs -0 -r clang-format --dry-run -Werror'
 
       - name: Check Lua formatting
         run: nix develop --command stylua --check config.lua mods/
 
   lua-lint:
+    name: "Linter"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

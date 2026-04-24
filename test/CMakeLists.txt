@@ -19,7 +19,11 @@ add_executable(unit_test
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)
-target_compile_options(unit_test PUBLIC -Wall)
+if(MSVC)
+  target_compile_options(unit_test PUBLIC /W4)
+else()
+  target_compile_options(unit_test PUBLIC -Wall)
+endif()
 target_compile_definitions(unit_test PRIVATE
                             SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 

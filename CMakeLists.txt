@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+endif()
+
 set(SC_VERSION 0.0.1) # x-release-please-version
 project(SolCorp
     VERSION ${SC_VERSION}
@@ -15,7 +19,11 @@ set(COVERAGE_PERCENTAGE 90 CACHE STRING "Minimum Coverage number to succeed")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_compile_options(-fdiagnostics-color=always)
+if(MSVC)
+  add_compile_options(/diagnostics:color)
+else()
+  add_compile_options(-fdiagnostics-color=always)
+endif()
 
 include(FetchContent)
 

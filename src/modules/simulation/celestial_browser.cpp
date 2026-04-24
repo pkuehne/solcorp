@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "modules/engine/gui.h"
 #include "simulation.h"
+#include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
