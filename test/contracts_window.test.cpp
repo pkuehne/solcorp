@@ -9,8 +9,8 @@ SCENARIO("acceptContract and rejectContract update balance",
          "[contracts_window]") {
   flecs::world world;
   world.import <BaseModule>();
+  world.import <SimulationModule>();
   world.import <RocketLaunchModule>();
-  world.add<Company>();
 
   auto contractE = world.entity("TestContract")
                        .set<Contract>({

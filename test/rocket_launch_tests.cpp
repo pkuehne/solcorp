@@ -8,6 +8,8 @@
 
 SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
   world.import <RocketLaunchModule>();
 
   GIVEN("An empty plan") {
@@ -195,6 +197,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
 SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
   world.import <RocketLaunchModule>();
 
   GIVEN("A valid plan") {
@@ -280,12 +284,13 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
 
 SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
   world.import <RocketLaunchModule>();
-  world.add<Company>();
 
   auto site = world.entity().add<Site>().add<CurrentSite>();
   auto launchpad = world.entity("Main Pad")
-                       .is_a<Launchpad>()
+                       .add<Launchpad>()
                        .child_of(site)
                        .set<SiteLocation>({0, 0})
                        .set<Transform>({})
