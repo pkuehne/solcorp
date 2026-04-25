@@ -296,6 +296,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                        .set<Transform>({})
                        .set<Sprite>({});
   auto rocket = world.entity("Falcon 9").add<Rocket>();
+  rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
 
   GIVEN("A launch plan due today with multiple payloads and matching contract "
         "orbit") {
