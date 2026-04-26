@@ -138,12 +138,12 @@ end
 local function create_contracts()
 	local info = solcorp.logging.info
 	info("Checking number of contracts...")
-	local contracts = solcorp.helpers.get_all_contracts()
+	local contracts = solcorp.helpers.get_all_active_contracts()
 	if #contracts >= 5 then
 		return
 	end
 
-	if math.random() < 0.9 then
+	if math.random() < 0.8 then
 		return
 	end
 	info("Creating new contract...")

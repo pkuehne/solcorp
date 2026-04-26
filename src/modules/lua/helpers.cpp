@@ -381,6 +381,24 @@ sol::table get_all_contracts(sol::this_state s) {
   return contracts_table;
 }
 
+sol::table get_all_active_contracts(sol::this_state s) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  sol::table contracts_table = mod_state.create_table();
+
+  int index = 1;
+  world->query_builder<Contract>().build().each(
+      [&](flecs::entity e, Contract &c) {
+        if (c.status == ContractStatus::Open ||
+            c.status == ContractStatus::Accepted) {
+          contracts_table[index++] = e;
+        }
+      });
+
+  return contracts_table;
+}
+
 /// @brief Registers helper functions into the Lua environment.
 ///
 /// Sets up the solcorp.helpers namespace and binds C++ helper functions for
@@ -396,7 +414,8 @@ sol::table get_all_contracts(sol::this_state s) {
 ///
 /// @param mod_state Reference to the sol2 Lua state where helpers will be
 ///                  registered.
-/// @note Call during Lua environment initialization to make helper functions
+/// @note Call during Lua environment initialization to make helper
+/// functions
 ///       available to Lua scripts.
 void load_helpers_namespace(sol::state &mod_state) {
   auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
@@ -416,4 +435,5 @@ void load_helpers_namespace(sol::state &mod_state) {
   helpers.set_function("create_contract", create_contract);
   helpers.set_function("create_contract_payload", create_contract_payload);
   helpers.set_function("get_all_contracts", get_all_contracts);
+  helpers.set_function("get_all_active_contracts", get_all_active_contracts);
 }
