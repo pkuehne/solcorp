@@ -243,8 +243,8 @@ void drawLaunchWindow(flecs::entity winE) {
           // Add payload
           state.draftPlan.payloads.push_back(payloadE);
         }
-        ImGui::EndDisabled();
       }
+      ImGui::EndDisabled();
     });
   });
 
