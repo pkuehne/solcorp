@@ -204,6 +204,9 @@ install(TARGETS solcorp
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
     DESTINATION .)
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/fonts
+    DESTINATION .)
+
 install(FILES ${CMAKE_SOURCE_DIR}/config.lua
     DESTINATION .)
 

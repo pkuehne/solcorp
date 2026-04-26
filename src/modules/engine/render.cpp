@@ -64,8 +64,8 @@ void registerRender(flecs::world &world) {
   world.set_scope(scope);
 
   Font defaultFont;
-  defaultFont.name = "external/imgui/misc/fonts/Roboto-Medium.ttf";
-  defaultFont.point_size = 14;
+  defaultFont.name = "fonts/Inter_18pt-Medium.ttf";
+  defaultFont.point_size = 18;
   defaultFont.ptr =
       TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
   SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +
