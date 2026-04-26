@@ -195,3 +195,20 @@ if(NOT WIN32)
       COMMENT Debugging SolCorp
   )
 endif()
+
+install(TARGETS solcorp
+    RUNTIME DESTINATION .)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
+    DESTINATION .)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/textures
+    DESTINATION .)
+
+install(FILES ${CMAKE_SOURCE_DIR}/config.lua
+    DESTINATION .)
+
+if(WIN32)
+    install(FILES $<TARGET_RUNTIME_DLLS:solcorp>
+        DESTINATION .)
+endif()
