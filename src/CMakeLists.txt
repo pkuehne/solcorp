@@ -198,8 +198,26 @@ if(NOT WIN32)
   )
 endif()
 
-install(TARGETS solcorp
-    RUNTIME DESTINATION .)
+install(TARGETS solcorp RUNTIME DESTINATION .)
+
+if(WIN32)
+    install(CODE "
+        file(GET_RUNTIME_DEPENDENCIES
+            EXECUTABLES \"$<TARGET_FILE:solcorp>\"
+            RESOLVED_DEPENDENCIES_VAR _r_deps
+            UNRESOLVED_DEPENDENCIES_VAR _u_deps
+            DIRECTORIES \"$<TARGET_FILE_DIR:SDL2::SDL2>\"
+            PRE_EXCLUDE_REGEXES \"api-ms-.*\" \"ext-ms-.*\"
+            POST_EXCLUDE_REGEXES \".*[Ss]ystem32/.*\\\\.dll\"
+        )
+        foreach(dep \${_r_deps})
+            file(INSTALL \"\${dep}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}\")
+        endforeach()
+        if(_u_deps)
+            message(WARNING \"Unresolved runtime deps: \${_u_deps}\")
+        endif()
+    ")
+endif()
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
     DESTINATION .)
@@ -209,8 +227,3 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/fonts
 
 install(FILES ${CMAKE_SOURCE_DIR}/config.lua
     DESTINATION .)
-
-if(WIN32)
-    install(FILES $<TARGET_RUNTIME_DLLS:solcorp>
-        DESTINATION .)
-endif()
