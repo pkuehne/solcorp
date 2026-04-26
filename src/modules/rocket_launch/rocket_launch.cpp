@@ -38,7 +38,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
-  world.component<Rocket>();
+  world.component<Rocket>().member("failure_rate", &Rocket::failure_rate);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
@@ -152,8 +152,10 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   }
 
   auto rocketE = planE.target<LaunchingOn>();
-  bool rocket_failure = roll_random(rocketE.get<Rocket>().failure_rate.value());
 
+  bool rocket_failure = roll_random(rocketE.get<Rocket>().failure_rate.value());
+  spdlog::info("Rocket Launch failure {} based on chance: {}", rocket_failure,
+               rocketE.get<Rocket>().failure_rate.value());
   std::vector<flecs::entity> payloads;
   planE.each<LaunchingWith>([&](flecs::entity payload) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -204,8 +206,8 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
                 plan.launch_date, today);
   std::string notification =
       rocket_failure ? std::format("{} failed - {} exploded on launch",
-                                   rocketE.name().c_str(), planE.name().c_str())
-                     : std::format("{} launched successfully (${})",
+                                   planE.name().c_str(), rocketE.name().c_str())
+                     : std::format("{} launched successfully (${:.0f})",
                                    planE.name().c_str(), total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
 

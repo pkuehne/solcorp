@@ -39,8 +39,9 @@ BaseModule::BaseModule(flecs::world &world) {
       .member("speed", &Simulation::speed)
       .add(flecs::Singleton);
   world.component<Game>().member("day", &Game::day).add(flecs::Singleton);
-  auto sim = Simulation{world.timer("SimTimer").interval(0.5f).disable()};
-  world.set<Simulation>(sim);
+  auto simTimer = world.timer("SimTimer").interval(0.5f);
+  simTimer.stop();
+  world.set<Simulation>(Simulation{simTimer});
   world.set<Game>({});
 
   world.component<std::string>()
