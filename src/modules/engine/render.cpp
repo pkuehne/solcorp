@@ -64,7 +64,7 @@ void registerRender(flecs::world &world) {
   world.set_scope(scope);
 
   Font defaultFont;
-  defaultFont.name = "fonts/Inter_18pt-Medium.ttf";
+  defaultFont.name = "fonts/RobotoMono-Medium.ttf";
   defaultFont.point_size = 18;
   defaultFont.ptr =
       TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
