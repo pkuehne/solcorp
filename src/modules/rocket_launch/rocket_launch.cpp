@@ -7,6 +7,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
@@ -24,6 +25,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
   world.import <BaseModule>();
+  world.import <StatsModule>();
 
   registerEngineComponents(world);
 
@@ -37,7 +39,7 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
-  world.component<Rocket>();
+  world.component<Rocket>().member("failure_rate", &Rocket::failure_rate);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
@@ -151,10 +153,10 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   }
 
   auto rocketE = planE.target<LaunchingOn>();
-  if (rocketE.is_valid()) {
-    spdlog::debug("Removing rocket: {}", rocketE.id());
-    rocketE.destruct();
-  }
+
+  bool rocket_failure = roll_random(rocketE.get<Rocket>().failure_rate.value());
+  spdlog::info("Rocket Launch failure {} based on chance: {}", rocket_failure,
+               rocketE.get<Rocket>().failure_rate.value());
   std::vector<flecs::entity> payloads;
   planE.each<LaunchingWith>([&](flecs::entity payload) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -163,12 +165,11 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   });
 
   Company &company = world.get_mut<Company>();
+  double total_payment = 0.0;
 
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
       spdlog::debug("Removing payload: {}", payload.name().c_str());
-      // TODO: This should also complete the contract associated with this
-      // payload, if there is one.
       auto contractE = payload.target<ContractPayload>();
       SC_ASSERT(contractE.is_valid() && contractE.has<Contract>(),
                 "Payload {} has ContractPayload relationship to invalid or "
@@ -180,8 +181,16 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
             "Contract {} failed because payload {} was launched to wrong orbit",
             contractE.name().c_str(), payload.name().c_str());
         contract.failed = true;
+      } else if (rocket_failure) {
+        spdlog::info(
+            "Contract {} failed because payload {} was launched on a rocket "
+            "that failed",
+            contractE.name().c_str(), payload.name().c_str());
+        contract.failed = true;
       } else {
+        contract.failed = false;
         company.balance += contract.completion_payment;
+        total_payment += contract.completion_payment;
       }
       contract.status = ContractStatus::Closed;
 
@@ -196,8 +205,14 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   auto launchpadE = planE.target<LaunchingFrom>();
   spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
                 plan.launch_date, today);
-  instantiateBuildingNotification(
-      world, launchpadE, fmt::format("{} launched", planE.name().c_str()));
+  std::string notification =
+      rocket_failure ? std::format("{} failed - {} exploded on launch",
+                                   planE.name().c_str(), rocketE.name().c_str())
+                     : std::format("{} launched successfully (${:.0f})",
+                                   planE.name().c_str(), total_payment);
+  instantiateBuildingNotification(world, launchpadE, notification);
+
+  rocketE.destruct();
   planE.destruct();
 }
 

@@ -44,8 +44,10 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
   if (ImGui::BeginMainMenuBar()) {
     ImGui::PushItemWidth(-FLT_MIN);
     ImGui::Text("Day: %3d", game.day);
-    if (ImGui::Button(sim.speed.enabled() ? "||" : ">")) {
-      sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
+    auto simTimer = winE.world().timer(sim.speed.id());
+    bool running = simTimer.get<flecs::Timer>().active;
+    if (ImGui::Button(running ? "||" : ">")) {
+      running ? simTimer.stop() : simTimer.start();
     }
     ImGui::Text(" %s ", company.name.c_str());
     ImGui::Text(" $ %ld ", company.balance);
@@ -82,8 +84,10 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
   }
 }
 
-void systemToggle(flecs::iter &, size_t, Simulation &sim, const KeyDown event) {
+void systemToggle(flecs::iter &it, size_t, Simulation &sim,
+                  const KeyDown event) {
   if (event.key == SDLK_SPACE) {
-    sim.speed.enabled() ? sim.speed.disable() : sim.speed.enable();
+    auto simTimer = it.world().timer(sim.speed.id());
+    simTimer.get<flecs::Timer>().active ? simTimer.stop() : simTimer.start();
   }
 }

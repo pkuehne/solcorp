@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
+#include <modules/base/base.h>
 #include <sol/forward.hpp>
 
 void systemInitialiseStats(flecs::iter &iter);
@@ -9,6 +10,8 @@ void systemInitialiseStats(flecs::iter &iter);
 /// @brief Constructor for the StatsModule.
 /// @param[in,out] world The flecs world.
 StatsModule::StatsModule(flecs::world &world) {
+
+  world.import <BaseModule>();
 
   // Register components
   world.component<Stat>("Stat")

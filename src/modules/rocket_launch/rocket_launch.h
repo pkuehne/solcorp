@@ -1,4 +1,5 @@
 #pragma once
+#include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>
 #include <string>
@@ -18,6 +19,9 @@ struct LaunchPlan {
 /// @brief Prefab for a planetary launch vehicle
 struct Rocket {
   static uint32_t max_id;
+  Stat failure_rate =
+      Stat("failure-rate", "Failure Rate",
+           "Likelyhood the rocket will fail on take-off", 0.1, false);
 };
 
 /// @brief Payload to be launched by a rocket
