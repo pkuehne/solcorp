@@ -11,7 +11,7 @@ void systemInitialiseStats(flecs::iter &iter);
 /// @param[in,out] world The flecs world.
 StatsModule::StatsModule(flecs::world &world) {
 
-  world.import<BaseModule>();
+  world.import <BaseModule>();
 
   // Register components
   world.component<Stat>("Stat")
