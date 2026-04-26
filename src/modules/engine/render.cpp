@@ -133,6 +133,11 @@ void initialiseGraphics(flecs::world &world) {
 
   r.renderer = SDL_CreateRenderer(r.window, -1, SDL_RENDERER_ACCELERATED);
   if (r.renderer == nullptr) {
+    spdlog::warn("Hardware renderer unavailable ({}), falling back to software",
+                 SDL_GetError());
+    r.renderer = SDL_CreateRenderer(r.window, -1, SDL_RENDERER_SOFTWARE);
+  }
+  if (r.renderer == nullptr) {
     spdlog::error("Failed to create SDL Renderer: {}", SDL_GetError());
     throw std::runtime_error("Failed to create SDL Renderer");
   }

@@ -177,6 +177,11 @@ endif()
 
 target_link_libraries(solcorp PRIVATE solcorplib)
 
+if(NOT WIN32)
+    # Find shared libs relative to the executable so the package is self-contained
+    set_target_properties(solcorp PROPERTIES INSTALL_RPATH "$ORIGIN")
+endif()
+
 file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
 file(COPY ${TEXTURES}
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
@@ -198,6 +203,13 @@ if(NOT WIN32)
   )
 endif()
 
+if(UNIX AND NOT APPLE)
+    find_program(PATCHELF patchelf)
+    if(NOT PATCHELF)
+        message(WARNING "patchelf not found - bundled .so files will keep Nix store RPATHs and won't be portable")
+    endif()
+endif()
+
 install(TARGETS solcorp RUNTIME DESTINATION .)
 
 if(WIN32)
@@ -212,6 +224,38 @@ if(WIN32)
         )
         foreach(dep \${_r_deps})
             file(INSTALL \"\${dep}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}\")
+        endforeach()
+        if(_u_deps)
+            message(WARNING \"Unresolved runtime deps: \${_u_deps}\")
+        endif()
+    ")
+elseif(UNIX AND NOT APPLE)
+    install(CODE "
+        file(GET_RUNTIME_DEPENDENCIES
+            EXECUTABLES \"$<TARGET_FILE:solcorp>\"
+            RESOLVED_DEPENDENCIES_VAR _r_deps
+            UNRESOLVED_DEPENDENCIES_VAR _u_deps
+            PRE_EXCLUDE_REGEXES
+                \"^libGL\" \"^libEGL\" \"^libGLX\" \"^libOpenGL\"
+                \"^libdrm\" \"^libgbm\" \"^libvulkan\"
+                \"^ld-linux\" \"^libc\\\\.so\" \"^libm\\\\.so\"
+                \"^libdl\\\\.so\" \"^libpthread\" \"^librt\\\\.so\"
+                \"^libgcc_s\" \"^libstdc\"
+        )
+        foreach(dep \${_r_deps})
+            get_filename_component(_dep_name \"\${dep}\" NAME)
+            file(INSTALL \"\${dep}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}\"
+                FOLLOW_SYMLINK_CHAIN)
+            if(NOT \"${PATCHELF}\" STREQUAL \"\")
+                execute_process(
+                    COMMAND \"${PATCHELF}\" --set-rpath \"$ORIGIN\"
+                        \"\${CMAKE_INSTALL_PREFIX}/\${_dep_name}\"
+                    RESULT_VARIABLE _patchelf_result
+                )
+                if(_patchelf_result)
+                    message(WARNING \"patchelf failed for \${_dep_name}\")
+                endif()
+            endif()
         endforeach()
         if(_u_deps)
             message(WARNING \"Unresolved runtime deps: \${_u_deps}\")
