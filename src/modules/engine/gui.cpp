@@ -3,6 +3,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
+#include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/render.h"
@@ -74,9 +75,14 @@ void systemInitialiseGui(flecs::iter &iter) {
   builder.AddRanges(pg_range);
   builder.BuildRanges(&ranges);
 
+  auto default_font = world.lookup("Fonts::Default");
+  SC_ASSERT(default_font.is_valid(), "Default font entity not found");
+  auto font = default_font.get<Font>();
+
   ImFontConfig config;
-  io.Fonts->AddFontFromFileTTF("external/imgui/misc/fonts/Roboto-Medium.ttf",
-                               dpi_scaling * 18.0f, &config, ranges.Data);
+  io.Fonts->AddFontFromFileTTF(
+      font.name.c_str(), dpi_scaling * static_cast<float>(font.point_size),
+      &config, ranges.Data);
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();

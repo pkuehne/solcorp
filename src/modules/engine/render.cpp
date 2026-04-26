@@ -64,8 +64,8 @@ void registerRender(flecs::world &world) {
   world.set_scope(scope);
 
   Font defaultFont;
-  defaultFont.name = "external/imgui/misc/fonts/Roboto-Medium.ttf";
-  defaultFont.point_size = 14;
+  defaultFont.name = "fonts/RobotoMono-Medium.ttf";
+  defaultFont.point_size = 18;
   defaultFont.ptr =
       TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
   SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +
@@ -132,6 +132,11 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   r.renderer = SDL_CreateRenderer(r.window, -1, SDL_RENDERER_ACCELERATED);
+  if (r.renderer == nullptr) {
+    spdlog::warn("Hardware renderer unavailable ({}), falling back to software",
+                 SDL_GetError());
+    r.renderer = SDL_CreateRenderer(r.window, -1, SDL_RENDERER_SOFTWARE);
+  }
   if (r.renderer == nullptr) {
     spdlog::error("Failed to create SDL Renderer: {}", SDL_GetError());
     throw std::runtime_error("Failed to create SDL Renderer");

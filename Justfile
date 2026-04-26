@@ -6,6 +6,11 @@ help:
 init:
     cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
 
+install:
+    cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DSC_BUILD_TESTS=OFF -G Ninja
+    cmake --build build-release --parallel
+    cmake --install build-release --prefix dist
+
 build:
     cmake --build build --target all --parallel
 

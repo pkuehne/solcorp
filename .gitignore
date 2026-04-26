@@ -1,7 +1,9 @@
 build/
+build-release/
+dist/
+public/
 .cache/
 .vscode/
-*.ttf
 *.log
 *.ini
 .direnv

@@ -69,6 +69,7 @@
           pkg-config
           clang-tools # clangd/clang-tidy, handy even if you build with gcc
           git
+          patchelf
           wl-clipboard
           wayland-utils
           mesa-demos

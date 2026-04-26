@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: "Package Linux"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v22
+
+      - name: Set up Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v5
+        with:
+          path: build-release/_deps
+          key: fetchcontent-linux-release-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-linux-release-
+
+      - name: Configure
+        run: nix develop --command cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DSC_BUILD_TESTS=OFF -G Ninja
+
+      - name: Build
+        run: nix develop --command cmake --build build-release --parallel
+
+      - name: Package
+        run: nix develop --command cpack --config build-release/CPackConfig.cmake -B build-release
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-release/SolCorp-*.zip
+
+  build-windows:
+    name: "Package Windows"
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v5
+        with:
+          path: build-release/_deps
+          key: fetchcontent-windows-release-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-windows-release-
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake -B build-release -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build
+        run: cmake --build build-release --parallel
+
+      - name: Package
+        run: cpack --config build-release/CPackConfig.cmake -B build-release
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-release/SolCorp-*.zip
