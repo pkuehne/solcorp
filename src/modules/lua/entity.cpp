@@ -41,6 +41,9 @@ void load_entity_usertype(sol::state &mod_state) {
   flecs_entity["child_of"] = [](flecs::entity &e, flecs::entity &rhs) {
     e.child_of(rhs);
   };
+  flecs_entity["lookup"] = [](flecs::entity &e, const std::string &name) {
+    return e.lookup(name.c_str());
+  };
   flecs_entity["is_a"] = [](flecs::entity &e, const std::string &name) {
     auto world = e.world();
     std::string prefabPath = fmt::format("Prefabs::{}", name);
