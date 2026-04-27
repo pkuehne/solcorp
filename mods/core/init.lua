@@ -13,6 +13,9 @@ local function on_init()
 	e:destroy()
 end
 
+local get_random_contract_name
+local get_random_company_name
+
 local function on_start()
 	local info = solcorp.logging.info
 	info("on_start called!")
@@ -62,26 +65,21 @@ local function on_start()
 	-- Create a new site
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
+	-- Add some buildings to the site
 	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
-	solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 0, 0, site)
-	solcorp.helpers.create_building("Main Launchpad", "Launch Complex", 1, 0, site)
-	solcorp.helpers.create_building("North Building", "Office Building", 2, 0, site)
-	local south_pad = solcorp.helpers.create_building("South Launchpad", "Launch Complex", 5, 5, site)
+	local storage = solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 1, 0, site)
+	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "Launch Complex", 8, 5, site)
+	solcorp.helpers.create_building("North Building", "Office Building", 0, 6, site)
 
-	local e = solcorp.entities.create("south_launchpad")
-	e:child_of(south_pad)
-	e:getText().text = "South Launchpad"
-	e:getVelocity().y = -20
-	e:getTransform().relativePosition.y = -15
-	e:getExpire().millis = 2000
-
-	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
+	-- Add some modifiers to the launchpad
 	local mod = solcorp.components.Modifier:new()
 	mod.target_stat = "max-weight"
+
+	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
 	mod.multiplicative = 1.2
 	solcorp.helpers.add_modifier(concrete, mod)
 
-	local cracks = solcorp.helpers.create_effect("Cracks detected", south_pad)
+	local cracks = solcorp.helpers.create_effect("Cracks detected", main_launchpad)
 	mod.multiplicative = 0.4
 	solcorp.helpers.add_modifier(cracks, mod)
 
@@ -90,20 +88,34 @@ local function on_start()
 	mod.additive = 500
 	solcorp.helpers.add_modifier(struts, mod)
 
-	mod.target_stat = "prep-days"
-	mod.multiplicative = 1.0
-	mod.additive = 3
-	solcorp.helpers.add_modifier(cracks, mod)
-
 	-- Create a rocket prefab
 	local rocket = solcorp.helpers.create_rocket_prefab("Falcon 1")
 	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Low Orbit", 6300)
 	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Polar Orbit", 5600)
 	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Transfer Orbit", 3300)
 	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Synchronous Orbit", 1300)
+
+	-- Create a rocket
+	local hall = storage:lookup("Hall 1")
+	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "Falcon 1", hall)
+
+	-- Create a contract
+	local contract = solcorp.helpers.create_contract(
+		get_random_contract_name(),
+		get_random_company_name(),
+		"Launch your first satellite into low Earth orbit.",
+		2 * 1000 * 1000,
+		2 * 1000 * 1000
+	)
+	solcorp.helpers.create_contract_payload(
+		contract,
+		"Satellite " .. math.random(100, 10000),
+		800,
+		"Sun::Earth::Low Orbit"
+	)
 end
 
-local function get_random_contract_name()
+get_random_contract_name = function()
 	local names = {
 		"Launch Satellite",
 		"Deploy Space Station Module",
@@ -119,7 +131,7 @@ local function get_random_contract_name()
 	return names[math.random(1, #names)]
 end
 
-local function get_random_company_name()
+get_random_company_name = function()
 	local names = {
 		"SpaceY",
 		"Galactic Ventures",

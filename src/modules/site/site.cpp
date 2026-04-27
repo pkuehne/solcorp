@@ -1,6 +1,7 @@
 #include "site.h"
 #include "building_window.h"
 #include "construction_window.h"
+#include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
@@ -109,6 +110,35 @@ SiteModule::SiteModule(flecs::world &world) {
       .each([](flecs::entity e, Launchpad &pad) {
         statsApplyModifiers(e, &pad.max_weight);
         statsApplyModifiers(e, &pad.prep_days);
+      });
+
+  world.system<const Site, const Transform>("Draw Site Border")
+      .with<CurrentSite>()
+      .kind(GuiPhase)
+      .each([](const Site &site, const Transform &t) {
+        const float x = t.worldPosition.x;
+        const float y = t.worldPosition.y;
+        const float w = site.width * 32.0f;
+        const float h = site.height * 32.0f;
+        const float ext = 7.0f;
+
+        const ImU32 glow = IM_COL32(100, 180, 255, 45);
+        const ImU32 border = IM_COL32(120, 195, 255, 200);
+        const ImU32 cap = IM_COL32(210, 235, 255, 255);
+
+        auto *dl = ImGui::GetBackgroundDrawList();
+        dl->AddRect({x - 3, y - 3}, {x + w + 3, y + h + 3}, glow, 0, 0, 5.0f);
+        dl->AddRect({x, y}, {x + w, y + h}, border, 0, 0, 2.0f);
+
+        // Corner accents — bright L-shaped caps at each corner
+        for (float cx : {x, x + w}) {
+          for (float cy : {y, y + h}) {
+            float sx = (cx == x) ? 1.0f : -1.0f;
+            float sy = (cy == y) ? 1.0f : -1.0f;
+            dl->AddLine({cx - sx * ext, cy}, {cx + sx * ext, cy}, cap, 2.0f);
+            dl->AddLine({cx, cy - sy * ext}, {cx, cy + sy * ext}, cap, 2.0f);
+          }
+        }
       });
 }
 

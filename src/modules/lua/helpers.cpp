@@ -32,7 +32,7 @@ flecs::entity create_site(sol::this_state s, const std::string &name,
 
   auto site = world->entity(name.c_str())
                   .set<Site>({width, height})
-                  .set<Transform>({{0, 50}, {}})
+                  .set<Transform>({{340, 240}, {}})
                   .add<ConstructionSiteNeedsUpdating>();
   if (make_current) {
     site.add<CurrentSite>();
@@ -121,6 +121,41 @@ flecs::entity add_facility_to_building(sol::this_state s,
   auto prefab =
       world->prefab(name.c_str()).is_a(facility_prefab).child_of(building);
   return prefab;
+}
+
+/// @brief Creates a rocket entity instance from a prefab in the ECS world.
+///
+/// Instantiates a rocket from a prefab template. The prefab is looked up under
+/// the Prefabs::Rockets hierarchy. The instance is parented to the given entity
+/// if valid, otherwise falls back to a "Rockets" node (created on demand).
+///
+/// @param s The Lua state handle (injected by sol2).
+/// @param name The name identifier for the rocket instance.
+/// @param prefab The prefab template name to instantiate from.
+/// @param parent Optional parent entity. If invalid, defaults to "Rockets"
+/// node.
+/// @return A flecs::entity representing the newly created rocket, or an empty
+///         entity if the prefab does not exist.
+flecs::entity create_rocket(sol::this_state s, const std::string &name,
+                            const std::string &prefab,
+                            flecs::entity parent = flecs::entity::null()) {
+  sol::state_view mod_state(s);
+  auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
+
+  std::string prefab_name = "Prefabs::Rockets::";
+  prefab_name.append(prefab);
+  auto prefab_entity = world->lookup(prefab_name.c_str());
+  if (!prefab_entity.is_valid()) {
+    spdlog::error("Rocket prefab {} does not exist", prefab_name);
+    return flecs::entity();
+  }
+
+  auto rocket = world->entity(name.c_str()).is_a(prefab_entity);
+  if (parent.is_valid()) {
+    rocket.child_of(parent);
+  }
+
+  return rocket;
 }
 
 /// @brief Creates a building entity in the ECS world through Lua bindings.
@@ -430,6 +465,7 @@ void load_helpers_namespace(sol::state &mod_state) {
   helpers.set_function("add_modifier", add_modifier);
   helpers.set_function("clip_sprite_from_texture", clip_sprite_from_texture);
   helpers.set_function("create_rocket_prefab", create_rocket_prefab);
+  helpers.set_function("create_rocket", create_rocket);
   helpers.set_function("add_target_orbit_to_rocket",
                        add_target_orbit_to_rocket);
   helpers.set_function("create_contract", create_contract);

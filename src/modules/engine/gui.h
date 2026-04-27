@@ -6,6 +6,7 @@
 
 struct Window {
   bool open = false;
+  std::string title;
   std::function<void(flecs::entity)> content_renderer;
 };
 
