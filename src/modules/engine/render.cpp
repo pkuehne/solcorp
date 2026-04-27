@@ -143,7 +143,7 @@ void initialiseGraphics(flecs::world &world) {
   }
   SDL_SetRenderDrawBlendMode(r.renderer, SDL_BLENDMODE_BLEND);
   SDL_GetRendererOutputSize(r.renderer, &m_width, &m_height);
-  SDL_SetRenderDrawColor(r.renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+  SDL_SetRenderDrawColor(r.renderer, 42, 80, 35, SDL_ALPHA_OPAQUE);
   spdlog::info("Window ({}x{}) Tile ({}x{})", m_width, m_height, m_tileWidth,
                m_tileHeight);
 
