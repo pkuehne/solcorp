@@ -122,13 +122,13 @@ SiteModule::SiteModule(flecs::world &world) {
         const float h = site.height * 32.0f;
         const float ext = 7.0f;
 
-        const ImU32 glow   = IM_COL32(100, 180, 255,  45);
+        const ImU32 glow = IM_COL32(100, 180, 255, 45);
         const ImU32 border = IM_COL32(120, 195, 255, 200);
-        const ImU32 cap    = IM_COL32(210, 235, 255, 255);
+        const ImU32 cap = IM_COL32(210, 235, 255, 255);
 
         auto *dl = ImGui::GetBackgroundDrawList();
-        dl->AddRect({x - 3, y - 3}, {x + w + 3, y + h + 3}, glow,   0, 0, 5.0f);
-        dl->AddRect({x,     y    }, {x + w,     y + h    }, border, 0, 0, 2.0f);
+        dl->AddRect({x - 3, y - 3}, {x + w + 3, y + h + 3}, glow, 0, 0, 5.0f);
+        dl->AddRect({x, y}, {x + w, y + h}, border, 0, 0, 2.0f);
 
         // Corner accents — bright L-shaped caps at each corner
         for (float cx : {x, x + w}) {
