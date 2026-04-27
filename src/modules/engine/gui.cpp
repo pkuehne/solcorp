@@ -17,7 +17,7 @@ void systemRenderGUI(const Renderer &);
 void systemRenderWindow(flecs::entity winE, Window &win);
 
 void registerGui(flecs::world &world) {
-  world.import <EngineModule>();
+  world.import<EngineModule>();
 
   // Register Systems
   world.system("Initialise GUI").kind(flecs::OnStart).run(systemInitialiseGui);
@@ -152,7 +152,7 @@ registerWindow(std::string name,
     windows = world.entity("Windows");
   }
   return world.entity(name.c_str())
-      .set<Window>({false, content_renderer})
+      .set<Window>({false, name, content_renderer})
       .child_of(windows);
 }
 
@@ -161,7 +161,9 @@ void systemRenderWindow(flecs::entity winE, Window &win) {
     return;
   }
 
-  ImGui::Begin(winE.name().c_str(), &win.open);
+  const char *title =
+      win.title.empty() ? winE.name().c_str() : win.title.c_str();
+  ImGui::Begin(title, &win.open);
   if (win.content_renderer) {
     win.content_renderer(winE);
   } else {

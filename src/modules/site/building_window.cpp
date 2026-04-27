@@ -31,6 +31,9 @@ void showBuildingWindow(const flecs::entity &entity) {
   auto window = showWindow(world, "Building Window");
   SC_ASSERT(window.is_valid(),
             "showWindow returned invalid entity for Building Window");
+  auto win = window.try_get_mut<Window>();
+  SC_ASSERT(win, "Window state is invalid");
+  win->title = fmt::format("Building Window ({})", entity.name().c_str());
   auto state = window.try_get_mut<BuildingWindow>();
   SC_ASSERT(state, "BuildingWindow state is invalid");
   state->buildingE = entity;
