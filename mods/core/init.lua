@@ -13,6 +13,9 @@ local function on_init()
 	e:destroy()
 end
 
+local get_random_contract_name
+local get_random_company_name
+
 local function on_start()
 	local info = solcorp.logging.info
 	info("on_start called!")
@@ -95,9 +98,24 @@ local function on_start()
 	-- Create a rocket
 	local hall = storage:lookup("Hall 1")
 	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "Falcon 1", hall)
+
+	-- Create a contract
+	local contract = solcorp.helpers.create_contract(
+		get_random_contract_name(),
+		get_random_company_name(),
+		"Launch your first satellite into low Earth orbit.",
+		2 * 1000 * 1000,
+		2 * 1000 * 1000
+	)
+	solcorp.helpers.create_contract_payload(
+		contract,
+		"Satellite " .. math.random(100, 10000),
+		800,
+		"Sun::Earth::Low Orbit"
+	)
 end
 
-local function get_random_contract_name()
+get_random_contract_name = function()
 	local names = {
 		"Launch Satellite",
 		"Deploy Space Station Module",
@@ -113,7 +131,7 @@ local function get_random_contract_name()
 	return names[math.random(1, #names)]
 end
 
-local function get_random_company_name()
+get_random_company_name = function()
 	local names = {
 		"SpaceY",
 		"Galactic Ventures",
