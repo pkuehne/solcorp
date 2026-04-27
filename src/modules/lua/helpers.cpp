@@ -32,7 +32,7 @@ flecs::entity create_site(sol::this_state s, const std::string &name,
 
   auto site = world->entity(name.c_str())
                   .set<Site>({width, height})
-                  .set<Transform>({{0, 50}, {}})
+                  .set<Transform>({{340, 240}, {}})
                   .add<ConstructionSiteNeedsUpdating>();
   if (make_current) {
     site.add<CurrentSite>();
