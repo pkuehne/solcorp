@@ -16,6 +16,7 @@ add_executable(unit_test
   simulation.test.cpp
   site.test.cpp
   stats.test.cpp
+  rocket_prefab_window.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)

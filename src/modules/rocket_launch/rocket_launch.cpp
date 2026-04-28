@@ -39,7 +39,9 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
-  world.component<Rocket>().member("failure_rate", &Rocket::failure_rate);
+  world.component<Rocket>()
+      .member("failure_rate", &Rocket::failure_rate)
+      .member("cost", &Rocket::cost);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
@@ -77,8 +79,11 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
         userType["launch_date"] = &LaunchPlan::launch_date;
       });
-  register_lua_user_type<Rocket>(world, "Rocket",
-                                 [](sol::usertype<Rocket> &) {});
+  register_lua_user_type<Rocket>(
+      world, "Rocket", [](sol::usertype<Rocket> &userType) {
+        userType["failure_rate"] = &Rocket::failure_rate;
+        userType["cost"] = &Rocket::cost;
+      });
   register_lua_user_type<Payload>(world, "Payload",
                                   [](sol::usertype<Payload> &userType) {
                                     userType["mass"] = &Payload::mass;

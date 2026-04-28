@@ -11,6 +11,7 @@
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
+#include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include <sol/types.hpp>
 #include <spdlog/spdlog.h>
@@ -56,6 +57,8 @@ SiteModule::SiteModule(flecs::world &world) {
                                            &BuildingWindow::buildingE);
   world.component<ConstructionSiteWindow>().member(
       "buildingE", &ConstructionSiteWindow::buildingE);
+  world.component<RocketPrefabWindow>().member(
+      "manufacturingE", &RocketPrefabWindow::manufacturingE);
 
   // Register Lua bindings
   register_lua_user_type<CurrentSite>(world, "CurrentSite");
@@ -216,6 +219,8 @@ void systemCreateSiteWindows(flecs::iter &it) {
       .set<BuildingWindow>({});
   registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
       .set<ConstructionSiteWindow>({});
+  registerWindow("Rocket Prefab Window", drawRocketPrefabWindow, world)
+      .set<RocketPrefabWindow>({});
 }
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,

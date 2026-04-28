@@ -158,9 +158,15 @@ SPDLOG_LEVEL=debug cmake --build build --target unit_tests
 
 ### What to test
 
-Test business logic wherever possible, even when it lives inside UI code. ImGui rendering is not testable, but logic embedded in draw functions — filtering, validation, state transitions — should be extracted into free functions and tested. This has caught real bugs (e.g. `is_valid()` vs `is_alive()` on deleted filter entities).
+Test business logic even when it lives in UI draw functions. Do not test ImGui rendering itself.
 
-The pattern: extract the logic into a named free function, declare it in the header, test it directly. Keep the draw function as a thin caller.
+When a draw function contains filtering, validation, or state-transition logic, extract that logic into named free functions, declare them in the header, and test them directly.
+
+Keep draw functions as thin callers.
+
+### How to test 
+
+Use Given/When/Then format for clarity. Test edge cases and failure modes, not just the happy path. Use descriptive test case names.
 
 ## Code Organization
 
