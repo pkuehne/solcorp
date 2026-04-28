@@ -9,7 +9,7 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 endif()
 
-set(SC_VERSION 0.0.1) # x-release-please-version
+set(SC_VERSION 0.1.0) # x-release-please-version
 project(SolCorp
     VERSION ${SC_VERSION}
     DESCRIPTION "Sol Corp"
