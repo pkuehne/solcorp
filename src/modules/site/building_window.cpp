@@ -111,13 +111,10 @@ void drawManufacturingSection(flecs::entity &entity) {
     // }
   } else {
     // Nothing yet - the line is empty
-    const int rocket_cost = 5'000'000;
-    Company &company = world.get_mut<Company>();
     ImGui::Text("Empty Manufacturing Line");
     ImGui::ProgressBar(0.0);
 
-    if (ActionButton("Build", "Start building a new rocket on this line",
-                     company.balance < rocket_cost ? "Not enough funds" : "")) {
+    if (ActionButton("Build", "Select a rocket prefab to build", "")) {
       showRocketPrefabWindow(entity);
     }
   }

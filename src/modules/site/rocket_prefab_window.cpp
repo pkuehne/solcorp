@@ -5,15 +5,14 @@
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
-#include "widgets/widgets.h"
+#include <cmath>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include <string>
 
 namespace {
-constexpr int ROCKET_COST = 5'000'000;
-
 void buildRocketFromPrefab(flecs::entity &manufacturingE,
                            const flecs::entity &prefabE) {
   auto world = manufacturingE.world();
@@ -70,6 +69,8 @@ void drawRocketPrefabWindow(flecs::entity winE) {
   auto lowEarthOrbit = world.lookup("Sun::Earth::Low Orbit");
 
   Company &company = world.get_mut<Company>();
+  auto buttonSize = ImGui::GetContentRegionAvail();
+  buttonSize.y = 30;
 
   rocketsPrefabs.children([&](flecs::entity prefabE) {
     if (!prefabE.has<Rocket>()) {
@@ -84,16 +85,30 @@ void drawRocketPrefabWindow(flecs::entity winE) {
           std::to_string(prefabE.get<CanLiftTo>(lowEarthOrbit).max_mass);
     }
 
-    std::string label = fmt::format("{} (Low Earth Orbit: {} kg)",
-                                    prefabE.name().c_str(), maxMassText);
+    const Rocket &rocket = prefabE.get<Rocket>();
+    Stat cost = rocket.cost;
+    statsApplyModifiers(prefabE, &cost);
+    const auto rocketCost = static_cast<int64_t>(std::llround(cost.value()));
 
-    if (ActionButton(label.c_str(),
-                     "Build this rocket on the manufacturing line",
-                     company.balance < ROCKET_COST ? "Not enough funds" : "")) {
+    ImGui::Text("%s", prefabE.name().c_str());
+    ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
+    displayStatWithTooltip(&cost);
+
+    const bool canAfford = company.balance >= rocketCost;
+    ImGui::BeginDisabled(!canAfford);
+    if (ImGui::Button("Build", buttonSize)) {
       buildRocketFromPrefab(manufacturingE, prefabE);
-      company.balance -= ROCKET_COST;
+      company.balance -= rocketCost;
       hideWindow(world, "Rocket Prefab Window");
     }
+    ImGui::EndDisabled();
+
+    if (!canAfford &&
+        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+      ImGui::SetTooltip("Not enough funds");
+    }
+
+    ImGui::Separator();
     ImGui::PopID();
   });
 }

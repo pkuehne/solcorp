@@ -16,12 +16,14 @@ struct LaunchPlan {
       flecs::entity::null(); ///< Target orbit from CanLiftTo
 };
 
-/// @brief Prefab for a planetary launch vehicle
+/// @brief Component to indicate entity is a rocket.
 struct Rocket {
   static uint32_t max_id;
   Stat failure_rate =
       Stat("failure-rate", "Failure Rate",
            "Likelyhood the rocket will fail on take-off", 0.1, false);
+  Stat cost =
+      Stat("cost", "Cost", "Cost to build this rocket", 5'000'000, false);
 };
 
 /// @brief Payload to be launched by a rocket
