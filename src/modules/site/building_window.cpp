@@ -7,6 +7,7 @@
 #include "modules/rocket_launch/launch_window.h"
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/stats/stats.h"
+#include "rocket_prefab_window.h"
 #include "site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
@@ -117,17 +118,7 @@ void drawManufacturingSection(flecs::entity &entity) {
 
     if (ActionButton("Build", "Start building a new rocket on this line",
                      company.balance < rocket_cost ? "Not enough funds" : "")) {
-      // Build new rocket
-      // TODO: Move to RocketLaunch Module and make selectable from a list of
-      // rocket prefabs instead of hardcoding Falcon 1 here
-      auto prefab = world.lookup("Prefabs::Rockets::Falcon 1");
-      SC_ASSERT(prefab.is_valid(), "Rocket prefab not found");
-      e = world.entity()
-              .is_a(prefab)
-              .set<Construction>({300, 300})
-              .child_of(entity);
-      e.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
-      company.balance -= rocket_cost;
+      showRocketPrefabWindow(entity);
     }
   }
   ImGui::PopID();
