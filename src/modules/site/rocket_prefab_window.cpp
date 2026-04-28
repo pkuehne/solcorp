@@ -25,6 +25,39 @@ void buildRocketFromPrefab(flecs::entity &manufacturingE,
 }
 } // namespace
 
+std::vector<flecs::entity> collectRocketPrefabs(flecs::world &world) {
+  std::vector<flecs::entity> prefabs;
+
+  auto rocketsPrefabs = world.lookup("Prefabs::Rockets");
+  if (!rocketsPrefabs.is_valid()) {
+    return prefabs;
+  }
+
+  rocketsPrefabs.children([&](flecs::entity prefabE) {
+    if (prefabE.has<Rocket>()) {
+      prefabs.push_back(prefabE);
+    }
+  });
+
+  return prefabs;
+}
+
+int64_t computeRocketPrefabBuildCost(const flecs::entity &prefabE) {
+  SC_ASSERT(prefabE.is_valid() && prefabE.has<Rocket>(),
+            "computeRocketPrefabBuildCost expects a valid rocket prefab");
+
+  const Rocket &rocket = prefabE.get<Rocket>();
+  Stat cost = rocket.cost;
+  statsApplyModifiers(prefabE, &cost);
+
+  return static_cast<int64_t>(std::llround(cost.value()));
+}
+
+bool canAffordRocketPrefab(const Company &company,
+                           const flecs::entity &prefabE) {
+  return company.balance >= computeRocketPrefabBuildCost(prefabE);
+}
+
 void showRocketPrefabWindow(const flecs::entity &entity) {
   spdlog::debug("Showing RocketPrefabWindow");
   if (!entity.is_alive()) {
@@ -60,8 +93,8 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     return;
   }
 
-  auto rocketsPrefabs = world.lookup("Prefabs::Rockets");
-  if (!rocketsPrefabs.is_valid()) {
+  auto prefabs = collectRocketPrefabs(world);
+  if (prefabs.empty()) {
     spdlog::error("Failed to load rocket prefabs");
     return;
   }
@@ -72,11 +105,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
   auto buttonSize = ImGui::GetContentRegionAvail();
   buttonSize.y = 30;
 
-  rocketsPrefabs.children([&](flecs::entity prefabE) {
-    if (!prefabE.has<Rocket>()) {
-      return;
-    }
-
+  for (auto prefabE : prefabs) {
     ImGui::PushID(prefabE.id());
 
     std::string maxMassText = "N/A";
@@ -88,13 +117,13 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     const Rocket &rocket = prefabE.get<Rocket>();
     Stat cost = rocket.cost;
     statsApplyModifiers(prefabE, &cost);
-    const auto rocketCost = static_cast<int64_t>(std::llround(cost.value()));
+    const auto rocketCost = computeRocketPrefabBuildCost(prefabE);
 
     ImGui::Text("%s", prefabE.name().c_str());
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
     displayStatWithTooltip(&cost);
 
-    const bool canAfford = company.balance >= rocketCost;
+    const bool canAfford = canAffordRocketPrefab(company, prefabE);
     ImGui::BeginDisabled(!canAfford);
     if (ImGui::Button("Build", buttonSize)) {
       buildRocketFromPrefab(manufacturingE, prefabE);
@@ -110,5 +139,5 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
     ImGui::Separator();
     ImGui::PopID();
-  });
+  }
 }
