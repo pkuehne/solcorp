@@ -25,10 +25,10 @@ jobs:
           submodules: recursive
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: nixbuild/nix-quick-install-action@v34
 
       - name: Set up Nix cache
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
@@ -56,10 +56,10 @@ jobs:
           submodules: recursive
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: nixbuild/nix-quick-install-action@v34
 
       - name: Set up Nix cache
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
