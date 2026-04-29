@@ -22,7 +22,10 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v22
 
       - name: Set up Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Cache CMake FetchContent
         uses: actions/cache@v5
