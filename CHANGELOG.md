@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/pkuehne/solcorp/compare/v0.1.0...v0.1.1) (2026-04-29)
+
+
+### Chores
+
+* **ci:** Replace nix cache image in Github Actions ([#117](https://github.com/pkuehne/solcorp/issues/117)) ([7bfa687](https://github.com/pkuehne/solcorp/commit/7bfa6873513b54277ddead3407ed6bc21e8e12d3))
+
 ## [0.1.0](https://github.com/pkuehne/solcorp/compare/v0.0.1...v0.1.0) (2026-04-28)
 
 
