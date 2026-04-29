@@ -145,7 +145,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: nixbuild/nix-quick-install-action@v34
 
       - name: Set up Nix cache
         uses: nix-community/cache-nix-action@v7
@@ -167,13 +167,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: nixbuild/nix-quick-install-action@v34
 
       - name: Set up Nix cache
         uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-
+            
       - name: Lint Lua
         run: nix develop --command luacheck config.lua mods/
