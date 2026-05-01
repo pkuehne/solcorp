@@ -4,10 +4,10 @@ SolCorp is a C++20 game built on an Entity Component System (ECS) using [Flecs v
 
 ## Contents
 
-- [ECS & Modules](ecs-and-modules.md) — How the module system works and how to add a module
-- [Systems & Phases](systems-and-phases.md) — Execution order and the 11-phase game loop
-- [Flecs Relationships](flecs-relationships.md) — How parent-child and custom relationships are used
-- [UI & Widgets](ui-and-widgets.md) — ImGui integration and the window pattern
+- [ECS & Modules](architecture/ecs-and-modules.md) — How the module system works and how to add a module
+- [Systems & Phases](architecture/systems-and-phases.md) — Execution order and the 11-phase game loop
+- [Flecs Relationships](architecture/flecs-relationships.md) — How parent-child and custom relationships are used
+- [UI & Widgets](architecture/ui-and-widgets.md) — ImGui integration and the window pattern
 
 See also the [ADRs](../adr/README.md) for recorded design decisions.
 

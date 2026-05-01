@@ -4,10 +4,10 @@ SolCorp is a space launch company management simulation. You build and operate l
 
 ## Contents
 
-- [Core Concepts](core-concepts.md) — Turns, balance, windows and stats/effects/modifiers
-- [Sites Management](sites-management.md) — The core building blocks of your launch site
-- [Contracts & Launches](contracts-and-launches.md) — The contract pipeline and launch operations
-- [Simulation](simulation.md) — Orbital mechanics and celestial bodies
+- [Core Concepts](gameplay/core-concepts.md) — Turns, balance, windows and stats/effects/modifiers
+- [Site Management](gameplay/site-management.md) — The core building blocks of your launch site
+- [Contracts & Launches](gameplay/contracts-and-launches.md) — The contract pipeline and launch operations
+- [Simulation](gameplay/simulation.md) — Orbital mechanics and celestial bodies
 
 ## The Game Loop
 
@@ -17,3 +17,11 @@ SolCorp is a space launch company management simulation. You build and operate l
 4. **Contract** — Accept contracts from clients specifying payload, orbit, and reward
 5. **Launch** — Assign a rocket to a contract and execute the launch
 6. **Repeat** — Use revenue to expand your site and take on more ambitious contracts
+
+## Failure Conditions
+
+- Bankruptcy: If your balance drops below zero, you go bankrupt and lose the game.
+
+## Win Conditions
+
+- Currently none, but future updates may include milestones or achievements to provide goals for players.
