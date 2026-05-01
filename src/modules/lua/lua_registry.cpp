@@ -21,6 +21,21 @@ void lua_set_mod_name(lua_State *L, const std::string &name) {
   lua_setfield(L, LUA_REGISTRYINDEX, MOD_NAME_KEY);
 }
 
+void lua_get_or_create_table(lua_State *L, const char *key) {
+  lua_getfield(L, -1, key);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    lua_newtable(L);
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -3, key);
+  }
+}
+
+void lua_register_function(lua_State *L, const char *name, lua_CFunction fn) {
+  lua_pushcfunction(L, fn);
+  lua_setfield(L, -2, name);
+}
+
 std::string lua_get_mod_name(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, MOD_NAME_KEY);
   const char *name = lua_tostring(L, -1);

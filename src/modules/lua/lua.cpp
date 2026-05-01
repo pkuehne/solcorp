@@ -3,6 +3,7 @@
 #include "modules/lua/entity.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
+#include "modules/lua/lua_registry.h"
 #include "modules/lua/systems.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
@@ -83,6 +84,7 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   auto entity = world.entity(mod_name.c_str()).child_of(mods);
   auto &mod = entity.ensure<Mod>();
   mod.name = mod_name;
+  lua_set_mod_name(mod.state.lua_state(), mod_name);
 
   auto solcorp_ns = mod.state["solcorp"].get_or_create<sol::table>();
   // This makes the name read-only
@@ -151,7 +153,7 @@ void load_mod_state(sol::state &mod_state) {
   auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
 
   // Set up the state with internal functions
-  load_logging(mod_state);
+  load_logging(mod_state.lua_state());
   load_script_namespace(mod_state);
   load_entity_usertype(mod_state);
   load_entities_namespace(mod_state);
