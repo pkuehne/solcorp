@@ -1,0 +1,17 @@
+Checks: >-
+  bugprone-infinite-loop,
+  bugprone-use-after-move,
+  bugprone-macro-parentheses,
+  modernize-*,
+  -modernize-use-nullptr,
+  -modernize-return-braced-init-list,
+  -modernize-use-trailing-return-type,
+  -modernize-use-auto,
+  -modernize-use-nodiscard,
+  -modernize-pass-by-value,
+  -modernize-use-override,
+  -readability-identifier-length,
+  -bugprone-narrowing-conversions
+WarningsAsErrors: ''
+HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
+FormatStyle: none
