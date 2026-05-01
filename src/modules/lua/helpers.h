@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-void load_helpers_namespace(sol::state &mod_state);
+void load_helpers_namespace(lua_State *L);
 
 flecs::entity create_site(flecs::world world, const std::string &name,
                           uint32_t width, uint32_t height,

@@ -191,7 +191,7 @@ lua_setmetatable(L, solcorp_table_idx);
 
 ---
 
-## Stage 6 — Replace entity namespace functions and helper function registration
+## ~~Stage 6 — Replace entity namespace functions and helper function registration~~
 
 **Goal:** Remove `sol::this_state` from all functions in `helpers.cpp` and the
 entity namespace functions in `entity.cpp`.
