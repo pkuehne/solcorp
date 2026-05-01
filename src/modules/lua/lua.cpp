@@ -10,7 +10,7 @@
 #include <flecs.h>
 
 void load_mod_state(sol::state &mod_state);
-void load_script_namespace(sol::state &mod_state);
+void load_script_namespace(lua_State *L);
 void load_all_mods(flecs::world &world);
 void load_mod(flecs::world &world, const std::filesystem::path &path);
 
@@ -129,21 +129,28 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
 
 bool run_mod_handler(Mod &mod, flecs::world &world,
                      const std::string &handler) {
+  lua_State *L = mod.state.lua_state();
   mod.state["solcorp"]["world"] = &world;
-  sol::protected_function function =
-      mod.state["solcorp"]["script"]["handlers"][handler.c_str()];
 
-  if (!function.valid()) {
+  lua_getglobal(L, "solcorp");
+  lua_getfield(L, -1, "script");
+  lua_getfield(L, -1, "handlers");
+  lua_getfield(L, -1, handler.c_str());
+
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 4);
     return true;
   }
-  // spdlog::debug("{} - Running mod handler {}", mod.name handler);
-  auto result = function();
-  if (!result.valid()) {
-    sol::error err = result;
+
+  if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+    std::string err = lua_tostring(L, -1);
+    lua_pop(L, 4); // errmsg, handlers, script, solcorp
     spdlog::error("{} - Could not run '{}' function: {}", mod.name, handler,
-                  err.what());
+                  err);
     return false;
   }
+
+  lua_pop(L, 3); // handlers, script, solcorp
   return true;
 }
 
@@ -154,14 +161,15 @@ void load_mod_state(sol::state &mod_state) {
 
   // Set up the state with internal functions
   load_logging(mod_state.lua_state());
-  load_script_namespace(mod_state);
+  load_script_namespace(mod_state.lua_state());
   load_entity_usertype(mod_state);
   load_entities_namespace(mod_state);
   load_helpers_namespace(mod_state);
 }
 
-void load_script_namespace(sol::state &mod_state) {
-  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
-  auto script_ns = solcorp_ns["script"].get_or_create<sol::table>();
-  auto handlers_ns = script_ns["handlers"].get_or_create<sol::table>();
+void load_script_namespace(lua_State *L) {
+  lua_getglobal(L, "solcorp");
+  lua_get_or_create_table(L, "script");
+  lua_get_or_create_table(L, "handlers");
+  lua_pop(L, 3);
 }

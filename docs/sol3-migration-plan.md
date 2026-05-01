@@ -27,7 +27,7 @@ All files are under `src/modules/lua/`.
 
 ---
 
-## Stage 1 — Extract pure business logic from Lua wrappers
+## ~~Stage 1 — Extract pure business logic from Lua wrappers~~
 
 **Goal:** Testability foundation. Every helper in `helpers.cpp` currently has two
 jobs: extract the world pointer from the Lua state, then do ECS work. Split them.
@@ -55,7 +55,7 @@ Functions to extract: `create_site`, `create_building_prefab`, `create_rocket_pr
 
 ---
 
-## Stage 2 — Move world pointer and mod name to the Lua registry
+## ~~Stage 2 — Move world pointer and mod name to the Lua registry~~
 
 **Goal:** Replace `mod_state["solcorp"]["world"].get<flecs::world*>()` with a Lua
 registry lookup. The registry is private per-state and maps directly to raw API
@@ -81,7 +81,7 @@ Implemented with `lua_pushlightuserdata` / `lua_pushstring` and
 
 ---
 
-## Stage 3 — Replace logging (smallest end-to-end replacement)
+## ~~Stage 3 — Replace logging (smallest end-to-end replacement)~~
 
 **Goal:** Fully remove sol3 from `logging.cpp`.
 
@@ -111,7 +111,7 @@ Registration in `load_logging` switches from `logging_ns.set_function(...)` to
 
 ---
 
-## Stage 4 — Replace `Mod::state` with owned `lua_State*`
+## ~~Stage 4 — Replace `Mod::state` with owned `lua_State*`~~
 
 **Goal:** Remove `sol::state` from the `Mod` struct so it no longer transitively
 pulls in `sol/sol.hpp` through `lua.h`.
