@@ -13,6 +13,7 @@ add_executable(unit_test
   contracts_window.test.cpp
   base_tests.cpp
   lua_helpers.test.cpp
+  lua_registry.test.cpp
   rocket_launch_tests.cpp
   simulation.test.cpp
   site.test.cpp
