@@ -4,8 +4,8 @@ SolCorp's game content is defined entirely in Lua. The core game content in `mod
 
 ## Contents
 
-- [Getting Started](getting-started.md) — Create your first mod
-- [Lua API Reference](lua-api-reference.md) — Full API surface
+- [Getting Started](modding/getting-started.md) — Create your first mod
+- [Lua API Reference](modding/lua-api-reference.md) — Full API surface
 
 ## Mod Structure
 
