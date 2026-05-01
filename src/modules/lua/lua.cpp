@@ -130,7 +130,8 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
 bool run_mod_handler(Mod &mod, flecs::world &world,
                      const std::string &handler) {
   lua_State *L = mod.state.lua_state();
-  mod.state["solcorp"]["world"] = &world;
+  mod.state["solcorp"]["world"] = &world;  // sol3 path: still used by helpers.cpp
+  lua_set_world(L, &world);               // raw Lua path: used by entity.cpp
 
   lua_getglobal(L, "solcorp");
   lua_getfield(L, -1, "script");
@@ -163,7 +164,7 @@ void load_mod_state(sol::state &mod_state) {
   load_logging(mod_state.lua_state());
   load_script_namespace(mod_state.lua_state());
   load_entity_usertype(mod_state);
-  load_entities_namespace(mod_state);
+  load_entities_namespace(mod_state.lua_state());
   load_helpers_namespace(mod_state);
 }
 

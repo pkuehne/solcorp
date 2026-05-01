@@ -1,29 +1,29 @@
 #include "entity.h"
+#include "modules/lua/lua_registry.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
-void load_entities_namespace(sol::state &mod_state) {
-  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
+void load_entities_namespace(lua_State *L) {
+  sol::state_view sv(L);
+  auto solcorp_ns = sv["solcorp"].get_or_create<sol::table>();
   auto entities = solcorp_ns["entities"].get_or_create<sol::table>();
-  entities.set_function("create", [&mod_state](const std::string &name) {
-    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    return world->entity(name.c_str());
-  });
-  entities.set_function("get", [&mod_state](const std::string &name) {
-    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    flecs::entity e = world->lookup(name.c_str());
-    return e;
-  });
 
-  entities.set_function("Game", [&mod_state]() -> Game * {
-    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    return &world->get_mut<Game>();
+  entities.set_function("create", [](sol::this_state s, const std::string &name) -> flecs::entity {
+    lua_State *L = s;
+    return lua_get_world(L)->entity(name.c_str());
   });
-
-  entities.set_function("Company", [&mod_state]() -> Company * {
-    auto world = mod_state["solcorp"]["world"].get<flecs::world *>();
-    return &world->get_mut<Company>();
+  entities.set_function("get", [](sol::this_state s, const std::string &name) -> flecs::entity {
+    lua_State *L = s;
+    return lua_get_world(L)->lookup(name.c_str());
+  });
+  entities.set_function("Game", [](sol::this_state s) -> Game * {
+    lua_State *L = s;
+    return &lua_get_world(L)->get_mut<Game>();
+  });
+  entities.set_function("Company", [](sol::this_state s) -> Company * {
+    lua_State *L = s;
+    return &lua_get_world(L)->get_mut<Company>();
   });
 }
 

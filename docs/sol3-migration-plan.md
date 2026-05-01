@@ -146,7 +146,7 @@ needed.
 
 ---
 
-## Stage 5 — Replace table namespace setup and script loading
+## ~~Stage 5 — Replace table namespace setup and script loading~~
 
 **Goal:** Remove all `get_or_create<sol::table>()` chains and `safe_script_file` /
 `sol::protected_function` from `lua.cpp`.
