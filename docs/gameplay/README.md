@@ -4,7 +4,8 @@ SolCorp is a space launch company management simulation. You build and operate l
 
 ## Contents
 
-- [Core Concepts](core-concepts.md) — Sites, buildings, facilities, staff
+- [Core Concepts](core-concepts.md) — Turns, balance, windows and stats/effects/modifiers
+- [Sites Management](sites-management.md) — The core building blocks of your launch site
 - [Contracts & Launches](contracts-and-launches.md) — The contract pipeline and launch operations
 - [Simulation](simulation.md) — Orbital mechanics and celestial bodies
 

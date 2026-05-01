@@ -1,41 +1,33 @@
 # Core Concepts
 
-## Sites
+## Overview
 
-A **site** is your launch complex — a grid of buildable tiles. You can own multiple sites. Each site has a name, dimensions, and an active flag.
+This section covers the core concepts of SolCorp's gameplay, simulation, company and balance and the windows for managing various aspects.
 
-Sites aggregate **effects** and **modifiers** that influence launch statistics (e.g. max payload weight, preparation days).
+![Toolbar](../assets/toolbar.png "Main toolbar with play/pause button, company name, and balance")
 
-## Buildings
+## Simulation
 
-Buildings are placed on site tiles at a grid position. Each building is an instance of a **building prefab** (e.g. "Launch Complex", "Office Building", "Factory").
+The game operates on a day-based simulation. Each day, the game processes events such as rocket manufacturing, contract deadlines, and launch operations. Days can be advanced by clicking the play/pause button on the main toolbar. When the game is paused, you can still manage your site and prepare for upcoming launches, but no time will pass until you click play again.
 
-Buildings contain one or more **facilities** that provide specific capabilities.
+## Company Balance
 
-## Facilities
+Next to the play/pause button is the name of your corporation and your current balance, which is the amount of money you have available to spend on building, staffing, manufacturing, and fulfilling contracts. Your balance will increase when you successfully complete contracts and decrease when you spend money on operations.
 
-| Facility | Purpose |
-|----------|---------|
-| Launchpad | Required to execute a rocket launch |
-| Office | Provides administrative capacity |
-| Storage | Stores manufactured components |
-| Manufacturing | Produces rockets |
+## Windows
 
-## Effects & Modifiers
+Beyond the current balance is the "Windows" menu, which allows you to open various UI windows to manage different aspects of your site and operations. These include:
+
+- **Celestial Browser** — View information about celestial bodies and orbits
+- **Launch Planner** — Plan and execute rocket launches
+- **Active Launches** — Monitor the status of ongoing launches
+- **Contracts** — View and manage available contracts
+
+
+## Stats, Effects & Modifiers
+
+**Stats** are named numerical values that represent a particular aspect of a site, building, or facility (e.g. "Max Weight", "Prep Days", "Launch Failure Rate"). Stats can be modified by **effects**. Hovering over a stat in the UI will show the base value and any active modifiers as well as the final modified value.
 
 **Effects** are named conditions attached to a site or building (e.g. "Better Concrete", "Cracks Detected"). Each effect carries one or more **modifiers** that adjust a named statistic multiplicatively or additively.
 
-Example modifiers:
-
-| Stat | Description |
-|------|-------------|
-| `max-weight` | Maximum payload mass the launchpad supports |
-| `prep-days` | Days required to prepare a launch |
-
-## Rockets
-
-Rockets are instances of a **rocket prefab**. A prefab defines the rocket's name and its list of supported **target orbits** (e.g. Low Orbit, Polar Orbit) each with an associated payload capacity.
-
-## Staff
-
-Staff are personnel entities assigned to facilities. They affect operational capacity and launch readiness. *(Details TBD)*
+![Stats](../assets/stats.png "Example of stats with effects and modifiers")
