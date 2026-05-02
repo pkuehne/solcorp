@@ -2,6 +2,7 @@
 #include "modules/base/assert.h"
 #include "modules/engine/render.h"
 #include "modules/lua/entity.h"
+#include "modules/lua/lua.h"
 #include "modules/lua/lua_registry.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"

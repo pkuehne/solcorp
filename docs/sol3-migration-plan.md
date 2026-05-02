@@ -225,7 +225,7 @@ Registration uses `lua_pushcfunction` + `lua_setfield` throughout.
 
 ---
 
-## Stage 7 — Replace `flecs::entity` usertype
+## ~~Stage 7 — Replace `flecs::entity` usertype~~
 
 **Goal:** Remove `mod_state.new_usertype<flecs::entity>()` from `entity.cpp`.
 
@@ -259,6 +259,20 @@ using raw Lua C API only.
 - Unit test: push an entity, call each method via `lua_pcall`, verify results.
 - Unit test: `lua_check_entity` raises a Lua error when called with the wrong type.
 - Integration: game starts, entity methods work in core mod Lua scripts.
+
+**Implementation note — sol3 compatibility bridge:** Changing the entity storage
+layout (from sol3's pointer-indirection userdata to our direct inline layout)
+breaks the existing `register_lua_user_type<T>` lambdas, which take
+`flecs::entity &e` and rely on sol3's extractor.  Three specialisations added to
+`lua.h` bridge the gap without touching Stage 8:
+
+- `sol::usertype_traits<flecs::entity>::metatable()` returns `"solcorp.entity"` so
+  sol3's type checker compares against the right Lua registry key.
+- `sol::stack::unqualified_getter<flecs::entity>` reads the entity directly
+  from the userdata block (no pointer indirection), returning `flecs::entity&`.
+- `sol::stack::unqualified_pusher<flecs::entity>` delegates to `lua_push_entity`.
+
+These specialisations live in `lua.h` and are removed as part of Stage 9.
 
 ---
 
