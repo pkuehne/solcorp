@@ -20,7 +20,7 @@ void load_config_file();
 bool run_mod_handler(Mod &mod, flecs::world &world, const std::string &handler);
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func);
 
-// ── Stage 8: raw Lua C API component registration ────────────────────────────
+// ── Stage 8: component / enum registration helpers ───────────────────────────
 
 // Extracts class and field types from a member pointer type.
 template <typename T> struct member_ptr_info;
@@ -133,18 +133,128 @@ template <typename T> static int entity_remover(lua_State *L) {
   return 0;
 }
 
+// ── Builder helpers for register_component_lua and register_enum_table_lua ───
+
+// Fluent builder passed to the register_component_lua callback.
+// Hides the raw Lua C API from callers.
+template <typename C> class LuaFieldBuilder {
+public:
+  LuaFieldBuilder(lua_State *L, int mt_idx) : L_(L), mt_(mt_idx) {}
+
+  // Register a plain struct member field (read + write).
+  template <auto M> LuaFieldBuilder &field(const char *name) {
+    lua_register_field<M>(L_, mt_, name);
+    return *this;
+  }
+
+  // Register a getter-only field that returns a nested component (e.g. a Stat
+  // member). The component_type is the unqualified type name; "solcorp." is
+  // prepended automatically.
+  template <auto M>
+  LuaFieldBuilder &nested(const char *name, const char *component_type) {
+    using CT = typename member_ptr_info<decltype(M)>::class_type;
+    lua_getfield(L_, mt_, "__getters");
+    lua_pushstring(L_, (std::string("solcorp.") + component_type).c_str());
+    lua_pushcclosure(
+        L_,
+        [](lua_State *Lx) -> int {
+          const char *mt = lua_tostring(Lx, lua_upvalueindex(1));
+          auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+          lua_push_component(Lx, &(static_cast<CT *>(ud->ptr)->*M), mt, false,
+                             nullptr);
+          return 1;
+        },
+        1);
+    lua_setfield(L_, -2, name);
+    lua_pop(L_, 1);
+    return *this;
+  }
+
+  // Register a computed getter-only field via a constexpr callable
+  // (non-capturing lambda). The return type is deduced automatically.
+  //   b.getter<[](const MyComp* c) { return c->method(); }>("fieldName")
+  template <auto Getter> LuaFieldBuilder &getter(const char *name) {
+    lua_getfield(L_, mt_, "__getters");
+    lua_pushcfunction(L_, [](lua_State *Lx) -> int {
+      using R =
+          std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))>;
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      return lua_push_typed_value<R>(Lx,
+                                     Getter(static_cast<const C *>(ud->ptr)));
+    });
+    lua_setfield(L_, -2, name);
+    lua_pop(L_, 1);
+    return *this;
+  }
+
+  // Register a computed field with both getter and setter via constexpr
+  // callables (non-capturing lambdas). The value type is deduced from Getter.
+  //   b.computed<
+  //       [](const MyComp* c) { return c->value(); },
+  //       [](MyComp* c, double v) { c->setValue(v); }
+  //   >("fieldName")
+  template <auto Getter, auto Setter>
+  LuaFieldBuilder &computed(const char *name) {
+    using R = std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))>;
+
+    lua_getfield(L_, mt_, "__getters");
+    lua_pushcfunction(L_, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      return lua_push_typed_value<R>(Lx,
+                                     Getter(static_cast<const C *>(ud->ptr)));
+    });
+    lua_setfield(L_, -2, name);
+    lua_pop(L_, 1);
+
+    lua_getfield(L_, mt_, "__setters");
+    lua_pushcfunction(L_, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      R val = lua_get_typed_value<R>(Lx, 2);
+      Setter(static_cast<C *>(ud->ptr), val);
+      return 0;
+    });
+    lua_setfield(L_, -2, name);
+    lua_pop(L_, 1);
+
+    return *this;
+  }
+
+private:
+  lua_State *L_;
+  int mt_;
+};
+
+// Fluent builder passed to the register_enum_table_lua callback.
+class LuaEnumBuilder {
+public:
+  LuaEnumBuilder(lua_State *L, int tbl_idx) : L_(L), tbl_(tbl_idx) {}
+
+  // Add an integer enum value to the Lua table.
+  template <typename E> LuaEnumBuilder &value(const char *name, E val) {
+    lua_pushinteger(L_, static_cast<lua_Integer>(val));
+    lua_setfield(L_, tbl_, name);
+    return *this;
+  }
+
+private:
+  lua_State *L_;
+  int tbl_;
+};
+
+// ── register_component_lua / register_enum_table_lua ─────────────────────────
+
 // Register a component type T with the Lua scripting system.
 // Creates:
 //   • metatable "solcorp.<name>" with __index/__newindex/__gc dispatch
 //   • solcorp.components.<name> table with :new() constructor
 //   • get<name>/set<name>/has<name>/remove<name> on the entity metatable
-// register_fields(L, mt_idx) is called with the component metatable on the
-// stack so that callers can add field accessors via lua_register_field.
+// register_fields receives a LuaFieldBuilder<T> so callers can register
+// fields without touching the raw Lua C API.
 template <typename T>
 void register_component_lua(
     flecs::world &world, const char *name,
-    const std::function<void(lua_State *, int)> &register_fields =
-        [](lua_State *, int) {}) {
+    const std::function<void(LuaFieldBuilder<T> &)> &register_fields =
+        [](LuaFieldBuilder<T> &) {}) {
 
   run_on_every_mod(world, [name, &register_fields](lua_State *L) {
     std::string mt_name = std::string("solcorp.") + name;
@@ -165,7 +275,8 @@ void register_component_lua(
     lua_pushcfunction(L, component_gc);
     lua_setfield(L, mt_idx, "__gc");
 
-    register_fields(L, mt_idx);
+    LuaFieldBuilder<T> builder(L, mt_idx);
+    register_fields(builder);
     lua_pop(L, 1); // pop metatable
 
     // 2. Add solcorp.components.<name> with :new() constructor.
@@ -214,9 +325,11 @@ void register_component_lua(
 }
 
 // Register a global Lua table of integer enum values.
+// The callback receives a LuaEnumBuilder to add entries without raw Lua API.
 void register_enum_table_lua(
     flecs::world &world, const std::string &name,
-    const std::function<void(lua_State *, int)> &register_func);
+    const std::function<void(LuaEnumBuilder &)> &register_func =
+        [](LuaEnumBuilder &) {});
 
 struct LuaModule {
 public:

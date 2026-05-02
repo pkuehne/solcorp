@@ -17,13 +17,13 @@ void systemUpdateExpiry(flecs::iter &it, size_t row, Expire &e) {
 }
 
 void registerMovement(flecs::world &world) {
-  register_component_lua<Velocity>(world, "Velocity", [](lua_State *L, int mt) {
-    lua_register_field<&Velocity::x>(L, mt, "x");
-    lua_register_field<&Velocity::y>(L, mt, "y");
-  });
-  register_component_lua<Expire>(world, "Expire", [](lua_State *L, int mt) {
-    lua_register_field<&Expire::millis>(L, mt, "millis");
-  });
+  register_component_lua<Velocity>(
+      world, "Velocity", [](LuaFieldBuilder<Velocity> &b) {
+        b.field<&Velocity::x>("x").field<&Velocity::y>("y");
+      });
+  register_component_lua<Expire>(
+      world, "Expire",
+      [](LuaFieldBuilder<Expire> &b) { b.field<&Expire::millis>("millis"); });
 
   // Register Systems
   world.system<const Velocity, Transform>("Apply Velocity")

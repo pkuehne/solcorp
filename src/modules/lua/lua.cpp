@@ -168,11 +168,12 @@ void load_mod_state(lua_State *L) {
 
 void register_enum_table_lua(
     flecs::world &world, const std::string &name,
-    const std::function<void(lua_State *, int)> &register_func) {
+    const std::function<void(LuaEnumBuilder &)> &register_func) {
   run_on_every_mod(world, [&name, &register_func](lua_State *L) {
     lua_newtable(L);
     int tbl_idx = lua_gettop(L);
-    register_func(L, tbl_idx);
+    LuaEnumBuilder builder(L, tbl_idx);
+    register_func(builder);
     lua_setglobal(L, name.c_str());
   });
 }

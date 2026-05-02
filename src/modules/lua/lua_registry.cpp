@@ -53,16 +53,16 @@ int component_index(lua_State *L) {
     lua_pushnil(L);
     return 1;
   }
-  lua_getmetatable(L, 1);     // mt
+  lua_getmetatable(L, 1);           // mt
   lua_getfield(L, -1, "__getters"); // mt, getters
-  lua_getfield(L, -1, key);        // mt, getters, getters[key]
+  lua_getfield(L, -1, key);         // mt, getters, getters[key]
   if (!lua_isnil(L, -1)) {
-    lua_pushvalue(L, 1);       // mt, getters, getter_fn, ud
-    lua_call(L, 1, 1);         // mt, getters, result
+    lua_pushvalue(L, 1); // mt, getters, getter_fn, ud
+    lua_call(L, 1, 1);   // mt, getters, result
     return 1;
   }
-  lua_pop(L, 2); // pop nil + getters; mt remains
-  lua_getfield(L, -1, key);   // mt[key] (method lookup)
+  lua_pop(L, 2);            // pop nil + getters; mt remains
+  lua_getfield(L, -1, key); // mt[key] (method lookup)
   return 1;
 }
 

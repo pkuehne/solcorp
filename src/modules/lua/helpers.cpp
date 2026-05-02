@@ -32,7 +32,9 @@ flecs::entity create_building_prefab(flecs::world world,
   auto building_prefab = world.lookup("Prefabs::Core::Building");
   SC_ASSERT(building_prefab.is_valid(),
             "Prefabs::Core::Building prefab not found");
-  return world.prefab(name.c_str()).is_a(building_prefab).child_of(buildings_node);
+  return world.prefab(name.c_str())
+      .is_a(building_prefab)
+      .child_of(buildings_node);
 }
 
 flecs::entity create_rocket_prefab(flecs::world world,
@@ -70,15 +72,15 @@ flecs::entity create_rocket(flecs::world world, const std::string &name,
 }
 
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, uint32_t x,
-                              uint32_t y, flecs::entity site) {
+                              const std::string &prefab, uint32_t x, uint32_t y,
+                              flecs::entity site) {
   return instantiateBuilding(world, name, prefab, x, y, site);
 }
 
 flecs::entity add_target_orbit_to_rocket(flecs::world world,
-                                          flecs::entity rocket,
-                                          const std::string &orbit_name,
-                                          uint32_t max_mass) {
+                                         flecs::entity rocket,
+                                         const std::string &orbit_name,
+                                         uint32_t max_mass) {
   auto orbit = world.lookup(orbit_name.c_str());
   SC_ASSERT(orbit.is_valid(), fmt::format("Orbit {} not found", orbit_name));
   rocket.set<CanLiftTo>(orbit, {max_mass});
@@ -198,7 +200,8 @@ static int create_site_wrapper(lua_State *L) {
   auto width = (uint32_t)luaL_checkinteger(L, 2);
   auto height = (uint32_t)luaL_checkinteger(L, 3);
   bool make_current = lua_toboolean(L, 4) != 0;
-  lua_push_entity(L, create_site(*lua_get_world(L), name, width, height, make_current));
+  lua_push_entity(
+      L, create_site(*lua_get_world(L), name, width, height, make_current));
   return 1;
 }
 
@@ -217,7 +220,8 @@ static int create_rocket_prefab_wrapper(lua_State *L) {
 static int add_facility_to_building_wrapper(lua_State *L) {
   flecs::entity building = lua_check_entity(L, 1);
   const char *name = luaL_checkstring(L, 2);
-  lua_push_entity(L, add_facility_to_building(*lua_get_world(L), building, name));
+  lua_push_entity(L,
+                  add_facility_to_building(*lua_get_world(L), building, name));
   return 1;
 }
 
@@ -238,7 +242,8 @@ static int create_building_wrapper(lua_State *L) {
   auto x = (uint32_t)luaL_checkinteger(L, 3);
   auto y = (uint32_t)luaL_checkinteger(L, 4);
   flecs::entity site = lua_check_entity(L, 5);
-  lua_push_entity(L, create_building(*lua_get_world(L), name, prefab, x, y, site));
+  lua_push_entity(L,
+                  create_building(*lua_get_world(L), name, prefab, x, y, site));
   return 1;
 }
 
@@ -246,14 +251,16 @@ static int add_target_orbit_to_rocket_wrapper(lua_State *L) {
   flecs::entity rocket = lua_check_entity(L, 1);
   const char *orbit_name = luaL_checkstring(L, 2);
   auto max_mass = (uint32_t)luaL_checkinteger(L, 3);
-  lua_push_entity(L, add_target_orbit_to_rocket(*lua_get_world(L), rocket, orbit_name, max_mass));
+  lua_push_entity(L, add_target_orbit_to_rocket(*lua_get_world(L), rocket,
+                                                orbit_name, max_mass));
   return 1;
 }
 
 static int create_texture_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *filename = luaL_checkstring(L, 2);
-  lua_push_entity(L, create_texture(*lua_get_world(L), name, filename, lua_get_mod_name(L)));
+  lua_push_entity(L, create_texture(*lua_get_world(L), name, filename,
+                                    lua_get_mod_name(L)));
   return 1;
 }
 
@@ -273,7 +280,8 @@ static int create_contract_wrapper(lua_State *L) {
   const char *description = luaL_checkstring(L, 3);
   auto upfront = (float)luaL_checknumber(L, 4);
   auto completion = (float)luaL_checknumber(L, 5);
-  lua_push_entity(L, create_contract(*lua_get_world(L), name, client, description, upfront, completion));
+  lua_push_entity(L, create_contract(*lua_get_world(L), name, client,
+                                     description, upfront, completion));
   return 1;
 }
 
@@ -282,7 +290,8 @@ static int create_contract_payload_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 2);
   auto mass = (uint32_t)luaL_checkinteger(L, 3);
   const char *target_orbit = luaL_optstring(L, 4, "");
-  lua_push_entity(L, create_contract_payload(*lua_get_world(L), contract, name, mass, target_orbit));
+  lua_push_entity(L, create_contract_payload(*lua_get_world(L), contract, name,
+                                             mass, target_orbit));
   return 1;
 }
 
@@ -308,7 +317,8 @@ static int get_all_active_contracts_wrapper(lua_State *L) {
 
 static int add_modifier_wrapper(lua_State *L) {
   flecs::entity effect = lua_check_entity(L, 1);
-  auto *ud = static_cast<ComponentUD *>(luaL_checkudata(L, 2, "solcorp.Modifier"));
+  auto *ud =
+      static_cast<ComponentUD *>(luaL_checkudata(L, 2, "solcorp.Modifier"));
   add_modifier(*lua_get_world(L), effect, *static_cast<Modifier *>(ud->ptr));
   return 0;
 }
@@ -319,8 +329,8 @@ static int clip_sprite_from_texture_wrapper(lua_State *L) {
   auto y = (uint32_t)luaL_checkinteger(L, 3);
   auto width = (uint32_t)luaL_checkinteger(L, 4);
   auto height = (uint32_t)luaL_checkinteger(L, 5);
-  auto *sprite = new Sprite(
-      clip_sprite_from_texture(*lua_get_world(L), texture, x, y, width, height));
+  auto *sprite = new Sprite(clip_sprite_from_texture(*lua_get_world(L), texture,
+                                                     x, y, width, height));
   lua_push_component(L, sprite, "solcorp.Sprite", true,
                      [](void *p) { delete static_cast<Sprite *>(p); });
   return 1;
@@ -330,21 +340,28 @@ void load_helpers_namespace(lua_State *L) {
   lua_getglobal(L, "solcorp");
   lua_get_or_create_table(L, "helpers");
 
-  lua_register_function(L, "create_building_prefab", create_building_prefab_wrapper);
+  lua_register_function(L, "create_building_prefab",
+                        create_building_prefab_wrapper);
   lua_register_function(L, "create_site", create_site_wrapper);
   lua_register_function(L, "create_building", create_building_wrapper);
-  lua_register_function(L, "add_facility_to_building", add_facility_to_building_wrapper);
+  lua_register_function(L, "add_facility_to_building",
+                        add_facility_to_building_wrapper);
   lua_register_function(L, "create_effect", create_effect_wrapper);
   lua_register_function(L, "create_texture", create_texture_wrapper);
-  lua_register_function(L, "create_rocket_prefab", create_rocket_prefab_wrapper);
+  lua_register_function(L, "create_rocket_prefab",
+                        create_rocket_prefab_wrapper);
   lua_register_function(L, "create_rocket", create_rocket_wrapper);
-  lua_register_function(L, "add_target_orbit_to_rocket", add_target_orbit_to_rocket_wrapper);
+  lua_register_function(L, "add_target_orbit_to_rocket",
+                        add_target_orbit_to_rocket_wrapper);
   lua_register_function(L, "create_contract", create_contract_wrapper);
-  lua_register_function(L, "create_contract_payload", create_contract_payload_wrapper);
+  lua_register_function(L, "create_contract_payload",
+                        create_contract_payload_wrapper);
   lua_register_function(L, "get_all_contracts", get_all_contracts_wrapper);
-  lua_register_function(L, "get_all_active_contracts", get_all_active_contracts_wrapper);
+  lua_register_function(L, "get_all_active_contracts",
+                        get_all_active_contracts_wrapper);
   lua_register_function(L, "add_modifier", add_modifier_wrapper);
-  lua_register_function(L, "clip_sprite_from_texture", clip_sprite_from_texture_wrapper);
+  lua_register_function(L, "clip_sprite_from_texture",
+                        clip_sprite_from_texture_wrapper);
 
   lua_pop(L, 2); // helpers, solcorp
 }

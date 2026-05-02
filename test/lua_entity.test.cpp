@@ -77,7 +77,7 @@ SCENARIO("lua_check_entity raises a Lua error for wrong type",
   }
 }
 
-// ── entity methods via Lua ────────────────────────────────────────────────────
+// ── entity methods via Lua ───────────────────────────────────────────────
 
 SCENARIO("entity:id() returns the entity id", "[lua][entity]") {
   GIVEN("a named entity pushed to Lua") {

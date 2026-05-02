@@ -62,44 +62,25 @@ SiteModule::SiteModule(flecs::world &world) {
   // Register Lua bindings
   register_component_lua<CurrentSite>(world, "CurrentSite");
   register_component_lua<Site>(world, "Site");
-  register_component_lua<SiteLocation>(world, "SiteLocation", [](lua_State *L, int mt) {
-    lua_register_field<&SiteLocation::x>(L, mt, "x");
-    lua_register_field<&SiteLocation::y>(L, mt, "y");
-  });
-  register_component_lua<Launchpad>(world, "Launchpad", [](lua_State *L, int mt) {
-    lua_getfield(L, mt, "__getters");
-    lua_pushcfunction(L, [](lua_State *Lx) -> int {
-      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
-      lua_push_component(Lx, &static_cast<Launchpad *>(ud->ptr)->max_weight,
-                         "solcorp.Stat", false, nullptr);
-      return 1;
-    });
-    lua_setfield(L, -2, "max_weight");
-    lua_pushcfunction(L, [](lua_State *Lx) -> int {
-      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
-      lua_push_component(Lx, &static_cast<Launchpad *>(ud->ptr)->prep_days,
-                         "solcorp.Stat", false, nullptr);
-      return 1;
-    });
-    lua_setfield(L, -2, "prep_days");
-    lua_pop(L, 1);
-  });
-  register_component_lua<Office>(world, "Office", [](lua_State *L, int mt) {
-    lua_getfield(L, mt, "__getters");
-    lua_pushcfunction(L, [](lua_State *Lx) -> int {
-      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
-      lua_push_component(Lx, &static_cast<Office *>(ud->ptr)->max_desks,
-                         "solcorp.Stat", false, nullptr);
-      return 1;
-    });
-    lua_setfield(L, -2, "max_desks");
-    lua_pop(L, 1);
-  });
+  register_component_lua<SiteLocation>(
+      world, "SiteLocation", [](LuaFieldBuilder<SiteLocation> &b) {
+        b.field<&SiteLocation::x>("x").field<&SiteLocation::y>("y");
+      });
+  register_component_lua<Launchpad>(
+      world, "Launchpad", [](LuaFieldBuilder<Launchpad> &b) {
+        b.nested<&Launchpad::max_weight>("max_weight", "Stat")
+            .nested<&Launchpad::prep_days>("prep_days", "Stat");
+      });
+  register_component_lua<Office>(
+      world, "Office", [](LuaFieldBuilder<Office> &b) {
+        b.nested<&Office::max_desks>("max_desks", "Stat");
+      });
   register_component_lua<Storage>(world, "Storage");
-  register_component_lua<Manufacturing>(world, "Manufacturing", [](lua_State *L, int mt) {
-    lua_register_field<&Manufacturing::max_weight>(L, mt, "max_weight");
-    lua_register_field<&Manufacturing::available_effort>(L, mt, "available_effort");
-  });
+  register_component_lua<Manufacturing>(
+      world, "Manufacturing", [](LuaFieldBuilder<Manufacturing> &b) {
+        b.field<&Manufacturing::max_weight>("max_weight")
+            .field<&Manufacturing::available_effort>("available_effort");
+      });
 
   // Register Systems
   world.system("Site Create Prefabs")

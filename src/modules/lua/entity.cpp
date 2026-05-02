@@ -18,7 +18,8 @@ flecs::entity lua_check_entity(lua_State *L, int idx) {
       luaL_checkudata(L, idx, "solcorp.entity"));
 }
 
-// ── entity methods ────────────────────────────────────────────────────────────
+// ── entity methods
+// ────────────────────────────────────────────────────────────
 
 static int entity_id(lua_State *L) {
   flecs::entity e = lua_check_entity(L, 1);
@@ -98,13 +99,18 @@ static int entity_is_a(lua_State *L) {
   return 0;
 }
 
-static const luaL_Reg entity_methods[] = {
-    {"id", entity_id},           {"destroy", entity_destroy},
-    {"is_alive", entity_is_alive}, {"name", entity_name},
-    {"symbol", entity_symbol},   {"enabled", entity_enabled},
-    {"enable", entity_enable},   {"disable", entity_disable},
-    {"child_of", entity_child_of}, {"lookup", entity_lookup},
-    {"is_a", entity_is_a},       {nullptr, nullptr}};
+static const luaL_Reg entity_methods[] = {{"id", entity_id},
+                                          {"destroy", entity_destroy},
+                                          {"is_alive", entity_is_alive},
+                                          {"name", entity_name},
+                                          {"symbol", entity_symbol},
+                                          {"enabled", entity_enabled},
+                                          {"enable", entity_enable},
+                                          {"disable", entity_disable},
+                                          {"child_of", entity_child_of},
+                                          {"lookup", entity_lookup},
+                                          {"is_a", entity_is_a},
+                                          {nullptr, nullptr}};
 
 void load_entity_usertype(lua_State *L) {
   luaL_newmetatable(L, "solcorp.entity");
@@ -118,7 +124,8 @@ void load_entity_usertype(lua_State *L) {
   lua_pop(L, 1);
 }
 
-// ── entities namespace ────────────────────────────────────────────────────────
+// ── entities namespace
+// ────────────────────────────────────────────────────────
 
 static int entities_create(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);

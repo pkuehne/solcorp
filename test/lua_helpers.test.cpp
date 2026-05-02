@@ -8,7 +8,7 @@
 #include <flecs.h>
 
 static void run_site_prefab_setup(flecs::world &world) {
-  world.import<SiteModule>();
+  world.import <SiteModule>();
   auto sys = world.system("Setup Site Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -17,7 +17,7 @@ static void run_site_prefab_setup(flecs::world &world) {
 }
 
 static void run_rocket_prefab_setup(flecs::world &world) {
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
   auto sys = world.system("Setup Rocket Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -25,11 +25,11 @@ static void run_rocket_prefab_setup(flecs::world &world) {
   sys.run();
 }
 
-// ── create_site ───────────────────────────────────────────────────────────────
+// ── create_site ───────────────────────────────────────────────────────────
 
 SCENARIO("create_site", "[helpers][lua]") {
   flecs::world world;
-  world.import<SiteModule>();
+  world.import <SiteModule>();
   world.entity("Earth").child_of(world.entity("Sun"));
 
   GIVEN("a name and dimensions") {
@@ -51,14 +51,12 @@ SCENARIO("create_site", "[helpers][lua]") {
 
     WHEN("created with make_current = true") {
       auto site = create_site(world, "Beta", 5, 5, true);
-      THEN("entity has CurrentSite") {
-        CHECK(site.has<CurrentSite>());
-      }
+      THEN("entity has CurrentSite") { CHECK(site.has<CurrentSite>()); }
     }
   }
 }
 
-// ── create_building_prefab ────────────────────────────────────────────────────
+// ── create_building_prefab ─────────────────────────────────────────────────
 
 SCENARIO("create_building_prefab", "[helpers][lua]") {
   flecs::world world;
@@ -67,9 +65,7 @@ SCENARIO("create_building_prefab", "[helpers][lua]") {
   GIVEN("a prefab name") {
     WHEN("create_building_prefab is called") {
       auto prefab = create_building_prefab(world, "ControlCenter");
-      THEN("a valid prefab entity is returned") {
-        REQUIRE(prefab.is_valid());
-      }
+      THEN("a valid prefab entity is returned") { REQUIRE(prefab.is_valid()); }
       THEN("it is a child of Prefabs::Buildings") {
         CHECK(prefab.parent() == world.lookup("Prefabs::Buildings"));
       }
@@ -77,7 +73,7 @@ SCENARIO("create_building_prefab", "[helpers][lua]") {
   }
 }
 
-// ── create_rocket_prefab ──────────────────────────────────────────────────────
+// ── create_rocket_prefab ────────────────────────────────────────────────────
 
 SCENARIO("create_rocket_prefab", "[helpers][lua]") {
   flecs::world world;
@@ -86,9 +82,7 @@ SCENARIO("create_rocket_prefab", "[helpers][lua]") {
   GIVEN("a prefab name") {
     WHEN("create_rocket_prefab is called") {
       auto prefab = create_rocket_prefab(world, "Falcon9");
-      THEN("a valid prefab entity is returned") {
-        REQUIRE(prefab.is_valid());
-      }
+      THEN("a valid prefab entity is returned") { REQUIRE(prefab.is_valid()); }
       THEN("it is a child of Prefabs::Rockets") {
         CHECK(prefab.parent() == world.lookup("Prefabs::Rockets"));
       }
@@ -96,7 +90,7 @@ SCENARIO("create_rocket_prefab", "[helpers][lua]") {
   }
 }
 
-// ── add_facility_to_building ──────────────────────────────────────────────────
+// ── add_facility_to_building ────────────────────────────────────────────────
 
 SCENARIO("add_facility_to_building", "[helpers][lua]") {
   flecs::world world;
@@ -105,10 +99,9 @@ SCENARIO("add_facility_to_building", "[helpers][lua]") {
 
   GIVEN("a valid building entity") {
     WHEN("add_facility_to_building is called") {
-      auto facility = add_facility_to_building(world, building, "MissionControl");
-      THEN("a valid entity is returned") {
-        REQUIRE(facility.is_valid());
-      }
+      auto facility =
+          add_facility_to_building(world, building, "MissionControl");
+      THEN("a valid entity is returned") { REQUIRE(facility.is_valid()); }
       THEN("it is a child of the building") {
         CHECK(facility.parent() == building);
       }
@@ -116,7 +109,7 @@ SCENARIO("add_facility_to_building", "[helpers][lua]") {
   }
 }
 
-// ── create_rocket ─────────────────────────────────────────────────────────────
+// ── create_rocket ───────────────────────────────────────────────────────────
 
 SCENARIO("create_rocket", "[helpers][lua]") {
   flecs::world world;
@@ -145,14 +138,12 @@ SCENARIO("create_rocket", "[helpers][lua]") {
   GIVEN("a prefab name that does not exist") {
     WHEN("create_rocket is called") {
       auto rocket = create_rocket(world, "Ghost", "NoSuchPrefab");
-      THEN("an invalid entity is returned") {
-        CHECK(!rocket.is_valid());
-      }
+      THEN("an invalid entity is returned") { CHECK(!rocket.is_valid()); }
     }
   }
 }
 
-// ── create_building ───────────────────────────────────────────────────────────
+// ── create_building ──────────────────────────────────────────────────────────
 
 SCENARIO("create_building", "[helpers][lua]") {
   flecs::world world;
@@ -163,30 +154,25 @@ SCENARIO("create_building", "[helpers][lua]") {
   GIVEN("a valid prefab name and site") {
     WHEN("create_building is called") {
       auto building = create_building(world, "WH1", "Warehouse", 3, 4, site);
-      THEN("a valid entity is returned") {
-        REQUIRE(building.is_valid());
-      }
-      THEN("it is a child of the site") {
-        CHECK(building.parent() == site);
-      }
+      THEN("a valid entity is returned") { REQUIRE(building.is_valid()); }
+      THEN("it is a child of the site") { CHECK(building.parent() == site); }
     }
   }
 
   GIVEN("a prefab name that does not exist") {
     WHEN("create_building is called") {
-      auto building = create_building(world, "Ghost", "NoSuchPrefab", 0, 0, site);
-      THEN("an invalid entity is returned") {
-        CHECK(!building.is_valid());
-      }
+      auto building =
+          create_building(world, "Ghost", "NoSuchPrefab", 0, 0, site);
+      THEN("an invalid entity is returned") { CHECK(!building.is_valid()); }
     }
   }
 }
 
-// ── add_target_orbit_to_rocket ────────────────────────────────────────────────
+// ── add_target_orbit_to_rocket ───────────────────────────────────────────
 
 SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
   auto rocket = world.entity("RocketLEO").add<Rocket>();
   world.entity("LEO");
 
@@ -202,20 +188,18 @@ SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
   }
 }
 
-// ── create_texture ────────────────────────────────────────────────────────────
+// ── create_texture ──────────────────────────────────────────────────────
 
 SCENARIO("create_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import<BaseModule>();
+  world.import <BaseModule>();
   registerEngineComponents(world);
   world.entity("Textures");
 
   GIVEN("a filename containing '..'") {
     WHEN("create_texture is called") {
       auto e = create_texture(world, "Bad", "../secret.png", "core");
-      THEN("an invalid entity is returned") {
-        CHECK(!e.is_valid());
-      }
+      THEN("an invalid entity is returned") { CHECK(!e.is_valid()); }
     }
   }
 
@@ -230,11 +214,11 @@ SCENARIO("create_texture", "[helpers][lua]") {
   }
 }
 
-// ── create_effect ─────────────────────────────────────────────────────────────
+// ── create_effect ───────────────────────────────────────────────────────
 
 SCENARIO("create_effect", "[helpers][lua]") {
   flecs::world world;
-  world.import<StatsModule>();
+  world.import <StatsModule>();
 
   GIVEN("a name with no source entity") {
     WHEN("create_effect is called") {
@@ -261,11 +245,11 @@ SCENARIO("create_effect", "[helpers][lua]") {
   }
 }
 
-// ── add_modifier ──────────────────────────────────────────────────────────────
+// ── add_modifier ──────────────────────────────────────────────────────
 
 SCENARIO("add_modifier", "[helpers][lua]") {
   flecs::world world;
-  world.import<StatsModule>();
+  world.import <StatsModule>();
 
   GIVEN("a valid effect entity") {
     WHEN("add_modifier is called") {
@@ -291,18 +275,16 @@ SCENARIO("add_modifier", "[helpers][lua]") {
   GIVEN("an invalid effect entity") {
     WHEN("add_modifier is called") {
       auto modifier = add_modifier(world, flecs::entity(), Modifier{});
-      THEN("an invalid entity is returned") {
-        CHECK(!modifier.is_valid());
-      }
+      THEN("an invalid entity is returned") { CHECK(!modifier.is_valid()); }
     }
   }
 }
 
-// ── clip_sprite_from_texture ──────────────────────────────────────────────────
+// ── clip_sprite_from_texture ──────────────────────────────────────────────
 
 SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import<BaseModule>();
+  world.import <BaseModule>();
   registerEngineComponents(world);
 
   GIVEN("a texture name that does not exist") {
@@ -333,20 +315,18 @@ SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
   }
 }
 
-// ── create_contract ───────────────────────────────────────────────────────────
+// ── create_contract ─────────────────────────────────────────────────────
 
 SCENARIO("create_contract", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
   world.entity("Contracts");
 
   GIVEN("a unique contract name") {
     WHEN("create_contract is called") {
       auto contract = create_contract(world, "Mission1", "AcmeCorp",
                                       "Deliver satellite", 2000.0f, 8000.0f);
-      THEN("a valid entity is returned") {
-        REQUIRE(contract.is_valid());
-      }
+      THEN("a valid entity is returned") { REQUIRE(contract.is_valid()); }
       THEN("the Contract component has the correct fields") {
         auto &c = contract.get<Contract>();
         CHECK(c.client == "AcmeCorp");
@@ -365,19 +345,18 @@ SCENARIO("create_contract", "[helpers][lua]") {
                         .child_of(world.lookup("Contracts"))
                         .set<Contract>({"OldClient", "OldDesc", 0, 0});
     WHEN("create_contract is called with the same name") {
-      auto contract = create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
-      THEN("the existing entity is returned") {
-        CHECK(contract == existing);
-      }
+      auto contract =
+          create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
+      THEN("the existing entity is returned") { CHECK(contract == existing); }
     }
   }
 }
 
-// ── create_contract_payload ───────────────────────────────────────────────────
+// ── create_contract_payload ───────────────────────────────────────────────
 
 SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
   auto contract = world.entity("ContractX").set<Contract>({"C", "D", 0, 0});
 
   GIVEN("a contract, payload name, and no orbit") {
@@ -412,11 +391,9 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
 
   GIVEN("a contract and an orbit name that does not exist") {
     WHEN("create_contract_payload is called") {
-      auto payload = create_contract_payload(world, contract, "SatC", 300,
-                                             "Nonexistent");
-      THEN("payload is still created") {
-        CHECK(payload.is_valid());
-      }
+      auto payload =
+          create_contract_payload(world, contract, "SatC", 300, "Nonexistent");
+      THEN("payload is still created") { CHECK(payload.is_valid()); }
       THEN("no ContractTargetOrbit is set") {
         CHECK(!contract.has<ContractTargetOrbit>());
       }
@@ -424,18 +401,16 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
   }
 }
 
-// ── get_all_contracts ─────────────────────────────────────────────────────────
+// ── get_all_contracts ────────────────────────────────────────────────────
 
 SCENARIO("get_all_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("no contracts in the world") {
     WHEN("get_all_contracts is called") {
       auto result = get_all_contracts(world);
-      THEN("an empty vector is returned") {
-        CHECK(result.empty());
-      }
+      THEN("an empty vector is returned") { CHECK(result.empty()); }
     }
   }
 
@@ -445,26 +420,24 @@ SCENARIO("get_all_contracts", "[helpers][lua]") {
     world.entity("C3").set<Contract>({"Client", "Desc", 0, 0});
     WHEN("get_all_contracts is called") {
       auto result = get_all_contracts(world);
-      THEN("all three are returned") {
-        CHECK(result.size() == 3);
-      }
+      THEN("all three are returned") { CHECK(result.size() == 3); }
     }
   }
 }
 
-// ── get_all_active_contracts ──────────────────────────────────────────────────
+// ── get_all_active_contracts ────────────────────────────────────────────────
 
 SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketLaunchModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
     world.entity("Open1").set<Contract>(
         {"C", "D", 0, 0, ContractStatus::Open, false});
     world.entity("Open2").set<Contract>(
         {"C", "D", 0, 0, ContractStatus::Open, false});
-    world.entity("Accepted1").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Accepted, false});
+    world.entity("Accepted1")
+        .set<Contract>({"C", "D", 0, 0, ContractStatus::Accepted, false});
     world.entity("Closed1").set<Contract>(
         {"C", "D", 0, 0, ContractStatus::Closed, false});
     world.entity("Closed2").set<Contract>(
@@ -479,13 +452,11 @@ SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   }
 
   GIVEN("only closed contracts") {
-    world.entity("ClosedOnly").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Closed, false});
+    world.entity("ClosedOnly")
+        .set<Contract>({"C", "D", 0, 0, ContractStatus::Closed, false});
     WHEN("get_all_active_contracts is called") {
       auto result = get_all_active_contracts(world);
-      THEN("an empty vector is returned") {
-        CHECK(result.empty());
-      }
+      THEN("an empty vector is returned") { CHECK(result.empty()); }
     }
   }
 }
