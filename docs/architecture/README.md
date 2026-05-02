@@ -18,7 +18,7 @@ See also the [ADRs](../adr/README.md) for recorded design decisions.
 | ECS | Flecs v4.1.2 |
 | Rendering | SDL2 + SDL2_image |
 | UI | ImGui |
-| Lua scripting | sol2 (sol3) + lua 5.4 |
+| Lua scripting | lua 5.4 |
 | Logging | spdlog |
 | Testing | Catch2 v3.6.0 |
 | Build | CMake + Ninja + Justfile |

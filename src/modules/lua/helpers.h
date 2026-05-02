@@ -4,7 +4,7 @@
 #include "modules/rocket_launch/rocket_launch.h"
 #include "modules/stats/stats.h"
 #include <flecs.h>
-#include <sol/sol.hpp>
+#include <lua.hpp>
 #include <string>
 #include <vector>
 
@@ -23,8 +23,8 @@ flecs::entity create_rocket(flecs::world world, const std::string &name,
                             const std::string &prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, uint32_t x,
-                              uint32_t y, flecs::entity site);
+                              const std::string &prefab, uint32_t x, uint32_t y,
+                              flecs::entity site);
 flecs::entity add_target_orbit_to_rocket(flecs::world world,
                                          flecs::entity rocket,
                                          const std::string &orbit_name,
