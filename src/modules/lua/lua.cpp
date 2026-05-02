@@ -162,7 +162,7 @@ void load_mod_state(sol::state &mod_state) {
   // Set up the state with internal functions
   load_logging(mod_state.lua_state());
   load_script_namespace(mod_state.lua_state());
-  load_entity_usertype(mod_state);
+  load_entity_usertype(mod_state.lua_state());
   load_entities_namespace(mod_state.lua_state());
   load_helpers_namespace(mod_state.lua_state());
 }

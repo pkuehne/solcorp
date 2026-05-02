@@ -12,6 +12,7 @@ add_executable(unit_test
   active_launches_tests.cpp
   contracts_window.test.cpp
   base_tests.cpp
+  lua_entity.test.cpp
   lua_helpers.test.cpp
   lua_logging.test.cpp
   lua_registry.test.cpp
