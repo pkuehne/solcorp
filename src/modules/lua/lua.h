@@ -35,9 +35,12 @@
  */
 #pragma once
 
+#include <concepts>
 #include <flecs.h>
 #include <functional>
+#include <string>
 #include <type_traits>
+#include <utility>
 
 #include "modules/lua/entity.h"
 #include "modules/lua/lua_registry.h"
@@ -50,7 +53,7 @@ struct Mod {
   lua_State *state;
 };
 
-typedef const std::function<void(lua_State *)> ModStateCallback;
+using ModStateCallback = std::function<void(lua_State *)>;
 
 /** @brief Load config.lua and apply global startup settings. */
 void load_config_file();
@@ -73,8 +76,54 @@ template <typename C, typename F> struct member_ptr_info<F C::*> {
   using field_type = F;
 };
 
+/** @brief Types that can be marshalled by
+ * lua_push_typed_value/lua_get_typed_value. */
+template <typename F>
+concept LuaValueType = std::is_same_v<std::remove_cvref_t<F>, bool> ||
+                       std::is_same_v<std::remove_cvref_t<F>, std::string> ||
+                       std::is_same_v<std::remove_cvref_t<F>, flecs::entity> ||
+                       std::is_integral_v<std::remove_cvref_t<F>> ||
+                       std::is_floating_point_v<std::remove_cvref_t<F>> ||
+                       std::is_enum_v<std::remove_cvref_t<F>>;
+
+/** @brief Valid direct field pointer for value marshalling. */
+template <auto M>
+concept LuaFieldMemberPointer =
+    std::is_member_object_pointer_v<decltype(M)> && requires {
+      typename member_ptr_info<decltype(M)>::field_type;
+    } && LuaValueType<typename member_ptr_info<decltype(M)>::field_type>;
+
+/** @brief Valid direct field pointer for a specific component type. */
+template <auto M, typename C>
+concept LuaFieldMemberPointerOf =
+    LuaFieldMemberPointer<M> &&
+    std::same_as<typename member_ptr_info<decltype(M)>::class_type, C>;
+
+/** @brief Valid member-object pointer for a specific component type. */
+template <auto M, typename C>
+concept MemberObjectPointerOf =
+    std::is_member_object_pointer_v<decltype(M)> &&
+    std::same_as<typename member_ptr_info<decltype(M)>::class_type, C>;
+
+/** @brief Valid getter callable for component type C. */
+template <auto Getter, typename C>
+concept LuaGetterFor =
+    requires(const C *c) { Getter(c); } &&
+    LuaValueType<
+        std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))>>;
+
+/** @brief Valid getter/setter callable pair for component type C. */
+template <auto Getter, auto Setter, typename C>
+concept LuaComputedFor =
+    LuaGetterFor<Getter, C> &&
+    requires(
+        C *c,
+        std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))> v) {
+      { Setter(c, v) } -> std::same_as<void>;
+    };
+
 /** @brief Push a supported C++ value type onto the Lua stack. */
-template <typename F> int lua_push_typed_value(lua_State *L, const F &val) {
+template <LuaValueType F> int lua_push_typed_value(lua_State *L, const F &val) {
   if constexpr (std::is_same_v<F, bool>) {
     lua_pushboolean(L, val ? 1 : 0);
   } else if constexpr (std::is_same_v<F, std::string>) {
@@ -87,15 +136,12 @@ template <typename F> int lua_push_typed_value(lua_State *L, const F &val) {
     lua_pushnumber(L, static_cast<lua_Number>(val));
   } else if constexpr (std::is_enum_v<F>) {
     lua_pushinteger(L, static_cast<lua_Integer>(val));
-  } else {
-    static_assert(sizeof(F) == 0,
-                  "Unsupported field type for lua_push_typed_value");
   }
   return 1;
 }
 
 /** @brief Read a supported C++ value type from Lua stack index idx. */
-template <typename F> F lua_get_typed_value(lua_State *L, int idx) {
+template <LuaValueType F> F lua_get_typed_value(lua_State *L, int idx) {
   if constexpr (std::is_same_v<F, bool>) {
     return lua_toboolean(L, idx) != 0;
   } else if constexpr (std::is_same_v<F, std::string>) {
@@ -108,23 +154,24 @@ template <typename F> F lua_get_typed_value(lua_State *L, int idx) {
     return static_cast<F>(luaL_checknumber(L, idx));
   } else if constexpr (std::is_enum_v<F>) {
     return static_cast<F>(luaL_checkinteger(L, idx));
-  } else {
-    static_assert(sizeof(F) == 0,
-                  "Unsupported field type for lua_get_typed_value");
   }
 }
 
 /**
  * @brief Lua getter shim for a direct member pointer.
  */
-template <auto M> static int field_getter(lua_State *L) {
+template <auto M>
+  requires LuaFieldMemberPointer<M>
+static int field_getter(lua_State *L) {
   using C = typename member_ptr_info<decltype(M)>::class_type;
   using F = typename member_ptr_info<decltype(M)>::field_type;
   auto *ud = static_cast<ComponentUD *>(lua_touserdata(L, 1));
   return lua_push_typed_value<F>(L, static_cast<C *>(ud->ptr)->*M);
 }
 
-template <auto M> static int field_setter(lua_State *L) {
+template <auto M>
+  requires LuaFieldMemberPointer<M>
+static int field_setter(lua_State *L) {
   using C = typename member_ptr_info<decltype(M)>::class_type;
   using F = typename member_ptr_info<decltype(M)>::field_type;
   auto *ud = static_cast<ComponentUD *>(lua_touserdata(L, 1));
@@ -139,6 +186,7 @@ template <auto M> static int field_setter(lua_State *L) {
  * @param name Lua field name.
  */
 template <auto M>
+  requires LuaFieldMemberPointer<M>
 void lua_register_field(lua_State *L, int mt_idx, const char *name) {
   lua_getfield(L, mt_idx, "__getters");
   lua_pushcfunction(L, field_getter<M>);
@@ -198,7 +246,9 @@ public:
    * @details Use for plain value-like members such as numbers, booleans,
    * strings, enums, and flecs::entity.
    */
-  template <auto M> LuaFieldBuilder &field(const char *name) {
+  template <auto M>
+    requires LuaFieldMemberPointerOf<M, C>
+  LuaFieldBuilder &field(const char *name) {
     lua_register_field<M>(L_, mt_, name);
     return *this;
   }
@@ -212,6 +262,7 @@ public:
    * prepended automatically).
    */
   template <auto M>
+    requires MemberObjectPointerOf<M, C>
   LuaFieldBuilder &nested(const char *name, const char *component_type) {
     using CT = typename member_ptr_info<decltype(M)>::class_type;
     lua_getfield(L_, mt_, "__getters");
@@ -236,7 +287,9 @@ public:
    * @details Use when data is exposed through methods or derived logic rather
    * than a direct member.
    */
-  template <auto Getter> LuaFieldBuilder &getter(const char *name) {
+  template <auto Getter>
+    requires LuaGetterFor<Getter, C>
+  LuaFieldBuilder &getter(const char *name) {
     lua_getfield(L_, mt_, "__getters");
     lua_pushcfunction(L_, [](lua_State *Lx) -> int {
       using R =
@@ -256,6 +309,7 @@ public:
    * direct member pointer (for example base()/setBase()).
    */
   template <auto Getter, auto Setter>
+    requires LuaComputedFor<Getter, Setter, C>
   LuaFieldBuilder &computed(const char *name) {
     using R = std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))>;
 
@@ -320,6 +374,7 @@ private:
  * exposed properties.
  */
 template <typename T>
+  requires std::default_initializable<T>
 void register_component_lua(
     flecs::world &world, const char *name,
     const std::function<void(LuaFieldBuilder<T> &)> &register_fields =

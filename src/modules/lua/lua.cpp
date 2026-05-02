@@ -106,7 +106,7 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
 }
 
 /**
- * @brief Runs a callback on very mod
+ * @brief Runs a callback on every mod
  *
  * @param world the flecs world
  * @param func The function to call
