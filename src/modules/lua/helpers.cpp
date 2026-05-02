@@ -2,7 +2,6 @@
 #include "modules/base/assert.h"
 #include "modules/engine/render.h"
 #include "modules/lua/entity.h"
-#include "modules/lua/lua.h"
 #include "modules/lua/lua_registry.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
@@ -10,11 +9,6 @@
 #include <filesystem>
 #include <flecs.h>
 #include <modules/rocket_launch/rocket_launch.h>
-
-flecs::world get_world(sol::this_state s) {
-  lua_State *L = s;
-  return *lua_get_world(L);
-}
 
 flecs::entity create_site(flecs::world world, const std::string &name,
                           uint32_t width, uint32_t height, bool make_current) {
@@ -312,18 +306,24 @@ static int get_all_active_contracts_wrapper(lua_State *L) {
   return 1;
 }
 
-// --- sol3 wrappers kept for Stage 8 (Modifier and Sprite are component usertypes) ---
-
-flecs::entity add_modifier_wrapper(sol::this_state s, flecs::entity effect,
-                                   Modifier mod) {
-  return add_modifier(get_world(s), effect, mod);
+static int add_modifier_wrapper(lua_State *L) {
+  flecs::entity effect = lua_check_entity(L, 1);
+  auto *ud = static_cast<ComponentUD *>(luaL_checkudata(L, 2, "solcorp.Modifier"));
+  add_modifier(*lua_get_world(L), effect, *static_cast<Modifier *>(ud->ptr));
+  return 0;
 }
 
-Sprite clip_sprite_from_texture_wrapper(sol::this_state s,
-                                        const std::string &texture,
-                                        uint32_t x, uint32_t y,
-                                        uint32_t width, uint32_t height) {
-  return clip_sprite_from_texture(get_world(s), texture, x, y, width, height);
+static int clip_sprite_from_texture_wrapper(lua_State *L) {
+  const char *texture = luaL_checkstring(L, 1);
+  auto x = (uint32_t)luaL_checkinteger(L, 2);
+  auto y = (uint32_t)luaL_checkinteger(L, 3);
+  auto width = (uint32_t)luaL_checkinteger(L, 4);
+  auto height = (uint32_t)luaL_checkinteger(L, 5);
+  auto *sprite = new Sprite(
+      clip_sprite_from_texture(*lua_get_world(L), texture, x, y, width, height));
+  lua_push_component(L, sprite, "solcorp.Sprite", true,
+                     [](void *p) { delete static_cast<Sprite *>(p); });
+  return 1;
 }
 
 void load_helpers_namespace(lua_State *L) {
@@ -343,12 +343,8 @@ void load_helpers_namespace(lua_State *L) {
   lua_register_function(L, "create_contract_payload", create_contract_payload_wrapper);
   lua_register_function(L, "get_all_contracts", get_all_contracts_wrapper);
   lua_register_function(L, "get_all_active_contracts", get_all_active_contracts_wrapper);
+  lua_register_function(L, "add_modifier", add_modifier_wrapper);
+  lua_register_function(L, "clip_sprite_from_texture", clip_sprite_from_texture_wrapper);
 
   lua_pop(L, 2); // helpers, solcorp
-
-  // add_modifier and clip_sprite_from_texture need sol3 (Stage 8)
-  sol::state_view sv(L);
-  auto helpers = sv["solcorp"]["helpers"].get<sol::table>();
-  helpers.set_function("add_modifier", add_modifier_wrapper);
-  helpers.set_function("clip_sprite_from_texture", clip_sprite_from_texture_wrapper);
 }

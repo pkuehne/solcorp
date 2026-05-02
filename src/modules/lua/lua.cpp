@@ -167,6 +167,18 @@ void load_mod_state(sol::state &mod_state) {
   load_helpers_namespace(mod_state.lua_state());
 }
 
+void register_enum_table_lua(
+    flecs::world &world, const std::string &name,
+    const std::function<void(lua_State *, int)> &register_func) {
+  run_on_every_mod(world, [&name, &register_func](sol::state &state) {
+    lua_State *L = state.lua_state();
+    lua_newtable(L);
+    int tbl_idx = lua_gettop(L);
+    register_func(L, tbl_idx);
+    lua_setglobal(L, name.c_str());
+  });
+}
+
 void load_script_namespace(lua_State *L) {
   lua_getglobal(L, "solcorp");
   lua_get_or_create_table(L, "script");

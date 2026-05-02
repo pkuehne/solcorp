@@ -1,9 +1,7 @@
-#define SOL_ALL_SAFETIES_ON 1
 #include "entity.h"
 #include "modules/lua/lua_registry.h"
 #include "modules/simulation/simulation.h"
 #include <flecs.h>
-#include <sol/sol.hpp>
 #include <spdlog/spdlog.h>
 
 flecs::entity *lua_push_entity(lua_State *L, flecs::entity e) {
@@ -113,8 +111,8 @@ void load_entity_usertype(lua_State *L) {
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_setfuncs(L, entity_methods, 0);
-  // Expose as global "entity" so register_lua_user_type<T> (Stage 8) can
-  // add component accessors to this table without crashing on nil.
+  // Expose as global "entity" so register_component_lua<T> can add
+  // component accessors to this table.
   lua_pushvalue(L, -1);
   lua_setglobal(L, "entity");
   lua_pop(L, 1);
@@ -134,22 +132,24 @@ static int entities_get(lua_State *L) {
   return 1;
 }
 
+static int entities_game(lua_State *L) {
+  Game *g = &lua_get_world(L)->get_mut<Game>();
+  lua_push_component(L, g, "solcorp.Game", false, nullptr);
+  return 1;
+}
+
+static int entities_company(lua_State *L) {
+  Company *c = &lua_get_world(L)->get_mut<Company>();
+  lua_push_component(L, c, "solcorp.Company", false, nullptr);
+  return 1;
+}
+
 void load_entities_namespace(lua_State *L) {
   lua_getglobal(L, "solcorp");
   lua_get_or_create_table(L, "entities");
   lua_register_function(L, "create", entities_create);
   lua_register_function(L, "get", entities_get);
+  lua_register_function(L, "Game", entities_game);
+  lua_register_function(L, "Company", entities_company);
   lua_pop(L, 2);
-
-  // Game and Company return component pointers — sol3 until Stage 8
-  sol::state_view sv(L);
-  auto entities = sv["solcorp"]["entities"].get<sol::table>();
-  entities.set_function("Game", [](sol::this_state s) -> Game * {
-    lua_State *L = s;
-    return &lua_get_world(L)->get_mut<Game>();
-  });
-  entities.set_function("Company", [](sol::this_state s) -> Company * {
-    lua_State *L = s;
-    return &lua_get_world(L)->get_mut<Company>();
-  });
 }

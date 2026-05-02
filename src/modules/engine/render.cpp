@@ -24,39 +24,57 @@ void systemRenderText(flecs::entity, const Text &, const Texture &,
 
 void registerRender(flecs::world &world) {
 
-  register_lua_user_type<Color>(world, "Color",
-                                [](sol::usertype<Color> &userType) {
-                                  userType["r"] = &Color::r;
-                                  userType["g"] = &Color::g;
-                                  userType["b"] = &Color::b;
-                                  userType["a"] = &Color::a;
-                                });
-  register_lua_user_type<Point>(world, "Point",
-                                [](sol::usertype<Point> &userType) {
-                                  userType["x"] = &Point::x;
-                                  userType["y"] = &Point::y;
-                                });
-  register_lua_user_type<Transform>(
-      world, "Transform", [](sol::usertype<Transform> &userType) {
-        userType["relativePosition"] = &Transform::relativePosition;
-        userType["worldPosition"] = &Transform::worldPosition;
-      });
-  register_lua_user_type<Sprite>(world, "Sprite",
-                                 [](sol::usertype<Sprite> &userType) {
-                                   userType["x"] = &Sprite::x;
-                                   userType["y"] = &Sprite::y;
-                                   userType["width"] = &Sprite::width;
-                                   userType["height"] = &Sprite::height;
-                                   userType["rotation"] = &Sprite::rotation;
-                                   userType["flip"] = &Sprite::flip;
-                                 });
-  register_lua_user_type<Text>(world, "Text",
-                               [](sol::usertype<Text> &userType) {
-                                 userType["text"] = &Text::text;
-                                 userType["color"] = &Text::color;
-                                 userType["rotation"] = &Text::rotation;
-                                 userType["flip"] = &Text::flip;
-                               });
+  register_component_lua<Color>(world, "Color", [](lua_State *L, int mt) {
+    lua_register_field<&Color::r>(L, mt, "r");
+    lua_register_field<&Color::g>(L, mt, "g");
+    lua_register_field<&Color::b>(L, mt, "b");
+    lua_register_field<&Color::a>(L, mt, "a");
+  });
+  register_component_lua<Point>(world, "Point", [](lua_State *L, int mt) {
+    lua_register_field<&Point::x>(L, mt, "x");
+    lua_register_field<&Point::y>(L, mt, "y");
+  });
+  register_component_lua<Transform>(world, "Transform", [](lua_State *L, int mt) {
+    lua_getfield(L, mt, "__getters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_push_component(Lx, &static_cast<Transform *>(ud->ptr)->relativePosition,
+                         "solcorp.Point", false, nullptr);
+      return 1;
+    });
+    lua_setfield(L, -2, "relativePosition");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_push_component(Lx, &static_cast<Transform *>(ud->ptr)->worldPosition,
+                         "solcorp.Point", false, nullptr);
+      return 1;
+    });
+    lua_setfield(L, -2, "worldPosition");
+    lua_pop(L, 1);
+  });
+  register_component_lua<Sprite>(world, "Sprite", [](lua_State *L, int mt) {
+    lua_register_field<&Sprite::x>(L, mt, "x");
+    lua_register_field<&Sprite::y>(L, mt, "y");
+    lua_register_field<&Sprite::width>(L, mt, "width");
+    lua_register_field<&Sprite::height>(L, mt, "height");
+    lua_register_field<&Sprite::rotation>(L, mt, "rotation");
+    lua_register_field<&Sprite::flip>(L, mt, "flip");
+    lua_register_field<&Sprite::texture>(L, mt, "texture");
+  });
+  register_component_lua<Text>(world, "Text", [](lua_State *L, int mt) {
+    lua_register_field<&Text::text>(L, mt, "text");
+    lua_register_field<&Text::rotation>(L, mt, "rotation");
+    lua_register_field<&Text::flip>(L, mt, "flip");
+    lua_getfield(L, mt, "__getters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_push_component(Lx, &static_cast<Text *>(ud->ptr)->color,
+                         "solcorp.Color", false, nullptr);
+      return 1;
+    });
+    lua_setfield(L, -2, "color");
+    lua_pop(L, 1);
+  });
 
   auto scope = world.set_scope(0);
   world.entity("Textures");

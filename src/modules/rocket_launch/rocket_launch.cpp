@@ -75,43 +75,51 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CanLiftTo>().add(flecs::Symmetric);
 
   // Register Lua bindings
-  register_lua_user_type<LaunchPlan>(
-      world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
-        userType["launch_date"] = &LaunchPlan::launch_date;
-      });
-  register_lua_user_type<Rocket>(
-      world, "Rocket", [](sol::usertype<Rocket> &userType) {
-        userType["failure_rate"] = &Rocket::failure_rate;
-        userType["cost"] = &Rocket::cost;
-      });
-  register_lua_user_type<Payload>(world, "Payload",
-                                  [](sol::usertype<Payload> &userType) {
-                                    userType["mass"] = &Payload::mass;
-                                  });
-  register_lua_user_type<CanLiftTo>(
-      world, "CanLiftTo", [](sol::usertype<CanLiftTo> &userType) {
-        userType["max_mass"] = &CanLiftTo::max_mass;
-      });
-  register_lua_user_type<Contract>(
-      world, "Contract", [](sol::usertype<Contract> &userType) {
-        userType["client"] = &Contract::client;
-        userType["description"] = &Contract::description;
-        userType["upfront_payment"] = &Contract::upfront_payment;
-        userType["completion_payment"] = &Contract::completion_payment;
-        userType["status"] = &Contract::status;
-        userType["failed"] = &Contract::failed;
-      });
-  register_lua_enum_table<ContractStatus>(
-      world, "ContractStatus", [](sol::table &enumTable) {
-        enumTable["Open"] = ContractStatus::Open;
-        enumTable["Accepted"] = ContractStatus::Accepted;
-        enumTable["Closed"] = ContractStatus::Closed;
-      });
-  register_lua_user_type<ContractPayload>(
-      world, "ContractPayload", [](sol::usertype<ContractPayload> &) {});
-  register_lua_user_type<ContractTargetOrbit>(
-      world, "ContractTargetOrbit",
-      [](sol::usertype<ContractTargetOrbit> &) {});
+  register_component_lua<LaunchPlan>(world, "LaunchPlan", [](lua_State *L, int mt) {
+    lua_register_field<&LaunchPlan::launch_date>(L, mt, "launch_date");
+  });
+  register_component_lua<Rocket>(world, "Rocket", [](lua_State *L, int mt) {
+    lua_getfield(L, mt, "__getters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_push_component(Lx, &static_cast<Rocket *>(ud->ptr)->failure_rate,
+                         "solcorp.Stat", false, nullptr);
+      return 1;
+    });
+    lua_setfield(L, -2, "failure_rate");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_push_component(Lx, &static_cast<Rocket *>(ud->ptr)->cost,
+                         "solcorp.Stat", false, nullptr);
+      return 1;
+    });
+    lua_setfield(L, -2, "cost");
+    lua_pop(L, 1);
+  });
+  register_component_lua<Payload>(world, "Payload", [](lua_State *L, int mt) {
+    lua_register_field<&Payload::mass>(L, mt, "mass");
+  });
+  register_component_lua<CanLiftTo>(world, "CanLiftTo", [](lua_State *L, int mt) {
+    lua_register_field<&CanLiftTo::max_mass>(L, mt, "max_mass");
+  });
+  register_component_lua<Contract>(world, "Contract", [](lua_State *L, int mt) {
+    lua_register_field<&Contract::client>(L, mt, "client");
+    lua_register_field<&Contract::description>(L, mt, "description");
+    lua_register_field<&Contract::upfront_payment>(L, mt, "upfront_payment");
+    lua_register_field<&Contract::completion_payment>(L, mt, "completion_payment");
+    lua_register_field<&Contract::status>(L, mt, "status");
+    lua_register_field<&Contract::failed>(L, mt, "failed");
+  });
+  register_enum_table_lua(world, "ContractStatus", [](lua_State *L, int tbl) {
+    lua_pushinteger(L, static_cast<lua_Integer>(ContractStatus::Open));
+    lua_setfield(L, tbl, "Open");
+    lua_pushinteger(L, static_cast<lua_Integer>(ContractStatus::Accepted));
+    lua_setfield(L, tbl, "Accepted");
+    lua_pushinteger(L, static_cast<lua_Integer>(ContractStatus::Closed));
+    lua_setfield(L, tbl, "Closed");
+  });
+  register_component_lua<ContractPayload>(world, "ContractPayload");
+  register_component_lua<ContractTargetOrbit>(world, "ContractTargetOrbit");
 
   // Register systems
   world.system("Create Rocket Prefabs")

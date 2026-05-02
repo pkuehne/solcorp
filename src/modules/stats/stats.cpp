@@ -3,7 +3,6 @@
 #include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
 #include <modules/base/base.h>
-#include <sol/forward.hpp>
 
 void systemInitialiseStats(flecs::iter &iter);
 
@@ -27,23 +26,62 @@ StatsModule::StatsModule(flecs::world &world) {
       .member("multiplicative", &Modifier::multiplicative);
 
   // Register lua types
-  register_lua_user_type<Stat>(
-      world, "Stat", [](sol::usertype<Stat> &userType) {
-        userType["base"] = sol::property(&Stat::base, &Stat::setBase);
-        userType["value"] = &Stat::value;
-        userType["id"] = &Stat::id;
-        userType["display"] = &Stat::display;
-        userType["description"] = &Stat::description;
-        userType["modifiers"] = &Stat::modifiers;
-      });
-  register_lua_user_type<Effect>(world, "Effect");
+  register_component_lua<Stat>(world, "Stat", [](lua_State *L, int mt) {
+    // base: read via base(), write via setBase()
+    lua_getfield(L, mt, "__getters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_pushnumber(Lx, static_cast<Stat *>(ud->ptr)->base());
+      return 1;
+    });
+    lua_setfield(L, -2, "base");
+    lua_pop(L, 1);
 
-  register_lua_user_type<Modifier>(
-      world, "Modifier", [](sol::usertype<Modifier> &userType) -> void {
-        userType["target_stat"] = &Modifier::target_stat;
-        userType["additive"] = &Modifier::additive;
-        userType["multiplicative"] = &Modifier::multiplicative;
-      });
+    lua_getfield(L, mt, "__setters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      static_cast<Stat *>(ud->ptr)->setBase(luaL_checknumber(Lx, 2));
+      return 0;
+    });
+    lua_setfield(L, -2, "base");
+    lua_pop(L, 1);
+
+    // value, id, display, description: read-only via methods
+    lua_getfield(L, mt, "__getters");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_pushnumber(Lx, static_cast<Stat *>(ud->ptr)->value());
+      return 1;
+    });
+    lua_setfield(L, -2, "value");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_pushstring(Lx, static_cast<Stat *>(ud->ptr)->id().c_str());
+      return 1;
+    });
+    lua_setfield(L, -2, "id");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_pushstring(Lx, static_cast<Stat *>(ud->ptr)->display().c_str());
+      return 1;
+    });
+    lua_setfield(L, -2, "display");
+    lua_pushcfunction(L, [](lua_State *Lx) -> int {
+      auto *ud = static_cast<ComponentUD *>(lua_touserdata(Lx, 1));
+      lua_pushstring(Lx, static_cast<Stat *>(ud->ptr)->description().c_str());
+      return 1;
+    });
+    lua_setfield(L, -2, "description");
+    lua_pop(L, 1);
+  });
+
+  register_component_lua<Effect>(world, "Effect");
+
+  register_component_lua<Modifier>(world, "Modifier", [](lua_State *L, int mt) {
+    lua_register_field<&Modifier::target_stat>(L, mt, "target_stat");
+    lua_register_field<&Modifier::additive>(L, mt, "additive");
+    lua_register_field<&Modifier::multiplicative>(L, mt, "multiplicative");
+  });
   // Register Effect category
   auto s = world.set_scope(0);
   world.entity("Effects");

@@ -276,7 +276,7 @@ These specialisations live in `lua.h` and are removed as part of Stage 9.
 
 ---
 
-## Stage 8 — Replace `register_lua_user_type<T>` component template
+## ~~Stage 8 — Replace `register_lua_user_type<T>` component template~~
 
 **Goal:** Remove the template in `lua.h` and all `sol::usertype<T>` usage for game
 components.

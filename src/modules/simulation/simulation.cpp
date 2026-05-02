@@ -53,15 +53,14 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.add<Developer>();
   world.add<Company>();
 
-  register_lua_user_type<Game>(
-      world, "Game",
-      [](sol::usertype<Game> &userType) { userType["day"] = &Game::day; });
+  register_component_lua<Game>(world, "Game", [](lua_State *L, int mt) {
+    lua_register_field<&Game::day>(L, mt, "day");
+  });
 
-  register_lua_user_type<Company>(world, "Company",
-                                  [](sol::usertype<Company> &userType) {
-                                    userType["name"] = &Company::name;
-                                    userType["balance"] = &Company::balance;
-                                  });
+  register_component_lua<Company>(world, "Company", [](lua_State *L, int mt) {
+    lua_register_field<&Company::name>(L, mt, "name");
+    lua_register_field<&Company::balance>(L, mt, "balance");
+  });
 
   // Register systems
   auto sim = world.get<Simulation>();
