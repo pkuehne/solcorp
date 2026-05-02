@@ -1,3 +1,38 @@
+/**
+ * @file lua.h
+ * @brief Lua integration helpers for component and enum registration.
+ *
+ * @details
+ * This header defines the registration surface used by modules when exposing
+ * ECS components to Lua through register_component_lua().
+ *
+ * Property helper selection guide:
+ * - field<M>("name")
+ *   Use for direct struct members that can be copied as values
+ *   (numbers, bool, string, enums, flecs::entity).
+ *   Example: field<&Game::day>("day")
+ *
+ * - nested<M>("name", "Type")
+ *   Use when the member is another component-like object that should be
+ *   exposed as userdata, not copied by value.
+ *   Example: nested<&Rocket::cost>("cost", "Stat")
+ *
+ * - getter<G>("name")
+ *   Read-only property backed by a method or derived value.
+ *   G is a non-capturing lambda that takes const Component* and returns the
+ *   value to expose.
+ *   Example: getter<[](const Stat* s) { return s->value(); }>("value")
+ *
+ * - computed<G, S>("name")
+ *   Read/write property backed by methods instead of a direct member.
+ *   G (getter) is a non-capturing lambda: const Component* -> Value.
+ *   S (setter) is a non-capturing lambda: Component*, Value -> void.
+ *   Example:
+ *   computed<
+ *     [](const Stat* s) { return s->base(); },
+ *     [](Stat* s, double v) { s->setBase(v); }
+ *   >("base")
+ */
 #pragma once
 
 #include <flecs.h>
@@ -7,8 +42,9 @@
 #include "modules/lua/entity.h"
 #include "modules/lua/lua_registry.h"
 
-// ─────────────────────────────────────────────────────────────────────────────
-
+/**
+ * @brief Loaded Lua mod state attached to an ECS entity under Mods.
+ */
 struct Mod {
   std::string name;
   lua_State *state;
@@ -16,20 +52,28 @@ struct Mod {
 
 typedef const std::function<void(lua_State *)> ModStateCallback;
 
+/** @brief Load config.lua and apply global startup settings. */
 void load_config_file();
+
+/**
+ * @brief Execute a named script handler on a specific mod.
+ * @return true if the handler either does not exist or runs successfully.
+ */
 bool run_mod_handler(Mod &mod, flecs::world &world, const std::string &handler);
+
+/**
+ * @brief Run a callback for each loaded mod state.
+ */
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func);
 
-// ── Stage 8: component / enum registration helpers ───────────────────────────
-
-// Extracts class and field types from a member pointer type.
+/** @brief Extract class/field types from a member pointer type. */
 template <typename T> struct member_ptr_info;
 template <typename C, typename F> struct member_ptr_info<F C::*> {
   using class_type = C;
   using field_type = F;
 };
 
-// Push a typed value onto the Lua stack.
+/** @brief Push a supported C++ value type onto the Lua stack. */
 template <typename F> int lua_push_typed_value(lua_State *L, const F &val) {
   if constexpr (std::is_same_v<F, bool>) {
     lua_pushboolean(L, val ? 1 : 0);
@@ -50,7 +94,7 @@ template <typename F> int lua_push_typed_value(lua_State *L, const F &val) {
   return 1;
 }
 
-// Read a typed value from the Lua stack at index idx.
+/** @brief Read a supported C++ value type from Lua stack index idx. */
 template <typename F> F lua_get_typed_value(lua_State *L, int idx) {
   if constexpr (std::is_same_v<F, bool>) {
     return lua_toboolean(L, idx) != 0;
@@ -70,8 +114,9 @@ template <typename F> F lua_get_typed_value(lua_State *L, int idx) {
   }
 }
 
-// Getter / setter lua_CFunctions templated on a member pointer.
-// Non-capturing → can be used directly as lua_CFunction.
+/**
+ * @brief Lua getter shim for a direct member pointer.
+ */
 template <auto M> static int field_getter(lua_State *L) {
   using C = typename member_ptr_info<decltype(M)>::class_type;
   using F = typename member_ptr_info<decltype(M)>::field_type;
@@ -87,9 +132,12 @@ template <auto M> static int field_setter(lua_State *L) {
   return 0;
 }
 
-// Register a field via member pointer into a component metatable.
-// Adds entries to the __getters and __setters sub-tables.
-// mt_idx must be the absolute stack index of the metatable.
+/**
+ * @brief Register a direct member field in __getters and __setters.
+ * @param L Lua state.
+ * @param mt_idx Absolute stack index of the component metatable.
+ * @param name Lua field name.
+ */
 template <auto M>
 void lua_register_field(lua_State *L, int mt_idx, const char *name) {
   lua_getfield(L, mt_idx, "__getters");
@@ -103,8 +151,7 @@ void lua_register_field(lua_State *L, int mt_idx, const char *name) {
   lua_pop(L, 1);
 }
 
-// Entity accessor templates — used as lua_CFunction via lua_pushcclosure.
-// upvalue 1: metatable name string (for getT/setT).
+/** @brief Entity get<T>() bridge. */
 template <typename T> static int entity_getter(lua_State *L) {
   const char *mt = lua_tostring(L, lua_upvalueindex(1));
   flecs::entity e = lua_check_entity(L, 1);
@@ -113,6 +160,7 @@ template <typename T> static int entity_getter(lua_State *L) {
   return 1;
 }
 
+/** @brief Entity set<T>() bridge. */
 template <typename T> static int entity_setter(lua_State *L) {
   const char *mt = lua_tostring(L, lua_upvalueindex(1));
   flecs::entity e = lua_check_entity(L, 1);
@@ -121,35 +169,48 @@ template <typename T> static int entity_setter(lua_State *L) {
   return 0;
 }
 
+/** @brief Entity has<T>() bridge. */
 template <typename T> static int entity_haser(lua_State *L) {
   flecs::entity e = lua_check_entity(L, 1);
   lua_pushboolean(L, e.has<T>() ? 1 : 0);
   return 1;
 }
 
+/** @brief Entity remove<T>() bridge. */
 template <typename T> static int entity_remover(lua_State *L) {
   flecs::entity e = lua_check_entity(L, 1);
   e.remove<T>();
   return 0;
 }
 
-// ── Builder helpers for register_component_lua and register_enum_table_lua ───
-
-// Fluent builder passed to the register_component_lua callback.
-// Hides the raw Lua C API from callers.
+/**
+ * @brief Fluent component field registration helper.
+ *
+ * Passed to register_component_lua() callbacks so modules can expose
+ * properties without directly touching Lua stack manipulation.
+ */
 template <typename C> class LuaFieldBuilder {
 public:
   LuaFieldBuilder(lua_State *L, int mt_idx) : L_(L), mt_(mt_idx) {}
 
-  // Register a plain struct member field (read + write).
+  /**
+   * @brief Register a direct member field (read and write).
+   * @details Use for plain value-like members such as numbers, booleans,
+   * strings, enums, and flecs::entity.
+   */
   template <auto M> LuaFieldBuilder &field(const char *name) {
     lua_register_field<M>(L_, mt_, name);
     return *this;
   }
 
-  // Register a getter-only field that returns a nested component (e.g. a Stat
-  // member). The component_type is the unqualified type name; "solcorp." is
-  // prepended automatically.
+  /**
+   * @brief Register a getter-only nested component field.
+   * @details Use when a member should be exposed as component userdata
+   * (for example a nested Stat), not copied as a plain value.
+   * @param name Lua field name.
+   * @param component_type Unqualified component type name ("solcorp." is
+   * prepended automatically).
+   */
   template <auto M>
   LuaFieldBuilder &nested(const char *name, const char *component_type) {
     using CT = typename member_ptr_info<decltype(M)>::class_type;
@@ -170,9 +231,11 @@ public:
     return *this;
   }
 
-  // Register a computed getter-only field via a constexpr callable
-  // (non-capturing lambda). The return type is deduced automatically.
-  //   b.getter<[](const MyComp* c) { return c->method(); }>("fieldName")
+  /**
+   * @brief Register a computed read-only property.
+   * @details Use when data is exposed through methods or derived logic rather
+   * than a direct member.
+   */
   template <auto Getter> LuaFieldBuilder &getter(const char *name) {
     lua_getfield(L_, mt_, "__getters");
     lua_pushcfunction(L_, [](lua_State *Lx) -> int {
@@ -187,12 +250,11 @@ public:
     return *this;
   }
 
-  // Register a computed field with both getter and setter via constexpr
-  // callables (non-capturing lambdas). The value type is deduced from Getter.
-  //   b.computed<
-  //       [](const MyComp* c) { return c->value(); },
-  //       [](MyComp* c, double v) { c->setValue(v); }
-  //   >("fieldName")
+  /**
+   * @brief Register a computed read/write property.
+   * @details Use when Lua should read/write via explicit methods instead of a
+   * direct member pointer (for example base()/setBase()).
+   */
   template <auto Getter, auto Setter>
   LuaFieldBuilder &computed(const char *name) {
     using R = std::remove_cvref_t<decltype(Getter(std::declval<const C *>()))>;
@@ -224,12 +286,14 @@ private:
   int mt_;
 };
 
-// Fluent builder passed to the register_enum_table_lua callback.
+/**
+ * @brief Fluent enum table registration helper.
+ */
 class LuaEnumBuilder {
 public:
   LuaEnumBuilder(lua_State *L, int tbl_idx) : L_(L), tbl_(tbl_idx) {}
 
-  // Add an integer enum value to the Lua table.
+  /** @brief Add a named enum constant to the Lua table. */
   template <typename E> LuaEnumBuilder &value(const char *name, E val) {
     lua_pushinteger(L_, static_cast<lua_Integer>(val));
     lua_setfield(L_, tbl_, name);
@@ -241,15 +305,20 @@ private:
   int tbl_;
 };
 
-// ── register_component_lua / register_enum_table_lua ─────────────────────────
-
-// Register a component type T with the Lua scripting system.
-// Creates:
-//   • metatable "solcorp.<name>" with __index/__newindex/__gc dispatch
-//   • solcorp.components.<name> table with :new() constructor
-//   • get<name>/set<name>/has<name>/remove<name> on the entity metatable
-// register_fields receives a LuaFieldBuilder<T> so callers can register
-// fields without touching the raw Lua C API.
+/**
+ * @brief Register a component type with Lua accessors and constructors.
+ *
+ * @details
+ * This function creates:
+ * - metatable "solcorp.<name>" with __index/__newindex/__gc dispatch,
+ * - solcorp.components.<name> with :new() constructor,
+ * - entity methods get<name>/set<name>/has<name>/remove<name>.
+ *
+ * @param world Flecs world.
+ * @param name Component name suffix used for Lua symbols.
+ * @param register_fields Callback that receives LuaFieldBuilder<T> to define
+ * exposed properties.
+ */
 template <typename T>
 void register_component_lua(
     flecs::world &world, const char *name,
@@ -324,8 +393,12 @@ void register_component_lua(
   });
 }
 
-// Register a global Lua table of integer enum values.
-// The callback receives a LuaEnumBuilder to add entries without raw Lua API.
+/**
+ * @brief Register a global Lua enum-like table.
+ * @param world Flecs world.
+ * @param name Global Lua table name.
+ * @param register_func Callback used to add values through LuaEnumBuilder.
+ */
 void register_enum_table_lua(
     flecs::world &world, const std::string &name,
     const std::function<void(LuaEnumBuilder &)> &register_func =
