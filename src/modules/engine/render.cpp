@@ -237,7 +237,7 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
     spdlog::error("Failed to create text texture: {}", SDL_GetError());
     return;
   }
-  e.set<Texture>({texture, surface->w, surface->h});
+  e.set<Texture>({.ptr = texture, .width = surface->w, .height = surface->h});
 }
 
 void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,

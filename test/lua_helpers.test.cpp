@@ -254,7 +254,8 @@ SCENARIO("add_modifier", "[helpers][lua]") {
   GIVEN("a valid effect entity") {
     WHEN("add_modifier is called") {
       auto effect = world.entity("SpeedEffect").add<Effect>();
-      Modifier mod{"thrust", 100.0, 1.5};
+      Modifier mod{
+          .target_stat = "thrust", .additive = 100.0, .multiplicative = 1.5};
       auto modifier = add_modifier(world, effect, mod);
       THEN("a valid modifier entity is returned") {
         REQUIRE(modifier.is_valid());
@@ -343,7 +344,12 @@ SCENARIO("create_contract", "[helpers][lua]") {
   GIVEN("a name that already exists under Contracts") {
     auto existing = world.entity("Dup")
                         .child_of(world.lookup("Contracts"))
-                        .set<Contract>({"OldClient", "OldDesc", 0, 0});
+                        .set<Contract>({.client = "OldClient",
+                                        .description = "OldDesc",
+                                        .upfront_payment = 0,
+                                        .completion_payment = 0,
+                                        .status = ContractStatus::Open,
+                                        .failed = false});
     WHEN("create_contract is called with the same name") {
       auto contract =
           create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
@@ -357,7 +363,13 @@ SCENARIO("create_contract", "[helpers][lua]") {
 SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
   world.import <RocketLaunchModule>();
-  auto contract = world.entity("ContractX").set<Contract>({"C", "D", 0, 0});
+  auto contract = world.entity("ContractX")
+                      .set<Contract>({.client = "C",
+                                      .description = "D",
+                                      .upfront_payment = 0,
+                                      .completion_payment = 0,
+                                      .status = ContractStatus::Open,
+                                      .failed = false});
 
   GIVEN("a contract, payload name, and no orbit") {
     WHEN("create_contract_payload is called with an empty orbit name") {
@@ -415,9 +427,24 @@ SCENARIO("get_all_contracts", "[helpers][lua]") {
   }
 
   GIVEN("three contracts in the world") {
-    world.entity("C1").set<Contract>({"Client", "Desc", 0, 0});
-    world.entity("C2").set<Contract>({"Client", "Desc", 0, 0});
-    world.entity("C3").set<Contract>({"Client", "Desc", 0, 0});
+    world.entity("C1").set<Contract>({.client = "Client",
+                                      .description = "Desc",
+                                      .upfront_payment = 0,
+                                      .completion_payment = 0,
+                                      .status = ContractStatus::Open,
+                                      .failed = false});
+    world.entity("C2").set<Contract>({.client = "Client",
+                                      .description = "Desc",
+                                      .upfront_payment = 0,
+                                      .completion_payment = 0,
+                                      .status = ContractStatus::Open,
+                                      .failed = false});
+    world.entity("C3").set<Contract>({.client = "Client",
+                                      .description = "Desc",
+                                      .upfront_payment = 0,
+                                      .completion_payment = 0,
+                                      .status = ContractStatus::Open,
+                                      .failed = false});
     WHEN("get_all_contracts is called") {
       auto result = get_all_contracts(world);
       THEN("all three are returned") { CHECK(result.size() == 3); }
@@ -432,16 +459,37 @@ SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   world.import <RocketLaunchModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
-    world.entity("Open1").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Open, false});
-    world.entity("Open2").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Open, false});
+    world.entity("Open1").set<Contract>({.client = "C",
+                                         .description = "D",
+                                         .upfront_payment = 0,
+                                         .completion_payment = 0,
+                                         .status = ContractStatus::Open,
+                                         .failed = false});
+    world.entity("Open2").set<Contract>({.client = "C",
+                                         .description = "D",
+                                         .upfront_payment = 0,
+                                         .completion_payment = 0,
+                                         .status = ContractStatus::Open,
+                                         .failed = false});
     world.entity("Accepted1")
-        .set<Contract>({"C", "D", 0, 0, ContractStatus::Accepted, false});
-    world.entity("Closed1").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Closed, false});
-    world.entity("Closed2").set<Contract>(
-        {"C", "D", 0, 0, ContractStatus::Closed, false});
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .status = ContractStatus::Accepted,
+                        .failed = false});
+    world.entity("Closed1").set<Contract>({.client = "C",
+                                           .description = "D",
+                                           .upfront_payment = 0,
+                                           .completion_payment = 0,
+                                           .status = ContractStatus::Closed,
+                                           .failed = false});
+    world.entity("Closed2").set<Contract>({.client = "C",
+                                           .description = "D",
+                                           .upfront_payment = 0,
+                                           .completion_payment = 0,
+                                           .status = ContractStatus::Closed,
+                                           .failed = false});
 
     WHEN("get_all_active_contracts is called") {
       auto result = get_all_active_contracts(world);
@@ -453,7 +501,12 @@ SCENARIO("get_all_active_contracts", "[helpers][lua]") {
 
   GIVEN("only closed contracts") {
     world.entity("ClosedOnly")
-        .set<Contract>({"C", "D", 0, 0, ContractStatus::Closed, false});
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .status = ContractStatus::Closed,
+                        .failed = false});
     WHEN("get_all_active_contracts is called") {
       auto result = get_all_active_contracts(world);
       THEN("an empty vector is returned") { CHECK(result.empty()); }

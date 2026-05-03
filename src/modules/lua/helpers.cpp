@@ -13,8 +13,9 @@
 flecs::entity create_site(flecs::world world, const std::string &name,
                           uint32_t width, uint32_t height, bool make_current) {
   auto site = world.entity(name.c_str())
-                  .set<Site>({width, height})
-                  .set<Transform>({{340, 240}, {}})
+                  .set<Site>({.width = width, .height = height})
+                  .set<Transform>({.relativePosition = {.x = 340, .y = 240},
+                                   .worldPosition = {}})
                   .add<ConstructionSiteNeedsUpdating>();
   if (make_current) {
     site.add<CurrentSite>();
@@ -152,7 +153,10 @@ flecs::entity create_contract(flecs::world world, const std::string &name,
     return existing;
   }
   return world.entity(name.c_str())
-      .set<Contract>({client, description, upfront_payment, completion_payment})
+      .set<Contract>({.client = client,
+                      .description = description,
+                      .upfront_payment = upfront_payment,
+                      .completion_payment = completion_payment})
       .child_of(contracts_node);
 }
 

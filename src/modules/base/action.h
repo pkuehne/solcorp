@@ -7,9 +7,9 @@ struct ValidationResult {
   bool ok = false;
   std::string message;
 
-  static ValidationResult Pass() { return {true, {}}; }
+  static ValidationResult Pass() { return {.ok = true, .message = {}}; }
   static ValidationResult Fail(const std::string &msg) {
-    return {false, std::move(msg)};
+    return {.ok = false, .message = std::move(msg)};
   }
   static ValidationResult Issue(const std::string &msg) {
     if (!msg.empty()) {

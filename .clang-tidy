@@ -23,7 +23,6 @@ Checks: >-
   -modernize-use-nodiscard,
   -modernize-pass-by-value,
   -modernize-avoid-c-arrays,
-  -modernize-use-designated-initializers,
   -modernize-use-integer-sign-comparison,
   -modernize-use-ranges,
   -modernize-redundant-void-arg,

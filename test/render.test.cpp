@@ -6,9 +6,9 @@ void systemApplyParentTransform(Transform &t, const Transform *parent);
 
 SCENARIO("systemApplyParentTransform", "[system]") {
   GIVEN("A point at (10,20)") {
-    Point original{10, 20};
+    Point original{.x = 10, .y = 20};
     WHEN("A transform is applied without a parent") {
-      Transform t{original, {}};
+      Transform t{.relativePosition = original, .worldPosition = {}};
 
       systemApplyParentTransform(t, nullptr);
 
@@ -21,8 +21,8 @@ SCENARIO("systemApplyParentTransform", "[system]") {
     }
 
     WHEN("A transform is applied with a parent at (10,20)") {
-      Transform t{original, {}};
-      Transform p{original, original};
+      Transform t{.relativePosition = original, .worldPosition = {}};
+      Transform p{.relativePosition = original, .worldPosition = original};
 
       systemApplyParentTransform(t, &p);
 

@@ -292,7 +292,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   auto launchpad = world.entity("Main Pad")
                        .add<Launchpad>()
                        .child_of(site)
-                       .set<SiteLocation>({0, 0})
+                       .set<SiteLocation>({.x = 0, .y = 0})
                        .set<Transform>({})
                        .set<Sprite>({});
   auto rocket = world.entity("Falcon 9").add<Rocket>();
@@ -304,21 +304,21 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
     auto targetOrbit = world.entity("LEO");
     auto contractA = world.entity("Contract A1")
                          .set<Contract>({
-                             "Client",
-                             "Description",
-                             1000.0f,
-                             2000.0f,
-                             ContractStatus::Accepted,
-                             false,
+                             .client = "Client",
+                             .description = "Description",
+                             .upfront_payment = 1000.0f,
+                             .completion_payment = 2000.0f,
+                             .status = ContractStatus::Accepted,
+                             .failed = false,
                          });
     auto contractB = world.entity("Contract A2")
                          .set<Contract>({
-                             "Client",
-                             "Description",
-                             1000.0f,
-                             2000.0f,
-                             ContractStatus::Accepted,
-                             false,
+                             .client = "Client",
+                             .description = "Description",
+                             .upfront_payment = 1000.0f,
+                             .completion_payment = 2000.0f,
+                             .status = ContractStatus::Accepted,
+                             .failed = false,
                          });
     contractA.add<ContractTargetOrbit>(targetOrbit);
     contractB.add<ContractTargetOrbit>(targetOrbit);
@@ -328,7 +328,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
     contractB.add<ContractPayload>(payloadB);
 
     auto planE = world.entity("Test Plan")
-                     .set<LaunchPlan>({today, targetOrbit})
+                     .set<LaunchPlan>(
+                         {.launch_date = today, .target_orbit = targetOrbit})
                      .add<LaunchingOn>(rocket)
                      .add<LaunchingFrom>(launchpad)
                      .add<LaunchingWith>(payloadA)
@@ -369,21 +370,21 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
     auto contractOrbit = world.entity("GTO");
     auto contractA = world.entity("Contract B1")
                          .set<Contract>({
-                             "Client",
-                             "Description",
-                             1000.0f,
-                             2000.0f,
-                             ContractStatus::Accepted,
-                             false,
+                             .client = "Client",
+                             .description = "Description",
+                             .upfront_payment = 1000.0f,
+                             .completion_payment = 2000.0f,
+                             .status = ContractStatus::Accepted,
+                             .failed = false,
                          });
     auto contractB = world.entity("Contract B2")
                          .set<Contract>({
-                             "Client",
-                             "Description",
-                             1000.0f,
-                             2000.0f,
-                             ContractStatus::Accepted,
-                             false,
+                             .client = "Client",
+                             .description = "Description",
+                             .upfront_payment = 1000.0f,
+                             .completion_payment = 2000.0f,
+                             .status = ContractStatus::Accepted,
+                             .failed = false,
                          });
     contractA.add<ContractTargetOrbit>(contractOrbit);
     contractB.add<ContractTargetOrbit>(contractOrbit);
@@ -393,7 +394,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
     contractB.add<ContractPayload>(payloadB);
 
     auto planE = world.entity("Test Plan 2")
-                     .set<LaunchPlan>({today, launchedOrbit})
+                     .set<LaunchPlan>(
+                         {.launch_date = today, .target_orbit = launchedOrbit})
                      .add<LaunchingOn>(rocket)
                      .add<LaunchingFrom>(launchpad)
                      .add<LaunchingWith>(payloadA)
@@ -429,7 +431,7 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   GIVEN("A launch plan not due yet") {
     uint32_t today = world.get<Game>().day;
     auto planE = world.entity("Test Plan")
-                     .set<LaunchPlan>({today + 1})
+                     .set<LaunchPlan>({.launch_date = today + 1})
                      .add<LaunchingOn>(rocket)
                      .add<LaunchingFrom>(launchpad);
     REQUIRE(planE.is_valid());

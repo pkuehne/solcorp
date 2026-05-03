@@ -64,7 +64,7 @@ struct Font {
 
 struct Text {
   std::string text;
-  Color color = {0, 0, 0, 0};
+  Color color = {.r = 0, .g = 0, .b = 0, .a = 0};
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
 };

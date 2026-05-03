@@ -51,14 +51,17 @@ void systemEventHandling(flecs::iter &it) {
       if (io.WantCaptureMouse) {
         break;
       }
-      world.set<MouseDown>(
-          {event.button.x, event.button.y, event.button.button});
+      world.set<MouseDown>({.x = event.button.x,
+                            .y = event.button.y,
+                            .button = event.button.button});
       break;
     case SDL_MOUSEBUTTONUP:
       if (io.WantCaptureMouse) {
         break;
       }
-      world.set<MouseUp>({event.button.x, event.button.y, event.button.button});
+      world.set<MouseUp>({.x = event.button.x,
+                          .y = event.button.y,
+                          .button = event.button.button});
       break;
     default:
       break;

@@ -75,7 +75,8 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
     spdlog::debug("Removing existing launch plan: {}", current.id());
     current.destruct();
   }
-  auto plan = LaunchPlan{static_cast<uint32_t>(launchDay), targetOrbit};
+  auto plan = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+                         .target_orbit = targetOrbit};
 
   auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());

@@ -8,19 +8,22 @@ SCENARIO("Stats", "[stats]") {
     THEN("The base value is 10") { REQUIRE(stat.base() == 10.0); }
 
     WHEN("A multiplier mod of 2 is applied") {
-      Modifier mod = {"test_stat", 0.0, 2.0};
+      Modifier mod = {
+          .target_stat = "test_stat", .additive = 0.0, .multiplicative = 2.0};
       stat.addModifier(mod, "");
       THEN("The result is 20") { REQUIRE(stat.value() == 20.0); }
     }
 
     WHEN("An adder mod of 10 is applied") {
-      Modifier mod = {"test_stat", 10.0, 1.0};
+      Modifier mod = {
+          .target_stat = "test_stat", .additive = 10.0, .multiplicative = 1.0};
       stat.addModifier(mod, "");
       THEN("The result is 20") { REQUIRE(stat.value() == 20.0); }
     }
 
     WHEN("An adder mod of 10 is applied and then reset") {
-      Modifier mod = {"test_stat", 10.0, 1.0};
+      Modifier mod = {
+          .target_stat = "test_stat", .additive = 10.0, .multiplicative = 1.0};
       bool result = stat.addModifier(mod, "");
       stat.reset();
 
@@ -31,7 +34,8 @@ SCENARIO("Stats", "[stats]") {
     }
 
     WHEN("An unrelated modifier is added") {
-      Modifier mod = {"other_stat", 10.0, 1.0};
+      Modifier mod = {
+          .target_stat = "other_stat", .additive = 10.0, .multiplicative = 1.0};
       bool result = stat.addModifier(mod, "");
       THEN("The result is again 10") {
         REQUIRE(result == false);

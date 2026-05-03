@@ -17,10 +17,11 @@ void buildRocketFromPrefab(flecs::entity &manufacturingE,
                            const flecs::entity &prefabE) {
   auto world = manufacturingE.world();
 
-  auto rocket = world.entity()
-                    .is_a(prefabE)
-                    .set<Construction>({300, 300})
-                    .child_of(manufacturingE);
+  auto rocket =
+      world.entity()
+          .is_a(prefabE)
+          .set<Construction>({.effort_remaining = 300, .effort_total = 300})
+          .child_of(manufacturingE);
   rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
 }
 } // namespace

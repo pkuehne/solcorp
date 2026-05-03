@@ -26,7 +26,7 @@ flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
 
   auto entity = world.entity(name.c_str())
                     .is_a(prefabE)
-                    .set<SiteLocation>({x, y})
+                    .set<SiteLocation>({.x = x, .y = y})
                     .set<Transform>(t)
                     .child_of(site);
   return entity;
@@ -54,7 +54,7 @@ flecs::entity instantiateConstructionSite(flecs::world &world, uint32_t x,
       fmt::format("Construction Site {}-{}/{}", site.name().c_str(), x, y);
   auto entity = world.entity(name.c_str())
                     .is_a(prefabE)
-                    .set<SiteLocation>({x, y})
+                    .set<SiteLocation>({.x = x, .y = y})
                     .set<Transform>(t)
                     .child_of(site);
   return entity;
@@ -69,10 +69,11 @@ flecs::entity instantiateBuildingNotification(flecs::world &world,
   }
 
   auto entity = world.entity()
-                    .set<Transform>({{0, -30}, {}})
-                    .set<Text>({text})
-                    .set<Velocity>({0, -10})
-                    .set<Expire>({1500})
+                    .set<Transform>({.relativePosition = {.x = 0, .y = -30},
+                                     .worldPosition = {}})
+                    .set<Text>({.text = text})
+                    .set<Velocity>({.x = 0, .y = -10})
+                    .set<Expire>({.millis = 1500})
                     .child_of(building);
 
   return entity;
