@@ -26,4 +26,4 @@ Checks: >-
   -readability-identifier-length,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
-FormatStyle: none
+FormatStyle: file
