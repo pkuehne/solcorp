@@ -64,6 +64,7 @@
         tools = with pkgs; [
           cmake
           ninja
+          just
           clang-tools # clangd/clang-tidy (must precede clang so wrapped binaries win PATH)
           clang
           gdb

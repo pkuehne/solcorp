@@ -12,7 +12,7 @@ The project uses CMake with Ninja and provides a Justfile for convenience:
 
 ```bash
 # Initial setup (first time only)
-cmake -B build -G Ninja
+just configure
 
 # Build
 just build

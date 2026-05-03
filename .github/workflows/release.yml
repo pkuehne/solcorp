@@ -35,24 +35,24 @@ jobs:
       - name: Cache CMake FetchContent
         uses: actions/cache@v5
         with:
-          path: build-release/_deps
+          path: build/_deps
           key: fetchcontent-linux-release-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-linux-release-
 
       - name: Configure
-        run: nix develop --command cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DSC_BUILD_TESTS=OFF -G Ninja
+        run: nix develop --command just configure-release-no-tests
 
       - name: Build
-        run: nix develop --command cmake --build build-release --parallel
+        run: nix develop --command just build
 
       - name: Package
-        run: nix develop --command cpack --config build-release/CPackConfig.cmake -B build-release
+        run: nix develop --command just package
 
       - name: Upload to release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
-          files: build-release/SolCorp-*.zip
+          files: build/SolCorp-*.zip
 
   build-windows:
     name: "Package Windows"
@@ -71,7 +71,7 @@ jobs:
       - name: Cache CMake FetchContent
         uses: actions/cache@v5
         with:
-          path: build-release/_deps
+          path: build/_deps
           key: fetchcontent-windows-release-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-windows-release-
 
@@ -79,16 +79,16 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake -B build-release -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+        run: just configure-release-no-tests
 
       - name: Build
-        run: cmake --build build-release --parallel
+        run: just build
 
       - name: Package
-        run: cpack --config build-release/CPackConfig.cmake -B build-release
+        run: just package
 
       - name: Upload to release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
-          files: build-release/SolCorp-*.zip
+          files: build/SolCorp-*.zip
