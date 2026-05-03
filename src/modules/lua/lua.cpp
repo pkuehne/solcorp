@@ -3,13 +3,14 @@
 #include "modules/lua/entity.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
+#include "modules/lua/lua_registry.h"
 #include "modules/lua/systems.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <flecs.h>
 
-void load_mod_state(sol::state &mod_state);
-void load_script_namespace(sol::state &mod_state);
+void load_mod_state(lua_State *L);
+void load_script_namespace(lua_State *L);
 void load_all_mods(flecs::world &world);
 void load_mod(flecs::world &world, const std::filesystem::path &path);
 
@@ -38,18 +39,17 @@ LuaModule::LuaModule(flecs::world &world) {
 }
 
 void load_config_file() {
-  sol::state config_state;
-  config_state.open_libraries(sol::lib::base, sol::lib::package);
-  sol::optional<sol::table> result =
-      config_state.safe_script_file("config.lua", sol::script_pass_on_error);
-  if (!result.has_value()) {
-    spdlog::error("Failed to load config.lua");
+  lua_State *L = luaL_newstate();
+  luaL_openlibs(L);
+  if (luaL_dofile(L, "config.lua") != LUA_OK) {
+    spdlog::error("Failed to load config.lua: {}", lua_tostring(L, -1));
+    lua_close(L);
     return;
   }
-  sol::table config = result.value();
-  spdlog::info("Font Name: {}",
-               config.get_or("font", std::string{"DefaultFont.ttf"}));
-  spdlog::info("Font Size: {}", config.get_or("font_size", 12));
+
+  // Todo: read config values from the Lua state and apply them to the game
+
+  lua_close(L);
 }
 
 void load_all_mods(flecs::world &world) {
@@ -83,18 +83,21 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   auto entity = world.entity(mod_name.c_str()).child_of(mods);
   auto &mod = entity.ensure<Mod>();
   mod.name = mod_name;
+  mod.state = luaL_newstate();
+  lua_set_mod_name(mod.state, mod_name);
 
-  auto solcorp_ns = mod.state["solcorp"].get_or_create<sol::table>();
-  // This makes the name read-only
-  solcorp_ns["mod_name"] = sol::property([&mod]() { return mod.name; });
+  lua_newtable(mod.state);
+  lua_setglobal(mod.state, "solcorp");
+
   load_mod_state(mod.state);
 
   auto init_file = path / "init.lua";
-  auto result =
-      mod.state.safe_script_file(init_file.string(), sol::script_pass_on_error);
-  if (!result.valid()) {
-    sol::error err = result;
-    spdlog::error("Failed to load {}: {}", init_file.string(), err.what());
+  if (luaL_loadfile(mod.state, init_file.string().c_str()) != LUA_OK ||
+      lua_pcall(mod.state, 0, LUA_MULTRET, 0) != LUA_OK) {
+    const char *err = lua_tostring(mod.state, -1);
+    spdlog::error("Failed to load {}: {}", init_file.string(),
+                  err ? err : "(unknown error)");
+    lua_pop(mod.state, 1);
     entity.destruct();
     return;
   }
@@ -103,7 +106,7 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
 }
 
 /**
- * @brief Runs a callback on very mod
+ * @brief Runs a callback on every mod
  *
  * @param world the flecs world
  * @param func The function to call
@@ -127,39 +130,57 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
 
 bool run_mod_handler(Mod &mod, flecs::world &world,
                      const std::string &handler) {
-  mod.state["solcorp"]["world"] = &world;
-  sol::protected_function function =
-      mod.state["solcorp"]["script"]["handlers"][handler.c_str()];
+  lua_State *L = mod.state;
+  lua_set_world(L, &world);
 
-  if (!function.valid()) {
+  lua_getglobal(L, "solcorp");
+  lua_getfield(L, -1, "script");
+  lua_getfield(L, -1, "handlers");
+  lua_getfield(L, -1, handler.c_str());
+
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 4);
     return true;
   }
-  // spdlog::debug("{} - Running mod handler {}", mod.name handler);
-  auto result = function();
-  if (!result.valid()) {
-    sol::error err = result;
+
+  if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+    std::string err = lua_tostring(L, -1);
+    lua_pop(L, 4); // errmsg, handlers, script, solcorp
     spdlog::error("{} - Could not run '{}' function: {}", mod.name, handler,
-                  err.what());
+                  err);
     return false;
   }
+
+  lua_pop(L, 3); // handlers, script, solcorp
   return true;
 }
 
-void load_mod_state(sol::state &mod_state) {
-  mod_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::math);
-
-  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
+void load_mod_state(lua_State *L) {
+  luaL_openlibs(L);
 
   // Set up the state with internal functions
-  load_logging(mod_state);
-  load_script_namespace(mod_state);
-  load_entity_usertype(mod_state);
-  load_entities_namespace(mod_state);
-  load_helpers_namespace(mod_state);
+  load_logging(L);
+  load_script_namespace(L);
+  load_entity_usertype(L);
+  load_entities_namespace(L);
+  load_helpers_namespace(L);
 }
 
-void load_script_namespace(sol::state &mod_state) {
-  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
-  auto script_ns = solcorp_ns["script"].get_or_create<sol::table>();
-  auto handlers_ns = script_ns["handlers"].get_or_create<sol::table>();
+void register_enum_table_lua(
+    flecs::world &world, const std::string &name,
+    const std::function<void(LuaEnumBuilder &)> &register_func) {
+  run_on_every_mod(world, [&name, &register_func](lua_State *L) {
+    lua_newtable(L);
+    int tbl_idx = lua_gettop(L);
+    LuaEnumBuilder builder(L, tbl_idx);
+    register_func(builder);
+    lua_setglobal(L, name.c_str());
+  });
+}
+
+void load_script_namespace(lua_State *L) {
+  lua_getglobal(L, "solcorp");
+  lua_get_or_create_table(L, "script");
+  lua_get_or_create_table(L, "handlers");
+  lua_pop(L, 3);
 }

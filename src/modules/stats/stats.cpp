@@ -3,7 +3,6 @@
 #include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
 #include <modules/base/base.h>
-#include <sol/forward.hpp>
 
 void systemInitialiseStats(flecs::iter &iter);
 
@@ -27,22 +26,22 @@ StatsModule::StatsModule(flecs::world &world) {
       .member("multiplicative", &Modifier::multiplicative);
 
   // Register lua types
-  register_lua_user_type<Stat>(
-      world, "Stat", [](sol::usertype<Stat> &userType) {
-        userType["base"] = sol::property(&Stat::base, &Stat::setBase);
-        userType["value"] = &Stat::value;
-        userType["id"] = &Stat::id;
-        userType["display"] = &Stat::display;
-        userType["description"] = &Stat::description;
-        userType["modifiers"] = &Stat::modifiers;
-      });
-  register_lua_user_type<Effect>(world, "Effect");
+  register_component_lua<Stat>(world, "Stat", [](LuaFieldBuilder<Stat> &b) {
+    b.computed<[](const Stat *s) { return s->base(); },
+               [](Stat *s, double v) { s->setBase(v); }>("base")
+        .getter<[](const Stat *s) { return s->value(); }>("value")
+        .getter<[](const Stat *s) { return s->id(); }>("id")
+        .getter<[](const Stat *s) { return s->display(); }>("display")
+        .getter<[](const Stat *s) { return s->description(); }>("description");
+  });
 
-  register_lua_user_type<Modifier>(
-      world, "Modifier", [](sol::usertype<Modifier> &userType) -> void {
-        userType["target_stat"] = &Modifier::target_stat;
-        userType["additive"] = &Modifier::additive;
-        userType["multiplicative"] = &Modifier::multiplicative;
+  register_component_lua<Effect>(world, "Effect");
+
+  register_component_lua<Modifier>(
+      world, "Modifier", [](LuaFieldBuilder<Modifier> &b) {
+        b.field<&Modifier::target_stat>("target_stat")
+            .field<&Modifier::additive>("additive")
+            .field<&Modifier::multiplicative>("multiplicative");
       });
   // Register Effect category
   auto s = world.set_scope(0);

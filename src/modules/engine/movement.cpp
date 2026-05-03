@@ -17,15 +17,13 @@ void systemUpdateExpiry(flecs::iter &it, size_t row, Expire &e) {
 }
 
 void registerMovement(flecs::world &world) {
-  register_lua_user_type<Velocity>(world, "Velocity",
-                                   [](sol::usertype<Velocity> &userType) {
-                                     userType["x"] = &Velocity::x;
-                                     userType["y"] = &Velocity::y;
-                                   });
-  register_lua_user_type<Expire>(world, "Expire",
-                                 [](sol::usertype<Expire> &userType) {
-                                   userType["millis"] = &Expire::millis;
-                                 });
+  register_component_lua<Velocity>(
+      world, "Velocity", [](LuaFieldBuilder<Velocity> &b) {
+        b.field<&Velocity::x>("x").field<&Velocity::y>("y");
+      });
+  register_component_lua<Expire>(
+      world, "Expire",
+      [](LuaFieldBuilder<Expire> &b) { b.field<&Expire::millis>("millis"); });
 
   // Register Systems
   world.system<const Velocity, Transform>("Apply Velocity")

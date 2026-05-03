@@ -13,7 +13,6 @@
 #include "modules/stats/stats.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
-#include <sol/types.hpp>
 #include <spdlog/spdlog.h>
 
 extern unsigned char construction_png[];
@@ -61,24 +60,26 @@ SiteModule::SiteModule(flecs::world &world) {
       "manufacturingE", &RocketPrefabWindow::manufacturingE);
 
   // Register Lua bindings
-  register_lua_user_type<CurrentSite>(world, "CurrentSite");
-  register_lua_user_type<Site>(world, "Site");
-  register_lua_user_type<SiteLocation>(
-      world, "SiteLocation", [](sol::usertype<SiteLocation> &userType) {
-        userType["x"] = &SiteLocation::x;
-        userType["y"] = &SiteLocation::y;
+  register_component_lua<CurrentSite>(world, "CurrentSite");
+  register_component_lua<Site>(world, "Site");
+  register_component_lua<SiteLocation>(
+      world, "SiteLocation", [](LuaFieldBuilder<SiteLocation> &b) {
+        b.field<&SiteLocation::x>("x").field<&SiteLocation::y>("y");
       });
-  register_lua_user_type<Launchpad>(
-      world, "Launchpad", [](sol::usertype<Launchpad> &userType) {
-        userType["max_weight"] = &Launchpad::max_weight;
-        userType["prep_days"] = &Launchpad::prep_days;
+  register_component_lua<Launchpad>(
+      world, "Launchpad", [](LuaFieldBuilder<Launchpad> &b) {
+        b.nested<&Launchpad::max_weight>("max_weight", "Stat")
+            .nested<&Launchpad::prep_days>("prep_days", "Stat");
       });
-  register_lua_user_type<Office>(world, "Office");
-  register_lua_user_type<Storage>(world, "Storage");
-  register_lua_user_type<Manufacturing>(
-      world, "Manufacturing", [](sol::usertype<Manufacturing> &userType) {
-        userType["max_weight"] = &Manufacturing::max_weight;
-        userType["available_effort"] = &Manufacturing::available_effort;
+  register_component_lua<Office>(
+      world, "Office", [](LuaFieldBuilder<Office> &b) {
+        b.nested<&Office::max_desks>("max_desks", "Stat");
+      });
+  register_component_lua<Storage>(world, "Storage");
+  register_component_lua<Manufacturing>(
+      world, "Manufacturing", [](LuaFieldBuilder<Manufacturing> &b) {
+        b.field<&Manufacturing::max_weight>("max_weight")
+            .field<&Manufacturing::available_effort>("available_effort");
       });
 
   // Register Systems

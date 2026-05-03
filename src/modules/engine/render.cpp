@@ -24,39 +24,36 @@ void systemRenderText(flecs::entity, const Text &, const Texture &,
 
 void registerRender(flecs::world &world) {
 
-  register_lua_user_type<Color>(world, "Color",
-                                [](sol::usertype<Color> &userType) {
-                                  userType["r"] = &Color::r;
-                                  userType["g"] = &Color::g;
-                                  userType["b"] = &Color::b;
-                                  userType["a"] = &Color::a;
-                                });
-  register_lua_user_type<Point>(world, "Point",
-                                [](sol::usertype<Point> &userType) {
-                                  userType["x"] = &Point::x;
-                                  userType["y"] = &Point::y;
-                                });
-  register_lua_user_type<Transform>(
-      world, "Transform", [](sol::usertype<Transform> &userType) {
-        userType["relativePosition"] = &Transform::relativePosition;
-        userType["worldPosition"] = &Transform::worldPosition;
+  register_component_lua<Color>(world, "Color", [](LuaFieldBuilder<Color> &b) {
+    b.field<&Color::r>("r")
+        .field<&Color::g>("g")
+        .field<&Color::b>("b")
+        .field<&Color::a>("a");
+  });
+  register_component_lua<Point>(world, "Point", [](LuaFieldBuilder<Point> &b) {
+    b.field<&Point::x>("x").field<&Point::y>("y");
+  });
+  register_component_lua<Transform>(
+      world, "Transform", [](LuaFieldBuilder<Transform> &b) {
+        b.nested<&Transform::relativePosition>("relativePosition", "Point")
+            .nested<&Transform::worldPosition>("worldPosition", "Point");
       });
-  register_lua_user_type<Sprite>(world, "Sprite",
-                                 [](sol::usertype<Sprite> &userType) {
-                                   userType["x"] = &Sprite::x;
-                                   userType["y"] = &Sprite::y;
-                                   userType["width"] = &Sprite::width;
-                                   userType["height"] = &Sprite::height;
-                                   userType["rotation"] = &Sprite::rotation;
-                                   userType["flip"] = &Sprite::flip;
+  register_component_lua<Sprite>(world, "Sprite",
+                                 [](LuaFieldBuilder<Sprite> &b) {
+                                   b.field<&Sprite::x>("x")
+                                       .field<&Sprite::y>("y")
+                                       .field<&Sprite::width>("width")
+                                       .field<&Sprite::height>("height")
+                                       .field<&Sprite::rotation>("rotation")
+                                       .field<&Sprite::flip>("flip")
+                                       .field<&Sprite::texture>("texture");
                                  });
-  register_lua_user_type<Text>(world, "Text",
-                               [](sol::usertype<Text> &userType) {
-                                 userType["text"] = &Text::text;
-                                 userType["color"] = &Text::color;
-                                 userType["rotation"] = &Text::rotation;
-                                 userType["flip"] = &Text::flip;
-                               });
+  register_component_lua<Text>(world, "Text", [](LuaFieldBuilder<Text> &b) {
+    b.field<&Text::text>("text")
+        .field<&Text::rotation>("rotation")
+        .field<&Text::flip>("flip")
+        .nested<&Text::color>("color", "Color");
+  });
 
   auto scope = world.set_scope(0);
   world.entity("Textures");

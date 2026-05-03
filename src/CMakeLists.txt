@@ -11,6 +11,7 @@ list(APPEND SolCorpSources
     modules/lua/helpers.cpp
     modules/lua/lua.cpp
     modules/lua/logging.cpp
+    modules/lua/lua_registry.cpp
     modules/lua/systems.cpp
     modules/main_menu/main_menu.cpp
     modules/rocket_launch/rocket_launch.cpp
@@ -44,6 +45,7 @@ list(APPEND SolCorpHeaders
     modules/lua/helpers.h
     modules/lua/lua.h
     modules/lua/logging.h
+    modules/lua/lua_registry.h
     modules/lua/systems.h
     modules/main_menu/main_menu.h
     modules/rocket_launch/rocket_launch.h
@@ -74,16 +76,10 @@ fetchcontent_declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/
     GIT_TAG v1.x
 )
-fetchcontent_declare(sol3
-    SYSTEM
-    GIT_REPOSITORY https://github.com/ThePhD/sol2/
-    GIT_TAG develop
-)
-
 
 set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
-fetchcontent_makeavailable(flecs spdlog sol3)
+fetchcontent_makeavailable(flecs spdlog)
 
 add_compile_definitions(SC_VERSION="${PROJECT_VERSION}")
 
@@ -144,7 +140,6 @@ target_link_libraries(solcorplib ${SDL2TTF_LINK_LIBRARIES})
 target_link_libraries(solcorplib flecs::flecs_static)
 target_link_libraries(solcorplib spdlog::spdlog)
 target_link_libraries(solcorplib imgui)
-target_link_libraries(solcorplib sol2::sol2)
 target_link_libraries(solcorplib ${LUA54_LINK_LIBRARIES})
 
 # Embedded textures

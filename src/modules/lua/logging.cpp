@@ -1,44 +1,49 @@
 #include "logging.h"
-#include "spdlog/spdlog.h"
-#include <sol/types.hpp>
+#include "lua_registry.h"
+#include <spdlog/spdlog.h>
 
-void log_info(sol::this_state s, const std::string &message) {
-  sol::state_view mod_state(s);
-  std::string mod_name = mod_state["solcorp"]["mod_name"]();
+static int log_info(lua_State *L) {
+  const char *msg = luaL_checkstring(L, 1);
+  std::string mod_name = lua_get_mod_name(L);
   auto logger = spdlog::get(mod_name);
   if (logger) {
-    logger->info("{}", message);
+    logger->info("{}", msg);
   }
+  return 0;
 }
 
-void log_warn(sol::this_state s, const std::string &message) {
-  sol::state_view mod_state(s);
-  std::string mod_name = mod_state["solcorp"]["mod_name"]();
+static int log_warn(lua_State *L) {
+  const char *msg = luaL_checkstring(L, 1);
+  std::string mod_name = lua_get_mod_name(L);
   auto logger = spdlog::get(mod_name);
   if (logger) {
-    logger->warn("{}", message);
+    logger->warn("{}", msg);
   }
+  return 0;
 }
 
-void log_error(sol::this_state s, const std::string &message) {
-  sol::state_view mod_state(s);
-  std::string mod_name = mod_state["solcorp"]["mod_name"]();
+static int log_error(lua_State *L) {
+  const char *msg = luaL_checkstring(L, 1);
+  std::string mod_name = lua_get_mod_name(L);
   auto logger = spdlog::get(mod_name);
   if (logger) {
-    logger->error("{}", message);
+    logger->error("{}", msg);
   }
+  return 0;
 }
 
-void load_logging(sol::state &mod_state) {
-  auto solcorp_ns = mod_state["solcorp"].get_or_create<sol::table>();
-  auto logging_ns = solcorp_ns["logging"].get_or_create<sol::table>();
-
-  std::string mod_name = solcorp_ns["mod_name"]();
+void load_logging(lua_State *L) {
+  std::string mod_name = lua_get_mod_name(L);
   auto sink = spdlog::default_logger()->sinks()[0];
   auto logger = std::make_shared<spdlog::logger>(mod_name, sink);
   spdlog::register_logger(logger);
 
-  logging_ns.set_function("info", log_info);
-  logging_ns.set_function("warn", log_warn);
-  logging_ns.set_function("error", log_error);
+  lua_getglobal(L, "solcorp");
+  lua_get_or_create_table(L, "logging");
+
+  lua_register_function(L, "info", log_info);
+  lua_register_function(L, "warn", log_warn);
+  lua_register_function(L, "error", log_error);
+
+  lua_pop(L, 2);
 }

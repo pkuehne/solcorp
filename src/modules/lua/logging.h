@@ -1,5 +1,5 @@
 #pragma once
 
-#include <sol/sol.hpp>
+#include <lua.hpp>
 
-void load_logging(sol::state &mod_state);
+void load_logging(lua_State *L);

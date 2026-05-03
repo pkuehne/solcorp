@@ -75,43 +75,38 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<CanLiftTo>().add(flecs::Symmetric);
 
   // Register Lua bindings
-  register_lua_user_type<LaunchPlan>(
-      world, "LaunchPlan", [](sol::usertype<LaunchPlan> &userType) {
-        userType["launch_date"] = &LaunchPlan::launch_date;
+  register_component_lua<LaunchPlan>(
+      world, "LaunchPlan", [](LuaFieldBuilder<LaunchPlan> &b) {
+        b.field<&LaunchPlan::launch_date>("launch_date");
       });
-  register_lua_user_type<Rocket>(
-      world, "Rocket", [](sol::usertype<Rocket> &userType) {
-        userType["failure_rate"] = &Rocket::failure_rate;
-        userType["cost"] = &Rocket::cost;
+  register_component_lua<Rocket>(
+      world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
+        b.nested<&Rocket::failure_rate>("failure_rate", "Stat")
+            .nested<&Rocket::cost>("cost", "Stat");
       });
-  register_lua_user_type<Payload>(world, "Payload",
-                                  [](sol::usertype<Payload> &userType) {
-                                    userType["mass"] = &Payload::mass;
-                                  });
-  register_lua_user_type<CanLiftTo>(
-      world, "CanLiftTo", [](sol::usertype<CanLiftTo> &userType) {
-        userType["max_mass"] = &CanLiftTo::max_mass;
+  register_component_lua<Payload>(
+      world, "Payload",
+      [](LuaFieldBuilder<Payload> &b) { b.field<&Payload::mass>("mass"); });
+  register_component_lua<CanLiftTo>(world, "CanLiftTo",
+                                    [](LuaFieldBuilder<CanLiftTo> &b) {
+                                      b.field<&CanLiftTo::max_mass>("max_mass");
+                                    });
+  register_component_lua<Contract>(
+      world, "Contract", [](LuaFieldBuilder<Contract> &b) {
+        b.field<&Contract::client>("client")
+            .field<&Contract::description>("description")
+            .field<&Contract::upfront_payment>("upfront_payment")
+            .field<&Contract::completion_payment>("completion_payment")
+            .field<&Contract::status>("status")
+            .field<&Contract::failed>("failed");
       });
-  register_lua_user_type<Contract>(
-      world, "Contract", [](sol::usertype<Contract> &userType) {
-        userType["client"] = &Contract::client;
-        userType["description"] = &Contract::description;
-        userType["upfront_payment"] = &Contract::upfront_payment;
-        userType["completion_payment"] = &Contract::completion_payment;
-        userType["status"] = &Contract::status;
-        userType["failed"] = &Contract::failed;
-      });
-  register_lua_enum_table<ContractStatus>(
-      world, "ContractStatus", [](sol::table &enumTable) {
-        enumTable["Open"] = ContractStatus::Open;
-        enumTable["Accepted"] = ContractStatus::Accepted;
-        enumTable["Closed"] = ContractStatus::Closed;
-      });
-  register_lua_user_type<ContractPayload>(
-      world, "ContractPayload", [](sol::usertype<ContractPayload> &) {});
-  register_lua_user_type<ContractTargetOrbit>(
-      world, "ContractTargetOrbit",
-      [](sol::usertype<ContractTargetOrbit> &) {});
+  register_enum_table_lua(world, "ContractStatus", [](LuaEnumBuilder &b) {
+    b.value("Open", ContractStatus::Open)
+        .value("Accepted", ContractStatus::Accepted)
+        .value("Closed", ContractStatus::Closed);
+  });
+  register_component_lua<ContractPayload>(world, "ContractPayload");
+  register_component_lua<ContractTargetOrbit>(world, "ContractTargetOrbit");
 
   // Register systems
   world.system("Create Rocket Prefabs")
