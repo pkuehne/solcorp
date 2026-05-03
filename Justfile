@@ -1,5 +1,7 @@
 set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 
+build_dir := "build"
+
 help:
     @just --list
 
@@ -16,20 +18,20 @@ configure-sanitize:
 
 install:
     cmake --preset release-no-tests
-    cmake --build build --parallel
-    cmake --install build --prefix dist
+    cmake --build {{build_dir}} --parallel
+    cmake --install {{build_dir}} --prefix dist
 
 package:
-    cpack --config build/CPackConfig.cmake -B build
+    cpack --config {{build_dir}}/CPackConfig.cmake -B {{build_dir}}
 
 build:
-    cmake --build build --target all --parallel
+    cmake --build {{build_dir}} --target all --parallel
 
 test:
-    cmake --build build --target unit_tests --parallel
+    cmake --build {{build_dir}} --target unit_tests --parallel
 
 run:
-    cmake --build build --target run --parallel
+    cmake --build {{build_dir}} --target run --parallel
 
 format: format-cpp format-lua
 
@@ -50,7 +52,7 @@ check-format-lua:
 lint: lint-cpp lint-lua 
 
 lint-cpp:
-    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build
+    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p {{build_dir}}
 
 lint-lua:
     luacheck config.lua mods/
