@@ -14,7 +14,7 @@
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 void systemRenderClear(const Renderer &);
-void systemRenderPresent(const Renderer &r);
+void systemRenderPresent(const Renderer &);
 void systemRenderSprite(flecs::entity, const Sprite &, const Transform &,
                         const Renderer &);
 void systemCreateTextureForText(flecs::entity e, Text &text,
@@ -121,7 +121,7 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   Renderer r;
-  flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+  flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
   r.window = SDL_CreateWindow("Sol, Corp", 0, 0, m_width, m_height, flags);
   if (r.window == nullptr) {
     spdlog::error("Failed to create SDL Window: {}", SDL_GetError());
@@ -177,7 +177,10 @@ void systemRenderClear(const Renderer &r) { SDL_RenderClear(r.renderer); }
 
 /// @brief System to present the rendering instructions from previous systems
 /// @param r The Render Component Singleton
-void systemRenderPresent(const Renderer &r) { SDL_RenderPresent(r.renderer); }
+void systemRenderPresent(const Renderer &r) {
+  SDL_RenderPresent(r.renderer);
+  SDL_ShowWindow(r.window);
+}
 
 /// @brief System to render a given TileSprite to a RenderTarget
 /// @param e The entity to which the sprite belongs
