@@ -225,7 +225,7 @@ jobs:
         run: nix develop --command cmake --build build --parallel
 
       - name: Lint C++
-        run: nix develop --command find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build
+        run: nix develop --command bash -c 'find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build'
 
       - name: Lint Lua
         run: nix develop --command luacheck config.lua mods/
