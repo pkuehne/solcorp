@@ -117,7 +117,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install just
-        run: winget install --id Casey.Just --exact --accept-source-agreements --accept-package-agreements
+        uses: extractions/setup-just@v4
       - name: Set up vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -144,7 +144,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install just
-        run: winget install --id Casey.Just --exact --accept-source-agreements --accept-package-agreements
+        uses: extractions/setup-just@v4
       - name: Set up vcpkg
         uses: lukka/run-vcpkg@v11
         with:
