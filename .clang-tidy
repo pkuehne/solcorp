@@ -22,7 +22,6 @@ Checks: >-
   -modernize-use-auto,
   -modernize-use-nodiscard,
   -modernize-pass-by-value,
-  -modernize-use-override,
   -modernize-avoid-c-arrays,
   -modernize-use-designated-initializers,
   -modernize-use-integer-sign-comparison,
