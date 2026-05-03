@@ -222,7 +222,7 @@ jobs:
         run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
 
       - name: Lint C++
-        run: nix develop --command just lint-cpp
+        run: nix develop --command find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build
 
       - name: Lint Lua
-        run: nix develop --command just lint-lua
+        run: nix develop --command luacheck config.lua mods/
