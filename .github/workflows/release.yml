@@ -40,7 +40,7 @@ jobs:
           restore-keys: fetchcontent-linux-release-
 
       - name: Configure
-        run: nix develop --command cmake --preset release-no-tests
+        run: nix develop --command just configure-release-no-tests
 
       - name: Build
         run: nix develop --command just build
@@ -79,7 +79,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake --preset windows-release-no-tests
+        run: just configure-release-no-tests
 
       - name: Build
         run: just build

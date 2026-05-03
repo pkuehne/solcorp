@@ -6,18 +6,21 @@ help:
     @just --list
 
 configure:
-    cmake --preset debug
+    cmake --preset {{ if os() == "windows" { "windows-debug" } else { "linux-debug" } }}
 
 configure-debug: configure
 
 configure-release:
-    cmake --preset release
+    cmake --preset {{ if os() == "windows" { "windows-release" } else { "linux-release" } }}
+
+configure-release-no-tests:
+    cmake --preset {{ if os() == "windows" { "windows-release-no-tests" } else { "linux-release-no-tests" } }}
 
 configure-sanitize:
-    cmake --preset sanitize
+    cmake --preset linux-sanitize
 
 install:
-    cmake --preset release-no-tests
+    just configure-release-no-tests
     cmake --build {{build_dir}} --parallel
     cmake --install {{build_dir}} --prefix dist
 

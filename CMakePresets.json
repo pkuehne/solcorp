@@ -8,41 +8,56 @@
       "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "debug",
-      "displayName": "Debug",
+      "name": "base-debug",
+      "hidden": true,
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "release",
-      "displayName": "Release",
+      "name": "base-release",
+      "hidden": true,
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "release-no-tests",
-      "displayName": "Release (no tests)",
-      "inherits": "release",
+      "name": "base-release-no-tests",
+      "hidden": true,
+      "inherits": "base-release",
       "cacheVariables": {
         "SC_BUILD_TESTS": "OFF"
       }
     },
     {
-      "name": "sanitize",
-      "displayName": "Debug with sanitizers",
-      "inherits": "debug",
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "inherits": "base-debug"
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "inherits": "base-release"
+    },
+    {
+      "name": "linux-release-no-tests",
+      "displayName": "Linux Release (no tests)",
+      "inherits": "base-release-no-tests"
+    },
+    {
+      "name": "linux-sanitize",
+      "displayName": "Linux Debug with sanitizers",
+      "inherits": "base-debug",
       "cacheVariables": {
         "SC_RUN_SANITIZERS": "ON"
       }
     },
     {
-      "name": "windows-release-no-tests",
-      "displayName": "Windows Release (no tests)",
-      "inherits": "release-no-tests",
+      "name": "windows-debug",
+      "displayName": "Windows Debug",
+      "inherits": "base-debug",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
@@ -50,7 +65,15 @@
     {
       "name": "windows-release",
       "displayName": "Windows Release",
-      "inherits": "release",
+      "inherits": "base-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "windows-release-no-tests",
+      "displayName": "Windows Release (no tests)",
+      "inherits": "base-release-no-tests",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
