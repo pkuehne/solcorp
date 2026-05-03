@@ -57,7 +57,7 @@ struct Sprite {
 };
 
 struct Font {
-  TTF_Font *ptr = 0;
+  TTF_Font *ptr = nullptr;
   std::string name;
   int point_size = 12;
 };

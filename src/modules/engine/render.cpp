@@ -204,7 +204,7 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   }
 
   SDL_RenderCopyExF(renderer.renderer, t.ptr, &source, &destination,
-                    sprite.rotation, NULL,
+                    sprite.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
@@ -249,7 +249,7 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
                            target.worldPosition.y * 1.0f, texture.width * 1.0f,
                            texture.height * 1.0f};
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
-                    text.rotation, NULL,
+                    text.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(text.flip));
 }
 
@@ -270,7 +270,8 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
                   SDL_GetError());
     throw std::runtime_error("Failed to create texture from surface");
   }
-  SDL_QueryTexture(texture.ptr, NULL, NULL, &texture.width, &texture.height);
+  SDL_QueryTexture(texture.ptr, nullptr, nullptr, &texture.width,
+                   &texture.height);
 
   return texture;
 }

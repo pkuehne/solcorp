@@ -17,7 +17,6 @@ Checks: >-
   -performance-unnecessary-value-param,
   -performance-unnecessary-copy-initialization,
   -portability-avoid-pragma-once,
-  -modernize-use-nullptr,
   -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
   -modernize-use-auto,
