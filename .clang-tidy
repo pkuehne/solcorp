@@ -24,6 +24,6 @@ Checks: >-
   -modernize-avoid-c-arrays,
   -modernize-redundant-void-arg,
   -readability-identifier-length,
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
 FormatStyle: none
