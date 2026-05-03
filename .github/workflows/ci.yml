@@ -221,6 +221,9 @@ jobs:
       - name: Configure
         run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
 
+      - name: Build
+        run: nix develop --command cmake --build build --parallel
+
       - name: Lint C++
         run: nix develop --command find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build
 
