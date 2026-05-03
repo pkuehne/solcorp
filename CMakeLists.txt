@@ -20,7 +20,13 @@ project(SolCorp
 message("Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 option(SC_BUILD_TESTS "Whether to build the unit tests" ON)
 option(SC_LINT_COMPILATION "Whether to lint as we build with clang-tidy" OFF)
+option(SC_RUN_SANITIZERS "Whether to enable sanitizers" OFF)
 set(COVERAGE_PERCENTAGE 90 CACHE STRING "Minimum Coverage number to succeed")
+
+if(SC_RUN_SANITIZERS AND NOT MSVC)
+  add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address,undefined)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
