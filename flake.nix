@@ -3,7 +3,7 @@
     "Dev shell for a C++20 SDL2/Flecs/ImGui/Lua project (CMake + Ninja)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -24,7 +24,6 @@
           xorg.libXrender
           xorg.libXinerama
           mesa
-          mesa.drivers
           wayland
           libxkbcommon
           vulkan-loader
@@ -38,7 +37,7 @@
         ];
 
         # Deps that pkg-config needs for SDL2_*:
-        sdlImageDeps = with pkgs; [ libpng libjpeg libtiff libwebp zlib lerc ];
+        sdlImageDeps = with pkgs; [ libpng libjpeg libtiff libwebp zlib lerc libdeflate xz zstd ];
         sdlTtfDeps = with pkgs; [
           freetype
           harfbuzz
@@ -54,6 +53,7 @@
             SDL2_image
             SDL2_ttf
             SDL2_mixer
+            sdl3
             lua5_4
             spdlog
             fmt
@@ -107,8 +107,8 @@
             fi
 
             # Make sure Mesa can find DRI/EGL drivers
-            export LIBGL_DRIVERS_PATH="${pkgs.mesa.drivers}/lib/dri"''${LIBGL_DRIVERS_PATH:+:$LIBGL_DRIVERS_PATH}
-            export LD_LIBRARY_PATH="${pkgs.mesa.drivers}/lib"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+            export LIBGL_DRIVERS_PATH="${pkgs.mesa}/lib/dri"''${LIBGL_DRIVERS_PATH:+:$LIBGL_DRIVERS_PATH}
+            export LD_LIBRARY_PATH="${pkgs.mesa}/lib:${pkgs.sdl3}/lib"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
             export EGL_PLATFORM=wayland
           '';
         };
