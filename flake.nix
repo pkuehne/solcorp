@@ -53,6 +53,7 @@
             SDL2_image
             SDL2_ttf
             SDL2_mixer
+            sdl3
             lua5_4
             spdlog
             fmt
@@ -107,7 +108,7 @@
 
             # Make sure Mesa can find DRI/EGL drivers
             export LIBGL_DRIVERS_PATH="${pkgs.mesa}/lib/dri"''${LIBGL_DRIVERS_PATH:+:$LIBGL_DRIVERS_PATH}
-            export LD_LIBRARY_PATH="${pkgs.mesa}/lib"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+            export LD_LIBRARY_PATH="${pkgs.mesa}/lib:${pkgs.sdl3}/lib"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
             export EGL_PLATFORM=wayland
           '';
         };
