@@ -36,9 +36,10 @@ else()
 endif()
 
 add_library(imgui STATIC "${imgui_sources}")
-target_include_directories(imgui PUBLIC ./imgui/)
-target_include_directories(imgui PUBLIC ${SDL2_INCLUDE_DIRS})
-target_include_directories(imgui PUBLIC ${SDL2IMAGE_INCLUDE_DIRS})
+target_include_directories(imgui SYSTEM PUBLIC ./imgui/)
+target_include_directories(imgui SYSTEM PUBLIC ${SDL2_INCLUDE_DIRS})
+target_include_directories(imgui SYSTEM PUBLIC ${SDL2IMAGE_INCLUDE_DIRS})
+target_compile_options(imgui PRIVATE -Wno-nontrivial-memcall)
 
 target_link_libraries(imgui ${SDL2_LINK_LIBRARIES})
 target_link_libraries(imgui ${SDL2IMAGE_LINK_LIBRARIES})
