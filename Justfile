@@ -15,9 +15,12 @@ configure-sanitize:
     cmake --preset sanitize
 
 install:
-    cmake --preset release-no-tests -B build-release
-    cmake --build build-release --parallel
-    cmake --install build-release --prefix dist
+    cmake --preset release-no-tests
+    cmake --build build --parallel
+    cmake --install build --prefix dist
+
+package:
+    cpack --config build/CPackConfig.cmake -B build
 
 build:
     cmake --build build --target all --parallel
