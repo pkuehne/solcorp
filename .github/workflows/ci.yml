@@ -41,7 +41,7 @@ jobs:
           restore-keys: fetchcontent-
 
       - name: Configure
-        run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF
+        run: nix develop --command cmake --preset release-no-tests
 
       - name: Build
         run: nix develop --command just build
@@ -72,7 +72,7 @@ jobs:
           restore-keys: fetchcontent-
 
       - name: Configure
-        run: nix develop --command just init-debug
+        run: nix develop --command just configure-debug
 
       - name: Test
         run: nix develop --command just test
@@ -103,7 +103,7 @@ jobs:
           restore-keys: fetchcontent-
 
       - name: Configure
-        run: nix develop --command just init-debug-sanitize
+        run: nix develop --command just configure-sanitize
 
       - name: Test
         run: nix develop --command just test
@@ -129,8 +129,7 @@ jobs:
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Configure
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DSC_BUILD_TESTS=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+        run: cmake --preset windows-release-no-tests
       - name: Build
         run: just build
 
@@ -155,8 +154,7 @@ jobs:
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Configure
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+        run: cmake --preset windows-release
       - name: Test
         run: just test
 
@@ -208,7 +206,7 @@ jobs:
           restore-keys: fetchcontent-
 
       - name: Configure
-        run: nix develop --command just init-debug
+        run: nix develop --command just configure-debug
 
       - name: Lint C++
         run: nix develop --command just lint-cpp

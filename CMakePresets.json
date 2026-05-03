@@ -1,0 +1,59 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "release-no-tests",
+      "displayName": "Release (no tests)",
+      "inherits": "release",
+      "cacheVariables": {
+        "SC_BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "Debug with sanitizers",
+      "inherits": "debug",
+      "cacheVariables": {
+        "SC_RUN_SANITIZERS": "ON"
+      }
+    },
+    {
+      "name": "windows-release-no-tests",
+      "displayName": "Windows Release (no tests)",
+      "inherits": "release-no-tests",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows Release",
+      "inherits": "release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    }
+  ]
+}

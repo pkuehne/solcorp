@@ -3,19 +3,19 @@ set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 help:
     @just --list
 
-init:
-    cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
+configure:
+    cmake --preset debug
 
-init-debug: init
+configure-debug: configure
 
-init-release:
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+configure-release:
+    cmake --preset release
 
-init-sanitize:
-    cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSC_RUN_SANITIZERS=ON -G Ninja
+configure-sanitize:
+    cmake --preset sanitize
 
 install:
-    cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DSC_BUILD_TESTS=OFF -G Ninja
+    cmake --preset release-no-tests -B build-release
     cmake --build build-release --parallel
     cmake --install build-release --prefix dist
 
