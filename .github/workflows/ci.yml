@@ -193,12 +193,14 @@ jobs:
       - name: Check Lua formatting
         run: nix develop --command stylua --check config.lua mods/
 
-  lua-lint:
-    name: "Linter"
+  lint:
+    name: "Lint"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@v34
@@ -208,6 +210,19 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-            
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v5
+        with:
+          path: build/_deps
+          key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-
+
+      - name: Configure
+        run: nix develop --command cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
+
+      - name: Lint C++
+        run: nix develop --command bash -c 'find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build'
+
       - name: Lint Lua
         run: nix develop --command luacheck config.lua mods/

@@ -31,6 +31,7 @@ format-lua:
 lint: lint-cpp lint-lua 
 
 lint-cpp:
+    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p build
 
 lint-lua:
     luacheck config.lua mods/
