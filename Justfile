@@ -6,6 +6,14 @@ help:
 init:
     cmake -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
 
+init-debug: init
+
+init-release:
+    cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+
+init-sanitize:
+    cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSC_RUN_SANITIZERS=ON -G Ninja
+
 install:
     cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DSC_BUILD_TESTS=OFF -G Ninja
     cmake --build build-release --parallel
@@ -27,6 +35,14 @@ format-cpp:
 
 format-lua:
     stylua config.lua mods/
+
+check-format: check-format-cpp check-format-lua
+
+check-format-cpp:
+    find src test \( -name "*.cpp" -o -name "*.h" \) -print0 | xargs -0 -r clang-format --dry-run -Werror
+
+check-format-lua:
+    stylua --check config.lua mods/
 
 lint: lint-cpp lint-lua 
 
