@@ -59,13 +59,14 @@ void drawCelestialDetails(flecs::entity selected_body) {
     auto row = [](std::string_view label, std::string_view value) {
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      ImGui::TextUnformatted(label.data());
+      ImGui::TextUnformatted(label.data(), label.data() + label.size());
       ImGui::TableSetColumnIndex(1);
       float w = ImGui::GetColumnWidth();
-      float text_w = ImGui::CalcTextSize(value.data()).x;
+      float text_w =
+          ImGui::CalcTextSize(value.data(), value.data() + value.size()).x;
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() + w - text_w -
                            ImGui::GetStyle().CellPadding.x * 2);
-      ImGui::TextUnformatted(value.data());
+      ImGui::TextUnformatted(value.data(), value.data() + value.size());
     };
 
     row("Semi-major axis", fmt::format("{:.0f} m", cb.semi_major_axis));
