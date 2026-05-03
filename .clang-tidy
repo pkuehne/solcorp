@@ -1,8 +1,19 @@
 Checks: >-
-  bugprone-infinite-loop,
-  bugprone-use-after-move,
-  bugprone-macro-parentheses,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*,
   modernize-*,
+  -clang-analyzer-deadcode.DeadStores,
+  -bugprone-narrowing-conversions,
+  -bugprone-macro-parentheses,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-branch-clone,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -performance-move-const-arg,
+  -performance-enum-size,
+  -performance-unnecessary-value-param,
   -modernize-use-nullptr,
   -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
@@ -10,8 +21,9 @@ Checks: >-
   -modernize-use-nodiscard,
   -modernize-pass-by-value,
   -modernize-use-override,
+  -modernize-avoid-c-arrays,
+  -modernize-redundant-void-arg,
   -readability-identifier-length,
-  -bugprone-narrowing-conversions
 WarningsAsErrors: ''
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
 FormatStyle: none
