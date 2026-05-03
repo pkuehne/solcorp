@@ -64,8 +64,8 @@
         tools = with pkgs; [
           cmake
           ninja
+          clang-tools # clangd/clang-tidy (must precede clang so wrapped binaries win PATH)
           clang
-          clang-tools # clangd/clang-tidy
           gdb
           pkg-config
           git
