@@ -64,10 +64,10 @@
         tools = with pkgs; [
           cmake
           ninja
-          gcc
+          clang
+          clang-tools # clangd/clang-tidy
           gdb
           pkg-config
-          clang-tools # clangd/clang-tidy, handy even if you build with gcc
           git
           patchelf
           wl-clipboard
@@ -92,6 +92,9 @@
           # PKG_CONFIG_PATH = ...
 
           shellHook = ''
+            export CC=clang
+            export CXX=clang++
+
             # Prefer WSLg sockets
             if [ -S /mnt/wslg/runtime-dir/wayland-0 ]; then
               export XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
