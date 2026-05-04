@@ -84,6 +84,25 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
         b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
             .nested<&Rocket::cost>({"cost"}, {"Stat"});
       });
+  register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
+    b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("IntegratingPayload", RocketStateId::IntegratingPayload)
+        .value("IntegrationComplete", RocketStateId::IntegrationComplete)
+        .value("RollingOut", RocketStateId::RollingOut)
+        .value("OnPad", RocketStateId::OnPad)
+        .value("Launched", RocketStateId::Launched)
+        .value("Unavailable", RocketStateId::Unavailable);
+  });
+  register_component_lua<RocketState>(
+      world, "RocketState", [](LuaFieldBuilder<RocketState> &b) {
+        b.field<&RocketState::current>("current").field<&RocketState::target>(
+            "target");
+      });
+  register_component_lua<RocketStateTransitionBlocked>(
+      world, "RocketStateTransitionBlocked",
+      [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
+        b.field<&RocketStateTransitionBlocked::reason>("reason");
+      });
   register_component_lua<Payload>(
       world, "Payload",
       [](LuaFieldBuilder<Payload> &b) { b.field<&Payload::mass>("mass"); });

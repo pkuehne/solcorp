@@ -7,7 +7,7 @@
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
 
-struct Construction {
+struct Construction { // Todo: Replace with EffortRequired/DurationRequired
   uint32_t effort_remaining = 0;
   uint32_t effort_total = 0;
 };

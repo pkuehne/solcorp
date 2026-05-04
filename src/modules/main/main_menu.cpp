@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/engine/input.h"
+#include "modules/lua/lua.h"
 #include <flecs.h>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/rocket/contracts_window.h>
@@ -19,6 +20,24 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
 
   // Register components
   world.component<MainMenuBar>();
+  world.component<EffortRequired>()
+      .member("current", &EffortRequired::current)
+      .member("total", &EffortRequired::total);
+  world.component<DurationRequired>()
+      .member("current", &DurationRequired::current)
+      .member("total", &DurationRequired::total);
+
+  // Register lua bindings
+  register_component_lua<EffortRequired>(
+      world, "EffortRequired", [](LuaFieldBuilder<EffortRequired> &b) {
+        b.field<&EffortRequired::current>("current")
+            .field<&EffortRequired::total>("total");
+      });
+  register_component_lua<DurationRequired>(
+      world, "DurationRequired", [](LuaFieldBuilder<DurationRequired> &b) {
+        b.field<&DurationRequired::current>("current")
+            .field<&DurationRequired::total>("total");
+      });
 
   // Register window
   world.entity("MainMenuBar").add<MainMenuBar>();

@@ -31,6 +31,26 @@ struct Rocket {
                     .base = 5'000'000,
                     .higher_is_better = false});
 };
+enum class RocketStateId : uint8_t {
+  UnderConstruction,
+  Stored,
+  Assigned,
+  IntegratingPayload,
+  IntegrationComplete,
+  RollingOut,
+  OnPad,
+  Launched,
+  Unavailable
+};
+
+struct RocketState {
+  RocketStateId current;
+  RocketStateId target;
+};
+
+struct RocketStateTransitionBlocked {
+  std::string reason;
+};
 
 /// @brief Payload to be launched by a rocket
 struct Payload {
