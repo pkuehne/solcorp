@@ -21,8 +21,8 @@ struct Site {
 struct Building {};
 
 struct SiteLocation {
-  uint32_t x = 0;
-  uint32_t y = 0;
+  int x = 0;
+  int y = 0;
 };
 
 /// @brief Marker component for facilities within a building

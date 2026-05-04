@@ -34,8 +34,8 @@ struct Renderer {
 /// @brief Stores an SDL2 texture and its size information
 struct Texture {
   SDL_Texture *ptr = nullptr;
-  int width = 0;
-  int height = 0;
+  uint32_t width = 0;
+  uint32_t height = 0;
 };
 
 enum SpriteFlip {
@@ -46,11 +46,11 @@ enum SpriteFlip {
 
 struct Sprite {
   flecs::entity texture;
-  int tile = 0;
+  uint32_t tile = 0;
   int x = 0;
   int y = 0;
-  int width = 0;
-  int height = 0;
+  uint32_t width = 0;
+  uint32_t height = 0;
   float scale = 1.0f;
   double rotation = 0.0f;
   SpriteFlip flip = SpriteFlip::None;
@@ -59,7 +59,7 @@ struct Sprite {
 struct Font {
   TTF_Font *ptr = nullptr;
   std::string name;
-  int point_size = 12;
+  uint32_t point_size = 12;
 };
 
 struct Text {

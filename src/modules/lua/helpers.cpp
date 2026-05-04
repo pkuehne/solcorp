@@ -73,7 +73,7 @@ flecs::entity create_rocket(flecs::world world, RocketName name,
 }
 
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, uint32_t x, uint32_t y,
+                              const std::string &prefab, int x, int y,
                               flecs::entity site) {
   return instantiateBuilding(world, BuildingName{name}, BuildingPrefab{prefab},
                              SiteLocation{.x = x, .y = y}, site);
@@ -245,8 +245,8 @@ static int create_rocket_wrapper(lua_State *L) {
 static int create_building_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *prefab = luaL_checkstring(L, 2);
-  auto x = (uint32_t)luaL_checkinteger(L, 3);
-  auto y = (uint32_t)luaL_checkinteger(L, 4);
+  auto x = (int)luaL_checkinteger(L, 3);
+  auto y = (int)luaL_checkinteger(L, 4);
   flecs::entity site = lua_check_entity(L, 5);
   lua_push_entity(L,
                   create_building(*lua_get_world(L), name, prefab, x, y, site));
@@ -332,8 +332,8 @@ static int add_modifier_wrapper(lua_State *L) {
 
 static int clip_sprite_from_texture_wrapper(lua_State *L) {
   const char *texture = luaL_checkstring(L, 1);
-  auto x = (uint32_t)luaL_checkinteger(L, 2);
-  auto y = (uint32_t)luaL_checkinteger(L, 3);
+  auto x = (int)luaL_checkinteger(L, 2);
+  auto y = (int)luaL_checkinteger(L, 3);
   auto width = (uint32_t)luaL_checkinteger(L, 4);
   auto height = (uint32_t)luaL_checkinteger(L, 5);
   auto *sprite = new Sprite(clip_sprite_from_texture(

@@ -24,8 +24,8 @@ struct TextureModName {
   std::string value;
 };
 struct SpriteClipRect {
-  uint32_t x;
-  uint32_t y;
+  int x;
+  int y;
   uint32_t width;
   uint32_t height;
 };
@@ -45,7 +45,7 @@ flecs::entity create_rocket(flecs::world world, RocketName name,
                             RocketPrefabType prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, uint32_t x, uint32_t y,
+                              const std::string &prefab, int x, int y,
                               flecs::entity site);
 flecs::entity add_target_orbit_to_rocket(flecs::world world,
                                          flecs::entity rocket,
