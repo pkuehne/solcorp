@@ -130,12 +130,10 @@ template <LuaValueType F> int lua_push_typed_value(lua_State *L, const F &val) {
     lua_pushstring(L, val.c_str());
   } else if constexpr (std::is_same_v<F, flecs::entity>) {
     lua_push_entity(L, val);
-  } else if constexpr (std::is_integral_v<F>) {
+  } else if constexpr (std::is_integral_v<F> || std::is_enum_v<F>) {
     lua_pushinteger(L, static_cast<lua_Integer>(val));
   } else if constexpr (std::is_floating_point_v<F>) {
     lua_pushnumber(L, static_cast<lua_Number>(val));
-  } else if constexpr (std::is_enum_v<F>) {
-    lua_pushinteger(L, static_cast<lua_Integer>(val));
   }
   return 1;
 }
@@ -148,12 +146,10 @@ template <LuaValueType F> F lua_get_typed_value(lua_State *L, int idx) {
     return std::string(luaL_checkstring(L, idx));
   } else if constexpr (std::is_same_v<F, flecs::entity>) {
     return lua_check_entity(L, idx);
-  } else if constexpr (std::is_integral_v<F>) {
+  } else if constexpr (std::is_integral_v<F> || std::is_enum_v<F>) {
     return static_cast<F>(luaL_checkinteger(L, idx));
   } else if constexpr (std::is_floating_point_v<F>) {
     return static_cast<F>(luaL_checknumber(L, idx));
-  } else if constexpr (std::is_enum_v<F>) {
-    return static_cast<F>(luaL_checkinteger(L, idx));
   }
 }
 

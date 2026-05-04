@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdlib>
-#include <iostream>
+#include <iostream> // IWYU pragma: keep
 
 #ifndef SC_ASSERT_BREAK_ON_FAIL
 #define SC_ASSERT_BREAK_ON_FAIL 0
@@ -19,7 +19,7 @@
     if (!(expr)) {                                                             \
       std::cerr << "Assertion failed:\n"                                       \
                 << "  Expr: " << #expr << "\n"                                 \
-                << "  Msg:  " << msg << "\n"                                   \
+                << "  Msg:  " << (msg) << "\n"                                 \
                 << "  File: " << __FILE__ << ":" << __LINE__ << "\n";          \
       std::cerr.flush();                                                       \
       if (SC_ASSERT_BREAK_ON_FAIL) {                                           \
