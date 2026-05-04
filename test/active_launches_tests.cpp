@@ -1,5 +1,5 @@
-#include "modules/rocket_launch/active_launches_window.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/active_launches_window.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>

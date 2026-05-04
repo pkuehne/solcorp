@@ -27,7 +27,7 @@ SolCorp is a C++20/CMake-based space simulation game using an **Entity Component
 - **engine**: Rendering, input, movement, camera (SDL2 + ImGui)
 - **lua**: Component exposure, script loading, Lua mod system
 - **simulation**: Celestial mechanics, orbital calculations (CelestialBody components)
-- **site/staff/stats/rocket_launch/main_menu**: Domain-specific game logic
+- **site/staff/stats/rocket/main**: Domain-specific game logic
 
 ## Build & Development
 

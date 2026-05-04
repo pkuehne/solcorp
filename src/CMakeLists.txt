@@ -13,12 +13,12 @@ list(APPEND SolCorpSources
     modules/lua/logging.cpp
     modules/lua/lua_registry.cpp
     modules/lua/systems.cpp
-    modules/main_menu/main_menu.cpp
-    modules/rocket_launch/rocket_launch.cpp
-    modules/rocket_launch/actions.cpp
-    modules/rocket_launch/launch_window.cpp
-    modules/rocket_launch/active_launches_window.cpp
-    modules/rocket_launch/contracts_window.cpp
+    modules/main/main_menu.cpp
+    modules/rocket/rocket_launch.cpp
+    modules/rocket/actions.cpp
+    modules/rocket/launch_window.cpp
+    modules/rocket/active_launches_window.cpp
+    modules/rocket/contracts_window.cpp
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
@@ -47,12 +47,12 @@ list(APPEND SolCorpHeaders
     modules/lua/logging.h
     modules/lua/lua_registry.h
     modules/lua/systems.h
-    modules/main_menu/main_menu.h
-    modules/rocket_launch/rocket_launch.h
-    modules/rocket_launch/actions.h
-    modules/rocket_launch/launch_window.h
-    modules/rocket_launch/active_launches_window.h
-    modules/rocket_launch/contracts_window.h
+    modules/main/main_menu.h
+    modules/rocket/rocket_launch.h
+    modules/rocket/actions.h
+    modules/rocket/launch_window.h
+    modules/rocket/active_launches_window.h
+    modules/rocket/contracts_window.h
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h

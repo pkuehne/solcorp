@@ -52,7 +52,7 @@ The game is structured as **9 independent modules** in [src/modules/](src/module
 - **staff**: Crew and personnel management
 - **stats**: Statistics tracking
 - **rocket_launch**: Launch operations and contracts
-- **main_menu**: Main menu UI
+- **main**: Main menu UI
 
 Each module is a struct with a constructor taking `flecs::world&` that registers components, systems, and phases.
 

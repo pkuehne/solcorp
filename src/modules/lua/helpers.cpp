@@ -8,7 +8,7 @@
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <flecs.h>
-#include <modules/rocket_launch/rocket_launch.h>
+#include <modules/rocket/rocket_launch.h>
 
 flecs::entity create_site(flecs::world world, const std::string &name,
                           uint8_t width, uint8_t height, bool make_current) {

@@ -1,6 +1,6 @@
-#include "modules/rocket_launch/contracts_window.h"
-#include "modules/rocket_launch/actions.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/contracts_window.h"
+#include "modules/rocket/actions.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>

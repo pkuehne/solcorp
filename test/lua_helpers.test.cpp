@@ -1,7 +1,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/helpers.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
