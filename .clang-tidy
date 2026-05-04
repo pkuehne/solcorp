@@ -7,10 +7,8 @@ Checks: >-
   -clang-analyzer-deadcode.DeadStores,
   -clang-analyzer-core.StackAddressEscape,
   -performance-enum-size,
-  -performance-unnecessary-copy-initialization,
   -portability-avoid-pragma-once,
   -modernize-use-trailing-return-type,
-  -readability-identifier-length,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
 FormatStyle: file

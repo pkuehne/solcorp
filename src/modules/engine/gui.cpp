@@ -86,7 +86,7 @@ void systemInitialiseGui(flecs::iter &iter) {
 
   auto default_font = world.lookup("Fonts::Default");
   SC_ASSERT(default_font.is_valid(), "Default font entity not found");
-  auto font = default_font.get<Font>();
+  const auto &font = default_font.get<Font>();
 
   ImFontConfig config;
   io.Fonts->AddFontFromFileTTF(

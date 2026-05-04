@@ -218,7 +218,7 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
     return;
   }
 
-  auto font = df.get<Font>();
+  const auto &font = df.get<Font>();
   if (!font.ptr) {
     spdlog::warn("Cannot render text: default font not loaded");
     e.remove<Text>();
