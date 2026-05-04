@@ -145,7 +145,8 @@ Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
 flecs::entity create_contract(flecs::world world, const std::string &name,
                               const std::string &client,
                               const std::string &description,
-                              float upfront_payment, float completion_payment) {
+                              uint32_t upfront_payment,
+                              uint32_t completion_payment) {
   auto contracts_node = world.lookup("Contracts");
   SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
   auto existing = contracts_node.lookup(name.c_str());
@@ -285,8 +286,8 @@ static int create_contract_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *client = luaL_checkstring(L, 2);
   const char *description = luaL_checkstring(L, 3);
-  auto upfront = (float)luaL_checknumber(L, 4);
-  auto completion = (float)luaL_checknumber(L, 5);
+  auto upfront = (uint32_t)luaL_checknumber(L, 4);
+  auto completion = (uint32_t)luaL_checknumber(L, 5);
   lua_push_entity(L, create_contract(*lua_get_world(L), name, client,
                                      description, upfront, completion));
   return 1;

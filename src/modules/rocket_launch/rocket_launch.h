@@ -49,8 +49,8 @@ struct Contract {
 
   std::string client;
   std::string description;
-  float upfront_payment;
-  float completion_payment;
+  uint32_t upfront_payment;
+  uint32_t completion_payment;
   ContractStatus status = ContractStatus::Open;
   bool failed = false; ///< Whether the contract was failed
 };

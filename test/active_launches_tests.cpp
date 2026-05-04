@@ -54,8 +54,8 @@ struct ActiveLaunchesFixture {
     world.entity()
         .set<Contract>({.client = "Client A",
                         .description = "Desc",
-                        .upfront_payment = 1000.0f,
-                        .completion_payment = 5000.0f,
+                        .upfront_payment = 1000u,
+                        .completion_payment = 5000u,
                         .status = ContractStatus::Open,
                         .failed = false})
         .add<ContractPayload>(payload1)
@@ -63,8 +63,8 @@ struct ActiveLaunchesFixture {
     world.entity()
         .set<Contract>({.client = "Client B",
                         .description = "Desc",
-                        .upfront_payment = 2000.0f,
-                        .completion_payment = 8000.0f,
+                        .upfront_payment = 2000u,
+                        .completion_payment = 8000u,
                         .status = ContractStatus::Open,
                         .failed = false})
         .add<ContractPayload>(payload2)

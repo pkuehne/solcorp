@@ -16,8 +16,8 @@ SCENARIO("acceptContract and rejectContract update balance",
                        .set<Contract>({
                            .client = "Client",
                            .description = "Description",
-                           .upfront_payment = 500.0f,
-                           .completion_payment = 1000.0f,
+                           .upfront_payment = 500,
+                           .completion_payment = 1000,
                            .status = ContractStatus::Open,
                            .failed = false,
                        });
@@ -67,8 +67,8 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
                                  .set<Contract>({
                                      .client = "TestClient",
                                      .description = "TestDesc",
-                                     .upfront_payment = 1000.0f,
-                                     .completion_payment = 2000.0f,
+                                     .upfront_payment = 1000u,
+                                     .completion_payment = 2000u,
                                      .status = ContractStatus::Accepted,
                                      .failed = false,
                                  });
@@ -100,8 +100,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Open,
           .failed = false,
       });
@@ -110,8 +110,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Accepted,
           .failed = false,
       });
@@ -120,8 +120,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Closed,
           .failed = false,
       });
@@ -129,8 +129,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Closed,
           .failed = true,
       });
@@ -201,8 +201,8 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Open,
           .failed = false,
       });
@@ -211,8 +211,8 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Accepted,
           .failed = false,
       });
@@ -221,8 +221,8 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
       .set<Contract>({
           .client = "TestClient",
           .description = "TestDesc",
-          .upfront_payment = 1000.0f,
-          .completion_payment = 2000.0f,
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
           .status = ContractStatus::Closed,
           .failed = false,
       });

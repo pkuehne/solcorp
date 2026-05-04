@@ -165,7 +165,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   });
 
   Company &company = world.get_mut<Company>();
-  float total_payment = 0.0;
+  uint32_t total_payment = 0;
 
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -208,7 +208,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   std::string notification =
       rocket_failure ? std::format("{} failed - {} exploded on launch",
                                    planE.name().c_str(), rocketE.name().c_str())
-                     : std::format("{} launched successfully (${:.0f})",
+                     : std::format("{} launched successfully (${})",
                                    planE.name().c_str(), total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
 

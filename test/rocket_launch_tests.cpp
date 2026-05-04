@@ -306,8 +306,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                          .set<Contract>({
                              .client = "Client",
                              .description = "Description",
-                             .upfront_payment = 1000.0f,
-                             .completion_payment = 2000.0f,
+                             .upfront_payment = 1000u,
+                             .completion_payment = 2000u,
                              .status = ContractStatus::Accepted,
                              .failed = false,
                          });
@@ -315,8 +315,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                          .set<Contract>({
                              .client = "Client",
                              .description = "Description",
-                             .upfront_payment = 1000.0f,
-                             .completion_payment = 2000.0f,
+                             .upfront_payment = 1000u,
+                             .completion_payment = 2000u,
                              .status = ContractStatus::Accepted,
                              .failed = false,
                          });
@@ -372,8 +372,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                          .set<Contract>({
                              .client = "Client",
                              .description = "Description",
-                             .upfront_payment = 1000.0f,
-                             .completion_payment = 2000.0f,
+                             .upfront_payment = 1000u,
+                             .completion_payment = 2000u,
                              .status = ContractStatus::Accepted,
                              .failed = false,
                          });
@@ -381,8 +381,8 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
                          .set<Contract>({
                              .client = "Client",
                              .description = "Description",
-                             .upfront_payment = 1000.0f,
-                             .completion_payment = 2000.0f,
+                             .upfront_payment = 1000u,
+                             .completion_payment = 2000u,
                              .status = ContractStatus::Accepted,
                              .failed = false,
                          });

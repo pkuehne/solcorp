@@ -62,7 +62,8 @@ Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
 flecs::entity create_contract(flecs::world world, const std::string &name,
                               const std::string &client,
                               const std::string &description,
-                              float upfront_payment, float completion_payment);
+                              uint32_t upfront_payment,
+                              uint32_t completion_payment);
 flecs::entity create_contract_payload(flecs::world world,
                                       flecs::entity contract,
                                       const std::string &name, uint32_t mass,
