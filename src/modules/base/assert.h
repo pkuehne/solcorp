@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdlib>
-#include <iostream>
+#include <iostream> // IWYU pragma: keep
 
 #ifndef SC_ASSERT_BREAK_ON_FAIL
 #define SC_ASSERT_BREAK_ON_FAIL 0
