@@ -86,7 +86,7 @@ lint-lua:
 
 # Lint C++ source files with clang-tidy and fix any auto-fixable issues
 lint-fix-cpp:
-    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p {{ build_dir }} --fix
+    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 clang-tidy --quiet -p {{ build_dir }} --fix
 
 # Serve documentation locally
 docs:

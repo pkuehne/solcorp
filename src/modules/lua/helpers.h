@@ -32,41 +32,43 @@ struct SpriteClipRect {
 
 void load_helpers_namespace(lua_State *L);
 
-flecs::entity create_site(flecs::world world, const std::string &name,
+flecs::entity create_site(const flecs::world &world, const std::string &name,
                           uint8_t width, uint8_t height,
                           bool make_current = false);
-flecs::entity create_building_prefab(flecs::world world,
+flecs::entity create_building_prefab(const flecs::world &world,
                                      const std::string &name);
-flecs::entity create_rocket_prefab(flecs::world world, const std::string &name);
-flecs::entity add_facility_to_building(flecs::world world,
+flecs::entity create_rocket_prefab(const flecs::world &world,
+                                   const std::string &name);
+flecs::entity add_facility_to_building(const flecs::world &world,
                                        flecs::entity building,
                                        const std::string &name);
-flecs::entity create_rocket(flecs::world world, RocketName name,
-                            RocketPrefabType prefab,
+flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
+                            const RocketPrefabType &prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
                               const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site);
-flecs::entity add_target_orbit_to_rocket(flecs::world world,
+flecs::entity add_target_orbit_to_rocket(const flecs::world &world,
                                          flecs::entity rocket,
                                          const std::string &orbit_name,
                                          uint32_t max_mass);
-flecs::entity create_texture(flecs::world world, TextureName name,
-                             TextureFilename filename, TextureModName mod_name);
-flecs::entity create_effect(flecs::world world, const std::string &name,
+flecs::entity create_texture(flecs::world world, const TextureName &name,
+                             TextureFilename filename,
+                             const TextureModName &mod_name);
+flecs::entity create_effect(const flecs::world &world, const std::string &name,
                             flecs::entity source);
-flecs::entity add_modifier(flecs::world world, flecs::entity effect,
-                           Modifier mod);
-Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
+flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,
+                           const Modifier &mod);
+Sprite clip_sprite_from_texture(const flecs::world &world,
+                                const std::string &texture,
                                 SpriteClipRect rect);
-flecs::entity create_contract(flecs::world world, const std::string &name,
-                              const std::string &client,
-                              const std::string &description,
-                              uint32_t upfront_payment,
-                              uint32_t completion_payment);
-flecs::entity create_contract_payload(flecs::world world,
+flecs::entity
+create_contract(const flecs::world &world, const std::string &name,
+                const std::string &client, const std::string &description,
+                uint32_t upfront_payment, uint32_t completion_payment);
+flecs::entity create_contract_payload(const flecs::world &world,
                                       flecs::entity contract,
                                       const std::string &name, uint32_t mass,
                                       const std::string &target_orbit_name);
-std::vector<flecs::entity> get_all_contracts(flecs::world world);
-std::vector<flecs::entity> get_all_active_contracts(flecs::world world);
+std::vector<flecs::entity> get_all_contracts(const flecs::world &world);
+std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world);

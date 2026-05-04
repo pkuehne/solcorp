@@ -10,6 +10,7 @@
 #include "spdlog/spdlog.h"
 #include <array>
 #include <flecs.h>
+#include <utility>
 
 void systemInitialiseGui(flecs::iter &iter);
 void systemGuiNewFrame(flecs::iter &);
@@ -85,7 +86,7 @@ void systemInitialiseGui(flecs::iter &iter) {
 
   auto default_font = world.lookup("Fonts::Default");
   SC_ASSERT(default_font.is_valid(), "Default font entity not found");
-  auto font = default_font.get<Font>();
+  const auto &font = default_font.get<Font>();
 
   ImFontConfig config;
   io.Fonts->AddFontFromFileTTF(
@@ -160,8 +161,9 @@ registerWindow(std::string name,
     windows = world.entity("Windows");
   }
   return world.entity(name.c_str())
-      .set<Window>(
-          {.open = false, .title = name, .content_renderer = content_renderer})
+      .set<Window>({.open = false,
+                    .title = name,
+                    .content_renderer = std::move(content_renderer)})
       .child_of(windows);
 }
 

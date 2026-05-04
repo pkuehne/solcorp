@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
                          flecs::entity *launchpad) {
@@ -39,7 +40,7 @@ void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
   auto state = window.try_get_mut<LaunchWindow>();
   SC_ASSERT(state, "LaunchWindow state is invalid");
 
-  state->draftPlan = draftPlan;
+  state->draftPlan = std::move(draftPlan);
 
   // Default the plan to today
   int today = static_cast<int>(world.get<Game>().day);
@@ -154,7 +155,7 @@ void drawLaunchWindow(flecs::entity winE) {
     launchpadQuery
         .iter()
         // .set_var("Site", m_entity)
-        .each([&](flecs::entity e, Launchpad) {
+        .each([&](flecs::entity e, const Launchpad &) {
           if (ImGui::Selectable(e.parent().name().c_str(),
                                 e == state.draftPlan.launchpad)) {
             state.draftPlan.launchpad = e;

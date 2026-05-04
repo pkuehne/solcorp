@@ -38,7 +38,7 @@ struct Texture {
   int height = 0;
 };
 
-enum SpriteFlip {
+enum SpriteFlip : uint8_t {
   None = 0,
   Horizontal = 1,
   Vertical = 2,

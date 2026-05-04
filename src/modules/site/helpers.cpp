@@ -4,9 +4,10 @@
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 
-flecs::entity instantiateBuilding(flecs::world &world, BuildingName building,
-                                  BuildingPrefab prefab, SiteLocation location,
-                                  flecs::entity site) {
+flecs::entity instantiateBuilding(flecs::world &world,
+                                  const BuildingName &building,
+                                  const BuildingPrefab &prefab,
+                                  SiteLocation location, flecs::entity site) {
 
   std::string prefabName = "Prefabs::Buildings::";
   prefabName.append(prefab.name);

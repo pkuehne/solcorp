@@ -9,7 +9,7 @@ struct ValidationResult {
 
   static ValidationResult Pass() { return {.ok = true, .message = {}}; }
   static ValidationResult Fail(const std::string &msg) {
-    return {.ok = false, .message = std::move(msg)};
+    return {.ok = false, .message = msg};
   }
   static ValidationResult Issue(const std::string &msg) {
     if (!msg.empty()) {

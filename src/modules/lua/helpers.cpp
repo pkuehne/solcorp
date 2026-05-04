@@ -10,7 +10,7 @@
 #include <flecs.h>
 #include <modules/rocket/rocket_launch.h>
 
-flecs::entity create_site(flecs::world world, const std::string &name,
+flecs::entity create_site(const flecs::world &world, const std::string &name,
                           uint8_t width, uint8_t height, bool make_current) {
   auto site = world.entity(name.c_str())
                   .set<Site>({.width = width, .height = height})
@@ -26,7 +26,7 @@ flecs::entity create_site(flecs::world world, const std::string &name,
   return site;
 }
 
-flecs::entity create_building_prefab(flecs::world world,
+flecs::entity create_building_prefab(const flecs::world &world,
                                      const std::string &name) {
   auto buildings_node = world.lookup("Prefabs::Buildings");
   SC_ASSERT(buildings_node.is_valid(), "Prefabs::Buildings node not found");
@@ -38,7 +38,7 @@ flecs::entity create_building_prefab(flecs::world world,
       .child_of(buildings_node);
 }
 
-flecs::entity create_rocket_prefab(flecs::world world,
+flecs::entity create_rocket_prefab(const flecs::world &world,
                                    const std::string &name) {
   auto rockets_node = world.lookup("Prefabs::Rockets");
   SC_ASSERT(rockets_node.is_valid(), "Prefabs::Rockets node not found");
@@ -47,7 +47,7 @@ flecs::entity create_rocket_prefab(flecs::world world,
   return world.prefab(name.c_str()).is_a(rocket_prefab).child_of(rockets_node);
 }
 
-flecs::entity add_facility_to_building(flecs::world world,
+flecs::entity add_facility_to_building(const flecs::world &world,
                                        flecs::entity building,
                                        const std::string &name) {
   auto facility_prefab = world.lookup("Prefabs::Core::Facility");
@@ -56,8 +56,9 @@ flecs::entity add_facility_to_building(flecs::world world,
   return world.prefab(name.c_str()).is_a(facility_prefab).child_of(building);
 }
 
-flecs::entity create_rocket(flecs::world world, RocketName name,
-                            RocketPrefabType prefab, flecs::entity parent) {
+flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
+                            const RocketPrefabType &prefab,
+                            flecs::entity parent) {
   std::string prefab_name = "Prefabs::Rockets::";
   prefab_name.append(prefab.value);
   auto prefab_entity = world.lookup(prefab_name.c_str());
@@ -79,7 +80,7 @@ flecs::entity create_building(flecs::world world, const std::string &name,
                              SiteLocation{.x = x, .y = y}, site);
 }
 
-flecs::entity add_target_orbit_to_rocket(flecs::world world,
+flecs::entity add_target_orbit_to_rocket(const flecs::world &world,
                                          flecs::entity rocket,
                                          const std::string &orbit_name,
                                          uint32_t max_mass) {
@@ -89,9 +90,9 @@ flecs::entity add_target_orbit_to_rocket(flecs::world world,
   return rocket;
 }
 
-flecs::entity create_texture(flecs::world world, TextureName name,
+flecs::entity create_texture(flecs::world world, const TextureName &name,
                              TextureFilename filename,
-                             TextureModName mod_name) {
+                             const TextureModName &mod_name) {
   if (filename.value.find("..") != std::string::npos) {
     spdlog::error("Invalid filename {}", filename.value);
     return {};
@@ -105,7 +106,7 @@ flecs::entity create_texture(flecs::world world, TextureName name,
       .set<Texture>(loadTexture(location, world));
 }
 
-flecs::entity create_effect(flecs::world world, const std::string &name,
+flecs::entity create_effect(const flecs::world &world, const std::string &name,
                             flecs::entity source) {
   auto effect = world.entity(name.c_str())
                     .add<Effect>()
@@ -116,15 +117,16 @@ flecs::entity create_effect(flecs::world world, const std::string &name,
   return effect;
 }
 
-flecs::entity add_modifier(flecs::world world, flecs::entity effect,
-                           Modifier mod) {
+flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,
+                           const Modifier &mod) {
   if (!effect.is_valid()) {
     return {};
   }
   return world.entity().child_of(effect).set<Modifier>(mod);
 }
 
-Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
+Sprite clip_sprite_from_texture(const flecs::world &world,
+                                const std::string &texture,
                                 SpriteClipRect rect) {
   std::string texture_name("Textures::");
   texture_name.append(texture);
@@ -142,11 +144,10 @@ Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
   return sprite;
 }
 
-flecs::entity create_contract(flecs::world world, const std::string &name,
-                              const std::string &client,
-                              const std::string &description,
-                              uint32_t upfront_payment,
-                              uint32_t completion_payment) {
+flecs::entity
+create_contract(const flecs::world &world, const std::string &name,
+                const std::string &client, const std::string &description,
+                uint32_t upfront_payment, uint32_t completion_payment) {
   auto contracts_node = world.lookup("Contracts");
   SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
   auto existing = contracts_node.lookup(name.c_str());
@@ -162,7 +163,7 @@ flecs::entity create_contract(flecs::world world, const std::string &name,
       .child_of(contracts_node);
 }
 
-flecs::entity create_contract_payload(flecs::world world,
+flecs::entity create_contract_payload(const flecs::world &world,
                                       flecs::entity contract,
                                       const std::string &name, uint32_t mass,
                                       const std::string &target_orbit_name) {
@@ -180,14 +181,14 @@ flecs::entity create_contract_payload(flecs::world world,
   return payload_entity;
 }
 
-std::vector<flecs::entity> get_all_contracts(flecs::world world) {
+std::vector<flecs::entity> get_all_contracts(const flecs::world &world) {
   std::vector<flecs::entity> result;
   world.query_builder<Contract>().build().each(
       [&](flecs::entity e, Contract &) { result.push_back(e); });
   return result;
 }
 
-std::vector<flecs::entity> get_all_active_contracts(flecs::world world) {
+std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world) {
   std::vector<flecs::entity> result;
   world.query_builder<Contract>().build().each(
       [&](flecs::entity e, Contract &c) {
