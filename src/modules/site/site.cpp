@@ -15,6 +15,7 @@
 #include "site_construction.h"
 #include <spdlog/spdlog.h>
 
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 extern unsigned char construction_png[];
 extern unsigned int construction_png_len;
 

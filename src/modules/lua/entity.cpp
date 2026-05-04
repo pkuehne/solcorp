@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "modules/lua/lua_registry.h"
 #include "modules/simulation/simulation.h"
+#include <array>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
@@ -99,24 +100,26 @@ static int entity_is_a(lua_State *L) {
   return 0;
 }
 
-static const luaL_Reg entity_methods[] = {{"id", entity_id},
-                                          {"destroy", entity_destroy},
-                                          {"is_alive", entity_is_alive},
-                                          {"name", entity_name},
-                                          {"symbol", entity_symbol},
-                                          {"enabled", entity_enabled},
-                                          {"enable", entity_enable},
-                                          {"disable", entity_disable},
-                                          {"child_of", entity_child_of},
-                                          {"lookup", entity_lookup},
-                                          {"is_a", entity_is_a},
-                                          {nullptr, nullptr}};
+static constexpr std::array<luaL_Reg, 12> entity_methods = {{
+    {.name = "id", .func = entity_id},
+    {.name = "destroy", .func = entity_destroy},
+    {.name = "is_alive", .func = entity_is_alive},
+    {.name = "name", .func = entity_name},
+    {.name = "symbol", .func = entity_symbol},
+    {.name = "enabled", .func = entity_enabled},
+    {.name = "enable", .func = entity_enable},
+    {.name = "disable", .func = entity_disable},
+    {.name = "child_of", .func = entity_child_of},
+    {.name = "lookup", .func = entity_lookup},
+    {.name = "is_a", .func = entity_is_a},
+    {.name = nullptr, .func = nullptr},
+}};
 
 void load_entity_usertype(lua_State *L) {
   luaL_newmetatable(L, "solcorp.entity");
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
-  luaL_setfuncs(L, entity_methods, 0);
+  luaL_setfuncs(L, entity_methods.data(), 0);
   // Expose as global "entity" so register_component_lua<T> can add
   // component accessors to this table.
   lua_pushvalue(L, -1);
