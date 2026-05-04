@@ -26,7 +26,8 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   if (!launchpad.is_valid()) {
     return ValidationResult::Fail("No launchpad selected");
   }
-  unsigned int launchPrepDays = launchpad.get<Launchpad>().prep_days.value();
+  uint32_t launchPrepDays =
+      static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
     auto launch = p.get<LaunchPlan>();
@@ -75,7 +76,8 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
     spdlog::debug("Removing existing launch plan: {}", current.id());
     current.destruct();
   }
-  auto plan = LaunchPlan{static_cast<uint32_t>(launchDay), targetOrbit};
+  auto plan = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+                         .target_orbit = targetOrbit};
 
   auto planE = world.entity().set<LaunchPlan>(plan);
   planE.set_name(name.c_str());

@@ -186,8 +186,7 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(statusStr);
 
       ImGui::TableSetColumnIndex(4);
-      ImGui::Text("%.2f",
-                  contract.upfront_payment + contract.completion_payment);
+      ImGui::Text("%u", contract.upfront_payment + contract.completion_payment);
 
       ImGui::TableSetColumnIndex(5);
       auto targetOrbit = contractE.target<ContractTargetOrbit>();

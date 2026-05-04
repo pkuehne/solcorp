@@ -152,7 +152,8 @@ registerWindow(std::string name,
     windows = world.entity("Windows");
   }
   return world.entity(name.c_str())
-      .set<Window>({false, name, content_renderer})
+      .set<Window>(
+          {.open = false, .title = name, .content_renderer = content_renderer})
       .child_of(windows);
 }
 

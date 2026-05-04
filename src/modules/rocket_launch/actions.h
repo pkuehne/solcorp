@@ -16,16 +16,23 @@ struct ScheduleLaunchAction : public IAction {
 
   flecs::entity result = flecs::entity::null();
 
-  virtual ValidationResult validate(const flecs::world &world) const override;
-  virtual void execute(flecs::world &) override;
+  ValidationResult validate(const flecs::world &world) const override;
+  void execute(flecs::world &) override;
+};
+
+struct RocketEntity {
+  flecs::entity value;
+};
+struct DestinationEntity {
+  flecs::entity value;
 };
 
 struct MoveRocketAction : public IAction {
   flecs::entity rocket;
   flecs::entity destination;
 
-  MoveRocketAction(flecs::entity r, flecs::entity d)
-      : rocket(r), destination(d) {}
+  MoveRocketAction(RocketEntity r, DestinationEntity d)
+      : rocket(r.value), destination(d.value) {}
 
   ValidationResult validate(const flecs::world &world) const override;
   void execute(flecs::world &world) override;

@@ -2,6 +2,13 @@
 
 #include <string>
 
-bool ActionButton(const char *label, const char *tooltip,
-                  const std::string &issue);
+struct ButtonLabel {
+  const char *text;
+};
+
+struct ButtonTooltip {
+  const char *text;
+};
+
+bool ActionButton(ButtonLabel, ButtonTooltip, const std::string &issue);
 void NotImplementedPopup();

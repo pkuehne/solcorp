@@ -14,12 +14,12 @@ SCENARIO("acceptContract and rejectContract update balance",
 
   auto contractE = world.entity("TestContract")
                        .set<Contract>({
-                           "Client",
-                           "Description",
-                           500.0f,
-                           1000.0f,
-                           ContractStatus::Open,
-                           false,
+                           .client = "Client",
+                           .description = "Description",
+                           .upfront_payment = 500,
+                           .completion_payment = 1000,
+                           .status = ContractStatus::Open,
+                           .failed = false,
                        });
 
   GIVEN("An open contract") {
@@ -65,16 +65,16 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
 
     flecs::entity contract = world.entity("TestContract")
                                  .set<Contract>({
-                                     "TestClient",
-                                     "TestDesc",
-                                     1000.0f,
-                                     2000.0f,
-                                     ContractStatus::Accepted,
-                                     false,
+                                     .client = "TestClient",
+                                     .description = "TestDesc",
+                                     .upfront_payment = 1000u,
+                                     .completion_payment = 2000u,
+                                     .status = ContractStatus::Accepted,
+                                     .failed = false,
                                  });
     auto targetOrbit = world.entity("LEO");
     contract.add<ContractTargetOrbit>(targetOrbit);
-    auto payload = world.entity("TestPayload").set<Payload>({1000});
+    auto payload = world.entity("TestPayload").set<Payload>({.mass = 1000});
     contract.add<ContractPayload>(payload);
     world.progress();
 
@@ -98,45 +98,46 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   // Create test contracts with different statuses
   world.entity("OpenContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Open,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Open,
+          .failed = false,
       });
 
   world.entity("AcceptedContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Accepted,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Accepted,
+          .failed = false,
       });
 
   world.entity("ClosedContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Closed,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Closed,
+          .failed = false,
       });
   world.entity("FailedContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Closed,
-          true,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Closed,
+          .failed = true,
       });
 
   WHEN("ContractsWindow with All filter and showCompleted=true") {
-    ContractsWindow state{ContractFilterStatus::All, true};
+    ContractsWindow state{.statusFilter = ContractFilterStatus::All,
+                          .showCompleted = true};
     THEN("All contracts match the filter") {
       REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
       REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
@@ -146,7 +147,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   }
 
   WHEN("ContractsWindow with Open filter") {
-    ContractsWindow state{ContractFilterStatus::Open, true};
+    ContractsWindow state{.statusFilter = ContractFilterStatus::Open,
+                          .showCompleted = true};
     THEN("Only Open contracts match the filter") {
       REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
       REQUIRE(!contractMatchesFilter(world.entity("AcceptedContract"), state));
@@ -156,7 +158,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   }
 
   WHEN("ContractsWindow with showCompleted=false") {
-    ContractsWindow state{ContractFilterStatus::All, false};
+    ContractsWindow state{.statusFilter = ContractFilterStatus::All,
+                          .showCompleted = false};
     THEN("Closed contracts do not match the filter") {
       REQUIRE(contractMatchesFilter(world.entity("OpenContract"), state));
       REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
@@ -166,7 +169,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   }
 
   WHEN("ContractsWindow with Closed filter") {
-    ContractsWindow state{ContractFilterStatus::Closed, true};
+    ContractsWindow state{.statusFilter = ContractFilterStatus::Closed,
+                          .showCompleted = true};
     THEN("Only Closed contracts match the filter") {
       REQUIRE(!contractMatchesFilter(world.entity("OpenContract"), state));
       REQUIRE(!contractMatchesFilter(world.entity("AcceptedContract"), state));
@@ -176,7 +180,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   }
 
   WHEN("ContractsWindow with Accepted filter") {
-    ContractsWindow state{ContractFilterStatus::Accepted, true};
+    ContractsWindow state{.statusFilter = ContractFilterStatus::Accepted,
+                          .showCompleted = true};
     THEN("Only Accepted contracts match the filter") {
       REQUIRE(!contractMatchesFilter(world.entity("OpenContract"), state));
       REQUIRE(contractMatchesFilter(world.entity("AcceptedContract"), state));
@@ -194,32 +199,32 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   // Create test contracts with different statuses
   world.entity("OpenContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Open,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Open,
+          .failed = false,
       });
 
   world.entity("AcceptedContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Accepted,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Accepted,
+          .failed = false,
       });
 
   world.entity("ClosedContract")
       .set<Contract>({
-          "TestClient",
-          "TestDesc",
-          1000.0f,
-          2000.0f,
-          ContractStatus::Closed,
-          false,
+          .client = "TestClient",
+          .description = "TestDesc",
+          .upfront_payment = 1000u,
+          .completion_payment = 2000u,
+          .status = ContractStatus::Closed,
+          .failed = false,
       });
 
   GIVEN("An Open Contract") {

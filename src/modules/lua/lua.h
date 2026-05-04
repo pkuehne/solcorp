@@ -15,7 +15,7 @@
  * - nested<M>("name", "Type")
  *   Use when the member is another component-like object that should be
  *   exposed as userdata, not copied by value.
- *   Example: nested<&Rocket::cost>("cost", "Stat")
+ *   Example: nested<&Rocket::cost>({"cost"}, {"Stat"})
  *
  * - getter<G>("name")
  *   Read-only property backed by a method or derived value.
@@ -231,6 +231,13 @@ template <typename T> static int entity_remover(lua_State *L) {
   return 0;
 }
 
+struct LuaFieldName {
+  const char *value;
+};
+struct LuaComponentType {
+  const char *value;
+};
+
 /**
  * @brief Fluent component field registration helper.
  *
@@ -263,10 +270,11 @@ public:
    */
   template <auto M>
     requires MemberObjectPointerOf<M, C>
-  LuaFieldBuilder &nested(const char *name, const char *component_type) {
+  LuaFieldBuilder &nested(LuaFieldName name, LuaComponentType component_type) {
     using CT = typename member_ptr_info<decltype(M)>::class_type;
     lua_getfield(L_, mt_, "__getters");
-    lua_pushstring(L_, (std::string("solcorp.") + component_type).c_str());
+    lua_pushstring(L_,
+                   (std::string("solcorp.") + component_type.value).c_str());
     lua_pushcclosure(
         L_,
         [](lua_State *Lx) -> int {
@@ -277,7 +285,7 @@ public:
           return 1;
         },
         1);
-    lua_setfield(L_, -2, name);
+    lua_setfield(L_, -2, name.value);
     lua_pop(L_, 1);
     return *this;
   }

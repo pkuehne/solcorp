@@ -9,7 +9,7 @@ void showDeveloperWindow(flecs::world &world) {
 }
 
 void child_tree(flecs::entity e) {
-  ImGui::PushID(e.id());
+  ImGui::PushID(std::to_string(e.id()).c_str());
   if (ImGui::TreeNode("", "%s", e.name().c_str())) {
     e.children([](flecs::entity e) { child_tree(e); });
     ImGui::TreePop();

@@ -22,21 +22,21 @@ struct EffectModifier {
   std::string effectName; ///< The name of the effect.
 };
 
+struct StatInit {
+  std::string id;
+  std::string display;
+  std::string description;
+  double base = 0.0;
+  bool higher_is_better = true;
+};
+
 /// Represents a modifiable stat.
 class Stat {
 public:
   Stat() = default;
-  /// @brief Constructs a new Stat object.
-  ///
-  /// @param id The name of the stat used to refer to it by Modifiers.
-  /// @param display The display name of the stat.
-  /// @param description The description of the stat.
-  /// @param base The base value of the stat.
-  /// @param hib Whether higher values are better.
-  Stat(const std::string &id, const std::string &display,
-       const std::string &description, double base = 0.0f, bool hib = true)
-      : m_id(id), m_display(display), m_description(description), m_base(base),
-        higher_is_better(hib) {}
+  explicit Stat(const StatInit &init)
+      : m_id(init.id), m_display(init.display), m_description(init.description),
+        m_base(init.base), higher_is_better(init.higher_is_better) {}
 
   /// Gets the base value of the stat.
   /// @return The base value.
@@ -72,6 +72,10 @@ public:
   /// Gets the list of modifiers applied to the stat.
   /// @return The list of modifiers.
   const std::vector<EffectModifier> &modifiers() const;
+
+  /// @brief Checks if higher values of the stat are better.
+  /// @return True if higher values are better, false otherwise.
+  bool isHigherBetter() const { return higher_is_better; }
 
 public:
   std::string m_id;                        ///< The ID of the stat.

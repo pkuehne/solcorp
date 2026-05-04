@@ -42,32 +42,44 @@ struct ActiveLaunchesFixture {
     pad1 = world.entity().add<Launchpad>().add<Facility>().child_of(building1);
     pad2 = world.entity().add<Launchpad>().add<Facility>().child_of(building2);
 
-    orbit1 = world.entity().set<TargetOrbit>({200000.0, 0.0});
-    orbit2 = world.entity().set<TargetOrbit>({400000.0, 1.5708});
+    orbit1 = world.entity().set<TargetOrbit>(
+        {.altitude = 200000.0, .inclination = 0.0});
+    orbit2 = world.entity().set<TargetOrbit>(
+        {.altitude = 400000.0, .inclination = 1.5708});
 
-    payload1 = world.entity().set<Payload>({500u});
-    payload2 = world.entity().set<Payload>({800u});
+    payload1 = world.entity().set<Payload>({.mass = 500u});
+    payload2 = world.entity().set<Payload>({.mass = 800u});
 
     // Contracts link payloads to orbits
     world.entity()
-        .set<Contract>({"Client A", "Desc", 1000.0f, 5000.0f})
+        .set<Contract>({.client = "Client A",
+                        .description = "Desc",
+                        .upfront_payment = 1000u,
+                        .completion_payment = 5000u,
+                        .status = ContractStatus::Open,
+                        .failed = false})
         .add<ContractPayload>(payload1)
         .add<ContractTargetOrbit>(orbit1);
     world.entity()
-        .set<Contract>({"Client B", "Desc", 2000.0f, 8000.0f})
+        .set<Contract>({.client = "Client B",
+                        .description = "Desc",
+                        .upfront_payment = 2000u,
+                        .completion_payment = 8000u,
+                        .status = ContractStatus::Open,
+                        .failed = false})
         .add<ContractPayload>(payload2)
         .add<ContractTargetOrbit>(orbit2);
 
     plan1 = world.entity("Plan Alpha")
-                .set<LaunchPlan>({10u})
+                .set<LaunchPlan>({.launch_date = 10u})
                 .add<LaunchingFrom>(pad1)
                 .add<LaunchingWith>(payload1);
     plan2 = world.entity("Plan Beta")
-                .set<LaunchPlan>({20u})
+                .set<LaunchPlan>({.launch_date = 20u})
                 .add<LaunchingFrom>(pad2)
                 .add<LaunchingWith>(payload2);
     plan3 = world.entity("Plan Gamma")
-                .set<LaunchPlan>({30u})
+                .set<LaunchPlan>({.launch_date = 30u})
                 .add<LaunchingFrom>(pad1);
   }
 };
@@ -246,7 +258,8 @@ SCENARIO("planMatchesFilters - dead filter entities",
   }
 
   GIVEN("filterOrbit is set then the orbit entity is destroyed") {
-    auto filterOrbit = f.world.entity().set<TargetOrbit>({300000.0, 0.5});
+    auto filterOrbit = f.world.entity().set<TargetOrbit>(
+        {.altitude = 300000.0, .inclination = 0.5});
     ActiveLaunchesWindow state;
     state.filterOrbit = filterOrbit;
     filterOrbit.destruct();

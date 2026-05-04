@@ -33,8 +33,9 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   world.each<CurrentSite>(
       [&](flecs::entity e, CurrentSite) { currentSite = e; });
 
-  std::vector<LocationInfo> locationMap(site.width * site.height,
-                                        LocationInfo::TileEmpty);
+  size_t siteSize =
+      static_cast<size_t>(site.width) * static_cast<size_t>(site.height);
+  std::vector<LocationInfo> locationMap(siteSize, LocationInfo::TileEmpty);
 
   auto currentBuildings =
       world.query_builder<SiteLocation>().with<CurrentSite>().up().build();
@@ -48,18 +49,18 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     }
   });
 
-  auto loc = [&site](size_t y, size_t x) -> size_t {
+  auto loc = [&site](uint8_t y, uint8_t x) -> uint8_t {
     return y * site.height + x;
   };
 
-  auto is_valid = [&site](size_t y, size_t x) -> bool {
+  auto is_valid = [&site](uint8_t y, uint8_t x) -> bool {
     if (y > site.height || x > site.width) {
       return false;
     }
     return true;
   };
 
-  auto setConstruction = [&](size_t y, size_t x) {
+  auto setConstruction = [&](uint8_t y, uint8_t x) {
     if (!is_valid(y, x)) {
       return;
     }
@@ -69,8 +70,8 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   };
 
   bool empty_site = true;
-  for (size_t y = 0; y < site.height; y++) {
-    for (size_t x = 0; x < site.width; x++) {
+  for (uint8_t y = 0; y < site.height; y++) {
+    for (uint8_t x = 0; x < site.width; x++) {
       if (locationMap[loc(y, x)] != LocationInfo::TileBuilding) {
         continue;
       }
@@ -87,15 +88,16 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     setConstruction(site.height / 2, site.width / 2);
   }
 
-  for (unsigned int y = 0; y < site.height; y++) {
-    for (unsigned int x = 0; x < site.width; x++) {
+  for (uint8_t y = 0; y < site.height; y++) {
+    for (uint8_t x = 0; x < site.width; x++) {
       if (locationMap[loc(y, x)] != LocationInfo::TileConstruction) {
         continue;
       }
 
       // Create Construction Site
       spdlog::debug("Creating construction site at {} {}", x, y);
-      instantiateConstructionSite(world, x, y, currentSite);
+      instantiateConstructionSite(world, SiteLocation{.x = x, .y = y},
+                                  currentSite);
     }
   }
 

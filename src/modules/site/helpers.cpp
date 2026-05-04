@@ -4,12 +4,12 @@
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 
-flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
-                                  const std::string &prefab, uint32_t x,
-                                  uint32_t y, flecs::entity site) {
+flecs::entity instantiateBuilding(flecs::world &world, BuildingName building,
+                                  BuildingPrefab prefab, SiteLocation location,
+                                  flecs::entity site) {
 
   std::string prefabName = "Prefabs::Buildings::";
-  prefabName.append(prefab);
+  prefabName.append(prefab.name);
   auto prefabE = world.lookup(prefabName.c_str());
   if (!prefabE.is_valid()) {
     spdlog::error("Prefab {} does not exist", prefabName);
@@ -21,19 +21,20 @@ flecs::entity instantiateBuilding(flecs::world &world, const std::string &name,
   }
 
   Transform t;
-  t.relativePosition.x = x * 32;
-  t.relativePosition.y = y * 32;
+  t.relativePosition.x = static_cast<float>(location.x * 32);
+  t.relativePosition.y = static_cast<float>(location.y * 32);
 
-  auto entity = world.entity(name.c_str())
+  auto entity = world.entity(building.value.c_str())
                     .is_a(prefabE)
-                    .set<SiteLocation>({x, y})
+                    .set<SiteLocation>(location)
                     .set<Transform>(t)
                     .child_of(site);
   return entity;
 };
 
-flecs::entity instantiateConstructionSite(flecs::world &world, uint32_t x,
-                                          uint32_t y, flecs::entity site) {
+flecs::entity instantiateConstructionSite(flecs::world &world,
+                                          SiteLocation location,
+                                          flecs::entity site) {
 
   std::string prefabName = "Prefabs::Core::ConstructionSite";
   auto prefabE = world.lookup(prefabName.c_str());
@@ -47,14 +48,14 @@ flecs::entity instantiateConstructionSite(flecs::world &world, uint32_t x,
   }
 
   Transform t;
-  t.relativePosition.x = x * 32;
-  t.relativePosition.y = y * 32;
+  t.relativePosition.x = static_cast<float>(location.x) * 32;
+  t.relativePosition.y = static_cast<float>(location.y) * 32;
 
-  std::string name =
-      fmt::format("Construction Site {}-{}/{}", site.name().c_str(), x, y);
+  std::string name = fmt::format("Construction Site {}-{}/{}",
+                                 site.name().c_str(), location.x, location.y);
   auto entity = world.entity(name.c_str())
                     .is_a(prefabE)
-                    .set<SiteLocation>({x, y})
+                    .set<SiteLocation>(location)
                     .set<Transform>(t)
                     .child_of(site);
   return entity;
@@ -69,10 +70,11 @@ flecs::entity instantiateBuildingNotification(flecs::world &world,
   }
 
   auto entity = world.entity()
-                    .set<Transform>({{0, -30}, {}})
-                    .set<Text>({text})
-                    .set<Velocity>({0, -10})
-                    .set<Expire>({1500})
+                    .set<Transform>({.relativePosition = {.x = 0, .y = -30},
+                                     .worldPosition = {}})
+                    .set<Text>({.text = text})
+                    .set<Velocity>({.x = 0, .y = -10})
+                    .set<Expire>({.millis = 1500})
                     .child_of(building);
 
   return entity;

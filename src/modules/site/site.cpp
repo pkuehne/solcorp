@@ -68,12 +68,12 @@ SiteModule::SiteModule(flecs::world &world) {
       });
   register_component_lua<Launchpad>(
       world, "Launchpad", [](LuaFieldBuilder<Launchpad> &b) {
-        b.nested<&Launchpad::max_weight>("max_weight", "Stat")
-            .nested<&Launchpad::prep_days>("prep_days", "Stat");
+        b.nested<&Launchpad::max_weight>({"max_weight"}, {"Stat"})
+            .nested<&Launchpad::prep_days>({"prep_days"}, {"Stat"});
       });
   register_component_lua<Office>(
       world, "Office", [](LuaFieldBuilder<Office> &b) {
-        b.nested<&Office::max_desks>("max_desks", "Stat");
+        b.nested<&Office::max_desks>({"max_desks"}, {"Stat"});
       });
   register_component_lua<Storage>(world, "Storage");
   register_component_lua<Manufacturing>(
@@ -122,8 +122,8 @@ SiteModule::SiteModule(flecs::world &world) {
       .each([](const Site &site, const Transform &t) {
         const float x = t.worldPosition.x;
         const float y = t.worldPosition.y;
-        const float w = site.width * 32.0f;
-        const float h = site.height * 32.0f;
+        const float w = static_cast<float>(site.width) * 32.0f;
+        const float h = static_cast<float>(site.height) * 32.0f;
         const float ext = 7.0f;
 
         const ImU32 glow = IM_COL32(100, 180, 255, 45);
@@ -228,9 +228,11 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse) {
   // We know from the query that this has a SiteLocation i.e. is part of a Site
   auto world = e.world();
-  int tileSize = s.width;
-  if ((mouse.x > t.worldPosition.x && mouse.x < t.worldPosition.x + tileSize) &&
-      (mouse.y > t.worldPosition.y && mouse.y < t.worldPosition.y + tileSize)) {
+  float tileSize = static_cast<float>(s.width);
+  float mouse_x = static_cast<float>(mouse.x);
+  float mouse_y = static_cast<float>(mouse.y);
+  if ((mouse_x > t.worldPosition.x && mouse_x < t.worldPosition.x + tileSize) &&
+      (mouse_y > t.worldPosition.y && mouse_y < t.worldPosition.y + tileSize)) {
     spdlog::debug("Clicked on building {}", e.name().c_str());
     if (e.has<Building>()) {
       spdlog::debug("Showing Building Window for {}", e.name().c_str());

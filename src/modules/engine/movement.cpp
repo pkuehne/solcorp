@@ -10,7 +10,7 @@ void systemApplyVelocity(flecs::iter &it, size_t, const Velocity &v,
 }
 
 void systemUpdateExpiry(flecs::iter &it, size_t row, Expire &e) {
-  e.millis -= (it.delta_time() * 1000);
+  e.millis -= static_cast<int>(it.delta_time() * 1000);
   if (e.millis <= 0) {
     it.entity(row).destruct();
   }

@@ -13,13 +13,18 @@ struct Person {
 /// @brief An Employee of the company
 struct Employee {
   int start = 0;
-  Stat motivation = Stat("motivation", "Motivation",
-                         "How well motivated this employee is", 50.0);
+  Stat motivation = Stat({.id = "motivation",
+                          .display = "Motivation",
+                          .description = "How well motivated this employee is",
+                          .base = 50.0});
   Stat leadership_skill =
-      Stat("leadership_skill", "Leadership Skills",
-           "How good this person is at leading others", 0.0);
-  Stat domain_skill = Stat("domains_skills", "Domain Skills",
-                           "How good this person is at their job", 0.0);
+      Stat({.id = "leadership_skill",
+            .display = "Leadership Skills",
+            .description = "How good this person is at leading others"});
+  Stat domain_skill =
+      Stat({.id = "domains_skills",
+            .display = "Domain Skills",
+            .description = "How good this person is at their job"});
 };
 
 /// @brief A team in the company

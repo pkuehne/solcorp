@@ -35,8 +35,8 @@ void registerRender(flecs::world &world) {
   });
   register_component_lua<Transform>(
       world, "Transform", [](LuaFieldBuilder<Transform> &b) {
-        b.nested<&Transform::relativePosition>("relativePosition", "Point")
-            .nested<&Transform::worldPosition>("worldPosition", "Point");
+        b.nested<&Transform::relativePosition>({"relativePosition"}, {"Point"})
+            .nested<&Transform::worldPosition>({"worldPosition"}, {"Point"});
       });
   register_component_lua<Sprite>(world, "Sprite",
                                  [](LuaFieldBuilder<Sprite> &b) {
@@ -52,7 +52,7 @@ void registerRender(flecs::world &world) {
     b.field<&Text::text>("text")
         .field<&Text::rotation>("rotation")
         .field<&Text::flip>("flip")
-        .nested<&Text::color>("color", "Color");
+        .nested<&Text::color>({"color"}, {"Color"});
   });
 
   auto scope = world.set_scope(0);
@@ -63,8 +63,8 @@ void registerRender(flecs::world &world) {
   Font defaultFont;
   defaultFont.name = "fonts/RobotoMono-Medium.ttf";
   defaultFont.point_size = 18;
-  defaultFont.ptr =
-      TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
+  defaultFont.ptr = TTF_OpenFont(defaultFont.name.c_str(),
+                                 static_cast<int>(defaultFont.point_size));
   SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +
                                             defaultFont.name +
                                             "': " + TTF_GetError());
@@ -189,10 +189,11 @@ void systemRenderPresent(const Renderer &r) {
 /// @param renderer The renderer used to draw on the screen
 void systemRenderSprite(flecs::entity, const Sprite &sprite,
                         const Transform &target, const Renderer &renderer) {
-  SDL_Rect source = {sprite.x, sprite.y, sprite.width, sprite.height};
+  SDL_Rect source = {sprite.x, sprite.y, static_cast<int>(sprite.width),
+                     static_cast<int>(sprite.height)};
   SDL_FRect destination = {target.worldPosition.x, target.worldPosition.y,
-                           sprite.width * sprite.scale,
-                           sprite.height * sprite.scale};
+                           static_cast<float>(sprite.width) * sprite.scale,
+                           static_cast<float>(sprite.height) * sprite.scale};
   if (!sprite.texture.is_valid()) {
     spdlog::error("Sprite has no texture assigned");
     return;
@@ -204,7 +205,7 @@ void systemRenderSprite(flecs::entity, const Sprite &sprite,
   }
 
   SDL_RenderCopyExF(renderer.renderer, t.ptr, &source, &destination,
-                    sprite.rotation, NULL,
+                    sprite.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(sprite.flip));
 }
 
@@ -237,7 +238,7 @@ void systemCreateTextureForText(flecs::entity e, Text &text,
     spdlog::error("Failed to create text texture: {}", SDL_GetError());
     return;
   }
-  e.set<Texture>({texture, surface->w, surface->h});
+  e.set<Texture>({.ptr = texture, .width = surface->w, .height = surface->h});
 }
 
 void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
@@ -246,10 +247,11 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
 
   SDL_Rect source = {0, 0, texture.width, texture.height};
   SDL_FRect destination = {target.worldPosition.x * 1.0f,
-                           target.worldPosition.y * 1.0f, texture.width * 1.0f,
-                           texture.height * 1.0f};
+                           target.worldPosition.y * 1.0f,
+                           static_cast<float>(texture.width) * 1.0f,
+                           static_cast<float>(texture.height) * 1.0f};
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
-                    text.rotation, NULL,
+                    text.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(text.flip));
 }
 
@@ -270,7 +272,8 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
                   SDL_GetError());
     throw std::runtime_error("Failed to create texture from surface");
   }
-  SDL_QueryTexture(texture.ptr, NULL, NULL, &texture.width, &texture.height);
+  SDL_QueryTexture(texture.ptr, nullptr, nullptr, &texture.width,
+                   &texture.height);
 
   return texture;
 }

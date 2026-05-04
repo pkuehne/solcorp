@@ -38,30 +38,30 @@ void systemSeedStaff(flecs::iter &it) {
                      .add<TeamMember>(finance);
 
   world.entity("Anna")
-      .set<Person>({"Anna", "Delaney"})
+      .set<Person>({.first_name = "Anna", .last_name = "Delaney"})
       .add<Employee>()
       .add<TeamMember>(purchasing);
   world.entity("Bernardo")
-      .set<Person>({"Bernardo", "Jimenez"})
+      .set<Person>({.first_name = "Bernardo", .last_name = "Jimenez"})
       .add<Employee>()
       .add<TeamMember>(purchasing);
   world.entity("Kathy")
-      .set<Person>({"Kathy", "Lau"})
+      .set<Person>({.first_name = "Kathy", .last_name = "Lau"})
       .add<Employee>()
       .add<TeamMember>(purchasing)
       .add<Manager>(purchasing);
   world.entity("Dave")
-      .set<Person>({"Dave", "Jones"})
+      .set<Person>({.first_name = "Dave", .last_name = "Jones"})
       .add<Employee>()
       .add<TeamMember>(finance)
       .add<Manager>(finance);
   world.entity("Elena")
-      .set<Person>({"Elena", "Rodriguez"})
+      .set<Person>({.first_name = "Elena", .last_name = "Rodriguez"})
       .add<Employee>()
       .add<TeamMember>(payable)
       .add<Manager>(payable);
   world.entity("Freddie")
-      .set<Person>({"Fred", "Dorn"})
+      .set<Person>({.first_name = "Fred", .last_name = "Dorn"})
       .add<Employee>()
       .add<TeamMember>(payable);
 }

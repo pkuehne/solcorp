@@ -81,8 +81,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       });
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
-        b.nested<&Rocket::failure_rate>("failure_rate", "Stat")
-            .nested<&Rocket::cost>("cost", "Stat");
+        b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
+            .nested<&Rocket::cost>({"cost"}, {"Stat"});
       });
   register_component_lua<Payload>(
       world, "Payload",
@@ -165,7 +165,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   });
 
   Company &company = world.get_mut<Company>();
-  double total_payment = 0.0;
+  uint32_t total_payment = 0;
 
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -189,7 +189,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
         contract.failed = true;
       } else {
         contract.failed = false;
-        company.balance += contract.completion_payment;
+        company.balance += static_cast<int64_t>(contract.completion_payment);
         total_payment += contract.completion_payment;
       }
       contract.status = ContractStatus::Closed;
@@ -208,7 +208,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   std::string notification =
       rocket_failure ? std::format("{} failed - {} exploded on launch",
                                    planE.name().c_str(), rocketE.name().c_str())
-                     : std::format("{} launched successfully (${:.0f})",
+                     : std::format("{} launched successfully (${})",
                                    planE.name().c_str(), total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
 

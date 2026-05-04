@@ -43,7 +43,8 @@ SCENARIO("computeRocketPrefabBuildCost applies modifiers", "[site][ui]") {
     rocket.cost.setBase(1000);
 
     auto effect = world.entity("Cost Reduction Program");
-    world.entity().child_of(effect).set<Modifier>({"cost", 250.0, 1.0});
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
     prefab.add<HasEffect>(effect);
 
     WHEN("computing rocket prefab build cost") {
@@ -72,7 +73,8 @@ SCENARIO("canAffordRocketPrefab uses modifier-aware cost", "[site][ui]") {
     rocket.cost.setBase(1000);
 
     auto effect = world.entity("Cost Reduction Program");
-    world.entity().child_of(effect).set<Modifier>({"cost", 250.0, 1.0});
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
     prefab.add<HasEffect>(effect);
 
     WHEN("company balance is below required cost") {

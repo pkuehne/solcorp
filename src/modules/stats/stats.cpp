@@ -129,17 +129,17 @@ void displayStatWithTooltip(const Stat *stat) {
       ImVec4 colour;
       if (item.mod.additive > 0) {
         modValue = fmt::format("+{:.0f}", item.mod.additive);
-        colour = stat->higher_is_better ? green : red;
+        colour = stat->isHigherBetter() ? green : red;
       } else if (item.mod.additive < 0) {
         modValue = fmt::format("{:.0f}", item.mod.additive);
-        colour = stat->higher_is_better ? red : green;
+        colour = stat->isHigherBetter() ? red : green;
       }
       if (item.mod.multiplicative > 1) {
         modValue = fmt::format("+{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = stat->higher_is_better ? green : red;
+        colour = stat->isHigherBetter() ? green : red;
       } else if (item.mod.multiplicative < 1) {
         modValue = fmt::format("{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = stat->higher_is_better ? red : green;
+        colour = stat->isHigherBetter() ? red : green;
       }
       ImGui::Text("%s:", item.effectName.c_str());
       ImGui::SameLine();

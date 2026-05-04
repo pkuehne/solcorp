@@ -11,10 +11,11 @@
 #include <modules/rocket_launch/rocket_launch.h>
 
 flecs::entity create_site(flecs::world world, const std::string &name,
-                          uint32_t width, uint32_t height, bool make_current) {
+                          uint8_t width, uint8_t height, bool make_current) {
   auto site = world.entity(name.c_str())
-                  .set<Site>({width, height})
-                  .set<Transform>({{340, 240}, {}})
+                  .set<Site>({.width = width, .height = height})
+                  .set<Transform>({.relativePosition = {.x = 340, .y = 240},
+                                   .worldPosition = {}})
                   .add<ConstructionSiteNeedsUpdating>();
   if (make_current) {
     site.add<CurrentSite>();
@@ -55,16 +56,16 @@ flecs::entity add_facility_to_building(flecs::world world,
   return world.prefab(name.c_str()).is_a(facility_prefab).child_of(building);
 }
 
-flecs::entity create_rocket(flecs::world world, const std::string &name,
-                            const std::string &prefab, flecs::entity parent) {
+flecs::entity create_rocket(flecs::world world, RocketName name,
+                            RocketPrefabType prefab, flecs::entity parent) {
   std::string prefab_name = "Prefabs::Rockets::";
-  prefab_name.append(prefab);
+  prefab_name.append(prefab.value);
   auto prefab_entity = world.lookup(prefab_name.c_str());
   if (!prefab_entity.is_valid()) {
     spdlog::error("Rocket prefab {} does not exist", prefab_name);
     return flecs::entity();
   }
-  auto rocket = world.entity(name.c_str()).is_a(prefab_entity);
+  auto rocket = world.entity(name.value.c_str()).is_a(prefab_entity);
   if (parent.is_valid()) {
     rocket.child_of(parent);
   }
@@ -72,9 +73,10 @@ flecs::entity create_rocket(flecs::world world, const std::string &name,
 }
 
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, uint32_t x, uint32_t y,
+                              const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site) {
-  return instantiateBuilding(world, name, prefab, x, y, site);
+  return instantiateBuilding(world, BuildingName{name}, BuildingPrefab{prefab},
+                             SiteLocation{.x = x, .y = y}, site);
 }
 
 flecs::entity add_target_orbit_to_rocket(flecs::world world,
@@ -87,17 +89,18 @@ flecs::entity add_target_orbit_to_rocket(flecs::world world,
   return rocket;
 }
 
-flecs::entity create_texture(flecs::world world, const std::string &name,
-                             const std::string &filename,
-                             const std::string &mod_name) {
-  if (filename.find("..") != std::string::npos) {
-    spdlog::error("Invalid filename {}", filename);
+flecs::entity create_texture(flecs::world world, TextureName name,
+                             TextureFilename filename,
+                             TextureModName mod_name) {
+  if (filename.value.find("..") != std::string::npos) {
+    spdlog::error("Invalid filename {}", filename.value);
     return flecs::entity();
   }
   auto location =
-      (std::filesystem::path("mods") / mod_name / filename).string();
+      (std::filesystem::path("mods") / mod_name.value / filename.value)
+          .string();
   auto texture_node = world.entity("Textures");
-  return world.entity(name.c_str())
+  return world.entity(name.value.c_str())
       .child_of(texture_node)
       .set<Texture>(loadTexture(location, world));
 }
@@ -122,8 +125,7 @@ flecs::entity add_modifier(flecs::world world, flecs::entity effect,
 }
 
 Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
-                                uint32_t x, uint32_t y, uint32_t width,
-                                uint32_t height) {
+                                SpriteClipRect rect) {
   std::string texture_name("Textures::");
   texture_name.append(texture);
   auto textureE = world.lookup(texture_name.c_str());
@@ -133,17 +135,18 @@ Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
   }
   Sprite sprite;
   sprite.texture = textureE;
-  sprite.x = x;
-  sprite.y = y;
-  sprite.width = width;
-  sprite.height = height;
+  sprite.x = rect.x;
+  sprite.y = rect.y;
+  sprite.width = rect.width;
+  sprite.height = rect.height;
   return sprite;
 }
 
 flecs::entity create_contract(flecs::world world, const std::string &name,
                               const std::string &client,
                               const std::string &description,
-                              float upfront_payment, float completion_payment) {
+                              uint32_t upfront_payment,
+                              uint32_t completion_payment) {
   auto contracts_node = world.lookup("Contracts");
   SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
   auto existing = contracts_node.lookup(name.c_str());
@@ -152,7 +155,10 @@ flecs::entity create_contract(flecs::world world, const std::string &name,
     return existing;
   }
   return world.entity(name.c_str())
-      .set<Contract>({client, description, upfront_payment, completion_payment})
+      .set<Contract>({.client = client,
+                      .description = description,
+                      .upfront_payment = upfront_payment,
+                      .completion_payment = completion_payment})
       .child_of(contracts_node);
 }
 
@@ -232,15 +238,16 @@ static int create_rocket_wrapper(lua_State *L) {
   if (!lua_isnoneornil(L, 3)) {
     parent = lua_check_entity(L, 3);
   }
-  lua_push_entity(L, create_rocket(*lua_get_world(L), name, prefab, parent));
+  lua_push_entity(L, create_rocket(*lua_get_world(L), RocketName{name},
+                                   RocketPrefabType{prefab}, parent));
   return 1;
 }
 
 static int create_building_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *prefab = luaL_checkstring(L, 2);
-  auto x = (uint32_t)luaL_checkinteger(L, 3);
-  auto y = (uint32_t)luaL_checkinteger(L, 4);
+  auto x = (int)luaL_checkinteger(L, 3);
+  auto y = (int)luaL_checkinteger(L, 4);
   flecs::entity site = lua_check_entity(L, 5);
   lua_push_entity(L,
                   create_building(*lua_get_world(L), name, prefab, x, y, site));
@@ -259,8 +266,9 @@ static int add_target_orbit_to_rocket_wrapper(lua_State *L) {
 static int create_texture_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *filename = luaL_checkstring(L, 2);
-  lua_push_entity(L, create_texture(*lua_get_world(L), name, filename,
-                                    lua_get_mod_name(L)));
+  lua_push_entity(L, create_texture(*lua_get_world(L), TextureName{name},
+                                    TextureFilename{filename},
+                                    TextureModName{lua_get_mod_name(L)}));
   return 1;
 }
 
@@ -278,8 +286,8 @@ static int create_contract_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *client = luaL_checkstring(L, 2);
   const char *description = luaL_checkstring(L, 3);
-  auto upfront = (float)luaL_checknumber(L, 4);
-  auto completion = (float)luaL_checknumber(L, 5);
+  auto upfront = (uint32_t)luaL_checknumber(L, 4);
+  auto completion = (uint32_t)luaL_checknumber(L, 5);
   lua_push_entity(L, create_contract(*lua_get_world(L), name, client,
                                      description, upfront, completion));
   return 1;
@@ -325,12 +333,13 @@ static int add_modifier_wrapper(lua_State *L) {
 
 static int clip_sprite_from_texture_wrapper(lua_State *L) {
   const char *texture = luaL_checkstring(L, 1);
-  auto x = (uint32_t)luaL_checkinteger(L, 2);
-  auto y = (uint32_t)luaL_checkinteger(L, 3);
+  auto x = (int)luaL_checkinteger(L, 2);
+  auto y = (int)luaL_checkinteger(L, 3);
   auto width = (uint32_t)luaL_checkinteger(L, 4);
   auto height = (uint32_t)luaL_checkinteger(L, 5);
-  auto *sprite = new Sprite(clip_sprite_from_texture(*lua_get_world(L), texture,
-                                                     x, y, width, height));
+  auto *sprite = new Sprite(clip_sprite_from_texture(
+      *lua_get_world(L), texture,
+      SpriteClipRect{.x = x, .y = y, .width = width, .height = height}));
   lua_push_component(L, sprite, "solcorp.Sprite", true,
                      [](void *p) { delete static_cast<Sprite *>(p); });
   return 1;
