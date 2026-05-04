@@ -59,13 +59,15 @@ bool planButtonDisabled(const Contract &contract) {
 void acceptContract(flecs::world &world, flecs::entity contractE) {
   Contract &contract = contractE.get_mut<Contract>();
   contract.status = ContractStatus::Accepted;
-  world.get_mut<Company>().balance += contract.upfront_payment;
+  world.get_mut<Company>().balance +=
+      static_cast<int64_t>(contract.upfront_payment);
 }
 
 void rejectContract(flecs::world &world, flecs::entity contractE) {
   Contract &contract = contractE.get_mut<Contract>();
   if (contract.status == ContractStatus::Accepted) {
-    world.get_mut<Company>().balance -= contract.upfront_payment;
+    world.get_mut<Company>().balance -=
+        static_cast<int64_t>(contract.upfront_payment);
   }
   contract.status = ContractStatus::Closed;
   contract.failed = true;
