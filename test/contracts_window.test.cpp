@@ -1,6 +1,6 @@
-#include "modules/rocket_launch/contracts_window.h"
-#include "modules/rocket_launch/actions.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/contracts_window.h"
+#include "modules/rocket/actions.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
@@ -8,9 +8,9 @@
 SCENARIO("acceptContract and rejectContract update balance",
          "[contracts_window]") {
   flecs::world world;
-  world.import <BaseModule>();
-  world.import <SimulationModule>();
-  world.import <RocketLaunchModule>();
+  world.import<BaseModule>();
+  world.import<SimulationModule>();
+  world.import<RocketLaunchModule>();
 
   auto contractE = world.entity("TestContract")
                        .set<Contract>({
@@ -60,8 +60,8 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
          "[contracts_window]") {
   GIVEN("an accepted contract") {
     flecs::world world;
-    world.import <BaseModule>();
-    world.import <RocketLaunchModule>();
+    world.import<BaseModule>();
+    world.import<RocketLaunchModule>();
 
     flecs::entity contract = world.entity("TestContract")
                                  .set<Contract>({
@@ -92,8 +92,8 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
 
 SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   flecs::world world;
-  world.import <BaseModule>();
-  world.import <RocketLaunchModule>();
+  world.import<BaseModule>();
+  world.import<RocketLaunchModule>();
 
   // Create test contracts with different statuses
   world.entity("OpenContract")
@@ -193,8 +193,8 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
 
 SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   flecs::world world;
-  world.import <BaseModule>();
-  world.import <RocketLaunchModule>();
+  world.import<BaseModule>();
+  world.import<RocketLaunchModule>();
 
   // Create test contracts with different statuses
   world.entity("OpenContract")

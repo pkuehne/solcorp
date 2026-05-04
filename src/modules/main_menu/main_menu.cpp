@@ -4,9 +4,9 @@
 #include "modules/base/base.h"
 #include "modules/engine/input.h"
 #include <flecs.h>
-#include <modules/rocket_launch/active_launches_window.h>
-#include <modules/rocket_launch/contracts_window.h>
-#include <modules/rocket_launch/launch_window.h>
+#include <modules/rocket/active_launches_window.h>
+#include <modules/rocket/contracts_window.h>
+#include <modules/rocket/launch_window.h>
 #include <modules/simulation/celestial_browser.h>
 #include <modules/simulation/developer_window.h>
 #include <modules/simulation/simulation.h>

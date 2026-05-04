@@ -2,7 +2,7 @@
 #include "modules/engine/engine.h"
 #include "modules/lua/lua.h"
 #include "modules/main_menu/main_menu.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/staff/staff.h"
@@ -20,15 +20,15 @@ int main(void) {
 
   load_config_file();
 
-  world.import <BaseModule>();
-  world.import <LuaModule>();
-  world.import <EngineModule>();
-  world.import <StatsModule>();
-  world.import <SimulationModule>();
-  world.import <MainMenuModule>();
-  world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
-  world.import <StaffModule>();
+  world.import<BaseModule>();
+  world.import<LuaModule>();
+  world.import<EngineModule>();
+  world.import<StatsModule>();
+  world.import<SimulationModule>();
+  world.import<MainMenuModule>();
+  world.import<SiteModule>();
+  world.import<RocketLaunchModule>();
+  world.import<StaffModule>();
 
   // Main Loop
   logger->info("Starting");

@@ -1,14 +1,14 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/helpers.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
 static void run_site_prefab_setup(flecs::world &world) {
-  world.import <SiteModule>();
+  world.import<SiteModule>();
   auto sys = world.system("Setup Site Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -17,7 +17,7 @@ static void run_site_prefab_setup(flecs::world &world) {
 }
 
 static void run_rocket_prefab_setup(flecs::world &world) {
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
   auto sys = world.system("Setup Rocket Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -29,7 +29,7 @@ static void run_rocket_prefab_setup(flecs::world &world) {
 
 SCENARIO("create_site", "[helpers][lua]") {
   flecs::world world;
-  world.import <SiteModule>();
+  world.import<SiteModule>();
   world.entity("Earth").child_of(world.entity("Sun"));
 
   GIVEN("a name and dimensions") {
@@ -175,7 +175,7 @@ SCENARIO("create_building", "[helpers][lua]") {
 
 SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
   auto rocket = world.entity("RocketLEO").add<Rocket>();
   world.entity("LEO");
 
@@ -195,7 +195,7 @@ SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
 
 SCENARIO("create_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import <BaseModule>();
+  world.import<BaseModule>();
   registerEngineComponents(world);
   world.entity("Textures");
 
@@ -225,7 +225,7 @@ SCENARIO("create_texture", "[helpers][lua]") {
 
 SCENARIO("create_effect", "[helpers][lua]") {
   flecs::world world;
-  world.import <StatsModule>();
+  world.import<StatsModule>();
 
   GIVEN("a name with no source entity") {
     WHEN("create_effect is called") {
@@ -256,7 +256,7 @@ SCENARIO("create_effect", "[helpers][lua]") {
 
 SCENARIO("add_modifier", "[helpers][lua]") {
   flecs::world world;
-  world.import <StatsModule>();
+  world.import<StatsModule>();
 
   GIVEN("a valid effect entity") {
     WHEN("add_modifier is called") {
@@ -292,7 +292,7 @@ SCENARIO("add_modifier", "[helpers][lua]") {
 
 SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import <BaseModule>();
+  world.import<BaseModule>();
   registerEngineComponents(world);
 
   GIVEN("a texture name that does not exist") {
@@ -331,7 +331,7 @@ SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
 
 SCENARIO("create_contract", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
   world.entity("Contracts");
 
   GIVEN("a unique contract name") {
@@ -373,7 +373,7 @@ SCENARIO("create_contract", "[helpers][lua]") {
 
 SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
   auto contract = world.entity("ContractX")
                       .set<Contract>({.client = "C",
                                       .description = "D",
@@ -428,7 +428,7 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
 
 SCENARIO("get_all_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("no contracts in the world") {
     WHEN("get_all_contracts is called") {
@@ -467,7 +467,7 @@ SCENARIO("get_all_contracts", "[helpers][lua]") {
 
 SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import<RocketLaunchModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
     world.entity("Open1").set<Contract>({.client = "C",

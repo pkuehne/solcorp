@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/engine/gui.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"

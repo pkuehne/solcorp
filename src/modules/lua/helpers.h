@@ -1,7 +1,7 @@
 #pragma once
 
 #include "modules/engine/render.h"
-#include "modules/rocket_launch/rocket_launch.h"
+#include "modules/rocket/rocket_launch.h"
 #include "modules/stats/stats.h"
 #include <flecs.h>
 #include <lua.hpp>
