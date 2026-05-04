@@ -6,7 +6,6 @@ Checks: >-
   modernize-*,
   -clang-analyzer-deadcode.DeadStores,
   -clang-analyzer-core.StackAddressEscape,
-  -performance-move-const-arg,
   -performance-enum-size,
   -performance-unnecessary-value-param,
   -performance-unnecessary-copy-initialization,
