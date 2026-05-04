@@ -91,7 +91,7 @@ void drawManufacturingSection(flecs::entity &entity) {
       e = ch;
     }
   });
-  ImGui::PushID(entity.id());
+  ImGui::PushID(std::to_string(entity.id()).c_str());
 
   if (e.is_valid()) {
     // There is a rocket on the line
@@ -99,8 +99,10 @@ void drawManufacturingSection(flecs::entity &entity) {
 
     Construction *c = e.try_get_mut<Construction>();
     if (c) {
-      float completed = c->effort_total - c->effort_remaining;
-      ImGui::ProgressBar(completed / c->effort_total);
+      float total = static_cast<float>(c->effort_total);
+      float remaining = static_cast<float>(c->effort_remaining);
+
+      ImGui::ProgressBar((total - remaining) / total);
     } else {
       ImGui::ProgressBar(1.0);
     }
@@ -129,7 +131,7 @@ void drawStorageSection(flecs::entity &entity) {
     if (rocket.has<Construction>()) {
       return;
     }
-    ImGui::PushID(rocket.id());
+    ImGui::PushID(std::to_string(rocket.id()).c_str());
     auto plan = rocket.target<LaunchingOn>();
     ImGui::Text("%s %s", rocket.name().c_str(),
                 plan.is_valid()
@@ -154,7 +156,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
   flecs::query<LaunchPlan> query =
       world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
   query.each([](flecs::entity planE, LaunchPlan &plan) {
-    ImGui::PushID(planE.id());
+    ImGui::PushID(std::to_string(planE.id()).c_str());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
     if (ImGui::SmallButton("Open")) {
