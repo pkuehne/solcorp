@@ -29,9 +29,9 @@ struct ActiveLaunchesFixture {
   flecs::entity plan3; // pad1, no payload
 
   ActiveLaunchesFixture() {
-    world.import<SimulationModule>();
-    world.import<SiteModule>();
-    world.import<RocketLaunchModule>();
+    world.import <SimulationModule>();
+    world.import <SiteModule>();
+    world.import <RocketLaunchModule>();
 
     site1 = world.entity("Site A").add<Site>();
     site2 = world.entity("Site B").add<Site>();
