@@ -38,7 +38,7 @@ BaseModule::BaseModule(flecs::world &world) {
       .opaque(flecs::String) // Opaque type that maps to string
       .serialize([](const flecs::serializer *s, const std::string *data) {
         const char *str = data->c_str();
-        return s->value(flecs::String, &str); // Forward to serializer
+        return s->value(flecs::String, static_cast<const void *>(&str));
       })
       .assign_string([](std::string *data, const char *value) {
         *data = value; // Assign new value to std::string
