@@ -24,8 +24,8 @@ uint32_t Rocket::max_id = 1;
 RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   spdlog::debug("Loading RocketLaunchModule");
 
-  world.import <BaseModule>();
-  world.import <StatsModule>();
+  world.import<BaseModule>();
+  world.import<StatsModule>();
 
   registerEngineComponents(world);
 
@@ -165,7 +165,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   });
 
   Company &company = world.get_mut<Company>();
-  double total_payment = 0.0;
+  float total_payment = 0.0;
 
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -189,7 +189,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
         contract.failed = true;
       } else {
         contract.failed = false;
-        company.balance += contract.completion_payment;
+        company.balance += static_cast<int64_t>(contract.completion_payment);
         total_payment += contract.completion_payment;
       }
       contract.status = ContractStatus::Closed;

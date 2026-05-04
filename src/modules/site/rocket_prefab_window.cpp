@@ -107,7 +107,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
   buttonSize.y = 30;
 
   for (auto prefabE : prefabs) {
-    ImGui::PushID(prefabE.id());
+    ImGui::PushID(std::to_string(prefabE.id()).c_str());
 
     std::string maxMassText = "N/A";
     if (lowEarthOrbit.is_valid() && prefabE.has<CanLiftTo>(lowEarthOrbit)) {
