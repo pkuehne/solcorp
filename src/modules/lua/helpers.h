@@ -8,6 +8,28 @@
 #include <string>
 #include <vector>
 
+struct RocketName {
+  std::string value;
+};
+struct RocketPrefabType {
+  std::string value;
+};
+struct TextureName {
+  std::string value;
+};
+struct TextureFilename {
+  std::string value;
+};
+struct TextureModName {
+  std::string value;
+};
+struct SpriteClipRect {
+  uint32_t x;
+  uint32_t y;
+  uint32_t width;
+  uint32_t height;
+};
+
 void load_helpers_namespace(lua_State *L);
 
 flecs::entity create_site(flecs::world world, const std::string &name,
@@ -19,8 +41,8 @@ flecs::entity create_rocket_prefab(flecs::world world, const std::string &name);
 flecs::entity add_facility_to_building(flecs::world world,
                                        flecs::entity building,
                                        const std::string &name);
-flecs::entity create_rocket(flecs::world world, const std::string &name,
-                            const std::string &prefab,
+flecs::entity create_rocket(flecs::world world, RocketName name,
+                            RocketPrefabType prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
                               const std::string &prefab, uint32_t x, uint32_t y,
@@ -29,16 +51,14 @@ flecs::entity add_target_orbit_to_rocket(flecs::world world,
                                          flecs::entity rocket,
                                          const std::string &orbit_name,
                                          uint32_t max_mass);
-flecs::entity create_texture(flecs::world world, const std::string &name,
-                             const std::string &filename,
-                             const std::string &mod_name);
+flecs::entity create_texture(flecs::world world, TextureName name,
+                             TextureFilename filename, TextureModName mod_name);
 flecs::entity create_effect(flecs::world world, const std::string &name,
                             flecs::entity source);
 flecs::entity add_modifier(flecs::world world, flecs::entity effect,
                            Modifier mod);
 Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
-                                uint32_t x, uint32_t y, uint32_t width,
-                                uint32_t height);
+                                SpriteClipRect rect);
 flecs::entity create_contract(flecs::world world, const std::string &name,
                               const std::string &client,
                               const std::string &description,

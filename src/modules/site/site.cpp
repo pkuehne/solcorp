@@ -68,12 +68,12 @@ SiteModule::SiteModule(flecs::world &world) {
       });
   register_component_lua<Launchpad>(
       world, "Launchpad", [](LuaFieldBuilder<Launchpad> &b) {
-        b.nested<&Launchpad::max_weight>("max_weight", "Stat")
-            .nested<&Launchpad::prep_days>("prep_days", "Stat");
+        b.nested<&Launchpad::max_weight>({"max_weight"}, {"Stat"})
+            .nested<&Launchpad::prep_days>({"prep_days"}, {"Stat"});
       });
   register_component_lua<Office>(
       world, "Office", [](LuaFieldBuilder<Office> &b) {
-        b.nested<&Office::max_desks>("max_desks", "Stat");
+        b.nested<&Office::max_desks>({"max_desks"}, {"Stat"});
       });
   register_component_lua<Storage>(world, "Storage");
   register_component_lua<Manufacturing>(

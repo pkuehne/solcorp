@@ -81,8 +81,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       });
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
-        b.nested<&Rocket::failure_rate>("failure_rate", "Stat")
-            .nested<&Rocket::cost>("cost", "Stat");
+        b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
+            .nested<&Rocket::cost>({"cost"}, {"Stat"});
       });
   register_component_lua<Payload>(
       world, "Payload",

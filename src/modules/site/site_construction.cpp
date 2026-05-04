@@ -95,7 +95,8 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
 
       // Create Construction Site
       spdlog::debug("Creating construction site at {} {}", x, y);
-      instantiateConstructionSite(world, x, y, currentSite);
+      instantiateConstructionSite(world, SiteLocation{.x = x, .y = y},
+                                  currentSite);
     }
   }
 

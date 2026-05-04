@@ -41,17 +41,25 @@ struct Storage {
 
 struct Office {
   Stat max_desks =
-      Stat("max-desks", "Max Desks",
-           "The maximum number of desks this facility can hold", 100);
+      Stat({.id = "max-desks",
+            .display = "Max Desks",
+            .description = "The maximum number of desks this facility can hold",
+            .base = 100});
 };
 
 /// @brief Can launch rockets
 struct Launchpad {
-  Stat max_weight = Stat("max-weight", "Max Weight",
-                         "The maximum weight the pad can support", 1000);
+  Stat max_weight =
+      Stat({.id = "max-weight",
+            .display = "Max Weight",
+            .description = "The maximum weight the pad can support",
+            .base = 1000});
   Stat prep_days =
-      Stat("prep-days", "Prep Days",
-           "Number of days required to prepare a launch", 5, false);
+      Stat({.id = "prep-days",
+            .display = "Prep Days",
+            .description = "Number of days required to prepare a launch",
+            .base = 5,
+            .higher_is_better = false});
 };
 
 /// @brief Indiciates the entity is a future building location

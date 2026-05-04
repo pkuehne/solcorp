@@ -251,7 +251,9 @@ void drawLaunchWindow(flecs::entity winE) {
   ImGui::Separator();
 
   auto valid = state.draftPlan.validate(world);
-  if (ActionButton("Save", "Save Launch Plan to be executed", valid.message)) {
+  if (ActionButton(ButtonLabel{.text = "Save"},
+                   ButtonTooltip{.text = "Save Launch Plan to be executed"},
+                   valid.message)) {
     // Save LaunchPlan and close window
     state.draftPlan.execute(world);
     hideWindow(world, "Mission Plan");

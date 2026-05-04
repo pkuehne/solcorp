@@ -118,7 +118,8 @@ SCENARIO("create_rocket", "[helpers][lua]") {
 
   GIVEN("a valid prefab name") {
     WHEN("create_rocket is called without a parent") {
-      auto rocket = create_rocket(world, "Booster1", "TestBooster");
+      auto rocket = create_rocket(world, RocketName{"Booster1"},
+                                  RocketPrefabType{"TestBooster"});
       THEN("a valid entity with the given name is returned") {
         REQUIRE(rocket.is_valid());
         CHECK(std::string(rocket.name().c_str()) == "Booster1");
@@ -127,7 +128,8 @@ SCENARIO("create_rocket", "[helpers][lua]") {
 
     WHEN("create_rocket is called with a parent entity") {
       auto parent = world.entity("LaunchPad");
-      auto rocket = create_rocket(world, "Booster2", "TestBooster", parent);
+      auto rocket = create_rocket(world, RocketName{"Booster2"},
+                                  RocketPrefabType{"TestBooster"}, parent);
       THEN("the rocket is a child of the parent") {
         REQUIRE(rocket.is_valid());
         CHECK(rocket.parent() == parent);
@@ -137,7 +139,8 @@ SCENARIO("create_rocket", "[helpers][lua]") {
 
   GIVEN("a prefab name that does not exist") {
     WHEN("create_rocket is called") {
-      auto rocket = create_rocket(world, "Ghost", "NoSuchPrefab");
+      auto rocket = create_rocket(world, RocketName{"Ghost"},
+                                  RocketPrefabType{"NoSuchPrefab"});
       THEN("an invalid entity is returned") { CHECK(!rocket.is_valid()); }
     }
   }
@@ -198,14 +201,18 @@ SCENARIO("create_texture", "[helpers][lua]") {
 
   GIVEN("a filename containing '..'") {
     WHEN("create_texture is called") {
-      auto e = create_texture(world, "Bad", "../secret.png", "core");
+      auto e = create_texture(world, TextureName{"Bad"},
+                              TextureFilename{"../secret.png"},
+                              TextureModName{"core"});
       THEN("an invalid entity is returned") { CHECK(!e.is_valid()); }
     }
   }
 
   GIVEN("a valid filename (no renderer, texture ptr will be null)") {
     WHEN("create_texture is called") {
-      auto e = create_texture(world, "Sheet", "sheet.png", "core");
+      auto e =
+          create_texture(world, TextureName{"Sheet"},
+                         TextureFilename{"sheet.png"}, TextureModName{"core"});
       THEN("an entity is created as a child of Textures") {
         REQUIRE(e.is_valid());
         CHECK(e.parent() == world.lookup("Textures"));
@@ -290,7 +297,9 @@ SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
 
   GIVEN("a texture name that does not exist") {
     WHEN("clip_sprite_from_texture is called") {
-      auto sprite = clip_sprite_from_texture(world, "missing", 0, 0, 32, 32);
+      auto sprite = clip_sprite_from_texture(
+          world, "missing",
+          SpriteClipRect{.x = 0, .y = 0, .width = 32, .height = 32});
       THEN("an empty Sprite is returned") {
         CHECK(sprite.texture == flecs::entity());
       }
@@ -302,7 +311,9 @@ SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
     auto tex = world.entity("sheet").child_of(textures);
 
     WHEN("clip_sprite_from_texture is called with a clipping region") {
-      auto sprite = clip_sprite_from_texture(world, "sheet", 10, 20, 64, 48);
+      auto sprite = clip_sprite_from_texture(
+          world, "sheet",
+          SpriteClipRect{.x = 10, .y = 20, .width = 64, .height = 48});
       THEN("the sprite references the texture entity") {
         CHECK(sprite.texture == tex);
       }

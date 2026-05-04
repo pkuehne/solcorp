@@ -20,10 +20,16 @@ struct LaunchPlan {
 struct Rocket {
   static uint32_t max_id;
   Stat failure_rate =
-      Stat("failure-rate", "Failure Rate",
-           "Likelyhood the rocket will fail on take-off", 0.1, false);
-  Stat cost =
-      Stat("cost", "Cost", "Cost to build this rocket", 5'000'000, false);
+      Stat({.id = "failure-rate",
+            .display = "Failure Rate",
+            .description = "Likelyhood the rocket will fail on take-off",
+            .base = 0.1,
+            .higher_is_better = false});
+  Stat cost = Stat({.id = "cost",
+                    .display = "Cost",
+                    .description = "Cost to build this rocket",
+                    .base = 5'000'000,
+                    .higher_is_better = false});
 };
 
 /// @brief Payload to be launched by a rocket

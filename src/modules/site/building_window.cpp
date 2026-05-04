@@ -114,7 +114,9 @@ void drawManufacturingSection(flecs::entity &entity) {
     ImGui::Text("Empty Manufacturing Line");
     ImGui::ProgressBar(0.0);
 
-    if (ActionButton("Build", "Select a rocket prefab to build", "")) {
+    if (ActionButton(ButtonLabel{.text = "Build"},
+                     ButtonTooltip{.text = "Select a rocket prefab to build"},
+                     "")) {
       showRocketPrefabWindow(entity);
     }
   }
@@ -172,8 +174,11 @@ void drawRocketButtons(flecs::entity &rocket) {
   if (rocket.has<Construction>()) {
     issue = "Cannot move rocket while being built";
   }
-  if (ActionButton("Move", "Move the rocket to another storage at this site",
-                   issue)) {
+  if (ActionButton(
+          ButtonLabel{.text = "Move"},
+          ButtonTooltip{.text =
+                            "Move the rocket to another storage at this site"},
+          issue)) {
     ImGui::OpenPopup("Move Rocket");
   }
   ImGui::SameLine();
@@ -186,7 +191,8 @@ void drawRocketButtons(flecs::entity &rocket) {
   if (target.is_valid()) {
     tooltip = "Edit launch plan";
   }
-  if (ActionButton("Schedule", tooltip.c_str(), issue)) {
+  if (ActionButton(ButtonLabel{.text = "Schedule"},
+                   ButtonTooltip{.text = tooltip.c_str()}, issue)) {
     if (target.is_valid()) {
       showLaunchWindowEdit(target);
     } else {
@@ -240,8 +246,10 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::SameLine();
-  MoveRocketAction action{rocket, destination};
-  if (ActionButton("Ok", nullptr, action.validate(world).message)) {
+  MoveRocketAction action{RocketEntity{rocket}, DestinationEntity{destination}};
+  if (ActionButton(ButtonLabel{.text = "Ok"},
+                   ButtonTooltip{.text = "Move the rocket to the new location"},
+                   action.validate(world).message)) {
     action.execute(world);
     closePopup();
   }

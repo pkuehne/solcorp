@@ -35,8 +35,8 @@ void registerRender(flecs::world &world) {
   });
   register_component_lua<Transform>(
       world, "Transform", [](LuaFieldBuilder<Transform> &b) {
-        b.nested<&Transform::relativePosition>("relativePosition", "Point")
-            .nested<&Transform::worldPosition>("worldPosition", "Point");
+        b.nested<&Transform::relativePosition>({"relativePosition"}, {"Point"})
+            .nested<&Transform::worldPosition>({"worldPosition"}, {"Point"});
       });
   register_component_lua<Sprite>(world, "Sprite",
                                  [](LuaFieldBuilder<Sprite> &b) {
@@ -52,7 +52,7 @@ void registerRender(flecs::world &world) {
     b.field<&Text::text>("text")
         .field<&Text::rotation>("rotation")
         .field<&Text::flip>("flip")
-        .nested<&Text::color>("color", "Color");
+        .nested<&Text::color>({"color"}, {"Color"});
   });
 
   auto scope = world.set_scope(0);

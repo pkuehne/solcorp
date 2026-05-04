@@ -3,7 +3,10 @@
 
 SCENARIO("Stats", "[stats]") {
   GIVEN("A test stat with value 10") {
-    Stat stat = Stat("test_stat", "Displ", "More Text", 10.0);
+    Stat stat{{.id = "test_stat",
+               .display = "Displ",
+               .description = "More Text",
+               .base = 10.0}};
 
     THEN("The base value is 10") { REQUIRE(stat.base() == 10.0); }
 

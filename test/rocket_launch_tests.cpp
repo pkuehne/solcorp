@@ -455,7 +455,8 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   GIVEN("An invalid Rocket entity") {
     flecs::entity rocket = flecs::entity::null();
     flecs::entity destination = world.entity();
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Validate is called") {
       ValidationResult result = move.validate(world);
@@ -470,7 +471,8 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   GIVEN("An invalid Destination ") {
     flecs::entity rocket = world.entity().add<Rocket>();
     flecs::entity destination = flecs::entity::null();
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Validate is called") {
       ValidationResult result = move.validate(world);
@@ -485,7 +487,8 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   GIVEN("Destination is the same as parent") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>().child_of(destination);
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Validate is called") {
       ValidationResult result = move.validate(world);
@@ -500,7 +503,8 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   GIVEN("Rocket has Construction tag") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>().add<Construction>();
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Validate is called") {
       ValidationResult result = move.validate(world);
@@ -515,7 +519,8 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   GIVEN("Valid rocket and destination") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>();
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Validate is called") {
       ValidationResult result = move.validate(world);
@@ -535,7 +540,8 @@ SCENARIO("MoveRocketAction Execution", "[execution][action]") {
   GIVEN("A valid rocket and destination") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>();
-    MoveRocketAction move = MoveRocketAction(rocket, destination);
+    MoveRocketAction move =
+        MoveRocketAction{RocketEntity{rocket}, DestinationEntity{destination}};
 
     WHEN("Move Rocket is attempted") {
       move.execute(world);
