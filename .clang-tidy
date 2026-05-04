@@ -18,7 +18,6 @@ Checks: >-
   -modernize-pass-by-value,
   -modernize-avoid-c-arrays,
   -modernize-use-ranges,
-  -modernize-redundant-void-arg,
   -readability-identifier-length,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'
