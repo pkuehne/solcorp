@@ -6,7 +6,6 @@ Checks: >-
   modernize-*,
   -clang-analyzer-deadcode.DeadStores,
   -clang-analyzer-core.StackAddressEscape,
-  -bugprone-macro-parentheses,
   -bugprone-branch-clone,
   -bugprone-multi-level-implicit-pointer-conversion,
   -performance-move-const-arg,
