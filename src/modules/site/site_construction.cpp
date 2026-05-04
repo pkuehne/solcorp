@@ -33,8 +33,9 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
   world.each<CurrentSite>(
       [&](flecs::entity e, CurrentSite) { currentSite = e; });
 
-  std::vector<LocationInfo> locationMap(site.width * site.height,
-                                        LocationInfo::TileEmpty);
+  size_t siteSize =
+      static_cast<size_t>(site.width) * static_cast<size_t>(site.height);
+  std::vector<LocationInfo> locationMap(siteSize, LocationInfo::TileEmpty);
 
   auto currentBuildings =
       world.query_builder<SiteLocation>().with<CurrentSite>().up().build();

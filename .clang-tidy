@@ -8,7 +8,6 @@ Checks: >-
   -clang-analyzer-core.StackAddressEscape,
   -bugprone-macro-parentheses,
   -bugprone-branch-clone,
-  -bugprone-implicit-widening-of-multiplication-result,
   -bugprone-multi-level-implicit-pointer-conversion,
   -performance-move-const-arg,
   -performance-enum-size,
