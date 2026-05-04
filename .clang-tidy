@@ -6,7 +6,6 @@ Checks: >-
   modernize-*,
   -clang-analyzer-deadcode.DeadStores,
   -clang-analyzer-core.StackAddressEscape,
-  -performance-enum-size,
   -portability-avoid-pragma-once,
   -modernize-use-trailing-return-type,
 WarningsAsErrors: '*'

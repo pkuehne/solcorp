@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <flecs.h>
 
-enum LocationInfo {
+enum LocationInfo : uint8_t {
   TileEmpty = 0,
   TileBuilding = 1,
   TileConstruction = 2,
