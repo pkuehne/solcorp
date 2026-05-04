@@ -218,8 +218,8 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
       launch.execute(world);
       THEN("A launch plan is created") {
         REQUIRE(launch.result.is_valid());
-        CHECK(launch.result.get<LaunchPlan>().launch_date ==
-              static_cast<uint32_t>(launch.launchDay));
+        CHECK(std::cmp_equal(launch.result.get<LaunchPlan>().launch_date,
+                             launch.launchDay));
         CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
@@ -247,8 +247,8 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
       THEN("A launch plan is created") {
         REQUIRE(launch.result.is_valid());
         REQUIRE(launch.current.is_alive() == false);
-        CHECK(launch.result.get<LaunchPlan>().launch_date ==
-              static_cast<uint32_t>(launch.launchDay));
+        CHECK(std::cmp_equal(launch.result.get<LaunchPlan>().launch_date,
+                             launch.launchDay));
         CHECK(launch.result.get<LaunchPlan>().target_orbit == orbit);
         CHECK(launch.result.name().c_str() == launch.name);
         CHECK(launch.result.target<LaunchingOn>() == rocket);
