@@ -47,7 +47,7 @@ int64_t computeRocketPrefabBuildCost(const flecs::entity &prefabE) {
   SC_ASSERT(prefabE.is_valid() && prefabE.has<Rocket>(),
             "computeRocketPrefabBuildCost expects a valid rocket prefab");
 
-  const Rocket &rocket = prefabE.get<Rocket>();
+  const auto &rocket = prefabE.get<Rocket>();
   Stat cost = rocket.cost;
   statsApplyModifiers(prefabE, &cost);
 
@@ -102,7 +102,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
   auto lowEarthOrbit = world.lookup("Sun::Earth::Low Orbit");
 
-  Company &company = world.get_mut<Company>();
+  auto &company = world.get_mut<Company>();
   auto buttonSize = ImGui::GetContentRegionAvail();
   buttonSize.y = 30;
 
@@ -115,7 +115,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
           std::to_string(prefabE.get<CanLiftTo>(lowEarthOrbit).max_mass);
     }
 
-    const Rocket &rocket = prefabE.get<Rocket>();
+    const auto &rocket = prefabE.get<Rocket>();
     Stat cost = rocket.cost;
     statsApplyModifiers(prefabE, &cost);
     const auto rocketCost = computeRocketPrefabBuildCost(prefabE);

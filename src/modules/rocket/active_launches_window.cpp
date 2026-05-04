@@ -94,7 +94,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
   ImGui::SameLine();
   std::string orbitDisplay = "Any";
   if (state.filterOrbit.is_valid()) {
-    const TargetOrbit *o = state.filterOrbit.try_get<TargetOrbit>();
+    const auto *o = state.filterOrbit.try_get<TargetOrbit>();
     if (o) {
       orbitDisplay = fmt::format("{:.0f} km / {:.1f}°", o->altitude / 1000.0,
                                  o->inclination * 180.0 / std::numbers::pi);
@@ -185,7 +185,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
 
       ImGui::TableSetColumnIndex(5);
       if (orbitE.is_valid()) {
-        const TargetOrbit *orbit = orbitE.try_get<TargetOrbit>();
+        const auto *orbit = orbitE.try_get<TargetOrbit>();
         if (orbit) {
           ImGui::TextUnformatted(
               fmt::format("{:.0f} km / {:.1f}°", orbit->altitude / 1000.0,

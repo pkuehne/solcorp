@@ -1,5 +1,5 @@
 #include "actions.h"
-#include "modules/simulation/simulation.h"
+#include "modules/base/base.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
 #include <flecs.h>
@@ -26,13 +26,15 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   if (!launchpad.is_valid()) {
     return ValidationResult::Fail("No launchpad selected");
   }
-  uint32_t launchPrepDays =
+  auto launchPrepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
     auto launch = p.get<LaunchPlan>();
-    if (launch.launch_date < static_cast<uint32_t>(launchDay) &&
-        launch.launch_date >= (launchDay - launchPrepDays)) {
+    if (std::cmp_less(launch.launch_date, launchDay) &&
+        std::cmp_greater_equal(launch.launch_date,
+                               static_cast<uint32_t>(launchDay) -
+                                   launchPrepDays)) {
       clash = true;
     }
   });

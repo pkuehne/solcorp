@@ -11,15 +11,7 @@ Checks: >-
   -performance-unnecessary-value-param,
   -performance-unnecessary-copy-initialization,
   -portability-avoid-pragma-once,
-  -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
-  -modernize-use-auto,
-  -modernize-use-nodiscard,
-  -modernize-pass-by-value,
-  -modernize-avoid-c-arrays,
-  -modernize-use-integer-sign-comparison,
-  -modernize-use-ranges,
-  -modernize-redundant-void-arg,
   -readability-identifier-length,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'

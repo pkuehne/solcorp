@@ -8,6 +8,7 @@
 #include "modules/engine/engine.h"
 #include "modules/engine/render.h"
 #include "spdlog/spdlog.h"
+#include <array>
 #include <flecs.h>
 
 void systemInitialiseGui(flecs::iter &iter);
@@ -54,25 +55,32 @@ void systemInitialiseGui(flecs::iter &iter) {
   // Set up Nerd Font
   ImVector<ImWchar> ranges;
   ImFontGlyphRangesBuilder builder;
-  ImWchar fa_range[] = {0xed00, 0xf2ff, 0}; // Font Awesome
-  ImWchar fae_range[] = {0xe200, 0x2a9, 0}; // Font Awesome Extended
-  ImWchar md_range[] = {0xf001, static_cast<ImWchar>(0xf1af0),
-                        0};                 // Material Design Icons
-  ImWchar wt_range[] = {0xe300, 0xe3e, 0};  // Weather Icons
-  ImWchar oc_range[] = {0xf400, 0xf533, 0}; // Octicon Icons
-  ImWchar ha_range[] = {0x276c, 0x2771, 0}; // Heavy Angle Bracket Icons
-  ImWchar bd_range[] = {0x2500, 0x259f, 0}; // Box Drawing Icons
-  ImWchar pg_range[] = {0xee00, 0xee0b, 0}; // Progress Icons
+  constexpr std::array<ImWchar, 3> fa_range = {0xed00, 0xf2ff,
+                                               0}; // Font Awesome
+  constexpr std::array<ImWchar, 3> fae_range = {0xe200, 0x2a9,
+                                                0}; // Font Awesome Extended
+  constexpr std::array<ImWchar, 3> md_range = {
+      0xf001, static_cast<ImWchar>(0xf1af0), 0}; // Material Design Icons
+  constexpr std::array<ImWchar, 3> wt_range = {0xe300, 0xe3e,
+                                               0}; // Weather Icons
+  constexpr std::array<ImWchar, 3> oc_range = {0xf400, 0xf533,
+                                               0}; // Octicon Icons
+  constexpr std::array<ImWchar, 3> ha_range = {0x276c, 0x2771,
+                                               0}; // Heavy Angle Bracket Icons
+  constexpr std::array<ImWchar, 3> bd_range = {0x2500, 0x259f,
+                                               0}; // Box Drawing Icons
+  constexpr std::array<ImWchar, 3> pg_range = {0xee00, 0xee0b,
+                                               0}; // Progress Icons
 
   builder.AddRanges(io.Fonts->GetGlyphRangesDefault()); // Add the default range
-  builder.AddRanges(fa_range);
-  builder.AddRanges(fae_range);
-  builder.AddRanges(md_range);
-  builder.AddRanges(wt_range);
-  builder.AddRanges(oc_range);
-  builder.AddRanges(ha_range);
-  builder.AddRanges(bd_range);
-  builder.AddRanges(pg_range);
+  builder.AddRanges(fa_range.data());
+  builder.AddRanges(fae_range.data());
+  builder.AddRanges(md_range.data());
+  builder.AddRanges(wt_range.data());
+  builder.AddRanges(oc_range.data());
+  builder.AddRanges(ha_range.data());
+  builder.AddRanges(bd_range.data());
+  builder.AddRanges(pg_range.data());
   builder.BuildRanges(&ranges);
 
   auto default_font = world.lookup("Fonts::Default");
@@ -122,7 +130,7 @@ flecs::entity showWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to show window '{}' but it does not exist", name);
-    return flecs::entity();
+    return {};
   }
   winE.get_mut<Window>().open = true;
   return winE;
@@ -136,7 +144,7 @@ flecs::entity hideWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to hide window '{}' but it does not exist", name);
-    return flecs::entity();
+    return {};
   }
   winE.get_mut<Window>().open = false;
   return winE;

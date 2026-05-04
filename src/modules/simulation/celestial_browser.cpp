@@ -96,7 +96,7 @@ void showCelestialBrowser(flecs::world &world) {
 
 void drawCelestialBrowser(flecs::entity winE) {
 
-  CelestialBrowser &state = winE.get_mut<CelestialBrowser>();
+  auto &state = winE.get_mut<CelestialBrowser>();
   auto world = winE.world();
 
   // Get full region
