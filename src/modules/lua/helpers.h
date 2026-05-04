@@ -33,7 +33,7 @@ struct SpriteClipRect {
 void load_helpers_namespace(lua_State *L);
 
 flecs::entity create_site(flecs::world world, const std::string &name,
-                          uint32_t width, uint32_t height,
+                          uint8_t width, uint8_t height,
                           bool make_current = false);
 flecs::entity create_building_prefab(flecs::world world,
                                      const std::string &name);
@@ -45,7 +45,7 @@ flecs::entity create_rocket(flecs::world world, RocketName name,
                             RocketPrefabType prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, int x, int y,
+                              const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site);
 flecs::entity add_target_orbit_to_rocket(flecs::world world,
                                          flecs::entity rocket,

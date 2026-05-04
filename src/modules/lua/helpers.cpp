@@ -11,7 +11,7 @@
 #include <modules/rocket_launch/rocket_launch.h>
 
 flecs::entity create_site(flecs::world world, const std::string &name,
-                          uint32_t width, uint32_t height, bool make_current) {
+                          uint8_t width, uint8_t height, bool make_current) {
   auto site = world.entity(name.c_str())
                   .set<Site>({.width = width, .height = height})
                   .set<Transform>({.relativePosition = {.x = 340, .y = 240},
@@ -73,7 +73,7 @@ flecs::entity create_rocket(flecs::world world, RocketName name,
 }
 
 flecs::entity create_building(flecs::world world, const std::string &name,
-                              const std::string &prefab, int x, int y,
+                              const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site) {
   return instantiateBuilding(world, BuildingName{name}, BuildingPrefab{prefab},
                              SiteLocation{.x = x, .y = y}, site);
