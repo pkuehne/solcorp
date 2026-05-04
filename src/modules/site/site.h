@@ -13,16 +13,16 @@ struct Construction {
 };
 
 struct Site {
-  uint32_t width = 10;
-  uint32_t height = 10;
+  uint8_t width = 10;
+  uint8_t height = 10;
 };
 
 /// @brief Indicates that entity is a building
 struct Building {};
 
 struct SiteLocation {
-  int x = 0;
-  int y = 0;
+  uint8_t x = 0;
+  uint8_t y = 0;
 };
 
 /// @brief Marker component for facilities within a building
