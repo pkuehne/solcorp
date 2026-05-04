@@ -34,8 +34,8 @@ struct Renderer {
 /// @brief Stores an SDL2 texture and its size information
 struct Texture {
   SDL_Texture *ptr = nullptr;
-  uint32_t width = 0;
-  uint32_t height = 0;
+  int width = 0; // signed int, because that's what SDL uses for texture sizes
+  int height = 0;
 };
 
 enum SpriteFlip {

@@ -10,7 +10,7 @@ void drawCelestialBodyNode(flecs::entity body, CelestialBrowser &state) {
   if (!body.has<CelestialBody>()) {
     return;
   }
-  ImGui::PushID(body.id());
+  ImGui::PushID(std::format("{}", body.id()).c_str());
   bool has_children = false;
   body.children([&](flecs::entity) { has_children = true; });
 

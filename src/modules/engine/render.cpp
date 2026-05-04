@@ -63,8 +63,8 @@ void registerRender(flecs::world &world) {
   Font defaultFont;
   defaultFont.name = "fonts/RobotoMono-Medium.ttf";
   defaultFont.point_size = 18;
-  defaultFont.ptr =
-      TTF_OpenFont(defaultFont.name.c_str(), defaultFont.point_size);
+  defaultFont.ptr = TTF_OpenFont(defaultFont.name.c_str(),
+                                 static_cast<int>(defaultFont.point_size));
   SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +
                                             defaultFont.name +
                                             "': " + TTF_GetError());
@@ -189,10 +189,11 @@ void systemRenderPresent(const Renderer &r) {
 /// @param renderer The renderer used to draw on the screen
 void systemRenderSprite(flecs::entity, const Sprite &sprite,
                         const Transform &target, const Renderer &renderer) {
-  SDL_Rect source = {sprite.x, sprite.y, sprite.width, sprite.height};
+  SDL_Rect source = {sprite.x, sprite.y, static_cast<int>(sprite.width),
+                     static_cast<int>(sprite.height)};
   SDL_FRect destination = {target.worldPosition.x, target.worldPosition.y,
-                           sprite.width * sprite.scale,
-                           sprite.height * sprite.scale};
+                           static_cast<float>(sprite.width) * sprite.scale,
+                           static_cast<float>(sprite.height) * sprite.scale};
   if (!sprite.texture.is_valid()) {
     spdlog::error("Sprite has no texture assigned");
     return;
@@ -246,8 +247,9 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
 
   SDL_Rect source = {0, 0, texture.width, texture.height};
   SDL_FRect destination = {target.worldPosition.x * 1.0f,
-                           target.worldPosition.y * 1.0f, texture.width * 1.0f,
-                           texture.height * 1.0f};
+                           target.worldPosition.y * 1.0f,
+                           static_cast<float>(texture.width) * 1.0f,
+                           static_cast<float>(texture.height) * 1.0f};
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
                     text.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(text.flip));
