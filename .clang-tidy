@@ -13,7 +13,6 @@ Checks: >-
   -portability-avoid-pragma-once,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
-  -modernize-pass-by-value,
   -modernize-avoid-c-arrays,
   -modernize-use-ranges,
   -readability-identifier-length,
