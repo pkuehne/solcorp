@@ -42,8 +42,8 @@ void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
   state->draftPlan = draftPlan;
 
   // Default the plan to today
-  uint32_t today = world.get<Game>().day;
-  if (state->draftPlan.launchDay < static_cast<int>(today)) {
+  int today = static_cast<int>(world.get<Game>().day);
+  if (state->draftPlan.launchDay < today) {
     state->draftPlan.launchDay = today;
   }
 
@@ -74,7 +74,7 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   SC_ASSERT(state, "BuildingWindow state is invalid");
 
   state->draftPlan.name = planE.name();
-  state->draftPlan.launchDay = plan.launch_date;
+  state->draftPlan.launchDay = static_cast<int>(plan.launch_date);
   state->draftPlan.rocket = planE.target<LaunchingOn>();
   state->draftPlan.launchpad = planE.target<LaunchingFrom>();
   state->draftPlan.targetOrbit = plan.target_orbit;
@@ -107,8 +107,8 @@ void drawLaunchWindow(flecs::entity winE) {
                                                //  .var("Site")
                                                .build();
 
-  uint32_t today = world.get<Game>().day;
-  if (static_cast<uint32_t>(state.draftPlan.launchDay) < today) {
+  int today = static_cast<int>(world.get<Game>().day);
+  if (state.draftPlan.launchDay < today) {
     state.draftPlan.launchDay = today;
   }
 
