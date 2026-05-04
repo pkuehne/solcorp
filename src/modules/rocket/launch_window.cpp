@@ -2,8 +2,8 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "modules/base/assert.h"
+#include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
 #include "widgets/widgets.h"
@@ -226,9 +226,10 @@ void drawLaunchWindow(flecs::entity winE) {
           payloadE.target<LaunchingWith>() != state.draftPlan.current;
 
       auto &payload = payloadE.get<Payload>();
-      bool isSelected = std::find(state.draftPlan.payloads.begin(),
-                                  state.draftPlan.payloads.end(),
-                                  payloadE) != state.draftPlan.payloads.end();
+      bool isSelected =
+          std::ranges::find(state.draftPlan.payloads,
+
+                            payloadE) != state.draftPlan.payloads.end();
 
       std::string label =
           std::format("{} ({} kg) - {}", payloadE.name().c_str(), payload.mass,
