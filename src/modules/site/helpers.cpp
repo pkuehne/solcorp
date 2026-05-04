@@ -21,8 +21,8 @@ flecs::entity instantiateBuilding(flecs::world &world, BuildingName building,
   }
 
   Transform t;
-  t.relativePosition.x = location.x * 32;
-  t.relativePosition.y = location.y * 32;
+  t.relativePosition.x = static_cast<float>(location.x * 32);
+  t.relativePosition.y = static_cast<float>(location.y * 32);
 
   auto entity = world.entity(building.value.c_str())
                     .is_a(prefabE)
@@ -48,8 +48,8 @@ flecs::entity instantiateConstructionSite(flecs::world &world,
   }
 
   Transform t;
-  t.relativePosition.x = location.x * 32;
-  t.relativePosition.y = location.y * 32;
+  t.relativePosition.x = static_cast<float>(location.x) * 32;
+  t.relativePosition.y = static_cast<float>(location.y) * 32;
 
   std::string name = fmt::format("Construction Site {}-{}/{}",
                                  site.name().c_str(), location.x, location.y);

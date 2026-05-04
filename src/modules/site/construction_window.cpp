@@ -39,8 +39,8 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
 
   auto location = constructionE.get<SiteLocation>();
   Transform t;
-  t.relativePosition.x = location.x * 32;
-  t.relativePosition.y = location.y * 32;
+  t.relativePosition.x = static_cast<float>(location.x * 32);
+  t.relativePosition.y = static_cast<float>(location.y * 32);
 
   world.entity(name.c_str())
       .is_a(prefabE)
@@ -77,7 +77,7 @@ void drawConstructionSiteWindow(flecs::entity winE) {
   buttonSize.y = 30;
 
   buildingPrefabs.children([&](flecs::entity prefabE) {
-    ImGui::PushID(prefabE.id());
+    ImGui::PushID(std::to_string(prefabE.id()).c_str());
 
     if (ImGui::Button(fmt::format("{}", prefabE.name().c_str()).c_str(),
                       buttonSize)) {
