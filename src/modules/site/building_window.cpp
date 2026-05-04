@@ -97,10 +97,10 @@ void drawManufacturingSection(flecs::entity &entity) {
     // There is a rocket on the line
     ImGui::Text("Constructing %s", e.name().c_str());
 
-    Construction *c = e.try_get_mut<Construction>();
+    auto *c = e.try_get_mut<Construction>();
     if (c) {
-      float total = static_cast<float>(c->effort_total);
-      float remaining = static_cast<float>(c->effort_remaining);
+      auto total = static_cast<float>(c->effort_total);
+      auto remaining = static_cast<float>(c->effort_remaining);
 
       ImGui::ProgressBar((total - remaining) / total);
     } else {

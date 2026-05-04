@@ -228,7 +228,7 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
       });
 
   GIVEN("An Open Contract") {
-    Contract &contract = world.entity("OpenContract").get_mut<Contract>();
+    auto &contract = world.entity("OpenContract").get_mut<Contract>();
     THEN("Accept button is enabled") {
       REQUIRE(!acceptButtonDisabled(contract));
     }
@@ -239,7 +239,7 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("An Accepted Contract") {
-    Contract &contract = world.entity("AcceptedContract").get_mut<Contract>();
+    auto &contract = world.entity("AcceptedContract").get_mut<Contract>();
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));
     }
@@ -250,7 +250,7 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("A failed Closed Contract") {
-    Contract &contract = world.entity("ClosedContract").get_mut<Contract>();
+    auto &contract = world.entity("ClosedContract").get_mut<Contract>();
     contract.failed = true;
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));
@@ -262,7 +262,7 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("A successful Closed Contract") {
-    Contract &contract = world.entity("ClosedContract").get_mut<Contract>();
+    auto &contract = world.entity("ClosedContract").get_mut<Contract>();
     contract.failed = false;
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));

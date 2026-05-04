@@ -6,7 +6,7 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
   flecs::world world = flecs::world();
   world.import <SiteModule>();
   flecs::entity building = world.entity().set<Manufacturing>({});
-  Manufacturing &manuf = building.get_mut<Manufacturing>();
+  auto &manuf = building.get_mut<Manufacturing>();
   manuf.available_effort = 20;
 
   GIVEN("An invalid rocket in a Manufacturing line") {

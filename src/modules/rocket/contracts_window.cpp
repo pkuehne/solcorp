@@ -1,7 +1,6 @@
 #include "contracts_window.h"
 #include "imgui.h"
 #include "launch_window.h"
-#include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "rocket_launch.h"
@@ -10,7 +9,7 @@
 
 bool contractMatchesFilter(flecs::entity contractE,
                            const ContractsWindow &state) {
-  const Contract *contract = contractE.try_get<Contract>();
+  const auto *contract = contractE.try_get<Contract>();
   if (!contract) {
     return false;
   }
@@ -57,13 +56,13 @@ bool planButtonDisabled(const Contract &contract) {
 }
 
 void acceptContract(flecs::world &world, flecs::entity contractE) {
-  Contract &contract = contractE.get_mut<Contract>();
+  auto &contract = contractE.get_mut<Contract>();
   contract.status = ContractStatus::Accepted;
   world.get_mut<Company>().balance += contract.upfront_payment;
 }
 
 void rejectContract(flecs::world &world, flecs::entity contractE) {
-  Contract &contract = contractE.get_mut<Contract>();
+  auto &contract = contractE.get_mut<Contract>();
   if (contract.status == ContractStatus::Accepted) {
     world.get_mut<Company>().balance -= contract.upfront_payment;
   }

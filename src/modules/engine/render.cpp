@@ -8,7 +8,6 @@
 #include <SDL_image.h>
 #include <SDL_render.h>
 #include <SDL_ttf.h>
-#include <cstddef>
 #include <cstdlib>
 #include <flecs.h>
 
@@ -261,7 +260,7 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
 /// @returns A Texture Component to be added to an entity
 Texture loadTexture(const std::string &filename, flecs::world &world) {
   Texture texture;
-  const Renderer *r = world.try_get<Renderer>();
+  const auto *r = world.try_get<Renderer>();
   if (r == nullptr) {
     spdlog::error("Renderer not set in world");
     return texture;
@@ -281,7 +280,7 @@ Texture loadTexture(const std::string &filename, flecs::world &world) {
 Texture loadTexture(const unsigned char *data, unsigned int len,
                     const flecs::world &world) {
   Texture texture;
-  const Renderer *r = world.try_get<Renderer>();
+  const auto *r = world.try_get<Renderer>();
   if (r == nullptr) {
     spdlog::error("Renderer not set in world");
     return texture;

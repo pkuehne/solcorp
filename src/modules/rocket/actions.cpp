@@ -26,7 +26,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   if (!launchpad.is_valid()) {
     return ValidationResult::Fail("No launchpad selected");
   }
-  uint32_t launchPrepDays =
+  auto launchPrepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {

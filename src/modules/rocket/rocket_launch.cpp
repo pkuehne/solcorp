@@ -164,7 +164,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
     }
   });
 
-  Company &company = world.get_mut<Company>();
+  auto &company = world.get_mut<Company>();
   uint32_t total_payment = 0;
 
   for (auto payload : payloads) {

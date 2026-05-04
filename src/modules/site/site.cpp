@@ -228,9 +228,9 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse) {
   // We know from the query that this has a SiteLocation i.e. is part of a Site
   auto world = e.world();
-  float tileSize = static_cast<float>(s.width);
-  float mouse_x = static_cast<float>(mouse.x);
-  float mouse_y = static_cast<float>(mouse.y);
+  auto tileSize = static_cast<float>(s.width);
+  auto mouse_x = static_cast<float>(mouse.x);
+  auto mouse_y = static_cast<float>(mouse.y);
   if ((mouse_x > t.worldPosition.x && mouse_x < t.worldPosition.x + tileSize) &&
       (mouse_y > t.worldPosition.y && mouse_y < t.worldPosition.y + tileSize)) {
     spdlog::debug("Clicked on building {}", e.name().c_str());
@@ -257,7 +257,7 @@ void systemBuildingUpdateManufacuringProgress(flecs::entity entity,
   if (!rocket.is_valid()) {
     return;
   }
-  Construction *construction = rocket.try_get_mut<Construction>();
+  auto *construction = rocket.try_get_mut<Construction>();
   if (!construction) {
     return;
   }
