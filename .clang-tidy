@@ -7,7 +7,6 @@ Checks: >-
   -clang-analyzer-deadcode.DeadStores,
   -clang-analyzer-core.StackAddressEscape,
   -performance-enum-size,
-  -performance-unnecessary-value-param,
   -performance-unnecessary-copy-initialization,
   -portability-avoid-pragma-once,
   -modernize-use-trailing-return-type,

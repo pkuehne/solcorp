@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <flecs.h>
 #include <string>
 
@@ -13,9 +12,10 @@ struct BuildingPrefab {
 
 struct SiteLocation; // declared in site.h
 
-flecs::entity instantiateBuilding(flecs::world &world, BuildingName building,
-                                  BuildingPrefab prefab, SiteLocation location,
-                                  flecs::entity site);
+flecs::entity instantiateBuilding(flecs::world &world,
+                                  const BuildingName &building,
+                                  const BuildingPrefab &prefab,
+                                  SiteLocation location, flecs::entity site);
 flecs::entity instantiateConstructionSite(flecs::world &world,
                                           SiteLocation location,
                                           flecs::entity site);
