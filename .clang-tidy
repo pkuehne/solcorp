@@ -12,7 +12,6 @@ Checks: >-
   -performance-unnecessary-copy-initialization,
   -portability-avoid-pragma-once,
   -modernize-use-trailing-return-type,
-  -modernize-use-nodiscard,
   -readability-identifier-length,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^.*/solcorp/(src|test)/.*'

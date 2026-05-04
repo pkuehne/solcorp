@@ -40,12 +40,12 @@ public:
 
   /// Gets the base value of the stat.
   /// @return The base value.
-  double base() const;
+  [[nodiscard]] double base() const;
   void setBase(double base);
 
   /// Gets the current, modified value of the stat.
   /// @return The current value.
-  double value() const;
+  [[nodiscard]] double value() const;
 
   /// Resets the stat to its base value.
   void reset();
@@ -59,23 +59,23 @@ public:
 
   /// Gets the ID of the stat.
   /// @return The ID.
-  const std::string &id() const;
+  [[nodiscard]] const std::string &id() const;
 
   /// Gets the display name of the stat.
   /// @return The display name.
-  const std::string &display() const;
+  [[nodiscard]] const std::string &display() const;
 
   /// Gets the description of the stat.
   /// @return The description.
-  const std::string &description() const;
+  [[nodiscard]] const std::string &description() const;
 
   /// Gets the list of modifiers applied to the stat.
   /// @return The list of modifiers.
-  const std::vector<EffectModifier> &modifiers() const;
+  [[nodiscard]] const std::vector<EffectModifier> &modifiers() const;
 
   /// @brief Checks if higher values of the stat are better.
   /// @return True if higher values are better, false otherwise.
-  bool isHigherBetter() const { return higher_is_better; }
+  [[nodiscard]] bool isHigherBetter() const { return higher_is_better; }
 
 public:
   std::string m_id;                        ///< The ID of the stat.

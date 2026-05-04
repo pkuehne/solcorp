@@ -22,6 +22,7 @@ struct ValidationResult {
 
 struct IAction {
   virtual ~IAction() = default;
-  virtual ValidationResult validate(const flecs::world &world) const = 0;
+  [[nodiscard]] virtual ValidationResult
+  validate(const flecs::world &world) const = 0;
   virtual void execute(flecs::world &world) = 0;
 };
