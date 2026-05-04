@@ -63,7 +63,7 @@ flecs::entity create_rocket(flecs::world world, RocketName name,
   auto prefab_entity = world.lookup(prefab_name.c_str());
   if (!prefab_entity.is_valid()) {
     spdlog::error("Rocket prefab {} does not exist", prefab_name);
-    return flecs::entity();
+    return {};
   }
   auto rocket = world.entity(name.value.c_str()).is_a(prefab_entity);
   if (parent.is_valid()) {
@@ -94,7 +94,7 @@ flecs::entity create_texture(flecs::world world, TextureName name,
                              TextureModName mod_name) {
   if (filename.value.find("..") != std::string::npos) {
     spdlog::error("Invalid filename {}", filename.value);
-    return flecs::entity();
+    return {};
   }
   auto location =
       (std::filesystem::path("mods") / mod_name.value / filename.value)
@@ -119,7 +119,7 @@ flecs::entity create_effect(flecs::world world, const std::string &name,
 flecs::entity add_modifier(flecs::world world, flecs::entity effect,
                            Modifier mod) {
   if (!effect.is_valid()) {
-    return flecs::entity();
+    return {};
   }
   return world.entity().child_of(effect).set<Modifier>(mod);
 }
@@ -131,7 +131,7 @@ Sprite clip_sprite_from_texture(flecs::world world, const std::string &texture,
   auto textureE = world.lookup(texture_name.c_str());
   if (!textureE.is_valid()) {
     spdlog::error("Texture {} does not exist", texture);
-    return Sprite();
+    return {};
   }
   Sprite sprite;
   sprite.texture = textureE;

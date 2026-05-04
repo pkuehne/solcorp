@@ -122,7 +122,7 @@ flecs::entity showWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to show window '{}' but it does not exist", name);
-    return flecs::entity();
+    return {};
   }
   winE.get_mut<Window>().open = true;
   return winE;
@@ -136,7 +136,7 @@ flecs::entity hideWindow(flecs::world &world, const std::string &name) {
   auto winE = windows.lookup(name.c_str());
   if (!winE.is_valid()) {
     spdlog::warn("Tried to hide window '{}' but it does not exist", name);
-    return flecs::entity();
+    return {};
   }
   winE.get_mut<Window>().open = false;
   return winE;

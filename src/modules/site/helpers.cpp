@@ -13,11 +13,11 @@ flecs::entity instantiateBuilding(flecs::world &world, BuildingName building,
   auto prefabE = world.lookup(prefabName.c_str());
   if (!prefabE.is_valid()) {
     spdlog::error("Prefab {} does not exist", prefabName);
-    return flecs::entity();
+    return {};
   }
   if (!site.is_valid()) {
     spdlog::error("Site entity is not valid");
-    return flecs::entity();
+    return {};
   }
 
   Transform t;
@@ -40,11 +40,11 @@ flecs::entity instantiateConstructionSite(flecs::world &world,
   auto prefabE = world.lookup(prefabName.c_str());
   if (!prefabE.is_valid()) {
     spdlog::error("Prefab {} does not exist", prefabName);
-    return flecs::entity();
+    return {};
   }
   if (!site.is_valid()) {
     spdlog::error("Site entity is not valid");
-    return flecs::entity();
+    return {};
   }
 
   Transform t;
@@ -66,7 +66,7 @@ flecs::entity instantiateBuildingNotification(flecs::world &world,
                                               const std::string &text) {
   if (!building.is_valid()) {
     spdlog::error("Building entity is not valid");
-    return flecs::entity();
+    return {};
   }
 
   auto entity = world.entity()
