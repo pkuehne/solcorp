@@ -2,29 +2,16 @@
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/engine/gui.h"
+#include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_launch.h"
 #include "modules/simulation/simulation.h"
-#include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
+#include "widgets/widgets.h"
 #include <cmath>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include <string>
-
-namespace {
-void buildRocketFromPrefab(flecs::entity &manufacturingE,
-                           const flecs::entity &prefabE) {
-  auto world = manufacturingE.world();
-
-  auto rocket =
-      world.entity()
-          .is_a(prefabE)
-          .set<Construction>({.effort_remaining = 300, .effort_total = 300})
-          .child_of(manufacturingE);
-  rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
-}
-} // namespace
 
 std::vector<flecs::entity> collectRocketPrefabs(flecs::world &world) {
   std::vector<flecs::entity> prefabs;
@@ -102,7 +89,6 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
   auto lowEarthOrbit = world.lookup("Sun::Earth::Low Orbit");
 
-  auto &company = world.get_mut<Company>();
   auto buttonSize = ImGui::GetContentRegionAvail();
   buttonSize.y = 30;
 
@@ -124,18 +110,16 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
     displayStatWithTooltip(&cost);
 
-    const bool canAfford = canAffordRocketPrefab(company, prefabE);
-    ImGui::BeginDisabled(!canAfford);
-    if (ImGui::Button("Build", buttonSize)) {
-      buildRocketFromPrefab(manufacturingE, prefabE);
-      company.balance -= rocketCost;
-      hideWindow(world, "Rocket Prefab Window");
-    }
-    ImGui::EndDisabled();
+    BuildRocketAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
+                             rocketCost};
+    auto result = action.validate(world);
 
-    if (!canAfford &&
-        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-      ImGui::SetTooltip("Not enough funds");
+    if (ActionButton(
+            ButtonLabel{
+                std::format("Build '{}'", prefabE.name().c_str()).c_str()},
+            ButtonTooltip{"Build this rocket"}, result.message)) {
+      action.execute(world);
+      hideWindow(world, "Rocket Prefab Window");
     }
 
     ImGui::Separator();

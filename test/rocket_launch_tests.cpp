@@ -615,6 +615,108 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
   }
 }
 
+SCENARIO("BuildRocketAction Validation", "[validation][action]") {
+  flecs::world world;
+  world.import<SimulationModule>();
+  world.import<SiteModule>();
+  world.import<RocketLaunchModule>();
+
+  GIVEN("An invalid prefab") {
+    auto line = world.entity();
+    BuildRocketAction action{PrefabEntity{flecs::entity::null()}, LineEntity{line}, 100};
+
+    WHEN("Validated") {
+      ValidationResult result = action.validate(world);
+
+      THEN("It fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket prefab is not valid");
+      }
+    }
+  }
+
+  GIVEN("An invalid manufacturing line") {
+    auto prefab = world.entity().add<Rocket>();
+    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{flecs::entity::null()}, 100};
+
+    WHEN("Validated") {
+      ValidationResult result = action.validate(world);
+
+      THEN("It fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Manufacturing line is not valid");
+      }
+    }
+  }
+
+  GIVEN("Insufficient company balance") {
+    auto prefab = world.entity().add<Rocket>();
+    auto line = world.entity();
+    world.get_mut<Company>().balance = 50;
+    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
+
+    WHEN("Validated") {
+      ValidationResult result = action.validate(world);
+
+      THEN("It fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Not enough funds to build this rocket");
+      }
+    }
+  }
+
+  GIVEN("A valid prefab, line, and sufficient balance") {
+    auto prefab = world.entity().add<Rocket>();
+    auto line = world.entity();
+    world.get_mut<Company>().balance = 500;
+    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
+
+    WHEN("Validated") {
+      ValidationResult result = action.validate(world);
+
+      THEN("It passes") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+  }
+}
+
+SCENARIO("BuildRocketAction Execution", "[execution][action]") {
+  flecs::world world;
+  world.import<SimulationModule>();
+  world.import<SiteModule>();
+  world.import<RocketLaunchModule>();
+
+  GIVEN("A valid prefab, line, and sufficient balance") {
+    auto prefab = world.prefab().add<Rocket>();
+    auto line = world.entity();
+    world.get_mut<Company>().balance = 500;
+    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 200};
+
+    WHEN("Executed") {
+      action.execute(world);
+
+      THEN("A rocket is created as a child of the manufacturing line") {
+        int count = 0;
+        flecs::entity created = flecs::entity::null();
+        line.children([&](flecs::entity child) {
+          count++;
+          created = child;
+        });
+        CHECK(count == 1);
+        REQUIRE(created.is_valid());
+        CHECK(created.has<Construction>());
+        CHECK(created.get<Construction>().effort_remaining == 300);
+        CHECK(created.get<Construction>().effort_total == 300);
+      }
+      THEN("The cost is deducted from the company balance") {
+        CHECK(world.get<Company>().balance == 300);
+      }
+    }
+  }
+}
+
 SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <RocketLaunchModule>();

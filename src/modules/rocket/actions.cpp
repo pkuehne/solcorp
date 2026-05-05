@@ -1,5 +1,7 @@
 #include "actions.h"
+#include "modules/base/action.h"
 #include "modules/base/base.h"
+#include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
 #include <flecs.h>
@@ -188,6 +190,39 @@ void CancelLaunchAction::execute(flecs::world &world) {
   }
   spdlog::debug("Cancelling launch plan: {}", plan.id());
   plan.destruct();
+}
+
+ValidationResult BuildRocketAction::validate(const flecs::world &world) const {
+  if (!prefab.is_valid()) {
+    return ValidationResult::Fail("Rocket prefab is not valid");
+  }
+  if (!line.is_valid()) {
+    return ValidationResult::Fail("Manufacturing line is not valid");
+  }
+
+  auto &company = world.get_mut<Company>();
+  if (company.balance < this->cost) {
+    return ValidationResult::Fail("Not enough funds to build this rocket");
+  }
+
+  return ValidationResult::Pass();
+}
+
+void BuildRocketAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+
+  auto rocket =
+      world.entity()
+          .is_a(this->prefab)
+          .set<Construction>({.effort_remaining = 300, .effort_total = 300})
+          .child_of(this->line);
+  rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
+
+  // deduct cost
+  auto &company = world.get_mut<Company>();
+  company.balance -= this->cost;
 }
 
 ValidationResult MoveRocketAction::validate(const flecs::world &) const {

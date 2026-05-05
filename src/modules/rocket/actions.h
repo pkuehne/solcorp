@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../base/action.h"
+#include <cstdint>
 #include <flecs.h>
 #include <vector>
 
@@ -40,6 +41,27 @@ struct CancelLaunchAction : public IAction {
 
   CancelLaunchAction() = default;
   explicit CancelLaunchAction(flecs::entity p) : plan(p) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &) override;
+};
+
+struct PrefabEntity {
+  flecs::entity value;
+};
+
+struct LineEntity {
+  flecs::entity value;
+};
+
+struct BuildRocketAction : public IAction {
+  flecs::entity prefab = flecs::entity::null();
+  flecs::entity line = flecs::entity::null();
+  int64_t cost = 0;
+
+  BuildRocketAction(PrefabEntity p, LineEntity l, int64_t c)
+      : prefab(p.value), line(l.value), cost(c) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;

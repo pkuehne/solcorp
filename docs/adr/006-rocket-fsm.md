@@ -40,34 +40,29 @@ Add boolean/enum fields to existing components (`is_integrating`, `is_rolling_ou
 **Pros:** minimal new code.  
 **Cons:** state is scattered; systems must defensively check each other's flags; no single authoritative definition of what states are legal in combination.
 
-### Option 3 — Explicit state components + Actions + completion utility (chosen)
+### Option 3 — Explicit state components + Actions for all transitions (chosen)
 
-Introduce explicit state enums on `RocketState` and `LaunchPlanState`. User-triggered transitions remain Actions (full domain validation + state mutation). Automated completions are handled by a `complete_transition` free function called by the progress system.
+Introduce explicit state enums on `RocketState` and `LaunchPlanState`. All transitions — user-triggered and automated — use the Action pattern from ADR 004. Automated completions attach `EffortRequired` / `DurationRequired` progress components and a pending-transition intent component (`PendingStateTransition` or `PendingMove`); the progress system decrements them and fires the completion Action when both reach zero.
 
-**Pros:** state is explicit and visible; Actions retain full domain awareness; automated completions are modelled cleanly without duplicating Action machinery; testable independently of UI.  
-**Cons:** existing ad-hoc mutations must be replaced with Action calls or completion utility calls; Lua bindings must be tightened.
+**Pros:** state is explicit and visible; Actions are the single path for all transitions — the same `validate()` / `execute()` contract guards both button presses and timer expirations; testable independently of UI; no parallel completion utility to maintain.  
+**Cons:** existing ad-hoc mutations must be replaced with Action calls; Lua bindings must be tightened.
 
 ## Decision
 
-Introduce explicit state components for rockets and launch plans. The workflow has two distinct transition paths, each handled differently:
-
-**User-triggered transitions** use the Action pattern from ADR 004. `validate()` checks domain preconditions (funds available, target location free, rocket in correct state, etc.) and returns a `ValidationResult`. `execute()` mutates state and attaches progress components. Actions are the authoritative layer for anything requiring domain knowledge.
-
-**Automated completions** use a `complete_transition` free function called by the progress system when `EffortRequired` or `DurationRequired` is satisfied. This function advances state to the target and removes progress components. If a completion guard is unmet (e.g. rocket not yet on pad), it attaches a `TransitionBlocked` component and the system retries each tick.
+Introduce explicit state components for rockets and launch plans. All transitions — whether initiated by a player button press or by a timer expiring — use the Action pattern from ADR 004. `validate()` checks domain preconditions and returns a `ValidationResult`. `execute()` mutates state and, where a timed step follows, attaches progress components and a pending-transition intent component. The progress system calls the completion Action; it does not mutate state directly.
 
 ```
-User action
- └─ Action::validate()   — domain preconditions (funds, location, state validity)
- └─ Action::execute()    — set state + target, attach progress components
-
-Progress system (each game day)
- └─ advance EffortRequired / DurationRequired
- └─ when complete: complete_transition(entity)
-      ├─ guards met:    advance state to target, remove progress + blocker
-      └─ guards unmet:  attach TransitionBlocked{reason}, retry next tick
+User action  ──────────────────────────────────────────────┐
+                                                            ▼
+Progress system (each game day)                    Action::validate()  — domain preconditions
+ └─ decrement EffortRequired / DurationRequired    Action::execute()   — mutate state, attach progress
+ └─ when both zero: construct + execute                     │
+      completion Action                                     ├─ guards met:    advance state, remove progress
+                                                            └─ guards unmet:  attach TransitionBlocked{reason}
+                                                                              retry each tick until resolved
 ```
 
-Physical location continues to use Flecs parent/child relationships and is not part of state.
+Physical location continues to use Flecs parent/child relationships and is not part of state. Moves that have effort or duration requirements attach `PendingMove { destination }` alongside the progress components; no state change occurs, only a parent change.
 
 ### State Components
 
@@ -86,12 +81,11 @@ enum class RocketStateId : uint8_t {
 
 struct RocketState {
     RocketStateId current;
-    RocketStateId target;  // set while a timed transition is in progress
+    // target is carried by PendingStateTransition when a timed transition is in progress
 };
 
 enum class LaunchPlanStateId : uint8_t {
-    Draft,
-    Scheduled,
+    Scheduled,  // first ECS state — Draft exists only as UI state in LaunchWindow
     WaitingForRocket,
     Integrating,
     WaitingForRollout,
@@ -107,37 +101,44 @@ struct LaunchPlanState {
 };
 ```
 
-### Progress Components
+### Progress and Intent Components
+
+`EffortRequired` and `DurationRequired` are reusable components that express orthogonal facts about a pending transition. A worker system that decrements `EffortRequired.remaining` does not need to know what type of transition is pending.
 
 ```cpp
 struct EffortRequired {
-    int total   = 0;
-    int current = 0;
+    int total     = 0;
+    int remaining = 0;  // decremented by worker/facility systems
 };
 
 struct DurationRequired {
-    int total   = 0;
-    int current = 0;
+    int total     = 0;
+    int remaining = 0;  // decremented each game day
 };
 ```
 
-### Completion Utility
+An intent component is attached alongside the progress components to tell the completion system which Action to fire:
 
 ```cpp
-// Called by progress systems — not by UI or Actions
-void complete_transition(flecs::entity entity);
+struct PendingStateTransition {
+    RocketStateId target;
+};
+
+struct PendingMove {
+    flecs::entity destination;
+    // no target state — only the parent changes
+};
 ```
 
-On success: advances `current` to `target`, removes progress components, removes any `TransitionBlocked`.  
-On failure: attaches `TransitionBlocked{reason}` and raises a player notification, retried each tick until resolved or cancelled.
+When `EffortRequired.remaining` and `DurationRequired.remaining` (whichever are present) both reach zero, the progress system constructs and executes the appropriate completion Action, then removes the progress and intent components.
+
+`TransitionBlocked` is set by a completion Action whose `validate()` fails at execution time — world state changed after the transition started (funds spent elsewhere, launchpad reassigned, building demolished). It is an alarm, not a normal "still working" status.
 
 ```cpp
 struct TransitionBlocked {
     std::string reason;
 };
 ```
-
-`TransitionBlocked` represents a situation the player did not anticipate: the Action's `validate()` passed, the transition started, but world state changed before completion — funds were spent elsewhere, a launchpad was assigned to another rocket, a building was demolished. The player needs to know and may need to intervene. It is not a normal "still working" status; it is an alarm.
 
 ### Example: Payload Integration
 
@@ -152,8 +153,9 @@ if (!vab_has_free_slot(world))
 // ... other domain checks
 
 // StartIntegrationAction::execute()
-rocket.set<RocketState>({RocketStateId::IntegratingPayload, RocketStateId::IntegrationComplete});
-rocket.set<DurationRequired>({5, 0});
+rocket.get_mut<RocketState>().current = RocketStateId::IntegratingPayload;
+rocket.set<PendingStateTransition>({RocketStateId::IntegrationComplete});
+rocket.set<DurationRequired>({.total = 5, .remaining = 5});
 rocket.child_of(vab_entity);
 ```
 
@@ -163,9 +165,10 @@ Progress system (automated):
 world.system<DurationRequired>("AdvanceDuration")
     .kind(UpdatePhase)
     .each([](flecs::entity e, DurationRequired& d) {
-        d.current++;
-        if (d.current >= d.total)
-            complete_transition(e);
+        if (d.remaining > 0) --d.remaining;
+        if (d.remaining == 0 && !e.has<EffortRequired>())
+            // construct and execute the appropriate completion Action
+            fire_completion_action(e);
     });
 ```
 
@@ -176,8 +179,8 @@ world.system<DurationRequired>("AdvanceDuration")
 | Build | Action | `EffortRequired` |
 | Payload integration | Action | `DurationRequired` |
 | Rollout | Action | `DurationRequired` |
-| Construction complete | `complete_transition` | — |
-| Launch plan readiness | `complete_transition` | guard: rocket parent is launchpad |
+| Construction complete | completion Action (fired by progress system) | — |
+| Launch plan readiness | completion Action (fired by progress system) | guard: rocket parent is launchpad |
 
 ### Lua Integration
 
@@ -206,9 +209,9 @@ Nova-2   WaitingForRollout                          BLOCKED: No pad available
 
 - **Explicit state** — `RocketState` and `LaunchPlanState` make the lifecycle visible and queryable; impossible combinations are caught by Action validation.
 - **Actions retain domain awareness** — funds, location availability, and other preconditions stay where they belong, in `validate()`.
-- **Automated completions are first-class** — `complete_transition` + `TransitionBlocked` cleanly models the cases no Action can handle.
+- **Single transition path** — Actions handle both user-triggered and automated completions; the progress system fires the completion Action rather than mutating state directly. `TransitionBlocked` catches cases where world state changed after a transition started.
 - **Better UI feedback** — `ValidationResult` explains why an action was rejected before it started; `TransitionBlocked` is an alarm for when world state changed under an in-progress transition, with a specific reason the player can act on.
-- **Testable** — Actions and `complete_transition` take a `flecs::world&` or `flecs::entity`; tests construct a world, set up state, call the function, assert on components.
+- **Testable** — Actions take a `flecs::world&`; tests construct a world, set up state, call `validate()` / `execute()`, assert on components.
 - **Migration cost** — ad-hoc state mutations must be replaced; Lua direct writes must be replaced with API calls.
 
 ## Non-Goals for 0.2
@@ -223,10 +226,10 @@ Nova-2   WaitingForRollout                          BLOCKED: No pad available
 ## Implementation Order
 
 1. Add `RocketState` / `LaunchPlanState` components
-2. Implement `complete_transition` utility
-3. Add progress systems for effort and duration
+2. Add `EffortRequired` / `DurationRequired` / `PendingStateTransition` / `PendingMove` components
+3. Add progress systems (decrement counters, fire completion Actions)
 4. Add `TransitionBlocked` handling and retry
-5. Implement Actions for each user-triggered transition
+5. Implement Actions for each transition (user-triggered and completion)
 6. Build Rocket List UI
 7. Build Launch Plan status UI
 8. Add unit tests (valid/invalid Actions, blocked completion, retry after blocker removed, effort and duration progression, cancellation paths)
