@@ -26,8 +26,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A rocket in Stored state") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -42,8 +42,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A rocket in Assigned state") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -58,8 +58,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A rocket under construction") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::UnderConstruction, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::UnderConstruction});
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -74,8 +74,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A rocket already assigned to another plan") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     rocket.add<LaunchingOn>(world.entity());
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
@@ -91,8 +91,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A missing launchpad") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -109,8 +109,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("A new plan and an existing plan with the same name") {
     world.entity("Test Plan").set<LaunchPlan>({});
 
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     auto launchpad = world.entity().add<Launchpad>();
     ScheduleLaunchAction launch;
     launch.launchDay = 10;
@@ -123,14 +123,15 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
       THEN("Report the name clash") {
         CHECK(!result.ok);
-        CHECK(result.message == "A Launch Plan named 'Test Plan' already exists");
+        CHECK(result.message ==
+              "A Launch Plan named 'Test Plan' already exists");
       }
     }
   }
 
   GIVEN("A valid plan") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -150,7 +151,6 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
       }
     }
   }
-
 }
 
 SCENARIO("EditLaunchAction Validation", "[validation][action]") {
@@ -174,8 +174,8 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
 
   GIVEN("The same name as another plan") {
     world.entity("Other Plan").set<LaunchPlan>({});
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -193,14 +193,15 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
 
       THEN("It reports the name clash") {
         CHECK(!result.ok);
-        CHECK(result.message == "A Launch Plan named 'Other Plan' already exists");
+        CHECK(result.message ==
+              "A Launch Plan named 'Other Plan' already exists");
       }
     }
   }
 
   GIVEN("The same name as the plan being edited") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -224,8 +225,8 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("The same rocket already on this plan (Assigned state)") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -249,10 +250,10 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
   }
 
   GIVEN("A different rocket that is already Assigned") {
-    auto oldRocket = world.entity().add<Rocket>()
-                         .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
-    auto newRocket = world.entity().add<Rocket>()
-                         .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto oldRocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
+    auto newRocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     newRocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -283,12 +284,13 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
   world.import <RocketLaunchModule>();
 
   GIVEN("An existing plan") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    auto existing = world.entity("Test Plan").set<LaunchPlan>({.launch_date = 5});
+    auto existing =
+        world.entity("Test Plan").set<LaunchPlan>({.launch_date = 5});
     existing.add<LaunchingOn>(rocket);
     existing.add<LaunchingFrom>(launchpad);
 
@@ -316,10 +318,10 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
   }
 
   GIVEN("An existing plan with a rocket being swapped") {
-    auto oldRocket = world.entity().add<Rocket>()
-                         .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
-    auto newRocket = world.entity().add<Rocket>()
-                         .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto oldRocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
+    auto newRocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     newRocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -367,8 +369,8 @@ SCENARIO("CancelLaunchAction", "[action]") {
   }
 
   GIVEN("A valid plan with an assigned rocket") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Assigned, .target = RocketStateId::Assigned});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Assigned});
     auto plan = world.entity("Test Plan").set<LaunchPlan>({});
     plan.add<LaunchingOn>(rocket);
     CancelLaunchAction cancel{plan};
@@ -376,9 +378,7 @@ SCENARIO("CancelLaunchAction", "[action]") {
     WHEN("Executed") {
       cancel.execute(world);
 
-      THEN("The plan is destroyed") {
-        CHECK(!plan.is_alive());
-      }
+      THEN("The plan is destroyed") { CHECK(!plan.is_alive()); }
       THEN("The rocket is returned to Stored") {
         CHECK(rocket.get<RocketState>().current == RocketStateId::Stored);
       }
@@ -393,8 +393,8 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   world.import <RocketLaunchModule>();
 
   GIVEN("A valid plan") {
-    auto rocket = world.entity().add<Rocket>()
-                      .set<RocketState>({.current = RocketStateId::Stored, .target = RocketStateId::Stored});
+    auto rocket = world.entity().add<Rocket>().set<RocketState>(
+        {.current = RocketStateId::Stored});
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -422,7 +422,6 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
       }
     }
   }
-
 }
 
 SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
@@ -617,13 +616,14 @@ SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
 
 SCENARIO("BuildRocketAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import<SimulationModule>();
-  world.import<SiteModule>();
-  world.import<RocketLaunchModule>();
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("An invalid prefab") {
     auto line = world.entity();
-    BuildRocketAction action{PrefabEntity{flecs::entity::null()}, LineEntity{line}, 100};
+    BuildRocketAction action{PrefabEntity{flecs::entity::null()},
+                             LineEntity{line}, 100};
 
     WHEN("Validated") {
       ValidationResult result = action.validate(world);
@@ -637,7 +637,8 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
 
   GIVEN("An invalid manufacturing line") {
     auto prefab = world.entity().add<Rocket>();
-    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{flecs::entity::null()}, 100};
+    BuildRocketAction action{PrefabEntity{prefab},
+                             LineEntity{flecs::entity::null()}, 100};
 
     WHEN("Validated") {
       ValidationResult result = action.validate(world);
@@ -684,9 +685,9 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
 
 SCENARIO("BuildRocketAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import<SimulationModule>();
-  world.import<SiteModule>();
-  world.import<RocketLaunchModule>();
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketLaunchModule>();
 
   GIVEN("A valid prefab, line, and sufficient balance") {
     auto prefab = world.prefab().add<Rocket>();

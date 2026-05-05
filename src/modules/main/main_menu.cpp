@@ -21,21 +21,21 @@ MainMenuModule::MainMenuModule(flecs::world &world) {
   // Register components
   world.component<MainMenuBar>();
   world.component<EffortRequired>()
-      .member("current", &EffortRequired::current)
+      .member("remaining", &EffortRequired::remaining)
       .member("total", &EffortRequired::total);
   world.component<DurationRequired>()
-      .member("current", &DurationRequired::current)
+      .member("remaining", &DurationRequired::remaining)
       .member("total", &DurationRequired::total);
 
   // Register lua bindings
   register_component_lua<EffortRequired>(
       world, "EffortRequired", [](LuaFieldBuilder<EffortRequired> &b) {
-        b.field<&EffortRequired::current>("current")
+        b.field<&EffortRequired::remaining>("remaining")
             .field<&EffortRequired::total>("total");
       });
   register_component_lua<DurationRequired>(
       world, "DurationRequired", [](LuaFieldBuilder<DurationRequired> &b) {
-        b.field<&DurationRequired::current>("current")
+        b.field<&DurationRequired::remaining>("remaining")
             .field<&DurationRequired::total>("total");
       });
 

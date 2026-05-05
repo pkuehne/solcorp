@@ -42,6 +42,19 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   world.component<Rocket>()
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
+  world.component<RocketStateId>()
+      .constant("UnderConstruction", RocketStateId::UnderConstruction)
+      .constant("Stored", RocketStateId::Stored)
+      .constant("Assigned", RocketStateId::Assigned)
+      .constant("IntegratingPayload", RocketStateId::IntegratingPayload)
+      .constant("IntegrationComplete", RocketStateId::IntegrationComplete)
+      .constant("RollingOut", RocketStateId::RollingOut)
+      .constant("OnPad", RocketStateId::OnPad)
+      .constant("Launched", RocketStateId::Launched)
+      .constant("Unavailable", RocketStateId::Unavailable);
+  world.component<RocketState>().member("current", &RocketState::current);
+  world.component<RocketTargetState>().member("target",
+                                              &RocketTargetState::target);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
@@ -95,8 +108,11 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   });
   register_component_lua<RocketState>(
       world, "RocketState", [](LuaFieldBuilder<RocketState> &b) {
-        b.field<&RocketState::current>("current").field<&RocketState::target>(
-            "target");
+        b.field<&RocketState::current>("current");
+      });
+  register_component_lua<RocketTargetState>(
+      world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &b) {
+        b.field<&RocketTargetState::target>("target");
       });
   register_component_lua<RocketStateTransitionBlocked>(
       world, "RocketStateTransitionBlocked",

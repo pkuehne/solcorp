@@ -1,6 +1,7 @@
 #include "actions.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
+#include "modules/main/main_menu.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
@@ -216,13 +217,46 @@ void BuildRocketAction::execute(flecs::world &world) {
   auto rocket =
       world.entity()
           .is_a(this->prefab)
-          .set<Construction>({.effort_remaining = 300, .effort_total = 300})
+          .set<Construction>({.effort_remaining = 300,
+                              .effort_total = 300}) // This will be replaced
+          .set<RocketState>({.current = RocketStateId::UnderConstruction})
+          .set<RocketTargetState>({.target = RocketStateId::Stored})
+          .set<EffortRequired>({.remaining = 300, .total = 300})
           .child_of(this->line);
   rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
 
   // deduct cost
   auto &company = world.get_mut<Company>();
   company.balance -= this->cost;
+}
+
+ValidationResult
+RocketCompleteBuildAction::validate(const flecs::world &) const {
+  if (!rocket.is_valid()) {
+    return ValidationResult::Fail("Rocket is not valid");
+  }
+  if (!rocket.has<EffortRequired>()) {
+    return ValidationResult::Fail("Does not have any effort required");
+  }
+  if (rocket.get<RocketState>().current != RocketStateId::UnderConstruction) {
+    return ValidationResult::Fail("Rocket is not under construction");
+  }
+  auto effort = rocket.get<EffortRequired>();
+  if (effort.remaining > 0) {
+    return ValidationResult::Fail("Rocket construction is not yet complete");
+  }
+  // TODO: Check there's enough storage space for the new rocket
+  return ValidationResult::Pass();
+}
+
+void RocketCompleteBuildAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+
+  rocket.get_mut<RocketState>().current = RocketStateId::Stored;
+  rocket.remove<EffortRequired>();
+  rocket.remove<RocketTargetState>();
 }
 
 ValidationResult MoveRocketAction::validate(const flecs::world &) const {

@@ -8,6 +8,8 @@
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
+#include "modules/main/main_menu.h"
+#include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_launch.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
@@ -31,6 +33,12 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <RocketLaunchModule>();
 
   // Register components
+  world.component<EffortRequired>()
+      .member("remaining", &EffortRequired::remaining)
+      .member("total", &EffortRequired::total);
+  world.component<DurationRequired>()
+      .member("remaining", &DurationRequired::remaining)
+      .member("total", &DurationRequired::total);
   world.component<CurrentSite>();
   world.component<Construction>()
       .member("effort_remaining", &Construction::effort_remaining)
@@ -95,7 +103,10 @@ SiteModule::SiteModule(flecs::world &world) {
       .run(systemCreateSiteWindows);
 
   auto sim = world.get<Simulation>();
-  world.system<Manufacturing>("Update Construction")
+  world.system<EffortRequired, const Manufacturing>("Update Construction")
+      .term_at(1)
+      .src()
+      .up(flecs::ChildOf)
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateManufacuringProgress);
@@ -244,31 +255,26 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
   }
 }
 
-void systemBuildingUpdateManufacuringProgress(flecs::entity entity,
-                                              Manufacturing &manufacturing) {
-  flecs::world world = entity.world();
-
-  flecs::entity rocket = flecs::entity::null();
-  entity.children([&](flecs::entity ch) {
-    if (ch.has<Construction>()) {
-      rocket = ch;
-    }
-  });
-
-  if (!rocket.is_valid()) {
-    return;
-  }
-  auto *construction = rocket.try_get_mut<Construction>();
-  if (!construction) {
-    return;
-  }
-  if (manufacturing.available_effort > construction->effort_remaining) {
-    construction->effort_remaining = 0;
+void systemBuildingUpdateManufacuringProgress(
+    flecs::entity rocket, EffortRequired &effort,
+    const Manufacturing &manufacturing) {
+  if (manufacturing.available_effort >= effort.remaining) {
+    effort.remaining = 0;
   } else {
-    construction->effort_remaining -= manufacturing.available_effort;
+    effort.remaining -= manufacturing.available_effort;
   }
-  if (construction->effort_remaining == 0) {
-    rocket.remove<Construction>();
-    instantiateBuildingNotification(world, entity, "Rocket finished");
+  if (effort.remaining == 0) {
+    auto world = rocket.world();
+    RocketCompleteBuildAction action(rocket);
+    auto result = action.validate(world);
+    if (result.ok) {
+      action.execute(world);
+      instantiateBuildingNotification(world, rocket.parent(),
+                                      "Rocket finished");
+
+    } else {
+      spdlog::error("Failed to complete rocket build: {}", result.message);
+      // TODO: Notification
+    }
   }
 }

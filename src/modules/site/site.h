@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modules/main/main_menu.h"
 #include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>
@@ -69,7 +70,8 @@ struct ConstructionSiteNeedsUpdating {};
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);
-void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
+void systemBuildingUpdateManufacuringProgress(flecs::entity, EffortRequired &,
+                                              const Manufacturing &);
 
 struct SiteModule {
 public:

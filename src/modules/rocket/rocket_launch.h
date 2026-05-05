@@ -45,6 +45,9 @@ enum class RocketStateId : uint8_t {
 
 struct RocketState {
   RocketStateId current;
+};
+
+struct RocketTargetState {
   RocketStateId target;
 };
 

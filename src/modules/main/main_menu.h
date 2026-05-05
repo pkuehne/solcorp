@@ -5,12 +5,12 @@
 struct MainMenuBar {};
 
 struct EffortRequired {
-  uint32_t current = 0;
+  uint32_t remaining = 0;
   uint32_t total = 0;
 };
 
 struct DurationRequired {
-  uint32_t current = 0;
+  uint32_t remaining = 0;
   uint32_t total = 0;
 };
 
