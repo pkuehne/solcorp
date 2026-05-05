@@ -40,9 +40,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("remaining", &DurationRequired::remaining)
       .member("total", &DurationRequired::total);
   world.component<CurrentSite>();
-  world.component<Construction>()
-      .member("effort_remaining", &Construction::effort_remaining)
-      .member("effort_total", &Construction::effort_total);
   world.component<ConstructionSite>();
   world.component<ConstructionSiteNeedsUpdating>();
   world.component<Site>()

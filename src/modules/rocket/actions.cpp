@@ -217,8 +217,6 @@ void BuildRocketAction::execute(flecs::world &world) {
   auto rocket =
       world.entity()
           .is_a(this->prefab)
-          .set<Construction>({.effort_remaining = 300,
-                              .effort_total = 300}) // This will be replaced
           .set<RocketState>({.current = RocketStateId::UnderConstruction})
           .set<RocketTargetState>({.target = RocketStateId::Stored})
           .set<EffortRequired>({.remaining = 300, .total = 300})
@@ -259,11 +257,12 @@ void RocketCompleteBuildAction::execute(flecs::world &world) {
   rocket.remove<RocketTargetState>();
 }
 
-ValidationResult MoveRocketAction::validate(const flecs::world &) const {
+ValidationResult RocketMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (rocket.has<Construction>()) {
+  if (rocket.has<RocketState>() &&
+      rocket.get<RocketState>().current == RocketStateId::UnderConstruction) {
     return ValidationResult::Fail("Rocket is under construction");
   }
   if (!destination.is_valid()) {
@@ -276,7 +275,7 @@ ValidationResult MoveRocketAction::validate(const flecs::world &) const {
   return ValidationResult::Pass();
 }
 
-void MoveRocketAction::execute(flecs::world &world) {
+void RocketMoveAction::execute(flecs::world &world) {
   if (!!validate(world)) {
     rocket.child_of(destination);
   }

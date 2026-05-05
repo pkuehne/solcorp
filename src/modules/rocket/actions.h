@@ -85,11 +85,11 @@ struct DestinationEntity {
   flecs::entity value;
 };
 
-struct MoveRocketAction : public IAction {
+struct RocketMoveAction : public IAction {
   flecs::entity rocket;
   flecs::entity destination;
 
-  MoveRocketAction(RocketEntity r, DestinationEntity d)
+  RocketMoveAction(RocketEntity r, DestinationEntity d)
       : rocket(r.value), destination(d.value) {}
 
   [[nodiscard]] ValidationResult
