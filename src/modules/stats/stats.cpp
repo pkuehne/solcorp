@@ -229,7 +229,7 @@ void discover_stat_update_systems(flecs::world &world) {
           .run([offsets, comp_size](flecs::iter &it) {
             while (it.next()) {
               // ecs_field_w_size returns a pointer to the contiguous array of
-              // component data for term 0 (0-indexed in Flecs 4).
+              // component data for query term index 0 (the .with(comp_id) term).
               char *field = static_cast<char *>(
                   ecs_field_w_size(it.c_ptr(),
                                    static_cast<size_t>(comp_size), 0));

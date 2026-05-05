@@ -108,4 +108,4 @@ The Flecs meta addon stores member type information (entity ID + byte offset) fo
 1. Declare the field in the struct header.
 2. Add `.member("field_name", &T::field_name)` to the existing `world.component<T>()` call.
 
-No separate update system is needed.  The Flecs `.member()` call that was already required for the REST inspector and Lua serialisation now also drives the stats update wiring.
+No separate update system is needed.  The Flecs `.member()` call that was already required for the REST inspector and Lua serialization now also drives the stats update wiring.

@@ -56,7 +56,7 @@ SCENARIO("Stats", "[stats]") {
 
 namespace {
 
-/// Helper: attach a named effect with an additive modifier to @p target.
+// Attach an effect with a single additive modifier to target.
 void add_effect(flecs::world &world, flecs::entity target,
                 const std::string &stat_id, double additive) {
   auto effect = world.entity();
