@@ -110,12 +110,10 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
-  world.system<Launchpad>()
-      .kind(UpdatePhase)
-      .each([](flecs::entity e, Launchpad &pad) {
-        statsApplyModifiers(e, &pad.max_weight);
-        statsApplyModifiers(e, &pad.prep_days);
-      });
+  // NOTE: Launchpad stat updaters (max_weight, prep_days) are auto-registered
+  // by StatsModule::discover_stat_update_systems at PostStartPhase.  Adding a
+  // new Stat member to Launchpad — or to any other component — only requires
+  // a .member() call; no manual system is needed.
 
   world.system<const Site, const Transform>("Draw Site Border")
       .with<CurrentSite>()

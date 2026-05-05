@@ -89,3 +89,23 @@ Effect scope is determined by position in the ECS hierarchy: an effect on a site
 - **Hierarchy scope** — effect placement in the entity tree naturally scopes its influence, matching the mental model of "a site-wide upgrade affects everything on the site."
 - **Recompute cost** — `applyModifiers` resets and re-accumulates all modifiers each update. This is acceptable at current entity counts but would need caching if the number of affected entities grows significantly.
 - **Stat–component coupling** — stats are not self-describing in a central registry; discovering which stats exist requires reading component definitions.
+
+## Auto-discovery of stat updaters (later addition)
+
+Initially each module manually registered a per-component `UpdatePhase` system to call `statsApplyModifiers`.  This created a third registration obligation alongside the Flecs reflection call (`.member()`) and the Lua binding (`register_component_lua`).
+
+The Flecs meta addon stores member type information (entity ID + byte offset) for every struct registered with `.member()`. Since `Stat` is itself a registered component, any field declared as `Stat` in another component will have its `type` field set to `ecs_id(Stat)`. `StatsModule` exploits this in `discover_stat_update_systems()`:
+
+1. Query all entities that carry `EcsComponent` (every registered component type).
+2. For each, retrieve the `EcsStruct` metadata; skip components with no struct metadata.
+3. Scan the `ecs_member_t` list for entries whose `type == ecs_id(Stat)`.
+4. If any are found, dynamically register an `UpdatePhase` system that uses `ecs_field_w_size` to access the raw component array and calls `statsApplyModifiers` at each discovered offset.
+
+`discover_stat_update_systems` is called automatically from a `PostStartPhase + immediate` system in `StatsModule`, which runs after all module constructors have completed and before the first `UpdatePhase`.
+
+**Consequence:** adding a new `Stat` field to any component now requires only:
+
+1. Declare the field in the struct header.
+2. Add `.member("field_name", &T::field_name)` to the existing `world.component<T>()` call.
+
+No separate update system is needed.  The Flecs `.member()` call that was already required for the REST inspector and Lua serialisation now also drives the stats update wiring.

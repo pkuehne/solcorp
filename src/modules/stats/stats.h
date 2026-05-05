@@ -99,6 +99,27 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats);
 /// @param stat The stat to apply modifiers to.
 void statsApplyModifiers(flecs::entity e, Stat *stat);
 
+/// @brief Auto-discover and register stat-update systems using Flecs reflection.
+///
+/// Iterates every component type registered in @p world that has Flecs struct
+/// metadata (i.e. at least one `.member()` call). For each component that
+/// contains one or more members of type @c Stat, this function registers a
+/// dedicated @c UpdatePhase system that calls @c statsApplyModifiers on every
+/// such member for every entity that owns the component.
+///
+/// This eliminates the need to manually write a per-component update system
+/// whenever a new @c Stat field is added to a component.  The only requirements
+/// are:
+///  1. The component is registered with @c world.component<T>() before this
+///     function is called.
+///  2. Each @c Stat member is exposed via @c .member("name", &T::field).
+///
+/// @note Called automatically during @c PostStartPhase by @c StatsModule.
+///       Exported so that unit tests can call it directly without relying on
+///       the phase trigger timing.
+/// @param world The Flecs world.
+void discover_stat_update_systems(flecs::world &world);
+
 /// Displays a stat with a tooltip in the UI.
 /// @param stat The stat to display.
 void displayStatWithTooltip(const Stat *stat);

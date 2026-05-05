@@ -3,6 +3,7 @@
 #include "modules/lua/lua.h"
 #include "spdlog/fmt/bundled/format.h"
 #include <modules/base/base.h>
+#include <spdlog/spdlog.h>
 
 void systemInitialiseStats(flecs::iter &iter);
 
@@ -47,6 +48,18 @@ StatsModule::StatsModule(flecs::world &world) {
   auto s = world.set_scope(0);
   world.entity("Effects");
   world.set(s);
+
+  // Register a PostStartPhase system to auto-discover all components that
+  // carry Stat-typed members and register an UpdatePhase updater for each.
+  // Runs with .immediate() so the newly registered updaters are active within
+  // the same world tick (and thus the first UpdatePhase).
+  world.system("Discover stat updaters")
+      .kind(PostStartPhase)
+      .immediate()
+      .run([](flecs::iter &it) {
+        auto world = it.world();
+        discover_stat_update_systems(world);
+      });
 
   // Register systems
 }
@@ -149,4 +162,92 @@ void displayStatWithTooltip(const Stat *stat) {
     ImGui::Text("Final Value: %.0f", stat->value());
     ImGui::EndTooltip();
   }
+}
+
+void discover_stat_update_systems(flecs::world &world) {
+  ecs_world_t *raw = world.c_ptr();
+  const flecs::entity_t stat_type_id = world.component<Stat>().id();
+
+  // Query every entity that IS a component type.
+  ecs_query_desc_t qdesc = {};
+  qdesc.terms[0].id = ecs_id(EcsComponent);
+  ecs_query_t *q = ecs_query_init(raw, &qdesc);
+  if (!q) {
+    spdlog::warn("discover_stat_update_systems: could not create component "
+                 "query");
+    return;
+  }
+
+  ecs_iter_t qit = ecs_query_iter(raw, q);
+  while (ecs_query_next(&qit)) {
+    for (int32_t i = 0; i < qit.count; i++) {
+      const ecs_entity_t comp_id = qit.entities[i];
+
+      // Only process components that have Flecs struct metadata, i.e. those
+      // registered with at least one .member() call.
+      const EcsStruct *s = ecs_get(raw, comp_id, EcsStruct);
+      if (!s) {
+        continue;
+      }
+
+      const EcsComponent *comp_desc = ecs_get(raw, comp_id, EcsComponent);
+      if (!comp_desc || comp_desc->size == 0) {
+        continue;
+      }
+
+      // Collect the byte offsets of every Stat-typed member.
+      std::vector<int32_t> stat_offsets;
+      const int32_t member_count = ecs_vec_count(&s->members);
+      const ecs_member_t *members = ecs_vec_first_t(&s->members, ecs_member_t);
+      for (int32_t m = 0; m < member_count; m++) {
+        if (members[m].type == stat_type_id) {
+          stat_offsets.push_back(members[m].offset);
+        }
+      }
+      if (stat_offsets.empty()) {
+        continue;
+      }
+
+      const char *comp_name = ecs_get_name(raw, comp_id);
+      spdlog::debug("discover_stat_update_systems: registering updater for {}",
+                    comp_name ? comp_name : "(unnamed)");
+
+      // Capture what we need for the system callback.
+      const ecs_size_t comp_size = comp_desc->size;
+      auto offsets =
+          std::make_shared<std::vector<int32_t>>(std::move(stat_offsets));
+
+      const std::string sys_name =
+          std::string("Auto-update stats for ") +
+          (comp_name ? comp_name : "?");
+
+      // Register an UpdatePhase system that iterates every entity owning this
+      // component and applies modifiers to each of its Stat members.
+      world.system(sys_name.c_str())
+          .with(comp_id)
+          .kind(UpdatePhase)
+          .run([offsets, comp_size](flecs::iter &it) {
+            while (it.next()) {
+              // ecs_field_w_size returns a pointer to the contiguous array of
+              // component data for term 0 (0-indexed in Flecs 4).
+              char *field = static_cast<char *>(
+                  ecs_field_w_size(it.c_ptr(),
+                                   static_cast<size_t>(comp_size), 0));
+              if (!field) {
+                continue;
+              }
+              for (size_t j = 0; j < it.count(); j++) {
+                const flecs::entity e = it.entity(j);
+                char *comp_ptr = field + j * static_cast<size_t>(comp_size);
+                for (const int32_t offset : *offsets) {
+                  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                  statsApplyModifiers(
+                      e, reinterpret_cast<Stat *>(comp_ptr + offset));
+                }
+              }
+            }
+          });
+    }
+  }
+  ecs_query_fini(q);
 }
