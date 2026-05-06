@@ -819,3 +819,53 @@ SCENARIO("MoveRocketAction Execution", "[execution][action]") {
     }
   }
 }
+
+SCENARIO("RocketCompleteBuildAction Block", "[action]") {
+  flecs::world world;
+  world.import <RocketLaunchModule>();
+
+  GIVEN("A rocket under construction with no effort remaining") {
+    flecs::entity rocket = world.entity().add<Rocket>();
+    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.set<EffortRequired>({.remaining = 0, .total = 300});
+
+    WHEN("block is called") {
+      RocketCompleteBuildAction{rocket}.block(world);
+
+      THEN("RocketStateTransitionBlocked is not set") {
+        REQUIRE(!rocket.has<RocketStateTransitionBlocked>());
+      }
+    }
+  }
+
+  GIVEN("A rocket that is not under construction") {
+    flecs::entity rocket = world.entity().add<Rocket>();
+    rocket.set<EffortRequired>({.remaining = 0, .total = 300});
+
+    WHEN("block is called") {
+      RocketCompleteBuildAction{rocket}.block(world);
+
+      THEN("RocketStateTransitionBlocked is set with the reason") {
+        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
+        REQUIRE(rocket.get<RocketStateTransitionBlocked>().reason ==
+                "Rocket is not under construction");
+      }
+    }
+  }
+
+  GIVEN("A rocket under construction with effort still remaining") {
+    flecs::entity rocket = world.entity().add<Rocket>();
+    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.set<EffortRequired>({.remaining = 50, .total = 300});
+
+    WHEN("block is called") {
+      RocketCompleteBuildAction{rocket}.block(world);
+
+      THEN("RocketStateTransitionBlocked is set with the reason") {
+        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
+        REQUIRE(rocket.get<RocketStateTransitionBlocked>().reason ==
+                "Rocket construction is not yet complete");
+      }
+    }
+  }
+}

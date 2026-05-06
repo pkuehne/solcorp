@@ -76,6 +76,7 @@ struct RocketCompleteBuildAction : public IAction {
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
   void execute(flecs::world &) override;
+  void block(flecs::world &world);
 };
 
 struct RocketEntity {

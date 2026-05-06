@@ -255,6 +255,15 @@ void RocketCompleteBuildAction::execute(flecs::world &world) {
   rocket.remove<RocketTargetState>();
 }
 
+void RocketCompleteBuildAction::block(flecs::world &world) {
+  auto result = validate(world);
+  if (result.ok) {
+    return;
+  }
+
+  this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
+}
+
 ValidationResult RocketMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");

@@ -51,6 +51,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("cost", &Rocket::cost);
   world.component<RocketTargetState>().member("target",
                                               &RocketTargetState::target);
+  world.component<RocketStateTransitionBlocked>().member(
+      "reason", &RocketStateTransitionBlocked::reason);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();

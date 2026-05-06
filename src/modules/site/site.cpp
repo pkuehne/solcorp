@@ -270,6 +270,7 @@ void systemBuildingUpdateManufacuringProgress(
                                       "Rocket finished");
 
     } else {
+      action.block(world);
       spdlog::error("Failed to complete rocket build: {}", result.message);
       // TODO: Notification
     }
