@@ -171,7 +171,7 @@ void drawLaunchpadSection(flecs::entity &entity) {
 
 void drawRocketButtons(flecs::entity &rocket) {
   std::string issue;
-  if (rocket.get<RocketState>().current != RocketStateId::Stored) {
+  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
     issue = "Rocket is not available";
   }
 

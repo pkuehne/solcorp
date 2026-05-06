@@ -16,21 +16,6 @@ struct LaunchPlan {
       flecs::entity::null(); ///< Target orbit from CanLiftTo
 };
 
-/// @brief Component to indicate entity is a rocket.
-struct Rocket {
-  static uint32_t max_id;
-  Stat failure_rate =
-      Stat({.id = "failure-rate",
-            .display = "Failure Rate",
-            .description = "Likelyhood the rocket will fail on take-off",
-            .base = 0.1,
-            .higher_is_better = false});
-  Stat cost = Stat({.id = "cost",
-                    .display = "Cost",
-                    .description = "Cost to build this rocket",
-                    .base = 5'000'000,
-                    .higher_is_better = false});
-};
 enum class RocketStateId : uint8_t {
   UnderConstruction,
   Stored,
@@ -43,8 +28,21 @@ enum class RocketStateId : uint8_t {
   Unavailable
 };
 
-struct RocketState {
-  RocketStateId current;
+/// @brief Component to indicate entity is a rocket.
+struct Rocket {
+  static uint32_t max_id;
+  RocketStateId state = RocketStateId::Stored;
+  Stat failure_rate =
+      Stat({.id = "failure-rate",
+            .display = "Failure Rate",
+            .description = "Likelyhood the rocket will fail on take-off",
+            .base = 0.1,
+            .higher_is_better = false});
+  Stat cost = Stat({.id = "cost",
+                    .display = "Cost",
+                    .description = "Cost to build this rocket",
+                    .base = 5'000'000,
+                    .higher_is_better = false});
 };
 
 struct RocketTargetState {

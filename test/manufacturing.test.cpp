@@ -17,11 +17,13 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
   auto &manuf = building.get<Manufacturing>();
 
   auto makeRocket = [&](uint32_t remaining, uint32_t total) {
-    return world.entity()
-        .set<EffortRequired>({.remaining = remaining, .total = total})
-        .set<RocketState>({.current = RocketStateId::UnderConstruction})
-        .set<RocketTargetState>({.target = RocketStateId::Stored})
-        .child_of(building);
+    auto e = world.entity()
+                 .add<Rocket>()
+                 .set<EffortRequired>({.remaining = remaining, .total = total})
+                 .set<RocketTargetState>({.target = RocketStateId::Stored})
+                 .child_of(building);
+    e.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    return e;
   };
 
   GIVEN("A rocket with more effort needed than available") {
@@ -43,7 +45,7 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("the rocket transitions to Stored") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<RocketState>().current == RocketStateId::Stored);
+        REQUIRE(rocket.get<Rocket>().state == RocketStateId::Stored);
       }
     }
   }
@@ -55,7 +57,7 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("the rocket transitions to Stored") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<RocketState>().current == RocketStateId::Stored);
+        REQUIRE(rocket.get<Rocket>().state == RocketStateId::Stored);
       }
     }
   }
@@ -67,7 +69,7 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("the rocket transitions to Stored") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<RocketState>().current == RocketStateId::Stored);
+        REQUIRE(rocket.get<Rocket>().state == RocketStateId::Stored);
       }
     }
   }

@@ -35,9 +35,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
-  world.component<Rocket>()
-      .member("failure_rate", &Rocket::failure_rate)
-      .member("cost", &Rocket::cost);
   world.component<RocketStateId>()
       .constant("UnderConstruction", RocketStateId::UnderConstruction)
       .constant("Stored", RocketStateId::Stored)
@@ -48,7 +45,10 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       .constant("OnPad", RocketStateId::OnPad)
       .constant("Launched", RocketStateId::Launched)
       .constant("Unavailable", RocketStateId::Unavailable);
-  world.component<RocketState>().member("current", &RocketState::current);
+  world.component<Rocket>()
+      .member("state", &Rocket::state)
+      .member("failure_rate", &Rocket::failure_rate)
+      .member("cost", &Rocket::cost);
   world.component<RocketTargetState>().member("target",
                                               &RocketTargetState::target);
   world.component<Payload>().member("mass", &Payload::mass);
@@ -90,7 +90,8 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       });
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
-        b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
+        b.field<&Rocket::state>("state")
+            .nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
             .nested<&Rocket::cost>({"cost"}, {"Stat"});
       });
   register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
@@ -102,10 +103,6 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
         .value("Launched", RocketStateId::Launched)
         .value("Unavailable", RocketStateId::Unavailable);
   });
-  register_component_lua<RocketState>(
-      world, "RocketState", [](LuaFieldBuilder<RocketState> &b) {
-        b.field<&RocketState::current>("current");
-      });
   register_component_lua<RocketTargetState>(
       world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &b) {
         b.field<&RocketTargetState::target>("target");
@@ -265,6 +262,5 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
   }
 
   // Base Rocket Prefab
-  world.prefab("Rocket").child_of(core_node).add<Rocket>().set<RocketState>(
-      {.current = RocketStateId::Stored});
+  world.prefab("Rocket").child_of(core_node).add<Rocket>();
 }
