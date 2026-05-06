@@ -126,6 +126,9 @@ void drawManufacturingSection(flecs::entity &entity) {
 void drawStorageSection(flecs::entity &entity) {
   flecs::world world = entity.world();
   entity.children([](flecs::entity rocket) {
+    if (!rocket.has<Rocket>()) {
+      return;
+    }
     ImGui::PushID(std::to_string(rocket.id()).c_str());
     auto plan = rocket.target<LaunchingOn>();
     ImGui::Text("%s %s", rocket.name().c_str(),

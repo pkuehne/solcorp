@@ -10,7 +10,6 @@
 #include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/site/helpers.h"
-#include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 #include <modules/simulation/simulation.h>
@@ -266,5 +265,6 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
   }
 
   // Base Rocket Prefab
-  world.prefab("Rocket").child_of(core_node).add<Rocket>();
+  world.prefab("Rocket").child_of(core_node).add<Rocket>().set<RocketState>(
+      {.current = RocketStateId::Stored});
 }
