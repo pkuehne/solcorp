@@ -3,6 +3,7 @@
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
+#include "modules/main/main_menu.h"
 #include "modules/rocket/actions.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_launch.h"
@@ -97,20 +98,17 @@ void drawManufacturingSection(flecs::entity &entity) {
     // There is a rocket on the line
     ImGui::Text("Constructing %s", e.name().c_str());
 
-    auto *c = e.try_get_mut<Construction>();
+    auto *c = e.try_get_mut<EffortRequired>();
     if (c) {
-      auto total = static_cast<float>(c->effort_total);
-      auto remaining = static_cast<float>(c->effort_remaining);
+      auto total = static_cast<float>(c->total);
+      auto remaining = static_cast<float>(c->remaining);
 
-      ImGui::ProgressBar((total - remaining) / total);
+      ImGui::ProgressBar(1.0f - (remaining / total));
     } else {
       ImGui::ProgressBar(1.0);
     }
     drawRocketButtons(e);
-    // ImGui::SameLine();
-    // if (ImGui::SmallButton("X")) {
-    //   e.remove<Construction>();
-    // }
+
   } else {
     // Nothing yet - the line is empty
     ImGui::Text("Empty Manufacturing Line");
@@ -128,7 +126,7 @@ void drawManufacturingSection(flecs::entity &entity) {
 void drawStorageSection(flecs::entity &entity) {
   flecs::world world = entity.world();
   entity.children([](flecs::entity rocket) {
-    if (rocket.has<Construction>()) {
+    if (!rocket.has<Rocket>()) {
       return;
     }
     ImGui::PushID(std::to_string(rocket.id()).c_str());
@@ -173,9 +171,10 @@ void drawLaunchpadSection(flecs::entity &entity) {
 
 void drawRocketButtons(flecs::entity &rocket) {
   std::string issue;
-  if (rocket.has<Construction>()) {
-    issue = "Cannot move rocket while being built";
+  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
+    issue = "Rocket is not available";
   }
+
   if (ActionButton(
           ButtonLabel{.text = "Move"},
           ButtonTooltip{.text =
@@ -184,9 +183,6 @@ void drawRocketButtons(flecs::entity &rocket) {
     ImGui::OpenPopup("Move Rocket");
   }
   ImGui::SameLine();
-  if (rocket.has<Construction>()) {
-    issue = "Cannot schedule rocket while being built";
-  }
 
   auto target = rocket.target<LaunchingOn>();
   std::string tooltip = "Schedule the rocket for launch";
@@ -248,7 +244,7 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::SameLine();
-  MoveRocketAction action{RocketEntity{rocket}, DestinationEntity{destination}};
+  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{destination}};
   if (ActionButton(ButtonLabel{.text = "Ok"},
                    ButtonTooltip{.text = "Move the rocket to the new location"},
                    action.validate(world).message)) {

@@ -1,5 +1,8 @@
 #include "actions.h"
+#include "modules/base/action.h"
 #include "modules/base/base.h"
+#include "modules/main/main_menu.h"
+#include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_launch.h"
 #include <flecs.h>
@@ -10,17 +13,17 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   uint32_t today = world.get<Game>().day;
 
   flecs::entity existing = world.lookup(name.c_str());
-  if (existing.is_valid() && existing != current) {
+  if (existing.is_valid()) {
     return ValidationResult::Fail(
         fmt::format("A Launch Plan named '{}' already exists", name));
   }
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("No rocket selected");
   }
-  if (current.is_valid() && rocket.has<LaunchingOn>(current)) {
-    // Rocket is already planned for this launch
-  } else if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
-    // Rocket is planned for another launch
+  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
+    return ValidationResult::Fail("Selected rocket is not unassigned");
+  }
+  if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
     return ValidationResult::Fail("Rocket is already planned for a launch");
   }
   if (!launchpad.is_valid()) {
@@ -42,13 +45,11 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail(
         "Another launch is already scheduled at that time");
   }
-
   if (static_cast<uint32_t>(launchDay) < today + launchPrepDays) {
     return ValidationResult::Fail(
         fmt::format("Launch needs to be planned at least {} days in advance",
                     launchPrepDays));
   }
-
   if (!targetOrbit.is_valid()) {
     return ValidationResult::Fail("No target orbit selected");
   }
@@ -56,8 +57,6 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail(
         "Rocket cannot lift payload to selected orbit");
   }
-
-  // Check total payload mass
   uint32_t totalMass = 0;
   for (const auto &payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
@@ -69,38 +68,208 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail(fmt::format(
         "Total payload mass {} kg exceeds maximum {} kg", totalMass, maxMass));
   }
-
   return ValidationResult::Pass();
 }
 
 void ScheduleLaunchAction::execute(flecs::world &world) {
-  if (current.is_valid()) {
-    spdlog::debug("Removing existing launch plan: {}", current.id());
-    current.destruct();
-  }
-  auto plan = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
-                         .target_orbit = targetOrbit};
-
-  auto planE = world.entity().set<LaunchPlan>(plan);
+  auto planData = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+                             .target_orbit = targetOrbit};
+  auto planE = world.entity().set<LaunchPlan>(planData);
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
-
-  // Add payloads to the plan
+  rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
   for (const auto &payload : payloads) {
     if (payload.is_valid()) {
       planE.add<LaunchingWith>(payload);
     }
   }
-
   result = planE;
 }
 
-ValidationResult MoveRocketAction::validate(const flecs::world &) const {
+ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
+  uint32_t today = world.get<Game>().day;
+
+  if (!plan.is_valid() || !plan.is_alive()) {
+    return ValidationResult::Fail("No plan to edit");
+  }
+  flecs::entity existing = world.lookup(name.c_str());
+  if (existing.is_valid() && existing != plan) {
+    return ValidationResult::Fail(
+        fmt::format("A Launch Plan named '{}' already exists", name));
+  }
+  if (!rocket.is_valid()) {
+    return ValidationResult::Fail("No rocket selected");
+  }
+  bool same_rocket = (rocket == plan.target<LaunchingOn>());
+  if (!same_rocket && rocket.get<Rocket>().state != RocketStateId::Stored) {
+    return ValidationResult::Fail("Selected rocket is not unassigned");
+  }
+  if (!same_rocket && rocket.has<LaunchingOn>(flecs::Wildcard)) {
+    return ValidationResult::Fail("Rocket is already planned for a launch");
+  }
+  if (!launchpad.is_valid()) {
+    return ValidationResult::Fail("No launchpad selected");
+  }
+  auto launchPrepDays =
+      static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  bool clash = false;
+  launchpad.each<LaunchingFrom>([&](flecs::entity p) {
+    if (p == plan) {
+      return;
+    }
+    auto launch = p.get<LaunchPlan>();
+    if (std::cmp_less(launch.launch_date, launchDay) &&
+        std::cmp_greater_equal(launch.launch_date,
+                               static_cast<uint32_t>(launchDay) -
+                                   launchPrepDays)) {
+      clash = true;
+    }
+  });
+  if (clash) {
+    return ValidationResult::Fail(
+        "Another launch is already scheduled at that time");
+  }
+  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays) {
+    return ValidationResult::Fail(
+        fmt::format("Launch needs to be planned at least {} days in advance",
+                    launchPrepDays));
+  }
+  if (!targetOrbit.is_valid()) {
+    return ValidationResult::Fail("No target orbit selected");
+  }
+  if (!rocket.has<CanLiftTo>(targetOrbit)) {
+    return ValidationResult::Fail(
+        "Rocket cannot lift payload to selected orbit");
+  }
+  uint32_t totalMass = 0;
+  for (const auto &payload : payloads) {
+    if (payload.is_valid() && payload.has<Payload>()) {
+      totalMass += payload.get<Payload>().mass;
+    }
+  }
+  auto maxMass = rocket.get<CanLiftTo>(targetOrbit).max_mass;
+  if (totalMass > maxMass) {
+    return ValidationResult::Fail(fmt::format(
+        "Total payload mass {} kg exceeds maximum {} kg", totalMass, maxMass));
+  }
+  return ValidationResult::Pass();
+}
+
+void EditLaunchAction::execute(flecs::world &world) {
+  CancelLaunchAction{plan}.execute(world);
+  auto planData = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+                             .target_orbit = targetOrbit};
+  auto planE = world.entity().set<LaunchPlan>(planData);
+  planE.set_name(name.c_str());
+  planE.add<LaunchingOn>(rocket);
+  planE.add<LaunchingFrom>(launchpad);
+  rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+  for (const auto &payload : payloads) {
+    if (payload.is_valid()) {
+      planE.add<LaunchingWith>(payload);
+    }
+  }
+  result = planE;
+}
+
+ValidationResult CancelLaunchAction::validate(const flecs::world &) const {
+  if (!plan.is_valid() || !plan.is_alive()) {
+    return ValidationResult::Fail("Launch plan is not valid");
+  }
+  return ValidationResult::Pass();
+}
+
+void CancelLaunchAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+  auto rocketE = plan.target<LaunchingOn>();
+  if (rocketE.is_valid()) {
+    rocketE.get_mut<Rocket>().state = RocketStateId::Stored;
+  }
+  spdlog::debug("Cancelling launch plan: {}", plan.id());
+  plan.destruct();
+}
+
+ValidationResult BuildRocketAction::validate(const flecs::world &world) const {
+  if (!prefab.is_valid()) {
+    return ValidationResult::Fail("Rocket prefab is not valid");
+  }
+  if (!line.is_valid()) {
+    return ValidationResult::Fail("Manufacturing line is not valid");
+  }
+
+  auto &company = world.get_mut<Company>();
+  if (company.balance < this->cost) {
+    return ValidationResult::Fail("Not enough funds to build this rocket");
+  }
+
+  return ValidationResult::Pass();
+}
+
+void BuildRocketAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+
+  auto rocket = world.entity()
+                    .is_a(this->prefab)
+                    .set<RocketTargetState>({.target = RocketStateId::Stored})
+                    .set<EffortRequired>({.remaining = 300, .total = 300})
+                    .child_of(this->line);
+  rocket.ensure<Rocket>().state = RocketStateId::UnderConstruction;
+  rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
+
+  // deduct cost
+  auto &company = world.get_mut<Company>();
+  company.balance -= this->cost;
+}
+
+ValidationResult
+RocketCompleteBuildAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (rocket.has<Construction>()) {
+  if (!rocket.has<EffortRequired>()) {
+    return ValidationResult::Fail("Does not have any effort required");
+  }
+  if (rocket.get<Rocket>().state != RocketStateId::UnderConstruction) {
+    return ValidationResult::Fail("Rocket is not under construction");
+  }
+  auto effort = rocket.get<EffortRequired>();
+  if (effort.remaining > 0) {
+    return ValidationResult::Fail("Rocket construction is not yet complete");
+  }
+  // TODO: Check there's enough storage space for the new rocket
+  return ValidationResult::Pass();
+}
+
+void RocketCompleteBuildAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+
+  rocket.get_mut<Rocket>().state = RocketStateId::Stored;
+  rocket.remove<EffortRequired>();
+  rocket.remove<RocketTargetState>();
+}
+
+void RocketCompleteBuildAction::block(flecs::world &world) {
+  auto result = validate(world);
+  if (result.ok) {
+    return;
+  }
+
+  this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
+}
+
+ValidationResult RocketMoveAction::validate(const flecs::world &) const {
+  if (!rocket.is_valid()) {
+    return ValidationResult::Fail("Rocket is not valid");
+  }
+  if (rocket.has<Rocket>() &&
+      rocket.get<Rocket>().state == RocketStateId::UnderConstruction) {
     return ValidationResult::Fail("Rocket is under construction");
   }
   if (!destination.is_valid()) {
@@ -113,7 +282,7 @@ ValidationResult MoveRocketAction::validate(const flecs::world &) const {
   return ValidationResult::Pass();
 }
 
-void MoveRocketAction::execute(flecs::world &world) {
+void RocketMoveAction::execute(flecs::world &world) {
   if (!!validate(world)) {
     rocket.child_of(destination);
   }

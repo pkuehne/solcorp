@@ -230,7 +230,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       ImGui::Text("This action cannot be undone.");
       ImGui::Separator();
       if (ImGui::Button("Yes, Cancel Launch")) {
-        state.pendingCancel.destruct();
+        CancelLaunchAction{state.pendingCancel}.execute(world);
         state.pendingCancel = flecs::entity::null();
         ImGui::CloseCurrentPopup();
       }

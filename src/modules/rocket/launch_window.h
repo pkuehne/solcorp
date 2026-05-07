@@ -5,6 +5,7 @@
 
 struct LaunchWindow {
   ScheduleLaunchAction draftPlan;
+  flecs::entity editingPlan = flecs::entity::null();
 };
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket = nullptr,

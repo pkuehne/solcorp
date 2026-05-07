@@ -79,7 +79,7 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   state->draftPlan.rocket = planE.target<LaunchingOn>();
   state->draftPlan.launchpad = planE.target<LaunchingFrom>();
   state->draftPlan.targetOrbit = plan.target_orbit;
-  state->draftPlan.current = planE;
+  state->editingPlan = planE;
 
   // Load existing payloads
   state->draftPlan.payloads.clear();
@@ -224,7 +224,7 @@ void drawLaunchWindow(flecs::entity winE) {
       }
       bool alreadyAssigned =
           payloadE.has<LaunchingWith>() &&
-          payloadE.target<LaunchingWith>() != state.draftPlan.current;
+          payloadE.target<LaunchingWith>() != state.editingPlan;
 
       auto &payload = payloadE.get<Payload>();
       bool isSelected =
@@ -252,18 +252,38 @@ void drawLaunchWindow(flecs::entity winE) {
 
   ImGui::Separator();
 
-  auto valid = state.draftPlan.validate(world);
-  if (ActionButton(ButtonLabel{.text = "Save"},
-                   ButtonTooltip{.text = "Save Launch Plan to be executed"},
-                   valid.message)) {
-    // Save LaunchPlan and close window
-    state.draftPlan.execute(world);
-    hideWindow(world, "Mission Plan");
+  if (state.editingPlan.is_valid()) {
+    EditLaunchAction edit;
+    edit.plan = state.editingPlan;
+    edit.launchDay = state.draftPlan.launchDay;
+    edit.name = state.draftPlan.name;
+    edit.rocket = state.draftPlan.rocket;
+    edit.launchpad = state.draftPlan.launchpad;
+    edit.targetOrbit = state.draftPlan.targetOrbit;
+    edit.payloads = state.draftPlan.payloads;
+    auto valid = edit.validate(world);
+    if (ActionButton(ButtonLabel{.text = "Save"},
+                     ButtonTooltip{.text = "Save Launch Plan to be executed"},
+                     valid.message)) {
+      edit.execute(world);
+      state.draftPlan = ScheduleLaunchAction{};
+      state.editingPlan = flecs::entity::null();
+      hideWindow(world, "Mission Plan");
+    }
+  } else {
+    auto valid = state.draftPlan.validate(world);
+    if (ActionButton(ButtonLabel{.text = "Save"},
+                     ButtonTooltip{.text = "Save Launch Plan to be executed"},
+                     valid.message)) {
+      state.draftPlan.execute(world);
+      state.draftPlan = ScheduleLaunchAction{};
+      hideWindow(world, "Mission Plan");
+    }
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
-    // clear draft plan and close window
     state.draftPlan = ScheduleLaunchAction{};
+    state.editingPlan = flecs::entity::null();
     hideWindow(world, "Mission Plan");
   }
 }

@@ -10,7 +10,6 @@
 #include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/site/helpers.h"
-#include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 #include <modules/simulation/simulation.h>
@@ -30,18 +29,30 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
   registerEngineComponents(world);
 
   // Register components
-  world.component<Construction>()
-      .member("effort_remaining", &Construction::effort_remaining)
-      .member("effort_total", &Construction::effort_total);
   world.component<ContractFilterStatus>();
   world.component<ScheduleLaunchAction>("PlannedLaunch")
       .member("name", &ScheduleLaunchAction::name)
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
+  world.component<RocketStateId>()
+      .constant("UnderConstruction", RocketStateId::UnderConstruction)
+      .constant("Stored", RocketStateId::Stored)
+      .constant("Assigned", RocketStateId::Assigned)
+      .constant("IntegratingPayload", RocketStateId::IntegratingPayload)
+      .constant("IntegrationComplete", RocketStateId::IntegrationComplete)
+      .constant("RollingOut", RocketStateId::RollingOut)
+      .constant("OnPad", RocketStateId::OnPad)
+      .constant("Launched", RocketStateId::Launched)
+      .constant("Unavailable", RocketStateId::Unavailable);
   world.component<Rocket>()
+      .member("state", &Rocket::state)
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
+  world.component<RocketTargetState>().member("target",
+                                              &RocketTargetState::target);
+  world.component<RocketStateTransitionBlocked>().member(
+      "reason", &RocketStateTransitionBlocked::reason);
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
@@ -81,8 +92,27 @@ RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
       });
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
-        b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
+        b.field<&Rocket::state>("state")
+            .nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
             .nested<&Rocket::cost>({"cost"}, {"Stat"});
+      });
+  register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
+    b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("IntegratingPayload", RocketStateId::IntegratingPayload)
+        .value("IntegrationComplete", RocketStateId::IntegrationComplete)
+        .value("RollingOut", RocketStateId::RollingOut)
+        .value("OnPad", RocketStateId::OnPad)
+        .value("Launched", RocketStateId::Launched)
+        .value("Unavailable", RocketStateId::Unavailable);
+  });
+  register_component_lua<RocketTargetState>(
+      world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &b) {
+        b.field<&RocketTargetState::target>("target");
+      });
+  register_component_lua<RocketStateTransitionBlocked>(
+      world, "RocketStateTransitionBlocked",
+      [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
+        b.field<&RocketStateTransitionBlocked::reason>("reason");
       });
   register_component_lua<Payload>(
       world, "Payload",

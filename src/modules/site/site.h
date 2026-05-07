@@ -1,16 +1,12 @@
 #pragma once
 
+#include "modules/main/main_menu.h"
 #include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>
 
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
-
-struct Construction {
-  uint32_t effort_remaining = 0;
-  uint32_t effort_total = 0;
-};
 
 struct Site {
   uint8_t width = 10;
@@ -69,7 +65,8 @@ struct ConstructionSiteNeedsUpdating {};
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);
-void systemBuildingUpdateManufacuringProgress(flecs::entity, Manufacturing &);
+void systemBuildingUpdateManufacuringProgress(flecs::entity, EffortRequired &,
+                                              const Manufacturing &);
 
 struct SiteModule {
 public:
