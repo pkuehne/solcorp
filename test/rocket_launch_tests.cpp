@@ -822,6 +822,8 @@ SCENARIO("MoveRocketAction Execution", "[execution][action]") {
 
 SCENARIO("RocketCompleteBuildAction Block", "[action]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <MainMenuModule>();
   world.import <RocketLaunchModule>();
 
   GIVEN("A rocket under construction with no effort remaining") {
