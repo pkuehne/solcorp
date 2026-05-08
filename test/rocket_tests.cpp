@@ -1,6 +1,6 @@
 #include "modules/engine/render.h"
 #include "modules/rocket/actions.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
@@ -10,7 +10,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An empty plan") {
     ScheduleLaunchAction launch({});
@@ -153,7 +153,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("No plan to edit") {
     EditLaunchAction edit;
@@ -277,7 +277,7 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An existing plan") {
     auto rocket = world.entity().add<Rocket>();
@@ -348,7 +348,7 @@ SCENARIO("CancelLaunchAction", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An invalid plan") {
     CancelLaunchAction cancel;
@@ -385,7 +385,7 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
@@ -418,9 +418,9 @@ SCENARIO("ScheduleLaunchAction Execution", "[execution][action]") {
   }
 }
 
-SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
+SCENARIO("systemCreateRocketPrefabs", "[rocket][system]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An empty world") {
     auto system = world.system("Create Rocket Prefabs")
@@ -442,11 +442,11 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket_launch][system]") {
   }
 }
 
-SCENARIO("systemLaunchRocket", "[rocket_launch][system]") {
+SCENARIO("systemLaunchRocket", "[rocket][system]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   auto site = world.entity().add<Site>().add<CurrentSite>();
   auto launchpad = world.entity("Main Pad")
@@ -612,7 +612,7 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An invalid prefab") {
     auto line = world.entity();
@@ -681,7 +681,7 @@ SCENARIO("BuildRocketAction Execution", "[execution][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("A valid prefab, line, and sufficient balance") {
     auto prefab = world.prefab().add<Rocket>();
@@ -715,7 +715,7 @@ SCENARIO("BuildRocketAction Execution", "[execution][action]") {
 
 SCENARIO("MoveRocketAction Validation", "[validation][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("An invalid Rocket entity") {
     flecs::entity rocket = flecs::entity::null();
@@ -801,7 +801,7 @@ SCENARIO("MoveRocketAction Validation", "[validation][action]") {
 
 SCENARIO("MoveRocketAction Execution", "[execution][action]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("A valid rocket and destination") {
     flecs::entity destination = world.entity();
@@ -823,8 +823,8 @@ SCENARIO("MoveRocketAction Execution", "[execution][action]") {
 SCENARIO("RocketCompleteBuildAction Block", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
-  world.import <MainMenuModule>();
-  world.import <RocketLaunchModule>();
+  world.import <MainModule>();
+  world.import <RocketModule>();
 
   GIVEN("A rocket under construction with no effort remaining") {
     flecs::entity rocket = world.entity().add<Rocket>();

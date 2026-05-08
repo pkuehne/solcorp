@@ -1,8 +1,8 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/lua.h"
-#include "modules/main/main_menu.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/main/main_module.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/staff/staff.h"
@@ -25,9 +25,9 @@ int main() {
   world.import <EngineModule>();
   world.import <StatsModule>();
   world.import <SimulationModule>();
-  world.import <MainMenuModule>();
+  world.import <MainModule>();
   world.import <SiteModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
   world.import <StaffModule>();
 
   // Main Loop

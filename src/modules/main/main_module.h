@@ -14,7 +14,7 @@ struct DurationRequired {
   uint32_t total = 0;
 };
 
-struct MainMenuModule {
+struct MainModule {
 public:
-  MainMenuModule(flecs::world &);
+  MainModule(flecs::world &);
 };

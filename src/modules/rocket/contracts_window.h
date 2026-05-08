@@ -2,7 +2,7 @@
 
 #include <flecs.h>
 
-// Forward declaration to avoid circular dependency with rocket_launch.h
+// Forward declaration to avoid circular dependency with rocket_module.h
 struct Contract;
 struct ScheduleLaunchAction;
 

@@ -5,7 +5,7 @@
 #include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
-#include "rocket_launch.h"
+#include "rocket_module.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 

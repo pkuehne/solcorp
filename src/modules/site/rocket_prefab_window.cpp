@@ -3,7 +3,7 @@
 #include "modules/base/assert.h"
 #include "modules/engine/gui.h"
 #include "modules/rocket/actions.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"

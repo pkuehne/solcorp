@@ -1,10 +1,10 @@
 #include "actions.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
-#include "modules/main/main_menu.h"
+#include "modules/main/main_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
-#include "rocket_launch.h"
+#include "rocket_module.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 

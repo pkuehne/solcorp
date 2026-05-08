@@ -1,6 +1,6 @@
 #include "modules/rocket/contracts_window.h"
 #include "modules/rocket/actions.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
@@ -10,7 +10,7 @@ SCENARIO("acceptContract and rejectContract update balance",
   flecs::world world;
   world.import <BaseModule>();
   world.import <SimulationModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   auto contractE = world.entity("TestContract")
                        .set<Contract>({
@@ -61,7 +61,7 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
   GIVEN("an accepted contract") {
     flecs::world world;
     world.import <BaseModule>();
-    world.import <RocketLaunchModule>();
+    world.import <RocketModule>();
 
     flecs::entity contract = world.entity("TestContract")
                                  .set<Contract>({
@@ -93,7 +93,7 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
 SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
   flecs::world world;
   world.import <BaseModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   // Create test contracts with different statuses
   world.entity("OpenContract")
@@ -194,7 +194,7 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
 SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   flecs::world world;
   world.import <BaseModule>();
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   // Create test contracts with different statuses
   world.entity("OpenContract")

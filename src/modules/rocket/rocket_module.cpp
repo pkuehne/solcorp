@@ -1,4 +1,4 @@
-#include "rocket_launch.h"
+#include "rocket_module.h"
 #include "actions.h"
 #include "active_launches_window.h"
 #include "contracts_window.h"
@@ -20,8 +20,8 @@ uint32_t Rocket::max_id = 1;
 
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
-RocketLaunchModule::RocketLaunchModule(flecs::world &world) {
-  spdlog::debug("Loading RocketLaunchModule");
+RocketModule::RocketModule(flecs::world &world) {
+  spdlog::debug("Loading RocketModule");
 
   world.import <BaseModule>();
   world.import <StatsModule>();

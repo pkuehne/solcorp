@@ -1,7 +1,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/helpers.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
@@ -17,7 +17,7 @@ static void run_site_prefab_setup(flecs::world &world) {
 }
 
 static void run_rocket_prefab_setup(flecs::world &world) {
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
   auto sys = world.system("Setup Rocket Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -175,7 +175,7 @@ SCENARIO("create_building", "[helpers][lua]") {
 
 SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
   auto rocket = world.entity("RocketLEO").add<Rocket>();
   world.entity("LEO");
 
@@ -331,7 +331,7 @@ SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
 
 SCENARIO("create_contract", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
   world.entity("Contracts");
 
   GIVEN("a unique contract name") {
@@ -373,7 +373,7 @@ SCENARIO("create_contract", "[helpers][lua]") {
 
 SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
   auto contract = world.entity("ContractX")
                       .set<Contract>({.client = "C",
                                       .description = "D",
@@ -428,7 +428,7 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
 
 SCENARIO("get_all_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("no contracts in the world") {
     WHEN("get_all_contracts is called") {
@@ -467,7 +467,7 @@ SCENARIO("get_all_contracts", "[helpers][lua]") {
 
 SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
     world.entity("Open1").set<Contract>({.client = "C",

@@ -1,6 +1,6 @@
-#include "modules/main/main_menu.h"
+#include "modules/main/main_module.h"
 #include "modules/rocket/active_launches_window.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
@@ -31,9 +31,9 @@ struct ActiveLaunchesFixture {
 
   ActiveLaunchesFixture() {
     world.import <SimulationModule>();
-    world.import <MainMenuModule>();
+    world.import <MainModule>();
     world.import <SiteModule>();
-    world.import <RocketLaunchModule>();
+    world.import <RocketModule>();
 
     site1 = world.entity("Site A").add<Site>();
     site2 = world.entity("Site B").add<Site>();

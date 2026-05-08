@@ -1,5 +1,5 @@
-#include "modules/main/main_menu.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/main/main_module.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
@@ -8,8 +8,8 @@
 SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
   flecs::world world;
   world.import <SimulationModule>();
-  world.import <MainMenuModule>();
-  world.import <RocketLaunchModule>();
+  world.import <MainModule>();
+  world.import <RocketModule>();
   world.import <SiteModule>();
 
   flecs::entity building =
