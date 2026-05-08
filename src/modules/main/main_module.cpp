@@ -1,4 +1,4 @@
-#include "main_menu.h"
+#include "main_module.h"
 #include "SDL_keycode.h"
 #include "imgui.h"
 #include "modules/base/base.h"
@@ -16,7 +16,7 @@ void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
                         MainMenuBar);
 void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 
-MainMenuModule::MainMenuModule(flecs::world &world) {
+MainModule::MainModule(flecs::world &world) {
 
   // Register components
   world.component<MainMenuBar>();
