@@ -16,7 +16,7 @@ add_executable(unit_test
   lua_helpers.test.cpp
   lua_logging.test.cpp
   lua_registry.test.cpp
-  rocket_launch_tests.cpp
+  rocket_tests.cpp
   simulation.test.cpp
   site.test.cpp
   stats.test.cpp
