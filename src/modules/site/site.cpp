@@ -8,9 +8,9 @@
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
-#include "modules/main/main_menu.h"
+#include "modules/main/main_module.h"
 #include "modules/rocket/actions.h"
-#include "modules/rocket/rocket_launch.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "rocket_prefab_window.h"
@@ -30,7 +30,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <StatsModule>();
   registerEngineComponents(world);
 
-  world.import <RocketLaunchModule>();
+  world.import <RocketModule>();
 
   // Register components
   world.component<EffortRequired>()

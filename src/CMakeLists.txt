@@ -13,8 +13,8 @@ list(APPEND SolCorpSources
     modules/lua/logging.cpp
     modules/lua/lua_registry.cpp
     modules/lua/systems.cpp
-    modules/main/main_menu.cpp
-    modules/rocket/rocket_launch.cpp
+    modules/main/main_module.cpp
+    modules/rocket/rocket_module.cpp
     modules/rocket/actions.cpp
     modules/rocket/launch_window.cpp
     modules/rocket/active_launches_window.cpp
@@ -47,8 +47,8 @@ list(APPEND SolCorpHeaders
     modules/lua/logging.h
     modules/lua/lua_registry.h
     modules/lua/systems.h
-    modules/main/main_menu.h
-    modules/rocket/rocket_launch.h
+    modules/main/main_module.h
+    modules/rocket/rocket_module.h
     modules/rocket/actions.h
     modules/rocket/launch_window.h
     modules/rocket/active_launches_window.h
