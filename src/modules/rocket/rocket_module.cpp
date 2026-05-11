@@ -38,6 +38,7 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<RocketStateId>()
       .constant("UnderConstruction", RocketStateId::UnderConstruction)
       .constant("Stored", RocketStateId::Stored)
+      .constant("Moving", RocketStateId::Moving)
       .constant("Assigned", RocketStateId::Assigned)
       .constant("IntegratingPayload", RocketStateId::IntegratingPayload)
       .constant("IntegrationComplete", RocketStateId::IntegrationComplete)
@@ -84,6 +85,7 @@ RocketModule::RocketModule(flecs::world &world) {
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
   world.component<CanLiftTo>().add(flecs::Symmetric);
+  world.component<RocketTargetParent>();
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -98,6 +100,9 @@ RocketModule::RocketModule(flecs::world &world) {
       });
   register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
     b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("Stored", RocketStateId::Stored)
+        .value("Moving", RocketStateId::Moving)
+        .value("Assigned", RocketStateId::Assigned)
         .value("IntegratingPayload", RocketStateId::IntegratingPayload)
         .value("IntegrationComplete", RocketStateId::IntegrationComplete)
         .value("RollingOut", RocketStateId::RollingOut)

@@ -12,10 +12,6 @@
 #include <modules/simulation/developer_window.h>
 #include <modules/simulation/simulation.h>
 
-void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
-                        MainMenuBar);
-void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
-
 MainModule::MainModule(flecs::world &world) {
 
   // Register components
@@ -49,6 +45,11 @@ MainModule::MainModule(flecs::world &world) {
   world.system<Simulation, const KeyDown>("Toggle Play/Pause")
       .kind(ValidatePhase)
       .each(systemToggle);
+  auto sim = world.get<Simulation>();
+  world.system<DurationRequired>("Tick DurationRequired")
+      .kind(UpdatePhase)
+      .tick_source(sim.speed)
+      .each(systemTickDurationRequired);
 }
 
 void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
@@ -108,5 +109,11 @@ void systemToggle(flecs::iter &it, size_t, Simulation &sim,
   if (event.key == SDLK_SPACE) {
     auto simTimer = it.world().timer(sim.speed.id());
     simTimer.get<flecs::Timer>().active ? simTimer.stop() : simTimer.start();
+  }
+}
+
+void systemTickDurationRequired(flecs::entity, DurationRequired &duration) {
+  if (duration.remaining > 0) {
+    duration.remaining--;
   }
 }

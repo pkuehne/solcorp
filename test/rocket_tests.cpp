@@ -713,108 +713,243 @@ SCENARIO("BuildRocketAction Execution", "[execution][action]") {
   }
 }
 
-SCENARIO("MoveRocketAction Validation", "[validation][action]") {
+SCENARIO("RocketMoveAction", "[action]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <MainModule>();
   world.import <RocketModule>();
 
   GIVEN("An invalid Rocket entity") {
     flecs::entity rocket = flecs::entity::null();
     flecs::entity destination = world.entity();
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
 
-    WHEN("Validate is called") {
+    WHEN("Validated") {
       ValidationResult result = move.validate(world);
 
       THEN("The validation fails") {
         CHECK(!result);
-        //
+        CHECK(result.message == "Rocket is not valid");
       }
     }
   }
 
-  GIVEN("An invalid Destination ") {
+  GIVEN("An invalid Destination") {
     flecs::entity rocket = world.entity().add<Rocket>();
     flecs::entity destination = flecs::entity::null();
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
 
-    WHEN("Validate is called") {
+    WHEN("Validated") {
       ValidationResult result = move.validate(world);
 
       THEN("The validation fails") {
         CHECK(!result);
-        //
+        CHECK(result.message == "Destination is not valid");
       }
     }
   }
 
-  GIVEN("Destination is the same as parent") {
+  GIVEN("Destination is the same as current parent") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>().child_of(destination);
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
 
-    WHEN("Validate is called") {
+    WHEN("Validated") {
       ValidationResult result = move.validate(world);
 
       THEN("The validation fails") {
         CHECK(!result);
-        //
+        CHECK(result.message ==
+              "Rocket is already stored in the selected destination");
       }
     }
   }
 
-  GIVEN("Rocket is under construction") {
+  GIVEN("A rocket under construction") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
 
-    WHEN("Validate is called") {
+    WHEN("Validated") {
       ValidationResult result = move.validate(world);
 
       THEN("The validation fails") {
         CHECK(!result);
-        //
+        CHECK(result.message == "Rocket is under construction");
       }
     }
   }
 
-  GIVEN("Valid rocket and destination") {
+  GIVEN("A valid rocket and destination") {
+    flecs::entity source = world.entity();
     flecs::entity destination = world.entity();
-    flecs::entity rocket = world.entity().add<Rocket>();
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+    flecs::entity rocket = world.entity().add<Rocket>().child_of(source);
+    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 5};
 
-    WHEN("Validate is called") {
+    WHEN("Validated") {
       ValidationResult result = move.validate(world);
 
       THEN("The validation succeeds") {
         CHECK(result.ok);
-        //
+        CHECK(result.message == "");
+      }
+    }
+
+    WHEN("Executed") {
+      move.execute(world);
+
+      THEN("The rocket remains in place until move completion") {
+        CHECK(rocket.parent() == source);
+      }
+      THEN("The move target and duration are recorded") {
+        CHECK(rocket.target<RocketTargetParent>() == destination);
+        REQUIRE(rocket.has<RocketTargetState>());
+        CHECK(rocket.get<RocketTargetState>().target == RocketStateId::Moving);
+        REQUIRE(rocket.has<DurationRequired>());
+        CHECK(rocket.get<DurationRequired>().remaining == 5);
+        CHECK(rocket.get<DurationRequired>().total == 5);
       }
     }
   }
 }
 
-SCENARIO("MoveRocketAction Execution", "[execution][action]") {
+SCENARIO("RocketMoveCompleteAction", "[action]") {
   flecs::world world;
+  world.import <SimulationModule>();
+  world.import <MainModule>();
   world.import <RocketModule>();
 
-  GIVEN("A valid rocket and destination") {
-    flecs::entity destination = world.entity();
-    flecs::entity rocket = world.entity().add<Rocket>();
-    RocketMoveAction move =
-        RocketMoveAction{RocketEntity{rocket}, DestinationEntity{destination}};
+  GIVEN("An invalid rocket entity") {
+    RocketMoveCompleteAction complete{flecs::entity::null()};
 
-    WHEN("Move Rocket is attempted") {
-      move.execute(world);
+    WHEN("Validated") {
+      ValidationResult result = complete.validate(world);
 
-      THEN("The rocket is moved to the destination") {
+      THEN("The validation fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket is not valid");
+      }
+    }
+  }
+
+  GIVEN("A rocket that is not currently moving") {
+    auto rocket = world.entity().add<Rocket>();
+    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    RocketMoveCompleteAction complete{rocket};
+
+    WHEN("Validated") {
+      ValidationResult result = complete.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket is not currently moving");
+      }
+    }
+  }
+
+  GIVEN("A moving rocket without a target parent") {
+    auto rocket = world.entity().add<Rocket>();
+    rocket.set<RocketTargetState>({.target = RocketStateId::Moving});
+    RocketMoveCompleteAction complete{rocket};
+
+    WHEN("Validated") {
+      ValidationResult result = complete.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket does not have a valid target");
+      }
+    }
+  }
+
+  GIVEN("A moving rocket with time remaining") {
+    auto destination = world.entity();
+    auto rocket = world.entity().add<Rocket>();
+    rocket.set<RocketTargetState>({.target = RocketStateId::Moving});
+    rocket.add<RocketTargetParent>(destination);
+    rocket.set<DurationRequired>({.remaining = 3, .total = 5});
+    RocketMoveCompleteAction complete{rocket};
+
+    WHEN("Validated") {
+      ValidationResult result = complete.validate(world);
+
+      THEN("The validation fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Rocket has not yet moved to the new location");
+      }
+    }
+  }
+
+  GIVEN("A moving rocket with valid target parent and duration") {
+    auto source = world.entity();
+    auto destination = world.entity();
+    auto rocket = world.entity().add<Rocket>().child_of(source);
+    rocket.set<RocketTargetState>({.target = RocketStateId::Moving});
+    rocket.add<RocketTargetParent>(destination);
+    rocket.set<DurationRequired>({.remaining = 0, .total = 5});
+    RocketMoveCompleteAction complete{rocket};
+
+    WHEN("Validated") {
+      ValidationResult result = complete.validate(world);
+
+      THEN("The validation passes") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+
+    WHEN("Executed") {
+      complete.execute(world);
+
+      THEN("The rocket is reparented and move markers are cleared") {
         CHECK(rocket.parent() == destination);
-        //
+        CHECK(rocket.get<RocketTargetState>().target == RocketStateId::Stored);
+        CHECK(!rocket.has<RocketTargetParent>());
+        CHECK(!rocket.has<DurationRequired>());
+      }
+    }
+  }
+}
+
+SCENARIO("RocketMoveCompleteAction Block", "[action]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <MainModule>();
+  world.import <RocketModule>();
+
+  GIVEN("A rocket that can complete move") {
+    auto destination = world.entity();
+    auto rocket = world.entity().add<Rocket>();
+    rocket.set<RocketTargetState>({.target = RocketStateId::Moving});
+    rocket.add<RocketTargetParent>(destination);
+
+    WHEN("block is called") {
+      RocketMoveCompleteAction{rocket}.block(world);
+
+      THEN("RocketStateTransitionBlocked is not set") {
+        CHECK(!rocket.has<RocketStateTransitionBlocked>());
+      }
+    }
+  }
+
+  GIVEN("A rocket missing move target") {
+    auto rocket = world.entity().add<Rocket>();
+    rocket.set<RocketTargetState>({.target = RocketStateId::Moving});
+
+    WHEN("block is called") {
+      RocketMoveCompleteAction{rocket}.block(world);
+
+      THEN("RocketStateTransitionBlocked is set with the reason") {
+        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
+        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
+              "Rocket does not have a valid target");
       }
     }
   }

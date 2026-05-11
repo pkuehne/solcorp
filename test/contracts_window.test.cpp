@@ -1,4 +1,5 @@
 #include "modules/rocket/contracts_window.h"
+#include "modules/base/base.h"
 #include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"

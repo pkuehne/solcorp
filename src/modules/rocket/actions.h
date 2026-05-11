@@ -89,11 +89,23 @@ struct DestinationEntity {
 struct RocketMoveAction : public IAction {
   flecs::entity rocket;
   flecs::entity destination;
+  uint8_t days = 0;
 
-  RocketMoveAction(RocketEntity r, DestinationEntity d)
-      : rocket(r.value), destination(d.value) {}
+  RocketMoveAction(RocketEntity r, DestinationEntity d, uint8_t days)
+      : rocket(r.value), destination(d.value), days(days) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
   void execute(flecs::world &world) override;
+};
+
+struct RocketMoveCompleteAction : public IAction {
+  flecs::entity rocket;
+
+  explicit RocketMoveCompleteAction(flecs::entity r) : rocket(r) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &world) override;
+  void block(flecs::world &world);
 };

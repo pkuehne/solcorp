@@ -226,6 +226,8 @@ void BuildRocketAction::execute(flecs::world &world) {
   company.balance -= this->cost;
 }
 
+// ----- RocketCompleteBuildAction-----
+
 ValidationResult
 RocketCompleteBuildAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
@@ -264,6 +266,8 @@ void RocketCompleteBuildAction::block(flecs::world &world) {
   this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
 }
 
+// ----- RocketMoveAction-----
+
 ValidationResult RocketMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
@@ -283,7 +287,52 @@ ValidationResult RocketMoveAction::validate(const flecs::world &) const {
 }
 
 void RocketMoveAction::execute(flecs::world &world) {
-  if (!!validate(world)) {
-    rocket.child_of(destination);
+  if (!validate(world)) {
+    return;
   }
+  rocket.add<RocketTargetParent>(destination);
+  rocket.get_mut<RocketTargetState>().target = RocketStateId::Moving;
+  rocket.set<DurationRequired>({.remaining = days, .total = days});
+}
+
+// ----- RocketMoveCompleteAction-----
+
+ValidationResult
+RocketMoveCompleteAction::validate(const flecs::world &) const {
+  if (!rocket.is_valid()) {
+    return ValidationResult::Fail("Rocket is not valid");
+  }
+  if (!rocket.has<RocketTargetState>() ||
+      rocket.get<RocketTargetState>().target != RocketStateId::Moving) {
+    return ValidationResult::Fail("Rocket is not currently moving");
+  }
+  if (!rocket.target<RocketTargetParent>().is_valid()) {
+    return ValidationResult::Fail("Rocket does not have a valid target");
+  }
+  if (rocket.has<DurationRequired>() &&
+      rocket.get<DurationRequired>().remaining > 0) {
+    return ValidationResult::Fail(
+        "Rocket has not yet moved to the new location");
+  }
+  return ValidationResult::Pass();
+}
+
+void RocketMoveCompleteAction::execute(flecs::world &world) {
+  if (!validate(world)) {
+    return;
+  }
+  auto targetParent = rocket.target<RocketTargetParent>();
+  rocket.child_of(targetParent);
+  rocket.get_mut<RocketTargetState>().target = RocketStateId::Stored;
+  rocket.remove<RocketTargetParent>();
+  rocket.remove<DurationRequired>();
+}
+
+void RocketMoveCompleteAction::block(flecs::world &world) {
+  auto result = validate(world);
+  if (result.ok) {
+    return;
+  }
+
+  this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
 }
