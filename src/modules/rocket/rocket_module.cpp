@@ -10,10 +10,10 @@
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
-#include "modules/main/main_module.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <memory>
 #include <modules/simulation/simulation.h>
 #include <vector>
 
@@ -283,14 +283,14 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
 
 void systemRocketCompleteAction(flecs::entity e) {
   auto world = e.world();
-  IAction *action = nullptr;
+  std::unique_ptr<IAction> action;
 
   switch (e.get<Rocket>().state) {
   case RocketStateId::UnderConstruction:
-    action = new RocketCompleteBuildAction(e);
+    action = std::make_unique<RocketCompleteBuildAction>(e);
     break;
   case RocketStateId::Moving:
-    action = new RocketMoveCompleteAction(e);
+    action = std::make_unique<RocketMoveCompleteAction>(e);
     break;
   default:
     break;
@@ -306,5 +306,4 @@ void systemRocketCompleteAction(flecs::entity e) {
   } else {
     action->block(world);
   }
-  delete action;
 }
