@@ -616,7 +616,7 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
 
   GIVEN("An invalid prefab") {
     auto line = world.entity();
-    BuildRocketAction action{PrefabEntity{flecs::entity::null()},
+    RocketBuildAction action{PrefabEntity{flecs::entity::null()},
                              LineEntity{line}, 100};
 
     WHEN("Validated") {
@@ -631,7 +631,7 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
 
   GIVEN("An invalid manufacturing line") {
     auto prefab = world.entity().add<Rocket>();
-    BuildRocketAction action{PrefabEntity{prefab},
+    RocketBuildAction action{PrefabEntity{prefab},
                              LineEntity{flecs::entity::null()}, 100};
 
     WHEN("Validated") {
@@ -648,7 +648,7 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
     auto prefab = world.entity().add<Rocket>();
     auto line = world.entity();
     world.get_mut<Company>().balance = 50;
-    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
+    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
 
     WHEN("Validated") {
       ValidationResult result = action.validate(world);
@@ -664,7 +664,7 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
     auto prefab = world.entity().add<Rocket>();
     auto line = world.entity();
     world.get_mut<Company>().balance = 500;
-    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
+    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
 
     WHEN("Validated") {
       ValidationResult result = action.validate(world);
@@ -687,7 +687,7 @@ SCENARIO("BuildRocketAction Execution", "[execution][action]") {
     auto prefab = world.prefab().add<Rocket>();
     auto line = world.entity();
     world.get_mut<Company>().balance = 500;
-    BuildRocketAction action{PrefabEntity{prefab}, LineEntity{line}, 200};
+    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 200};
 
     WHEN("Executed") {
       action.execute(world);

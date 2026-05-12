@@ -110,7 +110,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
     displayStatWithTooltip(&cost);
 
-    BuildRocketAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
+    RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
                              rocketCost};
     auto result = action.validate(world);
 

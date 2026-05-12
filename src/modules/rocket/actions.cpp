@@ -191,7 +191,7 @@ void CancelLaunchAction::execute(flecs::world &world) {
   plan.destruct();
 }
 
-ValidationResult BuildRocketAction::validate(const flecs::world &world) const {
+ValidationResult RocketBuildAction::validate(const flecs::world &world) const {
   if (!prefab.is_valid()) {
     return ValidationResult::Fail("Rocket prefab is not valid");
   }
@@ -207,7 +207,7 @@ ValidationResult BuildRocketAction::validate(const flecs::world &world) const {
   return ValidationResult::Pass();
 }
 
-void BuildRocketAction::execute(flecs::world &world) {
+void RocketBuildAction::execute(flecs::world &world) {
   if (!validate(world)) {
     return;
   }

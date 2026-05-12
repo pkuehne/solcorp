@@ -55,12 +55,12 @@ struct LineEntity {
   flecs::entity value;
 };
 
-struct BuildRocketAction : public IAction {
+struct RocketBuildAction : public IAction {
   flecs::entity prefab = flecs::entity::null();
   flecs::entity line = flecs::entity::null();
   int64_t cost = 0;
 
-  BuildRocketAction(PrefabEntity p, LineEntity l, int64_t c)
+  RocketBuildAction(PrefabEntity p, LineEntity l, int64_t c)
       : prefab(p.value), line(l.value), cost(c) {}
 
   [[nodiscard]] ValidationResult
