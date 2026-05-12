@@ -300,7 +300,7 @@ void RocketMoveAction::execute(flecs::world &world) {
 // ----- RocketMoveCompleteAction-----
 
 ValidationResult
-RocketMoveCompleteAction::validate(const flecs::world &) const {
+RocketCompleteMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
@@ -318,7 +318,7 @@ RocketMoveCompleteAction::validate(const flecs::world &) const {
   return ValidationResult::Pass();
 }
 
-void RocketMoveCompleteAction::execute(flecs::world &world) {
+void RocketCompleteMoveAction::execute(flecs::world &world) {
   if (!validate(world)) {
     return;
   }
@@ -330,7 +330,7 @@ void RocketMoveCompleteAction::execute(flecs::world &world) {
   rocket.remove<DurationRequired>();
 }
 
-void RocketMoveCompleteAction::block(flecs::world &world) {
+void RocketCompleteMoveAction::block(flecs::world &world) {
   auto result = validate(world);
   if (result.ok) {
     return;

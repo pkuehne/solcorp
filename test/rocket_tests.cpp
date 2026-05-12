@@ -828,7 +828,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
   world.import <RocketModule>();
 
   GIVEN("An invalid rocket entity") {
-    RocketMoveCompleteAction complete{flecs::entity::null()};
+    RocketCompleteMoveAction complete{flecs::entity::null()};
 
     WHEN("Validated") {
       ValidationResult result = complete.validate(world);
@@ -842,7 +842,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
 
   GIVEN("A rocket that is not currently moving") {
     auto rocket = world.entity().add<Rocket>(); // default state: Stored
-    RocketMoveCompleteAction complete{rocket};
+    RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
       ValidationResult result = complete.validate(world);
@@ -857,7 +857,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
   GIVEN("A moving rocket without a target parent") {
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-    RocketMoveCompleteAction complete{rocket};
+    RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
       ValidationResult result = complete.validate(world);
@@ -875,7 +875,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
     rocket.add<RocketTargetParent>(destination);
     rocket.set<DurationRequired>({.remaining = 3, .total = 5});
-    RocketMoveCompleteAction complete{rocket};
+    RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
       ValidationResult result = complete.validate(world);
@@ -895,7 +895,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     rocket.add<RocketTargetParent>(destination);
     rocket.set<DurationRequired>({.remaining = 0, .total = 5});
-    RocketMoveCompleteAction complete{rocket};
+    RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
       ValidationResult result = complete.validate(world);
@@ -934,7 +934,7 @@ SCENARIO("RocketMoveCompleteAction Block", "[action]") {
     rocket.add<RocketTargetParent>(destination);
 
     WHEN("block is called") {
-      RocketMoveCompleteAction{rocket}.block(world);
+      RocketCompleteMoveAction{rocket}.block(world);
 
       THEN("RocketStateTransitionBlocked is not set") {
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
@@ -947,7 +947,7 @@ SCENARIO("RocketMoveCompleteAction Block", "[action]") {
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
 
     WHEN("block is called") {
-      RocketMoveCompleteAction{rocket}.block(world);
+      RocketCompleteMoveAction{rocket}.block(world);
 
       THEN("RocketStateTransitionBlocked is set with the reason") {
         REQUIRE(rocket.has<RocketStateTransitionBlocked>());

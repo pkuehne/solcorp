@@ -99,10 +99,10 @@ struct RocketMoveAction : public IAction {
   void execute(flecs::world &world) override;
 };
 
-struct RocketMoveCompleteAction : public IAction {
+struct RocketCompleteMoveAction : public IAction {
   flecs::entity rocket;
 
-  explicit RocketMoveCompleteAction(flecs::entity r) : rocket(r) {}
+  explicit RocketCompleteMoveAction(flecs::entity r) : rocket(r) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;

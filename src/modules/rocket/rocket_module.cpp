@@ -290,7 +290,7 @@ void systemRocketCompleteAction(flecs::entity e) {
     action = std::make_unique<RocketCompleteBuildAction>(e);
     break;
   case RocketStateId::Moving:
-    action = std::make_unique<RocketMoveCompleteAction>(e);
+    action = std::make_unique<RocketCompleteMoveAction>(e);
     break;
   default:
     break;
