@@ -608,7 +608,7 @@ SCENARIO("systemLaunchRocket", "[rocket][system]") {
   }
 }
 
-SCENARIO("BuildRocketAction Validation", "[validation][action]") {
+SCENARIO("RocketBuildAction", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
@@ -661,10 +661,10 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
   }
 
   GIVEN("A valid prefab, line, and sufficient balance") {
-    auto prefab = world.entity().add<Rocket>();
+    auto prefab = world.prefab().add<Rocket>();
     auto line = world.entity();
     world.get_mut<Company>().balance = 500;
-    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 100};
+    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 200};
 
     WHEN("Validated") {
       ValidationResult result = action.validate(world);
@@ -674,20 +674,6 @@ SCENARIO("BuildRocketAction Validation", "[validation][action]") {
         CHECK(result.message == "");
       }
     }
-  }
-}
-
-SCENARIO("BuildRocketAction Execution", "[execution][action]") {
-  flecs::world world;
-  world.import <SimulationModule>();
-  world.import <SiteModule>();
-  world.import <RocketModule>();
-
-  GIVEN("A valid prefab, line, and sufficient balance") {
-    auto prefab = world.prefab().add<Rocket>();
-    auto line = world.entity();
-    world.get_mut<Company>().balance = 500;
-    RocketBuildAction action{PrefabEntity{prefab}, LineEntity{line}, 200};
 
     WHEN("Executed") {
       action.execute(world);
@@ -821,7 +807,7 @@ SCENARIO("RocketMoveAction", "[action]") {
   }
 }
 
-SCENARIO("RocketMoveCompleteAction", "[action]") {
+SCENARIO("RocketCompleteMoveAction", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <MainModule>();
@@ -920,8 +906,7 @@ SCENARIO("RocketMoveCompleteAction", "[action]") {
   }
 }
 
-// TODO: Collapse all scenarios related to RocketMoveCompleteAction
-SCENARIO("RocketMoveCompleteAction Block", "[action]") {
+SCENARIO("RocketCompleteMoveAction Block", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <MainModule>();
