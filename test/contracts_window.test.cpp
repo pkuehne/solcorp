@@ -1,6 +1,8 @@
 #include "modules/rocket/contracts_window.h"
 #include "modules/base/base.h"
+#include "modules/engine/gui.h"
 #include "modules/rocket/actions.h"
+#include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
@@ -77,7 +79,9 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
     contract.add<ContractTargetOrbit>(targetOrbit);
     auto payload = world.entity("TestPayload").set<Payload>({.mass = 1000});
     contract.add<ContractPayload>(payload);
-    world.progress();
+    // Create the window directly instead of calling world.progress(), which
+    // would run ImGui systems from any UI module without a valid ImGui context.
+    registerWindow("Mission Plan", drawLaunchWindow, world).set<LaunchWindow>({});
 
     WHEN("setupLaunchForPayload is called with the contract payload") {
       auto plan = setupLaunchForPayload(payload);

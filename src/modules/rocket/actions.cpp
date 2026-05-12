@@ -264,6 +264,8 @@ void RocketCompleteBuildAction::block(flecs::world &world) {
   }
 
   this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
+  spdlog::debug("Blocking rocket build completion for rocket {}: {}",
+                this->rocket.name().c_str(), result.message);
 }
 
 // ----- RocketMoveAction-----
@@ -291,7 +293,8 @@ void RocketMoveAction::execute(flecs::world &world) {
     return;
   }
   rocket.add<RocketTargetParent>(destination);
-  rocket.get_mut<RocketTargetState>().target = RocketStateId::Moving;
+  rocket.ensure<RocketTargetState>().target = RocketStateId::Stored;
+  rocket.get_mut<Rocket>().state = RocketStateId::Moving;
   rocket.set<DurationRequired>({.remaining = days, .total = days});
 }
 
@@ -302,8 +305,7 @@ RocketMoveCompleteAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (!rocket.has<RocketTargetState>() ||
-      rocket.get<RocketTargetState>().target != RocketStateId::Moving) {
+  if (rocket.get<Rocket>().state != RocketStateId::Moving) {
     return ValidationResult::Fail("Rocket is not currently moving");
   }
   if (!rocket.target<RocketTargetParent>().is_valid()) {
@@ -323,7 +325,8 @@ void RocketMoveCompleteAction::execute(flecs::world &world) {
   }
   auto targetParent = rocket.target<RocketTargetParent>();
   rocket.child_of(targetParent);
-  rocket.get_mut<RocketTargetState>().target = RocketStateId::Stored;
+  rocket.get_mut<Rocket>().state = rocket.get<RocketTargetState>().target;
+  rocket.remove<RocketTargetState>();
   rocket.remove<RocketTargetParent>();
   rocket.remove<DurationRequired>();
 }
@@ -335,4 +338,6 @@ void RocketMoveCompleteAction::block(flecs::world &world) {
   }
 
   this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
+  spdlog::debug("Blocking rocket move completion for rocket {}: {}",
+                this->rocket.name().c_str(), result.message);
 }

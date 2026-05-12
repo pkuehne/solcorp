@@ -4,6 +4,16 @@
 #include <flecs.h>
 #include <numbers>
 
+struct EffortRequired {
+  uint32_t remaining = 0;
+  uint32_t total = 0;
+};
+
+struct DurationRequired {
+  uint32_t remaining = 0;
+  uint32_t total = 0;
+};
+
 // Phases
 extern flecs::entity PostStartPhase;
 extern flecs::entity PreFramePhase;

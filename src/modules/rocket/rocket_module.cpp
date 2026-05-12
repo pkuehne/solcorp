@@ -3,12 +3,14 @@
 #include "active_launches_window.h"
 #include "contracts_window.h"
 #include "launch_window.h"
+#include "modules/base/action.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
+#include "modules/main/main_module.h"
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
@@ -172,6 +174,13 @@ RocketModule::RocketModule(flecs::world &world) {
         registerWindow("Contracts Window", drawContractsWindow, world)
             .set<ContractsWindow>({});
       });
+  world.system<>("Rocket Complete State Transition Action")
+      .tick_source(sim.speed)
+      .with<DurationRequired>()
+      .oper(flecs::Or)
+      .with<EffortRequired>()
+      .kind(UpdatePhase)
+      .each(systemRocketCompleteAction);
 }
 
 /// @brief Process LaunchPlans that are due
@@ -270,4 +279,32 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
 
   // Base Rocket Prefab
   world.prefab("Rocket").child_of(core_node).add<Rocket>();
+}
+
+void systemRocketCompleteAction(flecs::entity e) {
+  auto world = e.world();
+  IAction *action = nullptr;
+
+  switch (e.get<Rocket>().state) {
+  case RocketStateId::UnderConstruction:
+    action = new RocketCompleteBuildAction(e);
+    break;
+  case RocketStateId::Moving:
+    action = new RocketMoveCompleteAction(e);
+    break;
+  default:
+    break;
+  }
+
+  if (!action) {
+    spdlog::error("No completion action found for rocket {} in state: {}",
+                  e.name().c_str(), static_cast<int>(e.get<Rocket>().state));
+    return;
+  }
+  if (action->validate(world)) {
+    action->execute(world);
+  } else {
+    action->block(world);
+  }
+  delete action;
 }

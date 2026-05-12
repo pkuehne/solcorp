@@ -95,6 +95,7 @@ struct ContractTargetOrbit {}; ///< Which orbit is targeted by a contract
 // Systems
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemCreateRocketPrefabs(flecs::iter &);
+void systemRocketCompleteAction(flecs::entity);
 
 struct RocketModule {
   RocketModule(flecs::world &);
