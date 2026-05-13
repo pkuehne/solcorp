@@ -1,4 +1,4 @@
-#include "modules/main/main_module.h"
+#include "modules/window/window_module.h"
 #include "modules/rocket/active_launches_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
@@ -31,7 +31,7 @@ struct ActiveLaunchesFixture {
 
   ActiveLaunchesFixture() {
     world.import <SimulationModule>();
-    world.import <MainModule>();
+    world.import <WindowModule>();
     world.import <SiteModule>();
     world.import <RocketModule>();
 

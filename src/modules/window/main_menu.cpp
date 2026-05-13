@@ -1,8 +1,6 @@
-#include "main_module.h"
-#include "SDL_keycode.h"
+#include "main_menu.h"
 #include "imgui.h"
 #include "modules/base/base.h"
-#include "modules/engine/input.h"
 #include <flecs.h>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/rocket/contracts_window.h>
@@ -10,28 +8,6 @@
 #include <modules/simulation/celestial_browser.h>
 #include <modules/simulation/developer_window.h>
 #include <modules/simulation/simulation.h>
-
-MainModule::MainModule(flecs::world &world) {
-
-  // Register components
-  world.component<MainMenuBar>();
-
-  // Register window
-  world.entity("MainMenuBar").add<MainMenuBar>();
-
-  // Register Systems
-  world.system<const Simulation, const Game, MainMenuBar>("Draw MainMenu")
-      .kind(GuiPhase)
-      .each(systemDrawMainMenu);
-  world.system<Simulation, const KeyDown>("Toggle Play/Pause")
-      .kind(ValidatePhase)
-      .each(systemToggle);
-  auto sim = world.get<Simulation>();
-  world.system<DurationRequired>("Tick DurationRequired")
-      .kind(UpdatePhase)
-      .tick_source(sim.speed)
-      .each(systemTickDurationRequired);
-}
 
 void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
                         const Game game, MainMenuBar) {
@@ -82,19 +58,5 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       world.quit();
     }
     ImGui::EndPopup();
-  }
-}
-
-void systemToggle(flecs::iter &it, size_t, Simulation &sim,
-                  const KeyDown event) {
-  if (event.key == SDLK_SPACE) {
-    auto simTimer = it.world().timer(sim.speed.id());
-    simTimer.get<flecs::Timer>().active ? simTimer.stop() : simTimer.start();
-  }
-}
-
-void systemTickDurationRequired(flecs::entity, DurationRequired &duration) {
-  if (duration.remaining > 0) {
-    duration.remaining--;
   }
 }
