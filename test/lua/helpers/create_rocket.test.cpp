@@ -1,5 +1,5 @@
-#include "setup_helpers.h"
 #include "modules/lua/helpers.h"
+#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 

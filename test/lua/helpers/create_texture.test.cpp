@@ -6,7 +6,7 @@
 
 SCENARIO("create_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import<BaseModule>();
+  world.import <BaseModule>();
   registerEngineComponents(world);
   world.entity("Textures");
 
@@ -21,9 +21,9 @@ SCENARIO("create_texture", "[helpers][lua]") {
 
   GIVEN("a valid filename (no renderer, texture ptr will be null)") {
     WHEN("create_texture is called") {
-      auto e = create_texture(world, TextureName{"Sheet"},
-                              TextureFilename{"sheet.png"},
-                              TextureModName{"core"});
+      auto e =
+          create_texture(world, TextureName{"Sheet"},
+                         TextureFilename{"sheet.png"}, TextureModName{"core"});
       THEN("an entity is created as a child of Textures") {
         REQUIRE(e.is_valid());
         CHECK(e.parent() == world.lookup("Textures"));

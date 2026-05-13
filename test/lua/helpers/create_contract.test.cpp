@@ -5,7 +5,7 @@
 
 SCENARIO("create_contract", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketModule>();
+  world.import <RocketModule>();
   world.entity("Contracts");
 
   GIVEN("a unique contract name") {
@@ -36,7 +36,8 @@ SCENARIO("create_contract", "[helpers][lua]") {
                                         .status = ContractStatus::Open,
                                         .failed = false});
     WHEN("create_contract is called with the same name") {
-      auto contract = create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
+      auto contract =
+          create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
       THEN("the existing entity is returned") { CHECK(contract == existing); }
     }
   }

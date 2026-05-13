@@ -1,12 +1,12 @@
-#include "setup_helpers.h"
 #include "modules/lua/helpers.h"
 #include "modules/site/site.h"
+#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
 SCENARIO("create_site", "[helpers][lua]") {
   flecs::world world;
-  world.import<SiteModule>();
+  world.import <SiteModule>();
   world.entity("Earth").child_of(world.entity("Sun"));
 
   GIVEN("a name and dimensions") {

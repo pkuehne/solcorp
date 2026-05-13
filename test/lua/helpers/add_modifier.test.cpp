@@ -5,7 +5,7 @@
 
 SCENARIO("add_modifier", "[helpers][lua]") {
   flecs::world world;
-  world.import<StatsModule>();
+  world.import <StatsModule>();
 
   GIVEN("a valid effect entity") {
     WHEN("add_modifier is called") {

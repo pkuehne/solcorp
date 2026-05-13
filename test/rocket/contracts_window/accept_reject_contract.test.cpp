@@ -1,5 +1,5 @@
-#include "modules/rocket/contracts_window.h"
 #include "modules/base/base.h"
+#include "modules/rocket/contracts_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include <catch2/catch_test_macros.hpp>
@@ -8,9 +8,9 @@
 SCENARIO("acceptContract and rejectContract update balance",
          "[contracts_window]") {
   flecs::world world;
-  world.import<BaseModule>();
-  world.import<SimulationModule>();
-  world.import<RocketModule>();
+  world.import <BaseModule>();
+  world.import <SimulationModule>();
+  world.import <RocketModule>();
 
   auto contractE = world.entity("TestContract")
                        .set<Contract>({

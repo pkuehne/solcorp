@@ -5,7 +5,7 @@
 
 SCENARIO("get_all_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketModule>();
+  world.import <RocketModule>();
 
   GIVEN("no contracts in the world") {
     WHEN("get_all_contracts is called") {

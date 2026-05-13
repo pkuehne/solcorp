@@ -19,7 +19,8 @@ SCENARIO("getEntityEffortRequired", "[window]") {
   }
 
   GIVEN("An entity with EffortRequired fully remaining") {
-    auto entity = world.entity().set<EffortRequired>({.remaining = 100, .total = 100});
+    auto entity =
+        world.entity().set<EffortRequired>({.remaining = 100, .total = 100});
     WHEN("getEntityEffortRequired is called") {
       float result = getEntityEffortRequired(entity);
       THEN("it returns 0.0 (no progress)") {
@@ -29,7 +30,8 @@ SCENARIO("getEntityEffortRequired", "[window]") {
   }
 
   GIVEN("An entity with EffortRequired fully complete") {
-    auto entity = world.entity().set<EffortRequired>({.remaining = 0, .total = 100});
+    auto entity =
+        world.entity().set<EffortRequired>({.remaining = 0, .total = 100});
     WHEN("getEntityEffortRequired is called") {
       float result = getEntityEffortRequired(entity);
       THEN("it returns 1.0 (fully done)") {
@@ -39,7 +41,8 @@ SCENARIO("getEntityEffortRequired", "[window]") {
   }
 
   GIVEN("An entity with EffortRequired halfway complete") {
-    auto entity = world.entity().set<EffortRequired>({.remaining = 50, .total = 100});
+    auto entity =
+        world.entity().set<EffortRequired>({.remaining = 50, .total = 100});
     WHEN("getEntityEffortRequired is called") {
       float result = getEntityEffortRequired(entity);
       THEN("it returns 0.5") {
@@ -49,7 +52,8 @@ SCENARIO("getEntityEffortRequired", "[window]") {
   }
 
   GIVEN("An entity with EffortRequired at one tick remaining") {
-    auto entity = world.entity().set<EffortRequired>({.remaining = 1, .total = 100});
+    auto entity =
+        world.entity().set<EffortRequired>({.remaining = 1, .total = 100});
     WHEN("getEntityEffortRequired is called") {
       float result = getEntityEffortRequired(entity);
       THEN("it returns 0.99") {

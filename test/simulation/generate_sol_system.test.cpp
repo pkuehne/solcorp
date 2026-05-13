@@ -4,7 +4,7 @@
 
 SCENARIO("systemGenerateSolSystem", "[system]") {
   flecs::world world;
-  world.import<SimulationModule>();
+  world.import <SimulationModule>();
 
   GIVEN("The system is registered") {
     auto system = world.system("Generate Sol System")

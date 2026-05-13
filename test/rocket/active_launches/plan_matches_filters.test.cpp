@@ -1,8 +1,8 @@
-#include "modules/window/window_module.h"
 #include "modules/rocket/active_launches_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/window_module.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -25,10 +25,10 @@ struct ActiveLaunchesFixture {
   flecs::entity plan3;
 
   ActiveLaunchesFixture() {
-    world.import<SimulationModule>();
-    world.import<WindowModule>();
-    world.import<SiteModule>();
-    world.import<RocketModule>();
+    world.import <SimulationModule>();
+    world.import <WindowModule>();
+    world.import <SiteModule>();
+    world.import <RocketModule>();
 
     site1 = world.entity("Site A").add<Site>();
     site2 = world.entity("Site B").add<Site>();
@@ -38,22 +38,30 @@ struct ActiveLaunchesFixture {
     pad1 = world.entity().add<Launchpad>().add<Facility>().child_of(building1);
     pad2 = world.entity().add<Launchpad>().add<Facility>().child_of(building2);
 
-    orbit1 = world.entity().set<TargetOrbit>({.altitude = 200000.0, .inclination = 0.0});
-    orbit2 = world.entity().set<TargetOrbit>({.altitude = 400000.0, .inclination = 1.5708});
+    orbit1 = world.entity().set<TargetOrbit>(
+        {.altitude = 200000.0, .inclination = 0.0});
+    orbit2 = world.entity().set<TargetOrbit>(
+        {.altitude = 400000.0, .inclination = 1.5708});
 
     payload1 = world.entity().set<Payload>({.mass = 500u});
     payload2 = world.entity().set<Payload>({.mass = 800u});
 
     world.entity()
-        .set<Contract>({.client = "Client A", .description = "Desc",
-                        .upfront_payment = 1000u, .completion_payment = 5000u,
-                        .status = ContractStatus::Open, .failed = false})
+        .set<Contract>({.client = "Client A",
+                        .description = "Desc",
+                        .upfront_payment = 1000u,
+                        .completion_payment = 5000u,
+                        .status = ContractStatus::Open,
+                        .failed = false})
         .add<ContractPayload>(payload1)
         .add<ContractTargetOrbit>(orbit1);
     world.entity()
-        .set<Contract>({.client = "Client B", .description = "Desc",
-                        .upfront_payment = 2000u, .completion_payment = 8000u,
-                        .status = ContractStatus::Open, .failed = false})
+        .set<Contract>({.client = "Client B",
+                        .description = "Desc",
+                        .upfront_payment = 2000u,
+                        .completion_payment = 8000u,
+                        .status = ContractStatus::Open,
+                        .failed = false})
         .add<ContractPayload>(payload2)
         .add<ContractTargetOrbit>(orbit2);
 
@@ -228,8 +236,8 @@ SCENARIO("planMatchesFilters - dead filter entities",
 
   GIVEN("filterPad is set then the pad entity is destroyed") {
     auto tempBuilding = f.world.entity().child_of(f.site1);
-    auto filterPad =
-        f.world.entity().add<Launchpad>().add<Facility>().child_of(tempBuilding);
+    auto filterPad = f.world.entity().add<Launchpad>().add<Facility>().child_of(
+        tempBuilding);
     ActiveLaunchesWindow state;
     state.filterPad = filterPad;
     filterPad.destruct();
@@ -242,8 +250,8 @@ SCENARIO("planMatchesFilters - dead filter entities",
   }
 
   GIVEN("filterOrbit is set then the orbit entity is destroyed") {
-    auto filterOrbit =
-        f.world.entity().set<TargetOrbit>({.altitude = 300000.0, .inclination = 0.5});
+    auto filterOrbit = f.world.entity().set<TargetOrbit>(
+        {.altitude = 300000.0, .inclination = 0.5});
     ActiveLaunchesWindow state;
     state.filterOrbit = filterOrbit;
     filterOrbit.destruct();

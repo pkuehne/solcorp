@@ -1,5 +1,5 @@
-#include "modules/site/rocket_prefab_window.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/site/rocket_prefab_window.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 

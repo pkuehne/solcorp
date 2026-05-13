@@ -5,7 +5,7 @@
 
 SCENARIO("create_effect", "[helpers][lua]") {
   flecs::world world;
-  world.import<StatsModule>();
+  world.import <StatsModule>();
 
   GIVEN("a name with no source entity") {
     WHEN("create_effect is called") {

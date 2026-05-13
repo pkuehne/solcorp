@@ -1,5 +1,5 @@
-#include "setup_helpers.h"
 #include "modules/lua/helpers.h"
+#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -10,7 +10,8 @@ SCENARIO("add_facility_to_building", "[helpers][lua]") {
 
   GIVEN("a valid building entity") {
     WHEN("add_facility_to_building is called") {
-      auto facility = add_facility_to_building(world, building, "MissionControl");
+      auto facility =
+          add_facility_to_building(world, building, "MissionControl");
       THEN("a valid entity is returned") { REQUIRE(facility.is_valid()); }
       THEN("it is a child of the building") {
         CHECK(facility.parent() == building);

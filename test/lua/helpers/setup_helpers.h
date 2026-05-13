@@ -4,7 +4,7 @@
 #include <flecs.h>
 
 static void run_site_prefab_setup(flecs::world &world) {
-  world.import<SiteModule>();
+  world.import <SiteModule>();
   auto sys = world.system("Setup Site Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()
@@ -13,7 +13,7 @@ static void run_site_prefab_setup(flecs::world &world) {
 }
 
 static void run_rocket_prefab_setup(flecs::world &world) {
-  world.import<RocketModule>();
+  world.import <RocketModule>();
   auto sys = world.system("Setup Rocket Prefabs")
                  .kind(flecs::OnStart)
                  .immediate()

@@ -1,16 +1,16 @@
-#include "modules/window/window_module.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/window_module.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
 SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
   flecs::world world;
-  world.import<SimulationModule>();
-  world.import<WindowModule>();
-  world.import<RocketModule>();
-  world.import<SiteModule>();
+  world.import <SimulationModule>();
+  world.import <WindowModule>();
+  world.import <RocketModule>();
+  world.import <SiteModule>();
 
   flecs::entity building =
       world.entity().set<Manufacturing>({.available_effort = 20});

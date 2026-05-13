@@ -1,5 +1,5 @@
-#include "test_helpers.h"
 #include "modules/lua/logging.h"
+#include "test_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 
 SCENARIO("load_logging registers a named spdlog logger") {

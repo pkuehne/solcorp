@@ -4,7 +4,7 @@
 
 SCENARIO("systemCreateSitePrefabs", "[on_start][system]") {
   flecs::world world;
-  world.import<SiteModule>();
+  world.import <SiteModule>();
 
   GIVEN("An empty world") {
     auto system = world.system("Create Site Prefabs")

@@ -5,7 +5,7 @@
 
 SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketModule>();
+  world.import <RocketModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
     world.entity("Open1").set<Contract>({.client = "C",

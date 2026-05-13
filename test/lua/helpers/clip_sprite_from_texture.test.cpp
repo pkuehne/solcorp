@@ -6,7 +6,7 @@
 
 SCENARIO("clip_sprite_from_texture", "[helpers][lua]") {
   flecs::world world;
-  world.import<BaseModule>();
+  world.import <BaseModule>();
   registerEngineComponents(world);
 
   GIVEN("a texture name that does not exist") {

@@ -1,5 +1,4 @@
 #include "site.h"
-#include "modules/window/building_detail_window.h"
 #include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
@@ -11,6 +10,7 @@
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
+#include "modules/window/building_detail_window.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include <spdlog/spdlog.h>
@@ -50,8 +50,8 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)
       .member("prep_days", &Launchpad::prep_days);
-  world.component<BuildingDetailWindow>().member("buildingE",
-                                                 &BuildingDetailWindow::buildingE);
+  world.component<BuildingDetailWindow>().member(
+      "buildingE", &BuildingDetailWindow::buildingE);
   world.component<ConstructionSiteWindow>().member(
       "buildingE", &ConstructionSiteWindow::buildingE);
   world.component<RocketPrefabWindow>().member(

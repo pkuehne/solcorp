@@ -1,12 +1,12 @@
-#include "setup_helpers.h"
 #include "modules/lua/helpers.h"
 #include "modules/rocket/rocket_module.h"
+#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
 SCENARIO("add_target_orbit_to_rocket", "[helpers][lua]") {
   flecs::world world;
-  world.import<RocketModule>();
+  world.import <RocketModule>();
   auto rocket = world.entity("RocketLEO").add<Rocket>();
   world.entity("LEO");
 

@@ -1,5 +1,5 @@
-#include "setup_helpers.h"
 #include "modules/lua/helpers.h"
+#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -19,7 +19,8 @@ SCENARIO("create_building", "[helpers][lua]") {
 
   GIVEN("a prefab name that does not exist") {
     WHEN("create_building is called") {
-      auto building = create_building(world, "Ghost", "NoSuchPrefab", 0, 0, site);
+      auto building =
+          create_building(world, "Ghost", "NoSuchPrefab", 0, 0, site);
       THEN("an invalid entity is returned") { CHECK(!building.is_valid()); }
     }
   }
