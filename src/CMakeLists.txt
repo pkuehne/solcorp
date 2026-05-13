@@ -15,6 +15,7 @@ list(APPEND SolCorpSources
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
+    modules/window/building_detail_window.cpp
     modules/rocket/rocket_module.cpp
     modules/rocket/actions.cpp
     modules/rocket/launch_window.cpp
@@ -23,7 +24,6 @@ list(APPEND SolCorpSources
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
-    modules/site/building_window.cpp
     modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
     modules/site/helpers.cpp
@@ -50,6 +50,7 @@ list(APPEND SolCorpHeaders
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h
+    modules/window/building_detail_window.h
     modules/rocket/rocket_module.h
     modules/rocket/actions.h
     modules/rocket/launch_window.h
@@ -58,7 +59,6 @@ list(APPEND SolCorpHeaders
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
-    modules/site/building_window.h
     modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
     modules/site/helpers.h

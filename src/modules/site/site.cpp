@@ -1,5 +1,5 @@
 #include "site.h"
-#include "building_window.h"
+#include "modules/window/building_detail_window.h"
 #include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
@@ -50,8 +50,8 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)
       .member("prep_days", &Launchpad::prep_days);
-  world.component<BuildingWindow>().member("buildingE",
-                                           &BuildingWindow::buildingE);
+  world.component<BuildingDetailWindow>().member("buildingE",
+                                                 &BuildingDetailWindow::buildingE);
   world.component<ConstructionSiteWindow>().member(
       "buildingE", &ConstructionSiteWindow::buildingE);
   world.component<RocketPrefabWindow>().member(
@@ -217,8 +217,8 @@ void systemCreateSitePrefabs(flecs::iter &it) {
 
 void systemCreateSiteWindows(flecs::iter &it) {
   auto world = it.world();
-  registerWindow("Building Window", drawBuildingWindow, world)
-      .set<BuildingWindow>({});
+  registerWindow("Building Detail", drawBuildingDetailWindow, world)
+      .set<BuildingDetailWindow>({});
   registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
       .set<ConstructionSiteWindow>({});
   registerWindow("Rocket Prefab Window", drawRocketPrefabWindow, world)
@@ -237,7 +237,7 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
     spdlog::debug("Clicked on building {}", e.name().c_str());
     if (e.has<Building>()) {
       spdlog::debug("Showing Building Window for {}", e.name().c_str());
-      showBuildingWindow(e);
+      showBuildingDetailWindow(e);
     } else if (e.has<ConstructionSite>()) {
       showConstructionSiteWindow(e);
     }

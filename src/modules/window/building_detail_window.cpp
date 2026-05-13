@@ -1,4 +1,4 @@
-#include "building_window.h"
+#include "building_detail_window.h"
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
@@ -6,9 +6,9 @@
 #include "modules/rocket/actions.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/site/rocket_prefab_window.h"
+#include "modules/site/site.h"
 #include "modules/stats/stats.h"
-#include "rocket_prefab_window.h"
-#include "site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
@@ -21,33 +21,34 @@ void drawLaunchpadSection(flecs::entity &entity);
 void drawRocketButtons(flecs::entity &rocket);
 void movePopup(flecs::entity &rocket);
 
-void showBuildingWindow(const flecs::entity &entity) {
-  spdlog::debug("Showing BuildingWindow");
+void showBuildingDetailWindow(const flecs::entity &entity) {
+  spdlog::debug("Showing BuildingDetailWindow");
   if (!entity.is_alive()) {
-    spdlog::error("showing BuildingWindow can't be done on invalid building");
+    spdlog::error(
+        "showing BuildingDetailWindow can't be done on invalid building");
     return;
   }
 
   auto world = entity.world();
-  auto window = showWindow(world, "Building Window");
+  auto window = showWindow(world, "Building Detail");
   SC_ASSERT(window.is_valid(),
-            "showWindow returned invalid entity for Building Window");
+            "showWindow returned invalid entity for Building Detail");
   auto win = window.try_get_mut<Window>();
   SC_ASSERT(win, "Window state is invalid");
-  win->title = fmt::format("Building Window ({})", entity.name().c_str());
-  auto state = window.try_get_mut<BuildingWindow>();
-  SC_ASSERT(state, "BuildingWindow state is invalid");
+  win->title = fmt::format("Building Detail ({})", entity.name().c_str());
+  auto state = window.try_get_mut<BuildingDetailWindow>();
+  SC_ASSERT(state, "BuildingDetailWindow state is invalid");
   state->buildingE = entity;
 }
 
-void drawBuildingWindow(flecs::entity winE) {
-  auto &state = winE.get_mut<BuildingWindow>();
+void drawBuildingDetailWindow(flecs::entity winE) {
+  auto &state = winE.get_mut<BuildingDetailWindow>();
   auto world = winE.world();
 
   auto buildingE = state.buildingE;
   if (buildingE == flecs::entity() || !buildingE.is_alive()) {
-    spdlog::error("Building is no longer valid for BuildingWindow");
-    hideWindow(world, "Building Window");
+    spdlog::error("Building is no longer valid for BuildingDetailWindow");
+    hideWindow(world, "Building Detail");
     return;
   }
 
@@ -97,15 +98,7 @@ void drawManufacturingSection(flecs::entity &entity) {
     // There is a rocket on the line
     ImGui::Text("Constructing %s", e.name().c_str());
 
-    auto *c = e.try_get_mut<EffortRequired>();
-    if (c) {
-      auto total = static_cast<float>(c->total);
-      auto remaining = static_cast<float>(c->remaining);
-
-      ImGui::ProgressBar(1.0f - (remaining / total));
-    } else {
-      ImGui::ProgressBar(1.0);
-    }
+    ImGui::ProgressBar(getEntityEffortRequired(e));
     drawRocketButtons(e);
 
   } else {
@@ -253,4 +246,17 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::EndPopup();
+}
+
+float getEntityEffortRequired(flecs::entity &entity) {
+
+  auto *c = entity.try_get_mut<EffortRequired>();
+  if (!c) {
+    return 1.0f;
+  }
+
+  auto total = static_cast<float>(c->total);
+  auto remaining = static_cast<float>(c->remaining);
+
+  return 1.0f - (remaining / total);
 }
