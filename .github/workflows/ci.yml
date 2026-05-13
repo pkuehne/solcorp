@@ -15,6 +15,25 @@ permissions:
   contents: read
 
 jobs:
+  no-task-markers:
+    name: "No TODO comments"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      statuses: write
+    steps:
+      - name: Check added lines in pull request
+        uses: phntmxyz/pr_todo_checker@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Docs may contain intentionally long-lived task notes.
+          exclude: |
+            docs/**
+          # Allow issue-linked TODOs such as TODO(#123).
+          custom_ignore_matcher: 'TODO(#'
+
   build-linux:
     name: "Build (Linux)"
     runs-on: ubuntu-latest
