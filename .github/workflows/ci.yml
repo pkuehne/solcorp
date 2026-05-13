@@ -28,8 +28,10 @@ jobs:
         uses: phntmxyz/pr_todo_checker@v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Docs may contain intentionally long-lived task notes.
           exclude: |
             docs/**
+          # Allow issue-linked TODOs such as TODO(#123).
           custom_ignore_matcher: 'TODO(#'
 
   build-linux:
