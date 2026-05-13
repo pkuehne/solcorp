@@ -15,8 +15,18 @@ permissions:
   contents: read
 
 jobs:
+  no-todo-comment-check-tests:
+    name: "No TODO comment check tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Test TODO comment check script
+        run: bash .github/scripts/test-check-added-cpp-todos.sh
+
   no-task-markers:
-    name: "No task markers"
+    name: "No TODO comments"
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -29,12 +39,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if git diff --unified=0 --no-color "$BASE_SHA" "$HEAD_SHA" -- ':(glob)**/*.h' ':(glob)**/*.cpp' \
-            | grep -E '^\+.*//.*\<TODO\>'; then
-            echo "Found TODO comments in added C++ lines. Please track follow-up work in an issue instead of adding bare TODO markers."
-            exit 1
-          fi
+        run: bash .github/scripts/check-added-cpp-todos.sh "$BASE_SHA" "$HEAD_SHA"
 
   build-linux:
     name: "Build (Linux)"
