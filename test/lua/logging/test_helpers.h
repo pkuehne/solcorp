@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-static lua_State *make_state_with_mod(const std::string &mod_name) {
+inline lua_State *make_state_with_mod(const std::string &mod_name) {
   lua_State *L = luaL_newstate();
   luaL_openlibs(L);
   lua_newtable(L);
@@ -14,7 +14,7 @@ static lua_State *make_state_with_mod(const std::string &mod_name) {
   return L;
 }
 
-static std::shared_ptr<spdlog::sinks::ostream_sink_st>
+inline std::shared_ptr<spdlog::sinks::ostream_sink_st>
 redirect_logger(const std::string &name, std::ostringstream &oss) {
   auto logger = spdlog::get(name);
   auto sink = std::make_shared<spdlog::sinks::ostream_sink_st>(oss);

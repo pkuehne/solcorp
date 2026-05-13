@@ -3,7 +3,7 @@
 #include "modules/lua/lua_registry.h"
 #include <flecs.h>
 
-static lua_State *make_entity_state(flecs::world &world) {
+inline lua_State *make_entity_state(flecs::world &world) {
   lua_State *L = luaL_newstate();
   luaL_openlibs(L);
   lua_set_world(L, &world);
@@ -11,7 +11,7 @@ static lua_State *make_entity_state(flecs::world &world) {
   return L;
 }
 
-static void set_entity_global(lua_State *L, flecs::entity e) {
+inline void set_entity_global(lua_State *L, flecs::entity e) {
   lua_push_entity(L, e);
   lua_setglobal(L, "e");
 }
