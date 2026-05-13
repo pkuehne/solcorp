@@ -7,15 +7,38 @@ fetchcontent_makeavailable(catch2)
 
 add_executable(unit_test
   main.cpp
-  manufacturing.test.cpp
-  render.test.cpp
-  active_launches_tests.cpp
-  contracts_window.test.cpp
-  base_tests.cpp
-  lua_entity.test.cpp
-  lua_helpers.test.cpp
-  lua_logging.test.cpp
-  lua_registry.test.cpp
+  base/find_ancestor_with.test.cpp
+  engine/apply_parent_transform.test.cpp
+  lua/entity/lua_push_entity.test.cpp
+  lua/entity/lua_check_entity.test.cpp
+  lua/entity/entity_id.test.cpp
+  lua/entity/entity_is_alive.test.cpp
+  lua/entity/entity_name.test.cpp
+  lua/entity/entity_enabled.test.cpp
+  lua/entity/entity_disable_enable.test.cpp
+  lua/entity/entity_destroy.test.cpp
+  lua/entity/entity_child_of.test.cpp
+  lua/entity/entity_lookup.test.cpp
+  lua/entity/entity_is_a.test.cpp
+  lua/helpers/create_site.test.cpp
+  lua/helpers/create_building_prefab.test.cpp
+  lua/helpers/create_rocket_prefab.test.cpp
+  lua/helpers/add_facility_to_building.test.cpp
+  lua/helpers/create_rocket.test.cpp
+  lua/helpers/create_building.test.cpp
+  lua/helpers/add_target_orbit_to_rocket.test.cpp
+  lua/helpers/create_texture.test.cpp
+  lua/helpers/create_effect.test.cpp
+  lua/helpers/add_modifier.test.cpp
+  lua/helpers/clip_sprite_from_texture.test.cpp
+  lua/helpers/create_contract.test.cpp
+  lua/helpers/create_contract_payload.test.cpp
+  lua/helpers/get_all_contracts.test.cpp
+  lua/helpers/get_all_active_contracts.test.cpp
+  lua/logging/load_logging.test.cpp
+  lua/logging/logging_levels.test.cpp
+  lua/registry/world.test.cpp
+  lua/registry/mod_name.test.cpp
   rocket/systems.test.cpp
   rocket/actions/cancel_launch_action.test.cpp
   rocket/actions/edit_launch_action.test.cpp
@@ -24,10 +47,20 @@ add_executable(unit_test
   rocket/actions/rocket_complete_move_action.test.cpp
   rocket/actions/rocket_move_action.test.cpp
   rocket/actions/schedule_launch_action.test.cpp
-  simulation.test.cpp
-  site.test.cpp
-  stats.test.cpp
-  rocket_prefab_window.test.cpp
+  rocket/active_launches/plan_matches_filters.test.cpp
+  rocket/contracts_window/accept_reject_contract.test.cpp
+  rocket/contracts_window/setup_launch_for_payload.test.cpp
+  rocket/contracts_window/displaying_contracts.test.cpp
+  rocket/contracts_window/button_enabled_state.test.cpp
+  simulation/update_sim_date.test.cpp
+  simulation/generate_sol_system.test.cpp
+  site/create_site_prefabs.test.cpp
+  site/manufacturing_progress.test.cpp
+  site/rocket_prefab_window/collect_rocket_prefabs.test.cpp
+  site/rocket_prefab_window/compute_build_cost.test.cpp
+  site/rocket_prefab_window/can_afford_rocket_prefab.test.cpp
+  stats/stats.test.cpp
+  window/building_detail_window.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)
@@ -47,7 +80,6 @@ catch_discover_tests(
   PROPERTIES
     ENVIRONMENT "SPDLOG_LEVEL=debug"
 )
-# set_tests_properties(unit_test PROPERTIES ENVIRONMENT "SPDLOG_LEVEL=debug")
 
 add_custom_target(tests
   DEPENDS unit_test

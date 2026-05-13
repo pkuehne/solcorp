@@ -26,8 +26,7 @@ SCENARIO("systemApplyParentTransform", "[system]") {
 
       systemApplyParentTransform(t, &p);
 
-      THEN("The world position is the sum of the relative and parent "
-           "positions") {
+      THEN("The world position is the sum of the relative and parent positions") {
         REQUIRE(t.relativePosition.x == original.x);
         REQUIRE(t.relativePosition.y == original.y);
         REQUIRE(t.worldPosition.x == original.x * 2);

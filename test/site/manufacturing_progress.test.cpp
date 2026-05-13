@@ -7,10 +7,10 @@
 
 SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
   flecs::world world;
-  world.import <SimulationModule>();
-  world.import <WindowModule>();
-  world.import <RocketModule>();
-  world.import <SiteModule>();
+  world.import<SimulationModule>();
+  world.import<WindowModule>();
+  world.import<RocketModule>();
+  world.import<SiteModule>();
 
   flecs::entity building =
       world.entity().set<Manufacturing>({.available_effort = 20});
