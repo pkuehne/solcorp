@@ -15,6 +15,22 @@ permissions:
   contents: read
 
 jobs:
+  no-task-markers:
+    name: "No task markers"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check added lines in pull request
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash .github/scripts/check-pr-diff-no-task-markers.sh "$BASE_SHA" "$HEAD_SHA"
+
   build-linux:
     name: "Build (Linux)"
     runs-on: ubuntu-latest
