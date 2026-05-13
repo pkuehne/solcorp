@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/main/main_module.h"
+#include "modules/base/base.h"
 #include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>

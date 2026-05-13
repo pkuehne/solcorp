@@ -72,7 +72,7 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   SC_ASSERT(window.is_valid(),
             "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
-  SC_ASSERT(state, "BuildingWindow state is invalid");
+  SC_ASSERT(state, "LaunchWindow state is invalid");
 
   state->draftPlan.name = planE.name();
   state->draftPlan.launchDay = static_cast<int>(plan.launch_date);

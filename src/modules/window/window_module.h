@@ -4,14 +4,10 @@
 #include <modules/base/base.h>
 #include <modules/engine/input.h>
 
-struct MainMenuBar {};
-
-struct MainModule {
+struct WindowModule {
 public:
-  MainModule(flecs::world &);
+  WindowModule(flecs::world &);
 };
 
-void systemDrawMainMenu(flecs::entity, const Simulation, const Game,
-                        MainMenuBar);
 void systemToggle(flecs::iter &, size_t, Simulation &, const KeyDown);
 void systemTickDurationRequired(flecs::entity, DurationRequired &);

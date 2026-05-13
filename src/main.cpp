@@ -1,12 +1,12 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
 #include "modules/lua/lua.h"
-#include "modules/main/main_module.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/staff/staff.h"
 #include "modules/stats/stats.h"
+#include "modules/window/window_module.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 
@@ -25,7 +25,7 @@ int main() {
   world.import <EngineModule>();
   world.import <StatsModule>();
   world.import <SimulationModule>();
-  world.import <MainModule>();
+  world.import <WindowModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
   world.import <StaffModule>();

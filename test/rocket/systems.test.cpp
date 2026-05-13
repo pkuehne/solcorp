@@ -1,8 +1,8 @@
 #include "modules/engine/render.h"
-#include "modules/main/main_module.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/window_module.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -199,7 +199,7 @@ SCENARIO("systemLaunchRocket", "[rocket][system]") {
 SCENARIO("systemRocketCompleteAction", "[system]") {
   flecs::world world;
   world.import <SimulationModule>();
-  world.import <MainModule>();
+  world.import <WindowModule>();
   world.import <RocketModule>();
 
   GIVEN("A rocket under construction with effort still remaining") {

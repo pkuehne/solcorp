@@ -1,23 +1,18 @@
-#include "modules/main/main_module.h"
 #include "modules/rocket/active_launches_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/window_module.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
-
-// ---------------------------------------------------------------------------
-// Shared fixture: two sites, two pads, two orbits, two plans (one per site),
-// plus a third plan with no payload (no orbit).
-// ---------------------------------------------------------------------------
 
 struct ActiveLaunchesFixture {
   flecs::world world;
 
   flecs::entity site1;
   flecs::entity site2;
-  flecs::entity pad1; // facility child of a building child of site1
-  flecs::entity pad2; // facility child of a building child of site2
+  flecs::entity pad1;
+  flecs::entity pad2;
 
   flecs::entity orbit1;
   flecs::entity orbit2;
@@ -25,20 +20,19 @@ struct ActiveLaunchesFixture {
   flecs::entity payload1;
   flecs::entity payload2;
 
-  flecs::entity plan1; // pad1, payload1 -> orbit1
-  flecs::entity plan2; // pad2, payload2 -> orbit2
-  flecs::entity plan3; // pad1, no payload
+  flecs::entity plan1;
+  flecs::entity plan2;
+  flecs::entity plan3;
 
   ActiveLaunchesFixture() {
     world.import <SimulationModule>();
-    world.import <MainModule>();
+    world.import <WindowModule>();
     world.import <SiteModule>();
     world.import <RocketModule>();
 
     site1 = world.entity("Site A").add<Site>();
     site2 = world.entity("Site B").add<Site>();
 
-    // Mirror the real hierarchy: Site -> Building -> Facility(Launchpad)
     auto building1 = world.entity("Pad Building 1").child_of(site1);
     auto building2 = world.entity("Pad Building 2").child_of(site2);
     pad1 = world.entity().add<Launchpad>().add<Facility>().child_of(building1);
@@ -52,7 +46,6 @@ struct ActiveLaunchesFixture {
     payload1 = world.entity().set<Payload>({.mass = 500u});
     payload2 = world.entity().set<Payload>({.mass = 800u});
 
-    // Contracts link payloads to orbits
     world.entity()
         .set<Contract>({.client = "Client A",
                         .description = "Desc",
@@ -86,8 +79,6 @@ struct ActiveLaunchesFixture {
   }
 };
 
-// ---------------------------------------------------------------------------
-
 SCENARIO("planMatchesFilters - no filters", "[filter][active_launches]") {
   ActiveLaunchesFixture f;
 
@@ -110,11 +101,11 @@ SCENARIO("planMatchesFilters - site filter", "[filter][active_launches]") {
     state.filterSite = f.site1;
 
     THEN("Plans on site1 pass") {
-      CHECK(planMatchesFilters(f.plan1, state)); // pad1 child of site1
-      CHECK(planMatchesFilters(f.plan3, state)); // pad1 child of site1
+      CHECK(planMatchesFilters(f.plan1, state));
+      CHECK(planMatchesFilters(f.plan3, state));
     }
     THEN("Plans on site2 are excluded") {
-      CHECK(!planMatchesFilters(f.plan2, state)); // pad2 child of site2
+      CHECK(!planMatchesFilters(f.plan2, state));
     }
   }
 
@@ -231,7 +222,6 @@ SCENARIO("planMatchesFilters - dead filter entities",
   ActiveLaunchesFixture f;
 
   GIVEN("filterSite is set then the site entity is destroyed") {
-    // Use a separate entity so site1/site2 children are unaffected
     auto filterSite = f.world.entity("Temp Site").add<Site>();
     ActiveLaunchesWindow state;
     state.filterSite = filterSite;
