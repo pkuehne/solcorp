@@ -31,8 +31,8 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if git diff --unified=0 --no-color "$BASE_SHA" "$HEAD_SHA" -- ':(glob)**/*.h' ':(glob)**/*.cpp' \
-            | grep -E '^\+.*//.*TODO'; then
-            echo "Found TODO comments in added C++ lines."
+            | grep -E '^\+.*//.*\<TODO\>'; then
+            echo "Found TODO comments in added C++ lines. Please track follow-up work in an issue instead of adding bare TODO markers."
             exit 1
           fi
 
