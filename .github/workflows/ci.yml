@@ -30,7 +30,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if git diff --unified=0 --no-color "$BASE_SHA" "$HEAD_SHA" -- '*.h' '*.cpp' \
+          if git diff --unified=0 --no-color "$BASE_SHA" "$HEAD_SHA" -- ':(glob)**/*.h' ':(glob)**/*.cpp' \
             | grep -E '^\+.*//.*TODO'; then
             echo "Found TODO comments in added C++ lines."
             exit 1
