@@ -16,7 +16,7 @@ matches=$(
   git diff --unified=0 --no-color --diff-filter=ACMR "$base_sha" "$head_sha" -- \
     | awk '
         BEGIN { file = "<unknown>"; hunk = "" }
-        /^\+\+\+ b\// { file = substr($0, 7); next }
+        /^\+\+\+ b\// { sub(/^\+\+\+ b\//, "", $0); file = $0; next }
         /^@@ / { hunk = $0; next }
         /^\+/ && !/^\+\+\+/ { print file "\t" hunk "\t" substr($0, 2) }
       ' \
