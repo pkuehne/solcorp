@@ -150,7 +150,6 @@ end
 
 local function create_contracts()
 	local info = solcorp.logging.info
-	info("Checking number of contracts...")
 	local contracts = solcorp.helpers.get_all_active_contracts()
 	if #contracts >= 5 then
 		return

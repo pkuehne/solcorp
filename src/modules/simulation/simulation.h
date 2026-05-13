@@ -1,6 +1,5 @@
 #pragma once
 
-#include "modules/base/base.h"
 #include <flecs.h>
 #include <string>
 

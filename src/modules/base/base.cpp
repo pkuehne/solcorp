@@ -1,4 +1,5 @@
 #include "base.h"
+#include "modules/lua/lua.h"
 #include <string>
 
 flecs::entity PostStartPhase;
@@ -42,6 +43,23 @@ BaseModule::BaseModule(flecs::world &world) {
       })
       .assign_string([](std::string *data, const char *value) {
         *data = value; // Assign new value to std::string
+      });
+
+  world.component<EffortRequired>()
+      .member("remaining", &EffortRequired::remaining)
+      .member("total", &EffortRequired::total);
+  register_component_lua<EffortRequired>(
+      world, "EffortRequired", [](LuaFieldBuilder<EffortRequired> &b) {
+        b.field<&EffortRequired::remaining>("remaining")
+            .field<&EffortRequired::total>("total");
+      });
+  world.component<DurationRequired>()
+      .member("remaining", &DurationRequired::remaining)
+      .member("total", &DurationRequired::total);
+  register_component_lua<DurationRequired>(
+      world, "DurationRequired", [](LuaFieldBuilder<DurationRequired> &b) {
+        b.field<&DurationRequired::remaining>("remaining")
+            .field<&DurationRequired::total>("total");
       });
 
   // Game clock

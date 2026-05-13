@@ -55,12 +55,12 @@ struct LineEntity {
   flecs::entity value;
 };
 
-struct BuildRocketAction : public IAction {
+struct RocketBuildAction : public IAction {
   flecs::entity prefab = flecs::entity::null();
   flecs::entity line = flecs::entity::null();
   int64_t cost = 0;
 
-  BuildRocketAction(PrefabEntity p, LineEntity l, int64_t c)
+  RocketBuildAction(PrefabEntity p, LineEntity l, int64_t c)
       : prefab(p.value), line(l.value), cost(c) {}
 
   [[nodiscard]] ValidationResult
@@ -76,7 +76,7 @@ struct RocketCompleteBuildAction : public IAction {
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
   void execute(flecs::world &) override;
-  void block(flecs::world &world);
+  void block(flecs::world &world) override;
 };
 
 struct RocketEntity {
@@ -89,11 +89,23 @@ struct DestinationEntity {
 struct RocketMoveAction : public IAction {
   flecs::entity rocket;
   flecs::entity destination;
+  uint8_t days = 0;
 
-  RocketMoveAction(RocketEntity r, DestinationEntity d)
-      : rocket(r.value), destination(d.value) {}
+  RocketMoveAction(RocketEntity r, DestinationEntity d, uint8_t days)
+      : rocket(r.value), destination(d.value), days(days) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
   void execute(flecs::world &world) override;
+};
+
+struct RocketCompleteMoveAction : public IAction {
+  flecs::entity rocket;
+
+  explicit RocketCompleteMoveAction(flecs::entity r) : rocket(r) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &world) override;
+  void block(flecs::world &world) override;
 };

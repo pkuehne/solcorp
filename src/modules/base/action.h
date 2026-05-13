@@ -25,4 +25,8 @@ struct IAction {
   [[nodiscard]] virtual ValidationResult
   validate(const flecs::world &world) const = 0;
   virtual void execute(flecs::world &world) = 0;
+  virtual void block(flecs::world &) {
+    // Default implementation does nothing, but can be overridden by actions
+    // that need to set a blocked state on the entity when validation fails
+  }
 };

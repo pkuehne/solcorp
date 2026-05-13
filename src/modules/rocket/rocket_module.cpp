@@ -3,6 +3,7 @@
 #include "active_launches_window.h"
 #include "contracts_window.h"
 #include "launch_window.h"
+#include "modules/base/action.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
@@ -12,6 +13,7 @@
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <memory>
 #include <modules/simulation/simulation.h>
 #include <vector>
 
@@ -38,6 +40,7 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<RocketStateId>()
       .constant("UnderConstruction", RocketStateId::UnderConstruction)
       .constant("Stored", RocketStateId::Stored)
+      .constant("Moving", RocketStateId::Moving)
       .constant("Assigned", RocketStateId::Assigned)
       .constant("IntegratingPayload", RocketStateId::IntegratingPayload)
       .constant("IntegrationComplete", RocketStateId::IntegrationComplete)
@@ -84,6 +87,7 @@ RocketModule::RocketModule(flecs::world &world) {
       flecs::Symmetric); // Not Exclusive because each Launchpad can have
                          // multiple Plans assigned
   world.component<CanLiftTo>().add(flecs::Symmetric);
+  world.component<RocketTargetParent>();
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -98,6 +102,9 @@ RocketModule::RocketModule(flecs::world &world) {
       });
   register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
     b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("Stored", RocketStateId::Stored)
+        .value("Moving", RocketStateId::Moving)
+        .value("Assigned", RocketStateId::Assigned)
         .value("IntegratingPayload", RocketStateId::IntegratingPayload)
         .value("IntegrationComplete", RocketStateId::IntegrationComplete)
         .value("RollingOut", RocketStateId::RollingOut)
@@ -167,6 +174,13 @@ RocketModule::RocketModule(flecs::world &world) {
         registerWindow("Contracts Window", drawContractsWindow, world)
             .set<ContractsWindow>({});
       });
+  world.system<>("Rocket Complete State Transition Action")
+      .tick_source(sim.speed)
+      .with<DurationRequired>()
+      .oper(flecs::Or)
+      .with<EffortRequired>()
+      .kind(UpdatePhase)
+      .each(systemRocketCompleteAction);
 }
 
 /// @brief Process LaunchPlans that are due
@@ -265,4 +279,31 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
 
   // Base Rocket Prefab
   world.prefab("Rocket").child_of(core_node).add<Rocket>();
+}
+
+void systemRocketCompleteAction(flecs::entity e) {
+  auto world = e.world();
+  std::unique_ptr<IAction> action;
+
+  switch (e.get<Rocket>().state) {
+  case RocketStateId::UnderConstruction:
+    action = std::make_unique<RocketCompleteBuildAction>(e);
+    break;
+  case RocketStateId::Moving:
+    action = std::make_unique<RocketCompleteMoveAction>(e);
+    break;
+  default:
+    break;
+  }
+
+  if (!action) {
+    spdlog::error("No completion action found for rocket {} in state: {}",
+                  e.name().c_str(), static_cast<int>(e.get<Rocket>().state));
+    return;
+  }
+  if (action->validate(world)) {
+    action->execute(world);
+  } else {
+    action->block(world);
+  }
 }

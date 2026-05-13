@@ -1,0 +1,43 @@
+#include "modules/rocket/actions.h"
+#include "modules/rocket/rocket_module.h"
+#include "modules/simulation/simulation.h"
+#include "modules/site/site.h"
+#include <catch2/catch_test_macros.hpp>
+#include <flecs.h>
+
+SCENARIO("CancelLaunchAction", "[action]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("An invalid plan") {
+    CancelLaunchAction cancel;
+
+    WHEN("Validated") {
+      ValidationResult result = cancel.validate(world);
+
+      THEN("It fails") {
+        CHECK(!result.ok);
+        CHECK(result.message == "Launch plan is not valid");
+      }
+    }
+  }
+
+  GIVEN("A valid plan with an assigned rocket") {
+    auto rocket = world.entity().add<Rocket>();
+    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    auto plan = world.entity("Test Plan").set<LaunchPlan>({});
+    plan.add<LaunchingOn>(rocket);
+    CancelLaunchAction cancel{plan};
+
+    WHEN("Executed") {
+      cancel.execute(world);
+
+      THEN("The plan is destroyed") { CHECK(!plan.is_alive()); }
+      THEN("The rocket is returned to Stored") {
+        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+      }
+    }
+  }
+}

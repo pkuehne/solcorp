@@ -244,7 +244,9 @@ void movePopup(flecs::entity &rocket) {
     closePopup();
   }
   ImGui::SameLine();
-  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{destination}};
+  constexpr uint8_t moveDurationDays = 2;
+  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{destination},
+                          moveDurationDays};
   if (ActionButton(ButtonLabel{.text = "Ok"},
                    ButtonTooltip{.text = "Move the rocket to the new location"},
                    action.validate(world).message)) {

@@ -1,4 +1,5 @@
 #include "entity.h"
+#include "modules/base/base.h"
 #include "modules/lua/lua_registry.h"
 #include "modules/simulation/simulation.h"
 #include <array>
