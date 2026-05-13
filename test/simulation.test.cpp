@@ -1,4 +1,5 @@
 #include "modules/simulation/simulation.h"
+#include "modules/base/base.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 

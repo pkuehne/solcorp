@@ -9,7 +9,6 @@
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/main/main_module.h"
-#include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
@@ -33,12 +32,6 @@ SiteModule::SiteModule(flecs::world &world) {
   world.import <RocketModule>();
 
   // Register components
-  world.component<EffortRequired>()
-      .member("remaining", &EffortRequired::remaining)
-      .member("total", &EffortRequired::total);
-  world.component<DurationRequired>()
-      .member("remaining", &DurationRequired::remaining)
-      .member("total", &DurationRequired::total);
   world.component<CurrentSite>();
   world.component<ConstructionSite>();
   world.component<ConstructionSiteNeedsUpdating>();
@@ -253,26 +246,10 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 }
 
 void systemBuildingUpdateManufacuringProgress(
-    flecs::entity rocket, EffortRequired &effort,
-    const Manufacturing &manufacturing) {
+    flecs::entity, EffortRequired &effort, const Manufacturing &manufacturing) {
   if (manufacturing.available_effort >= effort.remaining) {
     effort.remaining = 0;
   } else {
     effort.remaining -= manufacturing.available_effort;
-  }
-  if (effort.remaining == 0) {
-    auto world = rocket.world();
-    RocketCompleteBuildAction action(rocket);
-    auto result = action.validate(world);
-    if (result.ok) {
-      action.execute(world);
-      instantiateBuildingNotification(world, rocket.parent(),
-                                      "Rocket finished");
-
-    } else {
-      action.block(world);
-      spdlog::error("Failed to complete rocket build: {}", result.message);
-      // TODO: Notification
-    }
   }
 }

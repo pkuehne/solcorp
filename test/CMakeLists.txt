@@ -16,7 +16,14 @@ add_executable(unit_test
   lua_helpers.test.cpp
   lua_logging.test.cpp
   lua_registry.test.cpp
-  rocket_tests.cpp
+  rocket/systems.test.cpp
+  rocket/actions/cancel_launch_action.test.cpp
+  rocket/actions/edit_launch_action.test.cpp
+  rocket/actions/rocket_build_action.test.cpp
+  rocket/actions/rocket_complete_build_action.test.cpp
+  rocket/actions/rocket_complete_move_action.test.cpp
+  rocket/actions/rocket_move_action.test.cpp
+  rocket/actions/schedule_launch_action.test.cpp
   simulation.test.cpp
   site.test.cpp
   stats.test.cpp
