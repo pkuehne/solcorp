@@ -1,5 +1,4 @@
 #include "modules/rocket/rocket_module.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/rocket_prefab_window.h"
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
