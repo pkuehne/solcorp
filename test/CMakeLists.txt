@@ -55,6 +55,7 @@ add_executable(unit_test
   simulation/update_sim_date.test.cpp
   simulation/generate_sol_system.test.cpp
   site/create_site_prefabs.test.cpp
+  site/auto_start_next_build.test.cpp
   site/manufacturing_progress.test.cpp
   site/rocket_prefab_window/collect_rocket_prefabs.test.cpp
   site/rocket_prefab_window/compute_build_cost.test.cpp
