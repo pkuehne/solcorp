@@ -6,9 +6,9 @@
 
 SCENARIO("systemAutoStartNextBuild", "[system]") {
   flecs::world world;
-  world.import<SimulationModule>();
-  world.import<SiteModule>();
-  world.import<RocketModule>();
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
 
   auto makeLine = [&](bool auto_build) {
     return world.entity().set<Manufacturing>(
@@ -33,9 +33,7 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
     WHEN("systemAutoStartNextBuild runs") {
       systemAutoStartNextBuild(line, line.get<Manufacturing>());
 
-      THEN("no rocket is started") {
-        CHECK(countRocketChildren(line) == 0);
-      }
+      THEN("no rocket is started") { CHECK(countRocketChildren(line) == 0); }
     }
   }
 
@@ -46,9 +44,7 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
     WHEN("systemAutoStartNextBuild runs") {
       systemAutoStartNextBuild(line, line.get<Manufacturing>());
 
-      THEN("no rocket is started") {
-        CHECK(countRocketChildren(line) == 0);
-      }
+      THEN("no rocket is started") { CHECK(countRocketChildren(line) == 0); }
     }
   }
 
@@ -69,7 +65,8 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
     }
   }
 
-  GIVEN("auto_build_next is true, template set, line is free, insufficient balance") {
+  GIVEN("auto_build_next is true, template set, line is free, insufficient "
+        "balance") {
     auto prefab = world.prefab().add<Rocket>();
     auto line = makeLine(true);
     line.add<ManufacturingLineTemplate>(prefab);
@@ -82,9 +79,7 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
         CHECK(line.has<AutoBuildBlocked>());
       }
 
-      THEN("no rocket is started") {
-        CHECK(countRocketChildren(line) == 0);
-      }
+      THEN("no rocket is started") { CHECK(countRocketChildren(line) == 0); }
     }
 
     WHEN("systemAutoStartNextBuild runs repeatedly") {
@@ -92,13 +87,15 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
       systemAutoStartNextBuild(line, line.get<Manufacturing>());
       systemAutoStartNextBuild(line, line.get<Manufacturing>());
 
-      THEN("the line remains blocked without spawning duplicate notifications") {
+      THEN(
+          "the line remains blocked without spawning duplicate notifications") {
         CHECK(line.has<AutoBuildBlocked>());
       }
     }
   }
 
-  GIVEN("auto_build_next is true, template set, line is free, sufficient balance") {
+  GIVEN("auto_build_next is true, template set, line is free, sufficient "
+        "balance") {
     auto prefab = world.prefab().add<Rocket>();
     auto line = makeLine(true);
     line.add<ManufacturingLineTemplate>(prefab);

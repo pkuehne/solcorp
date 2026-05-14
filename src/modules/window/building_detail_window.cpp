@@ -115,7 +115,18 @@ void drawManufacturingSection(flecs::entity &entity) {
   flecs::entity targetPrefab = entity.target<ManufacturingLineTemplate>();
   ImGui::Text("Tooled for: %s",
               targetPrefab.is_valid() ? targetPrefab.name().c_str() : "None");
-
+  flecs::entity targetStorage = entity.target<ManufacturingLineStorage>();
+  ImGui::Text("Stored to: %s ", targetStorage.is_valid()
+                                    ? targetStorage.parent().name().c_str()
+                                    : "Here");
+  ImGui::SameLine();
+  if (ImGui::SmallButton(targetStorage.is_valid() ? "Clear" : "Set")) {
+    if (targetStorage.is_valid()) {
+      entity.remove<ManufacturingLineStorage>();
+    } else {
+      // TODO: Implement - use prefab?
+    }
+  }
   ImGui::Separator();
 
   // Settings
@@ -127,6 +138,16 @@ void drawManufacturingSection(flecs::entity &entity) {
         "If enabled, once the current manufacturing effort is complete, a "
         "new rocket of the same model will automatically be added to the line "
         "to be constructed. ");
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+  ImGui::Checkbox("Auto Store", &manufacturing.auto_store);
+  if (ImGui::BeginItemTooltip()) {
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+    ImGui::TextUnformatted(
+        "If enabled, once the current manufacturing effort is complete, "
+        "the completed rocket will be automatically moved to the selected "
+        "storage ");
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
   }
@@ -229,16 +250,12 @@ void movePopup(flecs::entity &rocket) {
 
   if (ImGui::BeginCombo("##StorageCombo", display.c_str())) {
     storageFacilities.each([&](flecs::entity s) {
-      if (s == source) {
-        ImGui::BeginDisabled();
-      }
+      ImGui::BeginDisabled(s == source);
       if (ImGui::Selectable(s.parent().name().c_str(), destination == s)) {
         destination = s;
         display = s.parent().name();
       }
-      if (s == source) {
-        ImGui::EndDisabled();
-      }
+      ImGui::EndDisabled();
     });
     ImGui::EndCombo();
   }

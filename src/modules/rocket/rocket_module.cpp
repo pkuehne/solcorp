@@ -23,7 +23,6 @@ uint32_t Rocket::max_id = 1;
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketModule::RocketModule(flecs::world &world) {
-  spdlog::debug("Loading RocketModule");
 
   world.import <BaseModule>();
   world.import <StatsModule>();

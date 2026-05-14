@@ -45,7 +45,9 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Facility>();
   world.component<Manufacturing>()
       .member("max_weight", &Manufacturing::max_weight)
-      .member("available_effort", &Manufacturing::available_effort);
+      .member("available_effort", &Manufacturing::available_effort)
+      .member("auto_build_next", &Manufacturing::auto_build_next)
+      .member("auto_store", &Manufacturing::auto_store);
   world.component<ManufacturingLineTemplate>();
   world.component<ManufacturingLineStorage>();
   world.component<AutoBuildBlocked>();
@@ -81,7 +83,9 @@ SiteModule::SiteModule(flecs::world &world) {
   register_component_lua<Manufacturing>(
       world, "Manufacturing", [](LuaFieldBuilder<Manufacturing> &b) {
         b.field<&Manufacturing::max_weight>("max_weight")
-            .field<&Manufacturing::available_effort>("available_effort");
+            .field<&Manufacturing::available_effort>("available_effort")
+            .field<&Manufacturing::auto_build_next>("auto_build_next")
+            .field<&Manufacturing::auto_store>("auto_store");
       });
 
   // Register Systems
@@ -109,6 +113,11 @@ SiteModule::SiteModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemAutoStartNextBuild);
+  world.system<const Manufacturing>("Auto Store Built Rocket")
+      .with<ManufacturingLineStorage>(flecs::Wildcard)
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each(systemAutoStoreBuiltRocket);
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
@@ -294,6 +303,40 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
     action.execute(world);
   } else if (!manufacturingE.has<AutoBuildBlocked>()) {
     manufacturingE.add<AutoBuildBlocked>();
+    instantiateBuildingNotification(world, manufacturingE, result.message);
+  }
+}
+
+void systemAutoStoreBuiltRocket(flecs::entity manufacturingE,
+                                const Manufacturing &manufacturing) {
+  if (!manufacturing.auto_store) {
+    return;
+  }
+
+  flecs::entity rocket;
+  manufacturingE.children([&](flecs::entity child) {
+    if (child.has<Rocket>() &&
+        child.get<Rocket>().state == RocketStateId::Stored) {
+      rocket = child;
+    }
+  });
+  if (!rocket.is_alive()) {
+    return;
+  }
+
+  flecs::entity storageE = manufacturingE.target<ManufacturingLineStorage>();
+  if (!storageE.is_valid()) {
+    return;
+  }
+
+  auto world = manufacturingE.world();
+  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{storageE}, 1};
+  auto result = action.validate(world);
+  if (result.ok) {
+    manufacturingE.remove<AutoStoreBlocked>();
+    action.execute(world);
+  } else if (!manufacturingE.has<AutoStoreBlocked>()) {
+    manufacturingE.add<AutoStoreBlocked>();
     instantiateBuildingNotification(world, manufacturingE, result.message);
   }
 }
