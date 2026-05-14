@@ -28,7 +28,13 @@ struct Facility {};
 struct Manufacturing {
   uint32_t max_weight = 1000;
   uint32_t available_effort = 50;
+  bool auto_build_next = false;
 };
+
+/// @brief Which rocket prefab is being built here, if any
+struct ManufacturingLineTemplate {};
+/// @brief Which storage completed rockets are being stored in, if any
+struct ManufacturingLineStorage {};
 
 /// @brief For rockets and payloads
 struct Storage {
@@ -67,6 +73,8 @@ void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);
 void systemBuildingUpdateManufacuringProgress(flecs::entity, EffortRequired &,
                                               const Manufacturing &);
+void systemAutoStartNextBuild(flecs::entity manufacturingE,
+                              const Manufacturing &);
 
 struct SiteModule {
 public:

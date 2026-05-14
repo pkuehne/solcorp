@@ -11,6 +11,7 @@
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "modules/window/building_detail_window.h"
+#include "modules/rocket/actions.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include <spdlog/spdlog.h>
@@ -45,6 +46,8 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Manufacturing>()
       .member("max_weight", &Manufacturing::max_weight)
       .member("available_effort", &Manufacturing::available_effort);
+  world.component<ManufacturingLineTemplate>();
+  world.component<ManufacturingLineStorage>();
   world.component<Storage>().member("max_storage", &Storage::max_storage);
   world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
@@ -99,6 +102,12 @@ SiteModule::SiteModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateManufacuringProgress);
+
+  world.system<const Manufacturing>("Auto Start Next Build")
+      .with<ManufacturingLineTemplate>(flecs::Wildcard)
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each(systemAutoStartNextBuild);
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
@@ -250,5 +259,34 @@ void systemBuildingUpdateManufacuringProgress(
     effort.remaining = 0;
   } else {
     effort.remaining -= manufacturing.available_effort;
+  }
+}
+
+void systemAutoStartNextBuild(flecs::entity manufacturingE,
+                              const Manufacturing &manufacturing) {
+  if (!manufacturing.auto_build_next) {
+    return;
+  }
+
+  bool line_busy = false;
+  manufacturingE.children([&](flecs::entity child) {
+    if (child.has<Rocket>()) {
+      line_busy = true;
+    }
+  });
+  if (line_busy) {
+    return;
+  }
+
+  flecs::entity prefabE = manufacturingE.target<ManufacturingLineTemplate>();
+  if (!prefabE.is_valid()) {
+    return;
+  }
+
+  auto world = manufacturingE.world();
+  int64_t cost = computeRocketPrefabBuildCost(prefabE);
+  RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE}, cost};
+  if (action.validate(world)) {
+    action.execute(world);
   }
 }

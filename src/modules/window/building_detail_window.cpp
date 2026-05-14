@@ -13,6 +13,7 @@
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <flecs/addons/cpp/entity.hpp>
 #include <modules/simulation/simulation.h>
 
 void drawManufacturingSection(flecs::entity &entity);
@@ -92,7 +93,6 @@ void drawManufacturingSection(flecs::entity &entity) {
       e = ch;
     }
   });
-  ImGui::PushID(std::to_string(entity.id()).c_str());
 
   if (e.is_valid()) {
     // There is a rocket on the line
@@ -112,7 +112,24 @@ void drawManufacturingSection(flecs::entity &entity) {
       showRocketPrefabWindow(entity);
     }
   }
-  ImGui::PopID();
+  flecs::entity targetPrefab = entity.target<ManufacturingLineTemplate>();
+  ImGui::Text("Tooled for: %s",
+              targetPrefab.is_valid() ? targetPrefab.name().c_str() : "None");
+
+  ImGui::Separator();
+
+  // Settings
+  auto &manufacturing = entity.get_mut<Manufacturing>();
+  ImGui::Checkbox("Auto Build", &manufacturing.auto_build_next);
+  if (ImGui::BeginItemTooltip()) {
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+    ImGui::TextUnformatted(
+        "If enabled, once the current manufacturing effort is complete, a "
+        "new rocket of the same model will automatically be added to the line "
+        "to be constructed. ");
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
 }
 
 void drawStorageSection(flecs::entity &entity) {
