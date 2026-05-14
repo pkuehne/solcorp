@@ -75,11 +75,25 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
     line.add<ManufacturingLineTemplate>(prefab);
     world.get_mut<Company>().balance = 0;
 
-    WHEN("systemAutoStartNextBuild runs") {
+    WHEN("systemAutoStartNextBuild runs once") {
       systemAutoStartNextBuild(line, line.get<Manufacturing>());
+
+      THEN("the line is marked as blocked") {
+        CHECK(line.has<AutoBuildBlocked>());
+      }
 
       THEN("no rocket is started") {
         CHECK(countRocketChildren(line) == 0);
+      }
+    }
+
+    WHEN("systemAutoStartNextBuild runs repeatedly") {
+      systemAutoStartNextBuild(line, line.get<Manufacturing>());
+      systemAutoStartNextBuild(line, line.get<Manufacturing>());
+      systemAutoStartNextBuild(line, line.get<Manufacturing>());
+
+      THEN("the line remains blocked without spawning duplicate notifications") {
+        CHECK(line.has<AutoBuildBlocked>());
       }
     }
   }
@@ -107,6 +121,27 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
 
       THEN("the cost is deducted from the company balance") {
         CHECK(world.get<Company>().balance < 10'000'000);
+      }
+
+      THEN("the AutoBuildBlocked tag is cleared") {
+        CHECK(!line.has<AutoBuildBlocked>());
+      }
+    }
+  }
+
+  GIVEN("a line that was previously blocked, and funds are now available") {
+    auto prefab = world.prefab().add<Rocket>();
+    auto line = makeLine(true);
+    line.add<ManufacturingLineTemplate>(prefab);
+    line.add<AutoBuildBlocked>();
+    world.get_mut<Company>().balance = 10'000'000;
+
+    WHEN("systemAutoStartNextBuild runs") {
+      systemAutoStartNextBuild(line, line.get<Manufacturing>());
+
+      THEN("a rocket is started and the blocked tag is cleared") {
+        CHECK(countRocketChildren(line) == 1);
+        CHECK(!line.has<AutoBuildBlocked>());
       }
     }
   }

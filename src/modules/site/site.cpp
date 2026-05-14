@@ -7,11 +7,11 @@
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
+#include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "modules/window/building_detail_window.h"
-#include "modules/rocket/actions.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include <spdlog/spdlog.h>
@@ -48,6 +48,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("available_effort", &Manufacturing::available_effort);
   world.component<ManufacturingLineTemplate>();
   world.component<ManufacturingLineStorage>();
+  world.component<AutoBuildBlocked>();
   world.component<Storage>().member("max_storage", &Storage::max_storage);
   world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
@@ -285,8 +286,14 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
 
   auto world = manufacturingE.world();
   int64_t cost = computeRocketPrefabBuildCost(prefabE);
-  RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE}, cost};
-  if (action.validate(world)) {
+  RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
+                           cost};
+  auto result = action.validate(world);
+  if (result.ok) {
+    manufacturingE.remove<AutoBuildBlocked>();
     action.execute(world);
+  } else if (!manufacturingE.has<AutoBuildBlocked>()) {
+    manufacturingE.add<AutoBuildBlocked>();
+    instantiateBuildingNotification(world, manufacturingE, result.message);
   }
 }

@@ -35,6 +35,8 @@ struct Manufacturing {
 struct ManufacturingLineTemplate {};
 /// @brief Which storage completed rockets are being stored in, if any
 struct ManufacturingLineStorage {};
+/// @brief Set when auto_build_next fails validation; cleared when a build starts
+struct AutoBuildBlocked {};
 
 /// @brief For rockets and payloads
 struct Storage {
