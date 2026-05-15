@@ -158,6 +158,10 @@ RocketModule::RocketModule(flecs::world &world) {
         auto world = it.world();
         world.entity("Contracts");
       });
+  world.system("Create Rocket Build Notification Category")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateRocketBuildCategory);
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)
@@ -261,6 +265,12 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 
   rocketE.destruct();
   planE.destruct();
+}
+
+void systemCreateRocketBuildCategory(flecs::iter &it) {
+  auto world = it.world();
+  auto categories = world.entity("NotificationCategories");
+  world.entity("Rocket Build").child_of(categories);
 }
 
 void systemCreateRocketPrefabs(flecs::iter &it) {

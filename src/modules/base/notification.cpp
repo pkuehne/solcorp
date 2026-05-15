@@ -47,11 +47,15 @@ std::string_view to_string(NotificationSeverity severity) {
   return "Unknown";
 }
 
-void systemCreateNotificationNodes(flecs::iter &it) {
-  auto world = it.world();
+void createNotificationNodes(flecs::world &world) {
   world.entity("Notifications");
   auto categories = world.entity("NotificationCategories");
   world.entity("NotificationCategories::None").child_of(categories);
+}
+
+void systemCreateNotificationNodes(flecs::iter &it) {
+  auto world = it.world();
+  createNotificationNodes(world);
 }
 
 flecs::entity instantiateNotification(flecs::world &world,
@@ -69,7 +73,7 @@ flecs::entity instantiateNotification(flecs::world &world,
                                  : world.entity("NotificationCategories::None");
   e.add<NotificationCategory>(category);
 
-  spdlog::debug("New notification: {} - {} ({} @ {})", title, text,
+  spdlog::debug("Notification: {} - {} ({} @ {})", title, text,
                 category.name().c_str(), to_string(severity));
   return e;
 }

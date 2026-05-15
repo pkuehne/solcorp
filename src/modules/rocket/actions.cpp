@@ -1,6 +1,7 @@
 #include "actions.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
+#include "modules/base/notification.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_module.h"
@@ -257,6 +258,12 @@ void RocketCompleteBuildAction::execute(flecs::world &world) {
   rocket.remove<EffortRequired>();
   rocket.remove<RocketTargetState>();
   rocket.remove<RocketStateTransitionBlocked>();
+
+  instantiateNotification(world, "New rocket built",
+                          std::format("{} has been built and is now in storage",
+                                      rocket.name().c_str()),
+                          world.lookup("NotificationCategories::Rocket Build"),
+                          NotificationSeverity::Low);
 }
 
 void RocketCompleteBuildAction::block(flecs::world &world) {
