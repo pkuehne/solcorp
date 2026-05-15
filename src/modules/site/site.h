@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <flecs.h>
 
+struct Rocket;
+
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
 
@@ -82,7 +84,7 @@ void systemBuildingUpdateManufacuringProgress(flecs::entity, EffortRequired &,
                                               const Manufacturing &);
 void systemAutoStartNextBuild(flecs::entity manufacturingE,
                               const Manufacturing &);
-void systemAutoStoreBuiltRocket(flecs::entity manufacturingE,
+void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &,
                                 const Manufacturing &);
 
 struct SiteModule {

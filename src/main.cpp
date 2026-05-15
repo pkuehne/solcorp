@@ -26,8 +26,8 @@ int main() {
   world.import <StatsModule>();
   world.import <SimulationModule>();
   world.import <WindowModule>();
-  world.import <SiteModule>();
   world.import <RocketModule>();
+  world.import <SiteModule>();
   world.import <StaffModule>();
 
   // Main Loop

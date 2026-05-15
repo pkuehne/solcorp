@@ -51,6 +51,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<ManufacturingLineTemplate>();
   world.component<ManufacturingLineStorage>();
   world.component<AutoBuildBlocked>();
+  world.component<AutoStoreBlocked>();
   world.component<Storage>().member("max_storage", &Storage::max_storage);
   world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
@@ -113,8 +114,14 @@ SiteModule::SiteModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemAutoStartNextBuild);
-  world.system<const Manufacturing>("Auto Store Built Rocket")
+  world.system<Rocket, const Manufacturing>("Auto Store Built Rocket")
+      .term_at(1)
+      .src()
+      .up(flecs::ChildOf)
       .with<ManufacturingLineStorage>(flecs::Wildcard)
+      .src()
+      .up(flecs::ChildOf)
+      .without<EffortRequired>()
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemAutoStoreBuiltRocket);
@@ -304,39 +311,37 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
   } else if (!manufacturingE.has<AutoBuildBlocked>()) {
     manufacturingE.add<AutoBuildBlocked>();
     instantiateBuildingNotification(world, manufacturingE, result.message);
+    spdlog::debug("Auto-build blocked for manufacturing line {}: {}",
+                  manufacturingE.name().c_str(), result.message);
   }
 }
 
-void systemAutoStoreBuiltRocket(flecs::entity manufacturingE,
+void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
                                 const Manufacturing &manufacturing) {
   if (!manufacturing.auto_store) {
     return;
   }
-
-  flecs::entity rocket;
-  manufacturingE.children([&](flecs::entity child) {
-    if (child.has<Rocket>() &&
-        child.get<Rocket>().state == RocketStateId::Stored) {
-      rocket = child;
-    }
-  });
-  if (!rocket.is_alive()) {
+  if (rocket.state != RocketStateId::Stored) {
     return;
   }
 
-  flecs::entity storageE = manufacturingE.target<ManufacturingLineStorage>();
+  flecs::entity lineE = rocketE.parent();
+  flecs::entity storageE = lineE.target<ManufacturingLineStorage>();
   if (!storageE.is_valid()) {
     return;
   }
 
-  auto world = manufacturingE.world();
-  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{storageE}, 1};
+  auto world = rocketE.world();
+  RocketMoveAction action{RocketEntity{rocketE}, DestinationEntity{storageE},
+                          1};
   auto result = action.validate(world);
   if (result.ok) {
-    manufacturingE.remove<AutoStoreBlocked>();
+    lineE.remove<AutoStoreBlocked>();
     action.execute(world);
-  } else if (!manufacturingE.has<AutoStoreBlocked>()) {
-    manufacturingE.add<AutoStoreBlocked>();
-    instantiateBuildingNotification(world, manufacturingE, result.message);
+  } else if (!lineE.has<AutoStoreBlocked>()) {
+    lineE.add<AutoStoreBlocked>();
+    instantiateBuildingNotification(world, lineE, result.message);
+    spdlog::debug("Auto-store blocked for rocket {}: {}",
+                  rocketE.name().c_str(), result.message);
   }
 }

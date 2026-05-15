@@ -30,6 +30,8 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   }
   auto launchPrepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  // TODO(#95): Remove this when refactoring, rockets shouldn't know about
+  // launchpads
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
     auto launch = p.get<LaunchPlan>();
@@ -254,6 +256,7 @@ void RocketCompleteBuildAction::execute(flecs::world &world) {
   rocket.get_mut<Rocket>().state = RocketStateId::Stored;
   rocket.remove<EffortRequired>();
   rocket.remove<RocketTargetState>();
+  rocket.remove<RocketStateTransitionBlocked>();
 }
 
 void RocketCompleteBuildAction::block(flecs::world &world) {
@@ -274,8 +277,11 @@ ValidationResult RocketMoveAction::validate(const flecs::world &) const {
     return ValidationResult::Fail("Rocket is not valid");
   }
   if (rocket.has<Rocket>() &&
-      rocket.get<Rocket>().state == RocketStateId::UnderConstruction) {
-    return ValidationResult::Fail("Rocket is under construction");
+      rocket.get<Rocket>().state != RocketStateId::Stored) {
+    return ValidationResult::Fail("Rocket is not stored already");
+  }
+  if (rocket.has<EffortRequired>()) {
+    return ValidationResult::Fail("Rocket has unfinished effort");
   }
   if (!destination.is_valid()) {
     return ValidationResult::Fail("Destination is not valid");
@@ -292,8 +298,8 @@ void RocketMoveAction::execute(flecs::world &world) {
     return;
   }
   rocket.add<RocketTargetParent>(destination);
-  rocket.ensure<RocketTargetState>().target = RocketStateId::Stored;
   rocket.get_mut<Rocket>().state = RocketStateId::Moving;
+  rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
   rocket.set<DurationRequired>({.remaining = days, .total = days});
 }
 
@@ -328,6 +334,7 @@ void RocketCompleteMoveAction::execute(flecs::world &world) {
   rocket.remove<RocketTargetState>();
   rocket.remove<RocketTargetParent>();
   rocket.remove<DurationRequired>();
+  rocket.remove<RocketStateTransitionBlocked>();
 }
 
 void RocketCompleteMoveAction::block(flecs::world &world) {

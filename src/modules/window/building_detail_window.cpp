@@ -235,13 +235,13 @@ void drawRocketButtons(flecs::entity &rocket) {
   auto site = findAncestorWith<Site>(currentStorage);
   if (site.is_valid()) {
     constexpr uint8_t moveDurationDays = 2;
-    storagePickerPopup(
-        "Move Rocket", openPopup, world, currentStorage,
-        [&](flecs::entity dest) {
-          RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{dest},
-                                  moveDurationDays};
-          action.execute(world);
-        });
+    storagePickerPopup("Move Rocket", openPopup, world, currentStorage,
+                       [&](flecs::entity dest) {
+                         RocketMoveAction action{RocketEntity{rocket},
+                                                 DestinationEntity{dest},
+                                                 moveDurationDays};
+                         action.execute(world);
+                       });
   }
 }
 

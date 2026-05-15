@@ -209,7 +209,7 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
 
     WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket);
+      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("The rocket is blocked and remains under construction") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
@@ -228,7 +228,7 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
 
     WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket);
+      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("The rocket transitions to Stored and EffortRequired is removed") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
@@ -243,7 +243,7 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.set<EffortRequired>({.remaining = 0, .total = 300});
 
     WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket);
+      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("Nothing happens — the system ignores states other than "
            "UnderConstruction and Moving") {
@@ -264,7 +264,7 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.set<DurationRequired>({.remaining = 3, .total = 5});
 
     WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket);
+      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("The rocket is blocked and remains at its current location") {
         CHECK(rocket.parent() == source);
@@ -287,7 +287,7 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.set<DurationRequired>({.remaining = 0, .total = 5});
 
     WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket);
+      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("The rocket is reparented to its destination and move markers are "
            "cleared") {

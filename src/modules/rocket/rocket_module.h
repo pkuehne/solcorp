@@ -17,6 +17,7 @@ struct LaunchPlan {
 };
 
 enum class RocketStateId : uint8_t {
+  Invalid = 0,
   UnderConstruction,
   Stored,
   Moving,
@@ -95,7 +96,7 @@ struct ContractTargetOrbit {}; ///< Which orbit is targeted by a contract
 // Systems
 void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemCreateRocketPrefabs(flecs::iter &);
-void systemRocketCompleteAction(flecs::entity);
+void systemRocketCompleteAction(flecs::entity, Rocket &);
 
 struct RocketModule {
   RocketModule(flecs::world &);

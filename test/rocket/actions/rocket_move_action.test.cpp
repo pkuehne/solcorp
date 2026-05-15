@@ -72,7 +72,7 @@ SCENARIO("RocketMoveAction", "[action]") {
 
       THEN("The validation fails") {
         CHECK(!result);
-        CHECK(result.message == "Rocket is under construction");
+        CHECK(result.message == "Rocket is not stored already");
       }
     }
   }
