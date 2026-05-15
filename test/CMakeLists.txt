@@ -8,6 +8,7 @@ fetchcontent_makeavailable(catch2)
 add_executable(unit_test
   main.cpp
   base/find_ancestor_with.test.cpp
+  base/notification.test.cpp
   engine/apply_parent_transform.test.cpp
   lua/entity/lua_push_entity.test.cpp
   lua/entity/lua_check_entity.test.cpp

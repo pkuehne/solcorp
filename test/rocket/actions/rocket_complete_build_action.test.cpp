@@ -1,3 +1,4 @@
+#include "modules/base/base.h"
 #include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
@@ -7,6 +8,7 @@
 
 SCENARIO("RocketCompleteBuildAction", "[action]") {
   flecs::world world;
+  world.import <BaseModule>();
   world.import <SimulationModule>();
   world.import <WindowModule>();
   world.import <RocketModule>();

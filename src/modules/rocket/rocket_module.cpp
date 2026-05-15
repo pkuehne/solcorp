@@ -6,6 +6,8 @@
 #include "modules/base/action.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
+#include "modules/base/notification.h"
+
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
@@ -158,6 +160,10 @@ RocketModule::RocketModule(flecs::world &world) {
         auto world = it.world();
         world.entity("Contracts");
       });
+  world.system("Create Rocket Build Notification Category")
+      .kind(flecs::OnStart)
+      .immediate()
+      .run(systemCreateRocketBuildCategory);
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)
@@ -234,18 +240,25 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
             "that failed",
             contractE.name().c_str(), payload.name().c_str());
         contract.failed = true;
+        instantiateNotification(
+            world, "Launch Failure",
+            fmt::format("{} was launched on {}, which failed."
+                        " Contract {} is failed.",
+                        payload.name().c_str(), rocketE.name().c_str(),
+                        contractE.name().c_str()));
       } else {
         contract.failed = false;
         company.balance += static_cast<int64_t>(contract.completion_payment);
         total_payment += contract.completion_payment;
+        instantiateNotification(world, "Payload Launched",
+                                fmt::format("{} was launched on {} to {}",
+                                            payload.name().c_str(),
+                                            rocketE.name().c_str(),
+                                            plan.target_orbit.name().c_str()));
       }
       contract.status = ContractStatus::Closed;
 
       payload.destruct();
-      // TODO: We should probably also instantiate a notification for the
-      // payload being launched, but that requires some refactoring of the
-      // notification system to allow for multiple notifications in the same
-      // tick
     }
   }
 
@@ -258,9 +271,17 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
                      : std::format("{} launched successfully (${})",
                                    planE.name().c_str(), total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
-
+  instantiateNotification(world, "Launch Complete", notification,
+                          world.lookup("NotificationCategories::Rocket Build"),
+                          rocket_failure ? NotificationSeverity::High
+                                         : NotificationSeverity::Low);
   rocketE.destruct();
   planE.destruct();
+}
+
+void systemCreateRocketBuildCategory(flecs::iter &it) {
+  auto world = it.world();
+  createNotificationCategory(world, "Rocket Build");
 }
 
 void systemCreateRocketPrefabs(flecs::iter &it) {

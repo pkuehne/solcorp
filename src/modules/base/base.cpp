@@ -1,5 +1,6 @@
 #include "base.h"
 #include "modules/lua/lua.h"
+#include "notification.h"
 #include <string>
 
 flecs::entity PostStartPhase;
@@ -71,4 +72,6 @@ BaseModule::BaseModule(flecs::world &world) {
   simTimer.stop();
   world.set<Simulation>(Simulation{simTimer});
   world.set<Game>({});
+
+  registerNotificationComponents(world);
 }
