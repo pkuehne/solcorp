@@ -23,7 +23,6 @@ uint32_t Rocket::max_id = 1;
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
 RocketModule::RocketModule(flecs::world &world) {
-  spdlog::debug("Loading RocketModule");
 
   world.import <BaseModule>();
   world.import <StatsModule>();
@@ -38,6 +37,7 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<RocketStateId>()
+      .constant("Invalid", RocketStateId::Invalid)
       .constant("UnderConstruction", RocketStateId::UnderConstruction)
       .constant("Stored", RocketStateId::Stored)
       .constant("Moving", RocketStateId::Moving)
@@ -102,6 +102,7 @@ RocketModule::RocketModule(flecs::world &world) {
       });
   register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
     b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("Invalid", RocketStateId::Invalid)
         .value("Stored", RocketStateId::Stored)
         .value("Moving", RocketStateId::Moving)
         .value("Assigned", RocketStateId::Assigned)
@@ -174,8 +175,10 @@ RocketModule::RocketModule(flecs::world &world) {
         registerWindow("Contracts Window", drawContractsWindow, world)
             .set<ContractsWindow>({});
       });
-  world.system<>("Rocket Complete State Transition Action")
+  world.system<Rocket>("Rocket Complete State Transition Action")
+      .immediate()
       .tick_source(sim.speed)
+      .with<RocketTargetState>()
       .with<DurationRequired>()
       .oper(flecs::Or)
       .with<EffortRequired>()
@@ -281,11 +284,11 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
   world.prefab("Rocket").child_of(core_node).add<Rocket>();
 }
 
-void systemRocketCompleteAction(flecs::entity e) {
+void systemRocketCompleteAction(flecs::entity e, Rocket &rocket) {
   auto world = e.world();
   std::unique_ptr<IAction> action;
 
-  switch (e.get<Rocket>().state) {
+  switch (rocket.state) {
   case RocketStateId::UnderConstruction:
     action = std::make_unique<RocketCompleteBuildAction>(e);
     break;
@@ -298,7 +301,7 @@ void systemRocketCompleteAction(flecs::entity e) {
 
   if (!action) {
     spdlog::error("No completion action found for rocket {} in state: {}",
-                  e.name().c_str(), static_cast<int>(e.get<Rocket>().state));
+                  e.name().c_str(), static_cast<int>(rocket.state));
     return;
   }
   if (action->validate(world)) {

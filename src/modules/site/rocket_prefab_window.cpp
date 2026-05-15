@@ -5,6 +5,7 @@
 #include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
+#include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "widgets/widgets.h"
@@ -119,6 +120,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
                 std::format("Build '{}'", prefabE.name().c_str()).c_str()},
             ButtonTooltip{"Build this rocket"}, result.message)) {
       action.execute(world);
+      manufacturingE.add<ManufacturingLineTemplate>(prefabE);
       hideWindow(world, "Rocket Prefab Window");
     }
 

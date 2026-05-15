@@ -13,13 +13,17 @@
 #include "spdlog/spdlog.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <flecs/addons/cpp/entity.hpp>
+#include <functional>
 #include <modules/simulation/simulation.h>
 
 void drawManufacturingSection(flecs::entity &entity);
 void drawStorageSection(flecs::entity &entity);
 void drawLaunchpadSection(flecs::entity &entity);
 void drawRocketButtons(flecs::entity &rocket);
-void movePopup(flecs::entity &rocket);
+void storagePickerPopup(const char *popupId, bool open, flecs::world &world,
+                        flecs::entity excluded,
+                        const std::function<void(flecs::entity)> &onConfirm);
 
 void showBuildingDetailWindow(const flecs::entity &entity) {
   spdlog::debug("Showing BuildingDetailWindow");
@@ -92,7 +96,6 @@ void drawManufacturingSection(flecs::entity &entity) {
       e = ch;
     }
   });
-  ImGui::PushID(std::to_string(entity.id()).c_str());
 
   if (e.is_valid()) {
     // There is a rocket on the line
@@ -112,11 +115,52 @@ void drawManufacturingSection(flecs::entity &entity) {
       showRocketPrefabWindow(entity);
     }
   }
-  ImGui::PopID();
+  flecs::entity targetPrefab = entity.target<ManufacturingLineTemplate>();
+  ImGui::Text("Tooled for: %s",
+              targetPrefab.is_valid() ? targetPrefab.name().c_str() : "None");
+  flecs::entity targetStorage = entity.target<ManufacturingLineStorage>();
+  ImGui::Text("Stored to: %s ", targetStorage.is_valid()
+                                    ? targetStorage.parent().name().c_str()
+                                    : "Here");
+  ImGui::SameLine();
+  bool openSetStorage = false;
+  if (ImGui::SmallButton(targetStorage.is_valid() ? "Clear" : "Set")) {
+    if (targetStorage.is_valid()) {
+      entity.remove<ManufacturingLineStorage>();
+    } else {
+      openSetStorage = true;
+    }
+  }
+  storagePickerPopup(
+      "Set Storage", openSetStorage, world, flecs::entity(),
+      [&](flecs::entity dest) { entity.add<ManufacturingLineStorage>(dest); });
+  ImGui::Separator();
+
+  // Settings
+  auto &manufacturing = entity.get_mut<Manufacturing>();
+  ImGui::Checkbox("Auto Build", &manufacturing.auto_build_next);
+  if (ImGui::BeginItemTooltip()) {
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+    ImGui::TextUnformatted(
+        "If enabled, once the current manufacturing effort is complete, a "
+        "new rocket of the same model will automatically be added to the line "
+        "to be constructed. ");
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+  ImGui::Checkbox("Auto Store", &manufacturing.auto_store);
+  if (ImGui::BeginItemTooltip()) {
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+    ImGui::TextUnformatted(
+        "If enabled, once the current manufacturing effort is complete, "
+        "the completed rocket will be automatically moved to the selected "
+        "storage ");
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
 }
 
 void drawStorageSection(flecs::entity &entity) {
-  flecs::world world = entity.world();
   entity.children([](flecs::entity rocket) {
     if (!rocket.has<Rocket>()) {
       return;
@@ -167,13 +211,10 @@ void drawRocketButtons(flecs::entity &rocket) {
     issue = "Rocket is not available";
   }
 
-  if (ActionButton(
-          ButtonLabel{.text = "Move"},
-          ButtonTooltip{.text =
-                            "Move the rocket to another storage at this site"},
-          issue)) {
-    ImGui::OpenPopup("Move Rocket");
-  }
+  bool openPopup = ActionButton(
+      ButtonLabel{.text = "Move"},
+      ButtonTooltip{.text = "Move the rocket to another storage at this site"},
+      issue);
   ImGui::SameLine();
 
   auto target = rocket.target<LaunchingOn>();
@@ -189,61 +230,66 @@ void drawRocketButtons(flecs::entity &rocket) {
       showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
     }
   }
-  movePopup(rocket);
+  auto world = rocket.world();
+  auto currentStorage = rocket.parent();
+  auto site = findAncestorWith<Site>(currentStorage);
+  if (site.is_valid()) {
+    constexpr uint8_t moveDurationDays = 2;
+    storagePickerPopup("Move Rocket", openPopup, world, currentStorage,
+                       [&](flecs::entity dest) {
+                         RocketMoveAction action{RocketEntity{rocket},
+                                                 DestinationEntity{dest},
+                                                 moveDurationDays};
+                         action.execute(world);
+                       });
+  }
 }
 
-void movePopup(flecs::entity &rocket) {
-  if (!ImGui::BeginPopupModal("Move Rocket")) {
-    return;
+void storagePickerPopup(const char *popupId, bool open, flecs::world &world,
+                        flecs::entity excluded,
+                        const std::function<void(flecs::entity)> &onConfirm) {
+  static flecs::entity destination;
+  static std::string display = "<Select one>";
+  if (open) {
+    destination = flecs::entity();
+    display = "<Select one>";
+    ImGui::OpenPopup(popupId);
   }
-  auto world = rocket.world();
-  auto source = findAncestorWith<Site>(rocket.parent());
-  if (!source.is_valid()) {
-    spdlog::error("Error: Could not find Site for this rocket");
+  if (!ImGui::BeginPopupModal(popupId)) {
     return;
   }
   ImGui::Text("Where to?");
   ImGui::SameLine();
-  static flecs::entity destination;
-  static std::string display = "<Select one>";
 
   auto storageFacilities =
       world.query_builder().with<Storage>().with<Site>().up().build();
 
   if (ImGui::BeginCombo("##StorageCombo", display.c_str())) {
     storageFacilities.each([&](flecs::entity s) {
-      if (s == source) {
-        ImGui::BeginDisabled();
-      }
+      ImGui::BeginDisabled(excluded.is_valid() && s == excluded);
       if (ImGui::Selectable(s.parent().name().c_str(), destination == s)) {
         destination = s;
         display = s.parent().name();
       }
-      if (s == source) {
-        ImGui::EndDisabled();
-      }
+      ImGui::EndDisabled();
     });
     ImGui::EndCombo();
   }
   ImGui::Separator();
-  auto closePopup = [&]() {
-    // Reset variables when closing popup
-    destination = flecs::entity();
-    display = "<Select one>";
-    ImGui::CloseCurrentPopup();
-  };
   if (ImGui::Button("Cancel")) {
-    closePopup();
+    ImGui::CloseCurrentPopup();
   }
   ImGui::SameLine();
-  constexpr uint8_t moveDurationDays = 2;
-  RocketMoveAction action{RocketEntity{rocket}, DestinationEntity{destination},
-                          moveDurationDays};
+  std::string issue;
+  if (!destination.is_valid()) {
+    issue = "Select a destination";
+  } else if (destination == excluded) {
+    issue = "Already here";
+  }
   if (ActionButton(ButtonLabel{.text = "Ok"},
-                   ButtonTooltip{.text = "Move the rocket to the new location"},
-                   action.validate(world).message)) {
-    action.execute(world);
-    closePopup();
+                   ButtonTooltip{.text = "Confirm selection"}, issue)) {
+    onConfirm(destination);
+    ImGui::CloseCurrentPopup();
   }
   ImGui::EndPopup();
 }

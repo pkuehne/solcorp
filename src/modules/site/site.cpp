@@ -7,6 +7,7 @@
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
+#include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
@@ -44,7 +45,13 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Facility>();
   world.component<Manufacturing>()
       .member("max_weight", &Manufacturing::max_weight)
-      .member("available_effort", &Manufacturing::available_effort);
+      .member("available_effort", &Manufacturing::available_effort)
+      .member("auto_build_next", &Manufacturing::auto_build_next)
+      .member("auto_store", &Manufacturing::auto_store);
+  world.component<ManufacturingLineTemplate>();
+  world.component<ManufacturingLineStorage>();
+  world.component<AutoBuildBlocked>();
+  world.component<AutoStoreBlocked>();
   world.component<Storage>().member("max_storage", &Storage::max_storage);
   world.component<Office>().member("max_desks", &Office::max_desks);
   world.component<Launchpad>()
@@ -77,7 +84,9 @@ SiteModule::SiteModule(flecs::world &world) {
   register_component_lua<Manufacturing>(
       world, "Manufacturing", [](LuaFieldBuilder<Manufacturing> &b) {
         b.field<&Manufacturing::max_weight>("max_weight")
-            .field<&Manufacturing::available_effort>("available_effort");
+            .field<&Manufacturing::available_effort>("available_effort")
+            .field<&Manufacturing::auto_build_next>("auto_build_next")
+            .field<&Manufacturing::auto_store>("auto_store");
       });
 
   // Register Systems
@@ -99,6 +108,19 @@ SiteModule::SiteModule(flecs::world &world) {
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemBuildingUpdateManufacuringProgress);
+
+  world.system<const Manufacturing>("Auto Start Next Build")
+      .with<ManufacturingLineTemplate>(flecs::Wildcard)
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each(systemAutoStartNextBuild);
+  world.system<Rocket, const Manufacturing>("Auto Store Built Rocket")
+      .term_at(1)
+      .src()
+      .up(flecs::ChildOf)
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each(systemAutoStoreBuiltRocket);
 
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
@@ -250,5 +272,70 @@ void systemBuildingUpdateManufacuringProgress(
     effort.remaining = 0;
   } else {
     effort.remaining -= manufacturing.available_effort;
+  }
+}
+
+void systemAutoStartNextBuild(flecs::entity manufacturingE,
+                              const Manufacturing &manufacturing) {
+  if (!manufacturing.auto_build_next) {
+    return;
+  }
+
+  bool line_busy = false;
+  manufacturingE.children([&](flecs::entity child) {
+    if (child.has<Rocket>()) {
+      line_busy = true;
+    }
+  });
+  if (line_busy) {
+    return;
+  }
+
+  flecs::entity prefabE = manufacturingE.target<ManufacturingLineTemplate>();
+  if (!prefabE.is_valid()) {
+    return;
+  }
+
+  auto world = manufacturingE.world();
+  int64_t cost = computeRocketPrefabBuildCost(prefabE);
+  RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
+                           cost};
+  auto result = action.validate(world);
+  if (result.ok) {
+    manufacturingE.remove<AutoBuildBlocked>();
+    action.execute(world);
+  } else if (!manufacturingE.has<AutoBuildBlocked>()) {
+    manufacturingE.add<AutoBuildBlocked>();
+    instantiateBuildingNotification(world, manufacturingE, result.message);
+    spdlog::debug("Auto-build blocked for manufacturing line {}: {}",
+                  manufacturingE.name().c_str(), result.message);
+  }
+}
+
+void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
+                                const Manufacturing &manufacturing) {
+  if (!manufacturing.auto_store) {
+    return;
+  }
+  if (rocket.state != RocketStateId::Stored) {
+    return;
+  }
+
+  flecs::entity lineE = rocketE.parent();
+  flecs::entity storageE = lineE.target<ManufacturingLineStorage>();
+  // Validity will be checked in the action validation.
+
+  auto world = rocketE.world();
+  RocketMoveAction action{RocketEntity{rocketE}, DestinationEntity{storageE},
+                          1};
+  auto result = action.validate(world);
+  if (result.ok) {
+    lineE.remove<AutoStoreBlocked>();
+    action.execute(world);
+  } else if (!lineE.has<AutoStoreBlocked>()) {
+    lineE.add<AutoStoreBlocked>();
+    instantiateBuildingNotification(world, lineE, result.message);
+    spdlog::debug("Auto-store blocked for rocket {}: {}",
+                  rocketE.name().c_str(), result.message);
   }
 }

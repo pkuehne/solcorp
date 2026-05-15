@@ -51,6 +51,16 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
         CHECK(result.message == "Rocket does not have a valid target");
       }
     }
+
+    WHEN("block is called") {
+      complete.block(world);
+
+      THEN("RocketStateTransitionBlocked is set with the reason") {
+        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
+        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
+              "Rocket does not have a valid target");
+      }
+    }
   }
 
   GIVEN("A moving rocket with time remaining") {
@@ -90,6 +100,14 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
       }
     }
 
+    WHEN("block is called") {
+      complete.block(world);
+
+      THEN("RocketStateTransitionBlocked is not set") {
+        CHECK(!rocket.has<RocketStateTransitionBlocked>());
+      }
+    }
+
     WHEN("Executed") {
       complete.execute(world);
 
@@ -102,40 +120,23 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
       }
     }
   }
-}
 
-SCENARIO("RocketCompleteMoveAction Block", "[action]") {
-  flecs::world world;
-  world.import <SimulationModule>();
-  world.import <WindowModule>();
-  world.import <RocketModule>();
-
-  GIVEN("A rocket that can complete move") {
+  GIVEN("A completed move with a stale RocketStateTransitionBlocked marker") {
+    auto source = world.entity();
     auto destination = world.entity();
-    auto rocket = world.entity().add<Rocket>();
+    auto rocket = world.entity().add<Rocket>().child_of(source);
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
+    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     rocket.add<RocketTargetParent>(destination);
+    rocket.set<DurationRequired>({.remaining = 0, .total = 5});
+    rocket.set<RocketStateTransitionBlocked>({.reason = "stale"});
+    RocketCompleteMoveAction complete{rocket};
 
-    WHEN("block is called") {
-      RocketCompleteMoveAction{rocket}.block(world);
+    WHEN("Executed") {
+      complete.execute(world);
 
-      THEN("RocketStateTransitionBlocked is not set") {
+      THEN("RocketStateTransitionBlocked is cleared") {
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
-      }
-    }
-  }
-
-  GIVEN("A rocket missing move target") {
-    auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-
-    WHEN("block is called") {
-      RocketCompleteMoveAction{rocket}.block(world);
-
-      THEN("RocketStateTransitionBlocked is set with the reason") {
-        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
-        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
-              "Rocket does not have a valid target");
       }
     }
   }

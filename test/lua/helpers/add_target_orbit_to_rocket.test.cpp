@@ -1,6 +1,5 @@
 #include "modules/lua/helpers.h"
 #include "modules/rocket/rocket_module.h"
-#include "setup_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
