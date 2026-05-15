@@ -24,17 +24,34 @@ void registerNotificationComponents(flecs::world &world) {
   });
 }
 
-void systemCreateNotificationNodes(flecs::iter &it) {
-  auto world = it.world();
-  world.entity("Notifications");
-  world.entity("NotificationCategories");
-}
-
 void registerNotificationSystems(flecs::world &world) {
   world.system("Create Notification Nodes")
       .kind(flecs::OnStart)
       .immediate()
       .run(systemCreateNotificationNodes);
+}
+
+std::string_view to_string(NotificationSeverity severity) {
+  switch (severity) {
+  case NotificationSeverity::Low:
+    return "Low";
+  case NotificationSeverity::Medium:
+    return "Medium";
+  case NotificationSeverity::High:
+    return "High";
+  case NotificationSeverity::Important:
+    return "Important";
+  case NotificationSeverity::Critical:
+    return "Critical";
+  }
+  return "Unknown";
+}
+
+void systemCreateNotificationNodes(flecs::iter &it) {
+  auto world = it.world();
+  world.entity("Notifications");
+  auto categories = world.entity("NotificationCategories");
+  world.entity("NotificationCategories::None").child_of(categories);
 }
 
 flecs::entity instantiateNotification(flecs::world &world,
@@ -47,9 +64,12 @@ flecs::entity instantiateNotification(flecs::world &world,
                .set<Notification>(
                    {.title = title, .text = text, .severity = severity})
                .child_of(notificationsNode);
-  if (category.is_valid()) {
-    e.add<NotificationCategory>(category);
-  }
-  spdlog::debug("New notification: {} - {}", title, text);
+
+  category = category.is_valid() ? category
+                                 : world.entity("NotificationCategories::None");
+  e.add<NotificationCategory>(category);
+
+  spdlog::debug("New notification: {} - {} ({} @ {})", title, text,
+                category.name().c_str(), to_string(severity));
   return e;
 }
