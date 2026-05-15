@@ -1,3 +1,5 @@
+#include "modules/base/base.h"
+#include "modules/base/notification.h"
 #include "modules/engine/render.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
@@ -198,9 +200,11 @@ SCENARIO("systemLaunchRocket", "[rocket][system]") {
 
 SCENARIO("systemRocketCompleteAction", "[system]") {
   flecs::world world;
+  world.import <BaseModule>();
   world.import <SimulationModule>();
   world.import <WindowModule>();
   world.import <RocketModule>();
+  createNotificationNodes(world);
 
   GIVEN("A rocket under construction with effort still remaining") {
     auto rocket = world.entity().add<Rocket>();
