@@ -276,9 +276,12 @@ ValidationResult RocketMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (rocket.has<Rocket>() &&
-      rocket.get<Rocket>().state != RocketStateId::Stored) {
-    return ValidationResult::Fail("Rocket is not stored already");
+  if (!rocket.has<Rocket>()) {
+    return ValidationResult::Fail("This is not a rocket");
+  }
+  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
+    return ValidationResult::Fail(
+        "Rocket must be currently stored to be moved");
   }
   if (rocket.has<EffortRequired>()) {
     return ValidationResult::Fail("Rocket has unfinished effort");

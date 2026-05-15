@@ -37,6 +37,7 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
   world.component<RocketStateId>()
+      .constant("Invalid", RocketStateId::Invalid)
       .constant("UnderConstruction", RocketStateId::UnderConstruction)
       .constant("Stored", RocketStateId::Stored)
       .constant("Moving", RocketStateId::Moving)
@@ -101,6 +102,7 @@ RocketModule::RocketModule(flecs::world &world) {
       });
   register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
     b.value("UnderConstruction", RocketStateId::UnderConstruction)
+        .value("Invalid", RocketStateId::Invalid)
         .value("Stored", RocketStateId::Stored)
         .value("Moving", RocketStateId::Moving)
         .value("Assigned", RocketStateId::Assigned)

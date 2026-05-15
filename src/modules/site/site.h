@@ -41,7 +41,7 @@ struct ManufacturingLineStorage {};
 /// @brief Set when auto_build_next fails validation; cleared when a build
 /// starts again
 struct AutoBuildBlocked {};
-/// @brief Set when auto_store fails validattion; cleared when the validation
+/// @brief Set when auto_store fails validation; cleared when the validation
 /// later succeeds
 struct AutoStoreBlocked {};
 
