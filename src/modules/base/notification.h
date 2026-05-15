@@ -29,11 +29,10 @@ struct NotificationRead {};
 
 std::string_view to_string(NotificationSeverity severity);
 
-void createNotificationNodes(flecs::world &world);
-void systemCreateNotificationNodes(flecs::iter &it);
-
 void registerNotificationComponents(flecs::world &world);
-void registerNotificationSystems(flecs::world &world);
+
+flecs::entity createNotificationCategory(flecs::world &world,
+                                         const std::string &name);
 
 flecs::entity instantiateNotification(
     flecs::world &world, const std::string &title, const std::string &text,

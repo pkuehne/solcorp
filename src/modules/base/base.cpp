@@ -74,5 +74,4 @@ BaseModule::BaseModule(flecs::world &world) {
   world.set<Game>({});
 
   registerNotificationComponents(world);
-  registerNotificationSystems(world);
 }

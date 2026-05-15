@@ -6,10 +6,8 @@
 SCENARIO("instantiateNotification", "[base][notification]") {
   flecs::world world;
   world.import <BaseModule>();
-  createNotificationNodes(world);
-
   GIVEN("A valid category and explicit severity") {
-    auto categories = world.lookup("NotificationCategories");
+    auto categories = world.entity("NotificationCategories");
     auto category =
         world.entity("NotificationCategories::Custom").child_of(categories);
 
