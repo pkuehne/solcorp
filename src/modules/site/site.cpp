@@ -118,10 +118,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .term_at(1)
       .src()
       .up(flecs::ChildOf)
-      .with<ManufacturingLineStorage>(flecs::Wildcard)
-      .src()
-      .up(flecs::ChildOf)
-      .without<EffortRequired>()
       .tick_source(sim.speed)
       .kind(UpdatePhase)
       .each(systemAutoStoreBuiltRocket);
@@ -327,9 +323,7 @@ void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
 
   flecs::entity lineE = rocketE.parent();
   flecs::entity storageE = lineE.target<ManufacturingLineStorage>();
-  if (!storageE.is_valid()) {
-    return;
-  }
+  // Validity will be checked in the action validation.
 
   auto world = rocketE.world();
   RocketMoveAction action{RocketEntity{rocketE}, DestinationEntity{storageE},
