@@ -312,6 +312,12 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
 
 void systemRocketCompleteAction(flecs::entity e, Rocket &rocket) {
   auto world = e.world();
+
+  if (e.has<EffortRequired>() && e.get<EffortRequired>().remaining > 0)
+    return;
+  if (e.has<DurationRequired>() && e.get<DurationRequired>().remaining > 0)
+    return;
+
   std::unique_ptr<IAction> action;
 
   switch (rocket.state) {

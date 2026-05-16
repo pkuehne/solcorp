@@ -213,12 +213,10 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     WHEN("systemRocketCompleteAction is called") {
       systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
-      THEN("The rocket is blocked and remains under construction") {
+      THEN("Nothing happens — construction is still in progress") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
         CHECK(rocket.has<EffortRequired>());
-        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
-        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
-              "Rocket construction is not yet complete");
+        CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
     }
   }
@@ -268,13 +266,11 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     WHEN("systemRocketCompleteAction is called") {
       systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
-      THEN("The rocket is blocked and remains at its current location") {
+      THEN("Nothing happens — the move is still in progress") {
         CHECK(rocket.parent() == source);
         CHECK(rocket.has<DurationRequired>());
         CHECK(rocket.get<DurationRequired>().remaining == 3);
-        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
-        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
-              "Rocket has not yet moved to the new location");
+        CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
     }
   }
