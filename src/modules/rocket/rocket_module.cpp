@@ -250,11 +250,12 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
         contract.failed = false;
         company.balance += static_cast<int64_t>(contract.completion_payment);
         total_payment += contract.completion_payment;
-        instantiateNotification(world, "Payload Launched",
-                                fmt::format("{} was launched on {} to {}",
-                                            payload.name().c_str(),
-                                            rocketE.name().c_str(),
-                                            plan.target_orbit.name().c_str()));
+        instantiateNotification(
+            world, "Payload Launched",
+            fmt::format("{} was launched on {} to {}", payload.name().c_str(),
+                        rocketE.name().c_str(),
+                        plan.target_orbit.name().c_str()),
+            world.lookup("NotificationCategories::Rocket Launch"));
       }
       contract.status = ContractStatus::Closed;
 
@@ -272,7 +273,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
                                    planE.name().c_str(), total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
   instantiateNotification(world, "Launch Complete", notification,
-                          world.lookup("NotificationCategories::Rocket Build"),
+                          world.lookup("NotificationCategories::Rocket Launch"),
                           rocket_failure ? NotificationSeverity::High
                                          : NotificationSeverity::Low);
   rocketE.destruct();
@@ -282,6 +283,8 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
 void systemCreateRocketBuildCategory(flecs::iter &it) {
   auto world = it.world();
   createNotificationCategory(world, "Rocket Build");
+  createNotificationCategory(world, "Rocket Launch");
+  createNotificationCategory(world, "Contracts");
 }
 
 void systemCreateRocketPrefabs(flecs::iter &it) {
