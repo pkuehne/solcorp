@@ -4,31 +4,44 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("notificationMatchesFilter", "[notification_window]") {
+SCENARIO("Notification window filtering", "[notification_window]") {
   flecs::world world;
   world.import<BaseModule>();
 
   auto catA = createNotificationCategory(world, "CategoryA");
   auto catB = createNotificationCategory(world, "CategoryB");
 
-  auto lowA =
-      instantiateNotification(world, "Low A", "text", catA, NotificationSeverity::Low);
-  auto highA =
-      instantiateNotification(world, "High A", "text", catA, NotificationSeverity::High);
-  auto lowB =
-      instantiateNotification(world, "Low B", "text", catB, NotificationSeverity::Low);
-  auto critB =
-      instantiateNotification(world, "Crit B", "text", catB, NotificationSeverity::Critical);
+  auto lowA = instantiateNotification(world, "Low A", "text", catA,
+                                      NotificationSeverity::Low);
+  auto highA = instantiateNotification(world, "High A", "text", catA,
+                                       NotificationSeverity::High);
+  auto lowB = instantiateNotification(world, "Low B", "text", catB,
+                                      NotificationSeverity::Low);
+  auto critB = instantiateNotification(world, "Crit B", "text", catB,
+                                       NotificationSeverity::Critical);
+
+  auto notif_query = world.query_builder<const Notification>().build();
 
   GIVEN("No filters active") {
     NotificationWindow state{};
 
-    WHEN("Any notification is checked") {
-      THEN("All notifications match") {
+    WHEN("checking if a notification matches") {
+      THEN("all notifications match") {
         REQUIRE(notificationMatchesFilter(lowA, state));
         REQUIRE(notificationMatchesFilter(highA, state));
         REQUIRE(notificationMatchesFilter(lowB, state));
         REQUIRE(notificationMatchesFilter(critB, state));
+      }
+    }
+
+    WHEN("marking all filtered notifications read") {
+      markFilteredNotificationsRead(notif_query, state);
+
+      THEN("all notifications are marked read") {
+        REQUIRE(lowA.has<NotificationRead>());
+        REQUIRE(highA.has<NotificationRead>());
+        REQUIRE(lowB.has<NotificationRead>());
+        REQUIRE(critB.has<NotificationRead>());
       }
     }
   }
@@ -37,12 +50,23 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
     NotificationWindow state{.severity_filter =
                                  static_cast<int>(NotificationSeverity::High)};
 
-    WHEN("Notifications are checked") {
-      THEN("Only High severity notifications match") {
+    WHEN("checking if a notification matches") {
+      THEN("only High severity notifications match") {
         REQUIRE(!notificationMatchesFilter(lowA, state));
         REQUIRE(notificationMatchesFilter(highA, state));
         REQUIRE(!notificationMatchesFilter(lowB, state));
         REQUIRE(!notificationMatchesFilter(critB, state));
+      }
+    }
+
+    WHEN("marking all filtered notifications read") {
+      markFilteredNotificationsRead(notif_query, state);
+
+      THEN("only High severity notifications are marked read") {
+        REQUIRE(!lowA.has<NotificationRead>());
+        REQUIRE(highA.has<NotificationRead>());
+        REQUIRE(!lowB.has<NotificationRead>());
+        REQUIRE(!critB.has<NotificationRead>());
       }
     }
   }
@@ -50,12 +74,23 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
   GIVEN("Category filter set to CategoryB") {
     NotificationWindow state{.category_filter = catB};
 
-    WHEN("Notifications are checked") {
-      THEN("Only CategoryB notifications match") {
+    WHEN("checking if a notification matches") {
+      THEN("only CategoryB notifications match") {
         REQUIRE(!notificationMatchesFilter(lowA, state));
         REQUIRE(!notificationMatchesFilter(highA, state));
         REQUIRE(notificationMatchesFilter(lowB, state));
         REQUIRE(notificationMatchesFilter(critB, state));
+      }
+    }
+
+    WHEN("marking all filtered notifications read") {
+      markFilteredNotificationsRead(notif_query, state);
+
+      THEN("only CategoryB notifications are marked read") {
+        REQUIRE(!lowA.has<NotificationRead>());
+        REQUIRE(!highA.has<NotificationRead>());
+        REQUIRE(lowB.has<NotificationRead>());
+        REQUIRE(critB.has<NotificationRead>());
       }
     }
   }
@@ -65,8 +100,8 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
         .severity_filter = static_cast<int>(NotificationSeverity::Critical),
         .category_filter = catB};
 
-    WHEN("Notifications are checked") {
-      THEN("Only Critical + CategoryB notifications match") {
+    WHEN("checking if a notification matches") {
+      THEN("only Critical + CategoryB notifications match") {
         REQUIRE(!notificationMatchesFilter(lowA, state));
         REQUIRE(!notificationMatchesFilter(highA, state));
         REQUIRE(!notificationMatchesFilter(lowB, state));
@@ -78,24 +113,38 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
   GIVEN("Unread Only filter active") {
     NotificationWindow state{.unread_only = true};
 
-    WHEN("A notification has not been read") {
-      THEN("It matches") {
+    WHEN("no notifications have been read") {
+      THEN("all notifications match") {
         REQUIRE(notificationMatchesFilter(lowA, state));
+        REQUIRE(notificationMatchesFilter(highA, state));
+        REQUIRE(notificationMatchesFilter(lowB, state));
         REQUIRE(notificationMatchesFilter(critB, state));
       }
     }
 
-    WHEN("A notification is marked read") {
+    WHEN("a notification is marked read") {
       lowA.add<NotificationRead>();
 
-      THEN("The read notification does not match") {
+      THEN("the read notification does not match") {
         REQUIRE(!notificationMatchesFilter(lowA, state));
       }
 
-      THEN("Unread notifications still match") {
+      THEN("unread notifications still match") {
         REQUIRE(notificationMatchesFilter(highA, state));
         REQUIRE(notificationMatchesFilter(lowB, state));
         REQUIRE(notificationMatchesFilter(critB, state));
+      }
+    }
+
+    WHEN("marking all filtered notifications read") {
+      lowA.add<NotificationRead>();
+      markFilteredNotificationsRead(notif_query, state);
+
+      THEN("unread ones are marked read and already-read ones are unaffected") {
+        REQUIRE(lowA.has<NotificationRead>());
+        REQUIRE(highA.has<NotificationRead>());
+        REQUIRE(lowB.has<NotificationRead>());
+        REQUIRE(critB.has<NotificationRead>());
       }
     }
   }
@@ -105,14 +154,14 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
                                  static_cast<int>(NotificationSeverity::Low),
                              .unread_only = true};
 
-    WHEN("A matching notification is marked read") {
+    WHEN("a matching notification is marked read") {
       lowA.add<NotificationRead>();
 
-      THEN("It no longer matches") {
+      THEN("it no longer matches") {
         REQUIRE(!notificationMatchesFilter(lowA, state));
       }
 
-      THEN("Unread Low notifications still match") {
+      THEN("unread Low notifications still match") {
         REQUIRE(notificationMatchesFilter(lowB, state));
       }
     }
@@ -122,8 +171,8 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
     auto plainEntity = world.entity("Plain");
     NotificationWindow state{};
 
-    WHEN("It is checked against filters") {
-      THEN("It does not match") {
+    WHEN("checking if it matches") {
+      THEN("it does not match") {
         REQUIRE(!notificationMatchesFilter(plainEntity, state));
       }
     }

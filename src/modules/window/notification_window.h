@@ -15,3 +15,9 @@ void drawNotificationWindow(flecs::entity winE);
 /// @brief Returns true if the notification passes the active filters.
 bool notificationMatchesFilter(flecs::entity notifE,
                                 const NotificationWindow &state);
+
+/// @brief Adds NotificationRead to every notification that passes the active
+/// filters.
+void markFilteredNotificationsRead(
+    const flecs::query<const Notification> &notif_query,
+    const NotificationWindow &state);

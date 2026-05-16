@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <flecs.h>
 #include <ranges>
-#include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
 
@@ -100,6 +99,20 @@ bool notificationMatchesFilter(flecs::entity notifE,
   return true;
 }
 
+void markFilteredNotificationsRead(
+    const flecs::query<const Notification> &notif_query,
+    const NotificationWindow &state) {
+  std::vector<flecs::entity> to_mark;
+  notif_query.each([&](flecs::entity notifE, const Notification &) {
+    if (notificationMatchesFilter(notifE, state)) {
+      to_mark.push_back(notifE);
+    }
+  });
+  for (auto &e : to_mark) {
+    e.add<NotificationRead>();
+  }
+}
+
 static void drawFilterRow(NotificationWindow &state,
                           const std::vector<flecs::entity> &categories,
                           const flecs::query<const Notification> &notif_query) {
@@ -148,15 +161,7 @@ static void drawFilterRow(NotificationWindow &state,
 
   ImGui::SameLine();
   if (ImGui::Button("Mark All Read")) {
-    std::vector<flecs::entity> to_mark;
-    notif_query.each([&](flecs::entity notifE, const Notification &) {
-      if (notificationMatchesFilter(notifE, state)) {
-        to_mark.push_back(notifE);
-      }
-    });
-    for (auto &e : to_mark) {
-      e.add<NotificationRead>();
-    }
+    markFilteredNotificationsRead(notif_query, state);
   }
 }
 
