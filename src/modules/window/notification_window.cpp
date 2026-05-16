@@ -1,27 +1,27 @@
 #include "notification_window.h"
 #include "imgui.h"
 #include "modules/engine/gui.h"
-#include <flecs.h>
 #include <algorithm>
+#include <flecs.h>
 #include <ranges>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
 
-static ImVec4 severityColor(NotificationSeverity sev) {
+static ImColor severityColor(NotificationSeverity sev) {
   switch (sev) {
   case NotificationSeverity::Low:
-    return {0.7f, 0.7f, 0.7f, 1.0f};
+    return {178, 178, 178};
   case NotificationSeverity::Medium:
-    return {1.0f, 0.85f, 0.2f, 1.0f};
+    return {255, 217, 51};
   case NotificationSeverity::High:
-    return {1.0f, 0.55f, 0.1f, 1.0f};
+    return {255, 140, 26};
   case NotificationSeverity::Important:
-    return {1.0f, 0.25f, 0.1f, 1.0f};
+    return {255, 64, 26};
   case NotificationSeverity::Critical:
-    return {1.0f, 0.05f, 0.05f, 1.0f};
+    return {255, 13, 13};
   }
-  return {1.0f, 1.0f, 1.0f, 1.0f};
+  return {255, 255, 255};
 }
 
 bool notificationMatchesFilter(flecs::entity notifE,
@@ -151,8 +151,6 @@ void drawNotificationWindow(flecs::entity winE) {
     }
   });
 
-  // Sort by entity ID (monotonically increasing = creation order) so that
-  // archetype table moves (e.g. adding NotificationRead) don't disturb order.
   std::ranges::sort(visible, [](flecs::entity a, flecs::entity b) {
     return a.get<Notification>().id < b.get<Notification>().id;
   });
