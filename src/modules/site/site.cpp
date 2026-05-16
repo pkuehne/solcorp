@@ -267,9 +267,10 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 }
 
 void systemBuildingUpdateManufacuringProgress(
-    flecs::entity, EffortRequired &effort, const Manufacturing &manufacturing) {
+    flecs::entity e, EffortRequired &effort, const Manufacturing &manufacturing) {
   if (manufacturing.available_effort >= effort.remaining) {
     effort.remaining = 0;
+    e.remove<EffortRequired>();
   } else {
     effort.remaining -= manufacturing.available_effort;
   }

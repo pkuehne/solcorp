@@ -185,9 +185,8 @@ RocketModule::RocketModule(flecs::world &world) {
       .immediate()
       .tick_source(sim.speed)
       .with<RocketTargetState>()
-      .with<DurationRequired>()
-      .oper(flecs::Or)
-      .with<EffortRequired>()
+      .without<EffortRequired>()
+      .without<DurationRequired>()
       .kind(UpdatePhase)
       .each(systemRocketCompleteAction);
 }
@@ -312,11 +311,6 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
 
 void systemRocketCompleteAction(flecs::entity e, Rocket &rocket) {
   auto world = e.world();
-
-  if (e.has<EffortRequired>() && e.get<EffortRequired>().remaining > 0)
-    return;
-  if (e.has<DurationRequired>() && e.get<DurationRequired>().remaining > 0)
-    return;
 
   std::unique_ptr<IAction> action;
 

@@ -26,21 +26,6 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
     }
   }
 
-  GIVEN("A rocket with no EffortRequired") {
-    auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    RocketCompleteBuildAction complete{rocket};
-
-    WHEN("Validated") {
-      ValidationResult result = complete.validate(world);
-
-      THEN("The validation fails") {
-        CHECK(!result.ok);
-        CHECK(result.message == "Does not have any effort required");
-      }
-    }
-  }
-
   GIVEN("A rocket that is not under construction") {
     auto rocket = world.entity().add<Rocket>();
     rocket.set<EffortRequired>({.remaining = 0, .total = 300});
@@ -66,7 +51,7 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
     }
   }
 
-  GIVEN("A rocket under construction with effort still remaining") {
+  GIVEN("A rocket under construction that still has EffortRequired") {
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
     rocket.set<EffortRequired>({.remaining = 50, .total = 300});
@@ -95,7 +80,6 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
   GIVEN("A rocket ready to complete construction") {
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<EffortRequired>({.remaining = 0, .total = 300});
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     RocketCompleteBuildAction complete{rocket};
 
@@ -122,7 +106,6 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
       THEN("The rocket transitions to Stored and construction markers are "
            "cleared") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
-        CHECK(!rocket.has<EffortRequired>());
         CHECK(!rocket.has<RocketTargetState>());
       }
     }
@@ -132,7 +115,6 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
         "RocketStateTransitionBlocked marker") {
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<EffortRequired>({.remaining = 0, .total = 300});
     rocket.set<RocketStateTransitionBlocked>({.reason = "stale"});
     RocketCompleteBuildAction complete{rocket};
 
