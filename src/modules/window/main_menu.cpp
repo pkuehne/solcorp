@@ -1,6 +1,7 @@
 #include "main_menu.h"
 #include "imgui.h"
 #include "modules/base/base.h"
+#include "notification_window.h"
 #include <flecs.h>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/rocket/contracts_window.h>
@@ -43,6 +44,9 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       }
       if (ImGui::MenuItem("Developer Window")) {
         showDeveloperWindow(world);
+      }
+      if (ImGui::MenuItem("Notifications")) {
+        showNotificationWindow(world);
       }
       ImGui::EndMenu();
     }
