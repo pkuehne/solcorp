@@ -6,7 +6,7 @@
 
 SCENARIO("Notification window filtering", "[notification_window]") {
   flecs::world world;
-  world.import<BaseModule>();
+  world.import <BaseModule>();
 
   auto catA = createNotificationCategory(world, "CategoryA");
   auto catB = createNotificationCategory(world, "CategoryB");

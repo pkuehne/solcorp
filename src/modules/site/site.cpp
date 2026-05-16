@@ -2,6 +2,7 @@
 #include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
+#include "modules/base/notification.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
@@ -14,6 +15,7 @@
 #include "modules/window/building_detail_window.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
+#include <format>
 #include <spdlog/spdlog.h>
 
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
@@ -267,7 +269,8 @@ void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
 }
 
 void systemBuildingUpdateManufacuringProgress(
-    flecs::entity e, EffortRequired &effort, const Manufacturing &manufacturing) {
+    flecs::entity e, EffortRequired &effort,
+    const Manufacturing &manufacturing) {
   if (manufacturing.available_effort >= effort.remaining) {
     effort.remaining = 0;
     e.remove<EffortRequired>();
@@ -308,8 +311,11 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
   } else if (!manufacturingE.has<AutoBuildBlocked>()) {
     manufacturingE.add<AutoBuildBlocked>();
     instantiateBuildingNotification(world, manufacturingE, result.message);
-    spdlog::debug("Auto-build blocked for manufacturing line {}: {}",
-                  manufacturingE.name().c_str(), result.message);
+    instantiateNotification(
+        world,
+        std::format("Auto-Build Blocked at {}", manufacturingE.name().c_str()),
+        result.message, world.lookup("NotificationCategories::Rocket Build"),
+        NotificationSeverity::Important);
   }
 }
 
@@ -336,7 +342,9 @@ void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
   } else if (!lineE.has<AutoStoreBlocked>()) {
     lineE.add<AutoStoreBlocked>();
     instantiateBuildingNotification(world, lineE, result.message);
-    spdlog::debug("Auto-store blocked for rocket {}: {}",
-                  rocketE.name().c_str(), result.message);
+    instantiateNotification(
+        world, std::format("Auto-Store Blocked at {}", lineE.name().c_str()),
+        result.message, world.lookup("NotificationCategories::Rocket Build"),
+        NotificationSeverity::Important);
   }
 }
