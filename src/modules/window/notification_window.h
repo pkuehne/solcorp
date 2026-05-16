@@ -6,6 +6,7 @@
 struct NotificationWindow {
   int severity_filter = -1; // -1 = All; otherwise cast to NotificationSeverity
   flecs::entity category_filter = {};
+  bool unread_only = false;
 };
 
 void showNotificationWindow(flecs::world &world);

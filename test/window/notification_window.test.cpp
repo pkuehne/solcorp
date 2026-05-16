@@ -75,6 +75,49 @@ SCENARIO("notificationMatchesFilter", "[notification_window]") {
     }
   }
 
+  GIVEN("Unread Only filter active") {
+    NotificationWindow state{.unread_only = true};
+
+    WHEN("A notification has not been read") {
+      THEN("It matches") {
+        REQUIRE(notificationMatchesFilter(lowA, state));
+        REQUIRE(notificationMatchesFilter(critB, state));
+      }
+    }
+
+    WHEN("A notification is marked read") {
+      lowA.add<NotificationRead>();
+
+      THEN("The read notification does not match") {
+        REQUIRE(!notificationMatchesFilter(lowA, state));
+      }
+
+      THEN("Unread notifications still match") {
+        REQUIRE(notificationMatchesFilter(highA, state));
+        REQUIRE(notificationMatchesFilter(lowB, state));
+        REQUIRE(notificationMatchesFilter(critB, state));
+      }
+    }
+  }
+
+  GIVEN("Unread Only filter combined with severity filter") {
+    NotificationWindow state{.severity_filter =
+                                 static_cast<int>(NotificationSeverity::Low),
+                             .unread_only = true};
+
+    WHEN("A matching notification is marked read") {
+      lowA.add<NotificationRead>();
+
+      THEN("It no longer matches") {
+        REQUIRE(!notificationMatchesFilter(lowA, state));
+      }
+
+      THEN("Unread Low notifications still match") {
+        REQUIRE(notificationMatchesFilter(lowB, state));
+      }
+    }
+  }
+
   GIVEN("An entity without a Notification component") {
     auto plainEntity = world.entity("Plain");
     NotificationWindow state{};

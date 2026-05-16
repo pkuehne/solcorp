@@ -48,4 +48,17 @@ SCENARIO("instantiateNotification", "[base][notification]") {
       }
     }
   }
+
+  GIVEN("Multiple notifications are created in sequence") {
+    auto first = instantiateNotification(world, "First", "text");
+    auto second = instantiateNotification(world, "Second", "text");
+    auto third = instantiateNotification(world, "Third", "text");
+
+    WHEN("Their IDs are compared") {
+      THEN("IDs are strictly increasing in creation order") {
+        CHECK(first.get<Notification>().id < second.get<Notification>().id);
+        CHECK(second.get<Notification>().id < third.get<Notification>().id);
+      }
+    }
+  }
 }

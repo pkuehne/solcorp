@@ -94,6 +94,9 @@ bool notificationMatchesFilter(flecs::entity notifE,
       return false;
     }
   }
+  if (state.unread_only && notifE.has<NotificationRead>()) {
+    return false;
+  }
   return true;
 }
 
@@ -122,7 +125,6 @@ static void drawFilterRow(NotificationWindow &state,
   }
 
   ImGui::SameLine();
-
   const char *cat_label = state.category_filter.is_valid()
                               ? state.category_filter.name().c_str()
                               : "All Categories";
@@ -142,7 +144,9 @@ static void drawFilterRow(NotificationWindow &state,
   }
 
   ImGui::SameLine();
+  ImGui::Checkbox("Unread Only", &state.unread_only);
 
+  ImGui::SameLine();
   if (ImGui::Button("Mark All Read")) {
     std::vector<flecs::entity> to_mark;
     notif_query.each([&](flecs::entity notifE, const Notification &) {

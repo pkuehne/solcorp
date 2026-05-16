@@ -14,7 +14,8 @@ WindowModule::WindowModule(flecs::world &world) {
   world.component<MainMenuBar>();
   world.component<NotificationWindow>()
       .member("severity_filter", &NotificationWindow::severity_filter)
-      .member("category_filter", &NotificationWindow::category_filter);
+      .member("category_filter", &NotificationWindow::category_filter)
+      .member("unread_only", &NotificationWindow::unread_only);
 
   // Register window
   world.entity("MainMenuBar").add<MainMenuBar>();
