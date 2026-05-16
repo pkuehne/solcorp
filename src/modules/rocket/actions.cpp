@@ -272,9 +272,13 @@ void RocketCompleteBuildAction::block(flecs::world &world) {
     return;
   }
 
+  if (!rocket.has<RocketStateTransitionBlocked>()) {
+    instantiateNotification(
+        world, "Rocket cannot be completed", result.message,
+        world.lookup("NotificationCategories::Rocket Build"),
+        NotificationSeverity::Important);
+  }
   this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
-  spdlog::debug("Blocking rocket build completion for rocket {}: {}",
-                this->rocket.name().c_str(), result.message);
 }
 
 // ----- RocketMoveAction-----
@@ -339,6 +343,13 @@ void RocketCompleteMoveAction::execute(flecs::world &world) {
     return;
   }
   auto targetParent = rocket.target<RocketTargetParent>();
+  instantiateNotification(world, "Rocket move completed",
+                          std::format("{} has been moved to {}",
+                                      rocket.name().c_str(),
+                                      targetParent.name().c_str()),
+                          world.lookup("NotificationCategories::Rocket Move"),
+                          NotificationSeverity::Low);
+
   rocket.child_of(targetParent);
   rocket.get_mut<Rocket>().state = rocket.get<RocketTargetState>().target;
   rocket.remove<RocketTargetState>();
@@ -353,7 +364,10 @@ void RocketCompleteMoveAction::block(flecs::world &world) {
     return;
   }
 
+  if (!rocket.has<RocketStateTransitionBlocked>()) {
+    instantiateNotification(world, "Rocket cannot move", result.message,
+                            world.lookup("NotificationCategories::Rocket Move"),
+                            NotificationSeverity::Important);
+  }
   this->rocket.set<RocketStateTransitionBlocked>({.reason = result.message});
-  spdlog::debug("Blocking rocket move completion for rocket {}: {}",
-                this->rocket.name().c_str(), result.message);
 }

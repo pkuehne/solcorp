@@ -269,13 +269,14 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   std::string notification =
       rocket_failure ? std::format("{} failed - {} exploded on launch",
                                    planE.name().c_str(), rocketE.name().c_str())
-                     : std::format("{} launched successfully (${})",
-                                   planE.name().c_str(), total_payment);
+                     : std::format("{} launched {} successfully (${})",
+                                   planE.name().c_str(), rocketE.name().c_str(),
+                                   total_payment);
   instantiateBuildingNotification(world, launchpadE, notification);
   instantiateNotification(world, "Launch Complete", notification,
                           world.lookup("NotificationCategories::Rocket Launch"),
-                          rocket_failure ? NotificationSeverity::High
-                                         : NotificationSeverity::Low);
+                          rocket_failure ? NotificationSeverity::Critical
+                                         : NotificationSeverity::High);
   rocketE.destruct();
   planE.destruct();
 }
@@ -284,6 +285,7 @@ void systemCreateRocketBuildCategory(flecs::iter &it) {
   auto world = it.world();
   createNotificationCategory(world, "Rocket Build");
   createNotificationCategory(world, "Rocket Launch");
+  createNotificationCategory(world, "Rocket Move");
   createNotificationCategory(world, "Contracts");
 }
 
