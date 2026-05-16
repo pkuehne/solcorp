@@ -2,6 +2,8 @@
 #include "imgui.h"
 #include "modules/engine/gui.h"
 #include <flecs.h>
+#include <algorithm>
+#include <ranges>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
@@ -23,7 +25,7 @@ static ImVec4 severityColor(NotificationSeverity sev) {
 }
 
 bool notificationMatchesFilter(flecs::entity notifE,
-                                const NotificationWindow &state) {
+                               const NotificationWindow &state) {
   const auto *notif = notifE.try_get<Notification>();
   if (!notif) {
     return false;
@@ -76,18 +78,18 @@ void drawNotificationWindow(flecs::entity winE) {
   const char *sev_label =
       state.severity_filter < 0
           ? "All Severities"
-          : to_string(static_cast<NotificationSeverity>(state.severity_filter))
-                .data();
+          : to_string(static_cast<NotificationSeverity>(state.severity_filter));
   ImGui::SetNextItemWidth(150.0f);
   if (ImGui::BeginCombo("##SevFilter", sev_label)) {
     if (ImGui::Selectable("All Severities", state.severity_filter < 0)) {
       state.severity_filter = -1;
     }
-    for (auto sev : {NotificationSeverity::Low, NotificationSeverity::Medium,
-                     NotificationSeverity::High, NotificationSeverity::Important,
-                     NotificationSeverity::Critical}) {
+    for (auto sev :
+         {NotificationSeverity::Low, NotificationSeverity::Medium,
+          NotificationSeverity::High, NotificationSeverity::Important,
+          NotificationSeverity::Critical}) {
       bool sel = state.severity_filter == static_cast<int>(sev);
-      if (ImGui::Selectable(to_string(sev).data(), sel)) {
+      if (ImGui::Selectable(to_string(sev), sel)) {
         state.severity_filter = static_cast<int>(sev);
       }
     }
@@ -142,10 +144,20 @@ void drawNotificationWindow(flecs::entity winE) {
   bool any = false;
   flecs::entity clicked_notif = flecs::entity::null();
 
-  notif_query.each([&](flecs::entity notifE, const Notification &notif) {
-    if (!notificationMatchesFilter(notifE, state)) {
-      return;
+  std::vector<flecs::entity> visible;
+  notif_query.each([&](flecs::entity notifE, const Notification &) {
+    if (notificationMatchesFilter(notifE, state)) {
+      visible.push_back(notifE);
     }
+  });
+
+  // Sort by entity ID (monotonically increasing = creation order) so that
+  // archetype table moves (e.g. adding NotificationRead) don't disturb order.
+  std::ranges::sort(visible,
+                    [](flecs::entity a, flecs::entity b) { return a.id() < b.id(); });
+
+  for (auto notifE : std::ranges::reverse_view(visible)) {
+    const auto &notif = notifE.get<Notification>();
     any = true;
 
     ImGui::PushID(std::to_string(notifE.id()).c_str());
@@ -161,7 +173,7 @@ void drawNotificationWindow(flecs::entity winE) {
     ImGui::TextUnformatted(notif.title.c_str());
     ImGui::SameLine();
     ImGui::TextColored(severityColor(notif.severity), "[%s]",
-                       to_string(notif.severity).data());
+                       to_string(notif.severity));
     auto cat = notifE.target<NotificationCategory>();
     if (cat.is_valid()) {
       ImGui::SameLine();
@@ -200,9 +212,10 @@ void drawNotificationWindow(flecs::entity winE) {
 
     ImGui::Spacing();
     ImGui::PopID();
-  });
+  }
 
-  // Apply click-to-mark-read after iteration to avoid structural change during each()
+  // Apply click-to-mark-read after iteration to avoid structural change during
+  // each()
   if (clicked_notif.is_valid() && clicked_notif.is_alive()) {
     clicked_notif.add<NotificationRead>();
     spdlog::debug("Notification {} marked as read", clicked_notif.id());

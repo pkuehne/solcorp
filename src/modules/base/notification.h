@@ -27,7 +27,7 @@ struct NotificationCategory {};
 /// @brief Tag to indicate a notification has been read by the player.
 struct NotificationRead {};
 
-std::string_view to_string(NotificationSeverity severity);
+const char *to_string(NotificationSeverity severity);
 
 void registerNotificationComponents(flecs::world &world);
 

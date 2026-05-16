@@ -24,7 +24,7 @@ void registerNotificationComponents(flecs::world &world) {
   });
 }
 
-std::string_view to_string(NotificationSeverity severity) {
+const char *to_string(NotificationSeverity severity) {
   switch (severity) {
   case NotificationSeverity::Low:
     return "Low";
