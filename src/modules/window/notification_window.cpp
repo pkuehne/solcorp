@@ -153,8 +153,9 @@ void drawNotificationWindow(flecs::entity winE) {
 
   // Sort by entity ID (monotonically increasing = creation order) so that
   // archetype table moves (e.g. adding NotificationRead) don't disturb order.
-  std::ranges::sort(visible,
-                    [](flecs::entity a, flecs::entity b) { return a.id() < b.id(); });
+  std::ranges::sort(visible, [](flecs::entity a, flecs::entity b) {
+    return a.get<Notification>().id < b.get<Notification>().id;
+  });
 
   for (auto notifE : std::ranges::reverse_view(visible)) {
     const auto &notif = notifE.get<Notification>();

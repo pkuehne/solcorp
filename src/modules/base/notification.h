@@ -14,6 +14,8 @@ enum class NotificationSeverity : uint8_t {
 
 /// @brief Component representing a notification to be shown to the player.
 struct Notification {
+  static uint32_t max_id;
+  uint32_t id = 0;
   std::string title;
   std::string text;
   NotificationSeverity severity = NotificationSeverity::Low;

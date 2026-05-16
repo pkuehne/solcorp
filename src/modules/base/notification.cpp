@@ -1,4 +1,6 @@
 #include "notification.h"
+
+uint32_t Notification::max_id = 0;
 #include "modules/lua/lua.h"
 #include <spdlog/spdlog.h>
 
@@ -56,8 +58,10 @@ flecs::entity instantiateNotification(flecs::world &world,
     notificationsNode = world.entity("Notifications");
   }
   auto e = world.entity()
-               .set<Notification>(
-                   {.title = title, .text = text, .severity = severity})
+               .set<Notification>({.id = Notification::max_id++,
+                                   .title = title,
+                                   .text = text,
+                                   .severity = severity})
                .child_of(notificationsNode);
 
   category = category.is_valid() ? category
