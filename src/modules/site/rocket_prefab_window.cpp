@@ -111,7 +111,8 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
     ImGui::Text("%s", prefabE.name().c_str());
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
-    Widgets::StatTooltip(&cost, format_money<double>);
+    Widgets::StatTooltip(&cost,
+                         [](double v) { return "$" + format_locale(v); });
 
     RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
                              rocketCost};

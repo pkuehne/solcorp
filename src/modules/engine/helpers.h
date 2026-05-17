@@ -12,8 +12,8 @@ bool roll_random(double probability);
 /// @brief Formats a monetary amount as a string.
 /// @param amount The amount of money.
 /// @return A string representation of the amount.
-std::string format_money(int64_t amount);
+std::string format_locale(int64_t amount);
 
-template <std::floating_point T> std::string format_money(T amount) {
-  return format_money(static_cast<int64_t>(std::llround(amount)));
+template <std::floating_point T> std::string format_locale(T amount) {
+  return format_locale(static_cast<int64_t>(std::llround(amount)));
 }

@@ -29,7 +29,7 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       running ? simTimer.stop() : simTimer.start();
     }
     ImGui::Text(" %s ", company.name.c_str());
-    ImGui::Text(" %s ", format_money(company.balance).c_str());
+    ImGui::Text(" $%s ", format_locale(company.balance).c_str());
     if (ImGui::BeginMenu("Windows")) {
       if (ImGui::MenuItem("Celestial Browser")) {
         showCelestialBrowser(world);

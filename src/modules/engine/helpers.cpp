@@ -7,8 +7,8 @@ bool roll_random(double probability) {
   return dist(rng) < probability;
 }
 
-std::string format_money(int64_t amount) {
-  std::string result = "$";
+std::string format_locale(int64_t amount) {
+  std::string result = "";
   if (amount < 0) {
     result += "-";
     amount = -amount;

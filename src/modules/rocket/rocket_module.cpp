@@ -271,7 +271,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   } else {
     notification = std::format("{} launched {} successfully ({})",
                                planE.name().c_str(), rocketE.name().c_str(),
-                               format_money(total_payment).c_str());
+                               ("$" + format_locale(total_payment)).c_str());
   }
   notification +=
       fmt::format("\nOrbit:     {}", plan.target_orbit.name().c_str());

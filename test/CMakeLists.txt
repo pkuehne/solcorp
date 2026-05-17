@@ -10,7 +10,7 @@ add_executable(unit_test
   base/find_ancestor_with.test.cpp
   base/notification.test.cpp
   engine/apply_parent_transform.test.cpp
-  engine/format_money.test.cpp
+  engine/format_locale.test.cpp
   lua/entity/lua_push_entity.test.cpp
   lua/entity/lua_check_entity.test.cpp
   lua/entity/entity_id.test.cpp
