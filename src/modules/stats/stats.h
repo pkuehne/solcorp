@@ -99,10 +99,6 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats);
 /// @param stat The stat to apply modifiers to.
 void statsApplyModifiers(flecs::entity e, Stat *stat);
 
-/// Displays a stat with a tooltip in the UI.
-/// @param stat The stat to display.
-void displayStatWithTooltip(const Stat *stat);
-
 /// Represents the stats module.
 struct StatsModule {
   StatsModule(flecs::world &);

@@ -2,12 +2,14 @@
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
+#include "widgets/stat_widget.h"
 #include "widgets/widgets.h"
 #include <cmath>
 #include <flecs.h>
@@ -109,13 +111,14 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
     ImGui::Text("%s", prefabE.name().c_str());
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
-    displayStatWithTooltip(&cost);
+    Widgets::StatTooltip(&cost,
+                         [](double v) { return "$" + format_locale(v); });
 
     RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
                              rocketCost};
     auto result = action.validate(world);
 
-    if (ActionButton(
+    if (Widgets::ActionButton(
             ButtonLabel{
                 std::format("Build '{}'", prefabE.name().c_str()).c_str()},
             ButtonTooltip{"Build this rocket"}, result.message)) {

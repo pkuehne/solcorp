@@ -1,6 +1,8 @@
 #include "widgets.h"
 #include "imgui.h"
 
+namespace Widgets {
+
 bool ActionButton(ButtonLabel label, ButtonTooltip tooltip,
                   const std::string &issue) {
   bool retval = false;
@@ -36,3 +38,5 @@ void NotImplementedPopup() {
     ImGui::EndPopup();
   }
 }
+
+} // namespace Widgets

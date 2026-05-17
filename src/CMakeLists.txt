@@ -1,5 +1,6 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
+    widgets/stat_widget.cpp
     modules/base/base.cpp
     modules/base/notification.cpp
     modules/engine/engine.cpp
@@ -36,6 +37,7 @@ list(APPEND SolCorpSources
 )
 list(APPEND SolCorpHeaders
     widgets/widgets.h
+    widgets/stat_widget.h
     modules/base/base.h
     modules/base/assert.h
     modules/base/notification.h
