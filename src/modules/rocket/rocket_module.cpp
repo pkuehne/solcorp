@@ -269,9 +269,9 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
     notification = std::format("{} failed - {} exploded on launch",
                                planE.name().c_str(), rocketE.name().c_str());
   } else {
-    notification =
-        std::format("{} launched {} successfully (${})", planE.name().c_str(),
-                    rocketE.name().c_str(), total_payment);
+    notification = std::format("{} launched {} successfully ({})",
+                               planE.name().c_str(), rocketE.name().c_str(),
+                               format_money(total_payment).c_str());
   }
   notification +=
       fmt::format("\nOrbit:     {}", plan.target_orbit.name().c_str());

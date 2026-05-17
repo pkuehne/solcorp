@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "launch_window.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/simulation/simulation.h"
 #include "rocket_module.h"
 #include <flecs.h>
@@ -185,7 +186,9 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(statusStr);
 
       ImGui::TableSetColumnIndex(4);
-      ImGui::Text("%u", contract.upfront_payment + contract.completion_payment);
+      ImGui::Text("%s", format_money(contract.upfront_payment +
+                                     contract.completion_payment)
+                            .c_str());
 
       ImGui::TableSetColumnIndex(5);
       auto targetOrbit = contractE.target<ContractTargetOrbit>();

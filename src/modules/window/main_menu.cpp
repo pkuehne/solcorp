@@ -1,6 +1,7 @@
 #include "main_menu.h"
 #include "imgui.h"
 #include "modules/base/base.h"
+#include "modules/engine/helpers.h"
 #include "notification_window.h"
 #include <flecs.h>
 #include <modules/rocket/active_launches_window.h>
@@ -28,7 +29,7 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       running ? simTimer.stop() : simTimer.start();
     }
     ImGui::Text(" %s ", company.name.c_str());
-    ImGui::Text(" $ %ld ", company.balance);
+    ImGui::Text(" %s ", format_money(company.balance).c_str());
     if (ImGui::BeginMenu("Windows")) {
       if (ImGui::MenuItem("Celestial Browser")) {
         showCelestialBrowser(world);
