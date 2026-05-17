@@ -1,4 +1,6 @@
 #include "notification.h"
+
+uint32_t Notification::max_id = 0;
 #include "modules/lua/lua.h"
 #include <spdlog/spdlog.h>
 
@@ -12,6 +14,7 @@ void registerNotificationComponents(flecs::world &world) {
   world.component<NotificationCategory>().add(flecs::Exclusive);
   world.component<NotificationRead>();
   world.component<Notification>()
+      .member("id", &Notification::id)
       .member("title", &Notification::title)
       .member("text", &Notification::text)
       .member("severity", &Notification::severity);
@@ -24,7 +27,7 @@ void registerNotificationComponents(flecs::world &world) {
   });
 }
 
-std::string_view to_string(NotificationSeverity severity) {
+const char *to_string(NotificationSeverity severity) {
   switch (severity) {
   case NotificationSeverity::Low:
     return "Low";
@@ -56,8 +59,10 @@ flecs::entity instantiateNotification(flecs::world &world,
     notificationsNode = world.entity("Notifications");
   }
   auto e = world.entity()
-               .set<Notification>(
-                   {.title = title, .text = text, .severity = severity})
+               .set<Notification>({.id = Notification::max_id++,
+                                   .title = title,
+                                   .text = text,
+                                   .severity = severity})
                .child_of(notificationsNode);
 
   category = category.is_valid() ? category

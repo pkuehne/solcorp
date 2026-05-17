@@ -43,10 +43,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
     WHEN("manufacturing update is run") {
       auto &effort = rocket.get_mut<EffortRequired>();
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
-      THEN("remaining effort reaches zero but completion is deferred to "
-           "systemRocketCompleteAction") {
-        REQUIRE(rocket.get<EffortRequired>().remaining == 0);
-        REQUIRE(rocket.has<EffortRequired>());
+      THEN("EffortRequired is removed, signalling readiness for completion") {
+        REQUIRE(!rocket.has<EffortRequired>());
         REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
       }
     }
@@ -57,10 +55,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
     WHEN("manufacturing update is run") {
       auto &effort = rocket.get_mut<EffortRequired>();
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
-      THEN("remaining effort reaches zero but completion is deferred to "
-           "systemRocketCompleteAction") {
-        REQUIRE(rocket.get<EffortRequired>().remaining == 0);
-        REQUIRE(rocket.has<EffortRequired>());
+      THEN("EffortRequired is removed, signalling readiness for completion") {
+        REQUIRE(!rocket.has<EffortRequired>());
         REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
       }
     }
@@ -71,10 +67,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
     WHEN("manufacturing update is run") {
       auto &effort = rocket.get_mut<EffortRequired>();
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
-      THEN("remaining effort stays zero but completion is deferred to "
-           "systemRocketCompleteAction") {
-        REQUIRE(rocket.get<EffortRequired>().remaining == 0);
-        REQUIRE(rocket.has<EffortRequired>());
+      THEN("EffortRequired is removed, signalling readiness for completion") {
+        REQUIRE(!rocket.has<EffortRequired>());
         REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
       }
     }

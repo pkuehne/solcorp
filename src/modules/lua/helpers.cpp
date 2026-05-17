@@ -1,5 +1,6 @@
 #include "helpers.h"
 #include "modules/base/assert.h"
+#include "modules/base/notification.h"
 #include "modules/engine/render.h"
 #include "modules/lua/entity.h"
 #include "modules/lua/lua_registry.h"
@@ -144,10 +145,11 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
   return sprite;
 }
 
-flecs::entity
-create_contract(const flecs::world &world, const std::string &name,
-                const std::string &client, const std::string &description,
-                uint32_t upfront_payment, uint32_t completion_payment) {
+flecs::entity create_contract(flecs::world &world, const std::string &name,
+                              const std::string &client,
+                              const std::string &description,
+                              uint32_t upfront_payment,
+                              uint32_t completion_payment) {
   auto contracts_node = world.lookup("Contracts");
   SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
   auto existing = contracts_node.lookup(name.c_str());
@@ -155,6 +157,10 @@ create_contract(const flecs::world &world, const std::string &name,
     spdlog::warn("Entity with name {} already exists", name);
     return existing;
   }
+  instantiateNotification(world, "Contract Created",
+                          fmt::format("A new contract '{}' is available", name),
+                          world.lookup("NotificationCategories::Contracts"),
+                          NotificationSeverity::Medium);
   return world.entity(name.c_str())
       .set<Contract>({.client = client,
                       .description = description,

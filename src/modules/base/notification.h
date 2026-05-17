@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <flecs.h>
 #include <string>
 
@@ -14,6 +15,8 @@ enum class NotificationSeverity : uint8_t {
 
 /// @brief Component representing a notification to be shown to the player.
 struct Notification {
+  static uint32_t max_id;
+  uint32_t id = 0;
   std::string title;
   std::string text;
   NotificationSeverity severity = NotificationSeverity::Low;
@@ -27,7 +30,7 @@ struct NotificationCategory {};
 /// @brief Tag to indicate a notification has been read by the player.
 struct NotificationRead {};
 
-std::string_view to_string(NotificationSeverity severity);
+const char *to_string(NotificationSeverity severity);
 
 void registerNotificationComponents(flecs::world &world);
 

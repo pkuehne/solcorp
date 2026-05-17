@@ -64,6 +64,7 @@ add_executable(unit_test
   site/rocket_prefab_window/can_afford_rocket_prefab.test.cpp
   stats/stats.test.cpp
   window/building_detail_window.test.cpp
+  window/notification_window.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)

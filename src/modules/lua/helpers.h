@@ -1,7 +1,6 @@
 #pragma once
 
 #include "modules/engine/render.h"
-#include "modules/rocket/rocket_module.h"
 #include "modules/stats/stats.h"
 #include <flecs.h>
 #include <lua.hpp>
@@ -62,10 +61,11 @@ flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,
 Sprite clip_sprite_from_texture(const flecs::world &world,
                                 const std::string &texture,
                                 SpriteClipRect rect);
-flecs::entity
-create_contract(const flecs::world &world, const std::string &name,
-                const std::string &client, const std::string &description,
-                uint32_t upfront_payment, uint32_t completion_payment);
+flecs::entity create_contract(flecs::world &world, const std::string &name,
+                              const std::string &client,
+                              const std::string &description,
+                              uint32_t upfront_payment,
+                              uint32_t completion_payment);
 flecs::entity create_contract_payload(const flecs::world &world,
                                       flecs::entity contract,
                                       const std::string &name, uint32_t mass,

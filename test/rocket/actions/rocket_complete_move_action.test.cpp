@@ -63,7 +63,7 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
     }
   }
 
-  GIVEN("A moving rocket with time remaining") {
+  GIVEN("A moving rocket that still has DurationRequired") {
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
@@ -79,16 +79,25 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
         CHECK(result.message == "Rocket has not yet moved to the new location");
       }
     }
+
+    WHEN("block is called") {
+      complete.block(world);
+
+      THEN("RocketStateTransitionBlocked is set with the reason") {
+        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
+        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
+              "Rocket has not yet moved to the new location");
+      }
+    }
   }
 
-  GIVEN("A moving rocket with valid target parent and duration") {
+  GIVEN("A moving rocket with valid target parent") {
     auto source = world.entity();
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>().child_of(source);
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     rocket.add<RocketTargetParent>(destination);
-    rocket.set<DurationRequired>({.remaining = 0, .total = 5});
     RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
@@ -116,7 +125,6 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
         CHECK(!rocket.has<RocketTargetState>());
         CHECK(!rocket.has<RocketTargetParent>());
-        CHECK(!rocket.has<DurationRequired>());
       }
     }
   }
@@ -128,7 +136,6 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     rocket.add<RocketTargetParent>(destination);
-    rocket.set<DurationRequired>({.remaining = 0, .total = 5});
     rocket.set<RocketStateTransitionBlocked>({.reason = "stale"});
     RocketCompleteMoveAction complete{rocket};
 

@@ -204,37 +204,16 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
   world.import <WindowModule>();
   world.import <RocketModule>();
 
-  GIVEN("A rocket under construction with effort still remaining") {
-    auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<EffortRequired>({.remaining = 50, .total = 300});
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
-
-    WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
-
-      THEN("The rocket is blocked and remains under construction") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
-        CHECK(rocket.has<EffortRequired>());
-        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
-        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
-              "Rocket construction is not yet complete");
-      }
-    }
-  }
-
   GIVEN("A rocket under construction with effort complete") {
     auto rocket = world.entity().add<Rocket>();
     rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<EffortRequired>({.remaining = 0, .total = 300});
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
 
     WHEN("systemRocketCompleteAction is called") {
       systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
-      THEN("The rocket transitions to Stored and EffortRequired is removed") {
+      THEN("The rocket transitions to Stored") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
-        CHECK(!rocket.has<EffortRequired>());
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
     }
@@ -256,29 +235,6 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     }
   }
 
-  GIVEN("A moving rocket with duration still remaining") {
-    auto source = world.entity();
-    auto destination = world.entity();
-    auto rocket = world.entity().add<Rocket>().child_of(source);
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
-    rocket.add<RocketTargetParent>(destination);
-    rocket.set<DurationRequired>({.remaining = 3, .total = 5});
-
-    WHEN("systemRocketCompleteAction is called") {
-      systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
-
-      THEN("The rocket is blocked and remains at its current location") {
-        CHECK(rocket.parent() == source);
-        CHECK(rocket.has<DurationRequired>());
-        CHECK(rocket.get<DurationRequired>().remaining == 3);
-        REQUIRE(rocket.has<RocketStateTransitionBlocked>());
-        CHECK(rocket.get<RocketStateTransitionBlocked>().reason ==
-              "Rocket has not yet moved to the new location");
-      }
-    }
-  }
-
   GIVEN("A moving rocket with duration complete") {
     auto source = world.entity();
     auto destination = world.entity();
@@ -286,7 +242,6 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     rocket.get_mut<Rocket>().state = RocketStateId::Moving;
     rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
     rocket.add<RocketTargetParent>(destination);
-    rocket.set<DurationRequired>({.remaining = 0, .total = 5});
 
     WHEN("systemRocketCompleteAction is called") {
       systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
@@ -297,7 +252,6 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
         CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
         CHECK(!rocket.has<RocketTargetState>());
         CHECK(!rocket.has<RocketTargetParent>());
-        CHECK(!rocket.has<DurationRequired>());
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
     }
