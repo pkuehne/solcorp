@@ -8,6 +8,7 @@
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
+#include "widgets/stat_widget.h"
 #include "widgets/widgets.h"
 #include <cmath>
 #include <flecs.h>
@@ -109,13 +110,13 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
     ImGui::Text("%s", prefabE.name().c_str());
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
-    displayStatWithTooltip(&cost);
+    Widgets::StatTooltip(&cost);
 
     RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
                              rocketCost};
     auto result = action.validate(world);
 
-    if (ActionButton(
+    if (Widgets::ActionButton(
             ButtonLabel{
                 std::format("Build '{}'", prefabE.name().c_str()).c_str()},
             ButtonTooltip{"Build this rocket"}, result.message)) {

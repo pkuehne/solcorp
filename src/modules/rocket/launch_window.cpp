@@ -262,9 +262,10 @@ void drawLaunchWindow(flecs::entity winE) {
     edit.targetOrbit = state.draftPlan.targetOrbit;
     edit.payloads = state.draftPlan.payloads;
     auto valid = edit.validate(world);
-    if (ActionButton(ButtonLabel{.text = "Save"},
-                     ButtonTooltip{.text = "Save Launch Plan to be executed"},
-                     valid.message)) {
+    if (Widgets::ActionButton(
+            ButtonLabel{.text = "Save"},
+            ButtonTooltip{.text = "Save Launch Plan to be executed"},
+            valid.message)) {
       edit.execute(world);
       state.draftPlan = ScheduleLaunchAction{};
       state.editingPlan = flecs::entity::null();
@@ -272,9 +273,10 @@ void drawLaunchWindow(flecs::entity winE) {
     }
   } else {
     auto valid = state.draftPlan.validate(world);
-    if (ActionButton(ButtonLabel{.text = "Save"},
-                     ButtonTooltip{.text = "Save Launch Plan to be executed"},
-                     valid.message)) {
+    if (Widgets::ActionButton(
+            ButtonLabel{.text = "Save"},
+            ButtonTooltip{.text = "Save Launch Plan to be executed"},
+            valid.message)) {
       state.draftPlan.execute(world);
       state.draftPlan = ScheduleLaunchAction{};
       hideWindow(world, "Mission Plan");

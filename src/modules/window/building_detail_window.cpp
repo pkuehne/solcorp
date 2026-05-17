@@ -8,9 +8,9 @@
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/rocket_prefab_window.h"
 #include "modules/site/site.h"
-#include "modules/stats/stats.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
+#include "widgets/stat_widget.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
 #include <flecs/addons/cpp/entity.hpp>
@@ -109,9 +109,9 @@ void drawManufacturingSection(flecs::entity &entity) {
     ImGui::Text("Empty Manufacturing Line");
     ImGui::ProgressBar(0.0);
 
-    if (ActionButton(ButtonLabel{.text = "Build"},
-                     ButtonTooltip{.text = "Select a rocket prefab to build"},
-                     "")) {
+    if (Widgets::ActionButton(
+            ButtonLabel{.text = "Build"},
+            ButtonTooltip{.text = "Select a rocket prefab to build"}, "")) {
       showRocketPrefabWindow(entity);
     }
   }
@@ -183,8 +183,8 @@ void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
   auto launchpad = entity.get<Launchpad>();
-  displayStatWithTooltip(&launchpad.max_weight);
-  displayStatWithTooltip(&launchpad.prep_days);
+  Widgets::StatTooltip(&launchpad.max_weight);
+  Widgets::StatTooltip(&launchpad.prep_days);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =
@@ -211,7 +211,7 @@ void drawRocketButtons(flecs::entity &rocket) {
     issue = "Rocket is not available";
   }
 
-  bool openPopup = ActionButton(
+  bool openPopup = Widgets::ActionButton(
       ButtonLabel{.text = "Move"},
       ButtonTooltip{.text = "Move the rocket to another storage at this site"},
       issue);
@@ -222,8 +222,8 @@ void drawRocketButtons(flecs::entity &rocket) {
   if (target.is_valid()) {
     tooltip = "Edit launch plan";
   }
-  if (ActionButton(ButtonLabel{.text = "Schedule"},
-                   ButtonTooltip{.text = tooltip.c_str()}, issue)) {
+  if (Widgets::ActionButton(ButtonLabel{.text = "Schedule"},
+                            ButtonTooltip{.text = tooltip.c_str()}, issue)) {
     if (target.is_valid()) {
       showLaunchWindowEdit(target);
     } else {
@@ -286,8 +286,9 @@ void storagePickerPopup(const char *popupId, bool open, flecs::world &world,
   } else if (destination == excluded) {
     issue = "Already here";
   }
-  if (ActionButton(ButtonLabel{.text = "Ok"},
-                   ButtonTooltip{.text = "Confirm selection"}, issue)) {
+  if (Widgets::ActionButton(ButtonLabel{.text = "Ok"},
+                            ButtonTooltip{.text = "Confirm selection"},
+                            issue)) {
     onConfirm(destination);
     ImGui::CloseCurrentPopup();
   }
