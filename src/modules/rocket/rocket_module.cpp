@@ -257,25 +257,41 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
             world.lookup("NotificationCategories::Rocket Launch"));
       }
       contract.status = ContractStatus::Closed;
-
-      payload.destruct();
     }
   }
 
   auto launchpadE = planE.target<LaunchingFrom>();
   spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
                 plan.launch_date, today);
-  std::string notification =
-      rocket_failure ? std::format("{} failed - {} exploded on launch",
-                                   planE.name().c_str(), rocketE.name().c_str())
-                     : std::format("{} launched {} successfully (${})",
-                                   planE.name().c_str(), rocketE.name().c_str(),
-                                   total_payment);
+
+  std::string notification;
+  if (rocket_failure) {
+    notification = std::format("{} failed - {} exploded on launch",
+                               planE.name().c_str(), rocketE.name().c_str());
+  } else {
+    notification =
+        std::format("{} launched {} successfully (${})", planE.name().c_str(),
+                    rocketE.name().c_str(), total_payment);
+  }
+  notification +=
+      fmt::format("\nOrbit:     {}", plan.target_orbit.name().c_str());
+  notification += fmt::format("\nLaunchpad: {}", launchpadE.name().c_str());
+  notification += fmt::format("\nRocket:    {}%", rocketE.name().c_str());
+  std::string payload_list;
+  for (auto payload : payloads) {
+    payload_list += "\n- " + std::string(payload.name().c_str());
+  }
+  notification += "\nPayloads:" + payload_list;
+
   instantiateBuildingNotification(world, launchpadE, notification);
   instantiateNotification(world, "Launch Complete", notification,
                           world.lookup("NotificationCategories::Rocket Launch"),
                           rocket_failure ? NotificationSeverity::Critical
                                          : NotificationSeverity::High);
+
+  for (auto payload : payloads) {
+    payload.destruct();
+  }
   rocketE.destruct();
   planE.destruct();
 }
