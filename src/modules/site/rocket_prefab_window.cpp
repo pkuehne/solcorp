@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/rocket/actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
@@ -110,7 +111,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
     ImGui::Text("%s", prefabE.name().c_str());
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
-    Widgets::StatTooltip(&cost);
+    Widgets::StatTooltip(&cost, format_money<double>);
 
     RocketBuildAction action{PrefabEntity{prefabE}, LineEntity{manufacturingE},
                              rocketCost};
