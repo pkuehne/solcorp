@@ -34,7 +34,9 @@ void StatTooltip(const Stat *stat,
       }
       ImGui::Text("%s:", item.effectName.c_str());
       ImGui::SameLine();
-      ImGui::TextColored(colour, "%s", modValue.c_str());
+      if (!modValue.empty()) {
+        ImGui::TextColored(colour, "%s", modValue.c_str());
+      }
     }
     ImGui::Separator();
     ImGui::Text("Final Value: %s", fmt(stat->value()).c_str());

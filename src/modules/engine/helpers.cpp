@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include <cstddef>
 #include <random>
 
 bool roll_random(double probability) {
