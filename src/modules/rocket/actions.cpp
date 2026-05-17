@@ -6,6 +6,7 @@
 #include "modules/site/site.h"
 #include "rocket_module.h"
 #include <flecs.h>
+#include <format>
 #include <spdlog/spdlog.h>
 
 ValidationResult

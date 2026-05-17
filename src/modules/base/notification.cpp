@@ -14,6 +14,7 @@ void registerNotificationComponents(flecs::world &world) {
   world.component<NotificationCategory>().add(flecs::Exclusive);
   world.component<NotificationRead>();
   world.component<Notification>()
+      .member("id", &Notification::id)
       .member("title", &Notification::title)
       .member("text", &Notification::text)
       .member("severity", &Notification::severity);

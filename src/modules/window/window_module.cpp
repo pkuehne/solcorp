@@ -55,8 +55,8 @@ void systemToggle(flecs::iter &it, size_t, Simulation &sim,
 void systemTickDurationRequired(flecs::entity e, DurationRequired &duration) {
   if (duration.remaining > 0) {
     duration.remaining--;
-    if (duration.remaining == 0) {
-      e.remove<DurationRequired>();
-    }
+  }
+  if (duration.remaining == 0) {
+    e.remove<DurationRequired>();
   }
 }
