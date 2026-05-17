@@ -23,7 +23,9 @@ static ImColor severityColor(NotificationSeverity sev) {
   return {255, 255, 255};
 }
 
-static bool drawNotification(flecs::entity notifE, ImDrawList *dl) {
+enum class NotifAction : uint8_t { None, MarkRead, Delete };
+
+static NotifAction drawNotification(flecs::entity notifE, ImDrawList *dl) {
   const auto &notif = notifE.get<Notification>();
 
   ImGui::PushID(std::to_string(notifE.id()).c_str());
@@ -44,6 +46,15 @@ static bool drawNotification(flecs::entity notifE, ImDrawList *dl) {
     ImGui::SameLine();
     ImGui::Text("| %s", cat.name().c_str());
   }
+
+  float button_w =
+      ImGui::CalcTextSize("X").x + ImGui::GetStyle().FramePadding.x * 2;
+  ImGui::SameLine(ImGui::GetContentRegionMax().x - button_w);
+  ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(153, 26, 26));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(217, 51, 51));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(255, 77, 77));
+  bool delete_clicked = ImGui::SmallButton("X");
+  ImGui::PopStyleColor(3);
 
   ImGui::Indent(8.0f);
   ImGui::PushTextWrapPos(0.0f);
@@ -73,7 +84,13 @@ static bool drawNotification(flecs::entity notifE, ImDrawList *dl) {
   ImGui::Spacing();
   ImGui::PopID();
 
-  return clicked;
+  if (delete_clicked) {
+    return NotifAction::Delete;
+  }
+  if (clicked) {
+    return NotifAction::MarkRead;
+  }
+  return NotifAction::None;
 }
 
 bool notificationMatchesFilter(flecs::entity notifE,
@@ -203,17 +220,21 @@ void drawNotificationWindow(flecs::entity winE) {
   });
 
   ImDrawList *dl = ImGui::GetWindowDrawList();
-  flecs::entity clicked_notif = flecs::entity::null();
+  flecs::entity acted_notif = flecs::entity::null();
+  NotifAction acted_action = NotifAction::None;
   for (auto notifE : std::ranges::reverse_view(notifications)) {
-    if (drawNotification(notifE, dl)) {
-      clicked_notif = notifE;
+    NotifAction action = drawNotification(notifE, dl);
+    if (action != NotifAction::None) {
+      acted_notif = notifE;
+      acted_action = action;
     }
   }
 
-  // Apply click-to-mark-read after iteration to avoid structural change during
-  // each()
-  if (clicked_notif.is_valid()) {
-    clicked_notif.add<NotificationRead>();
+  // Apply deferred structural change after iteration
+  if (acted_action == NotifAction::MarkRead) {
+    acted_notif.add<NotificationRead>();
+  } else if (acted_action == NotifAction::Delete) {
+    acted_notif.destruct();
   }
 
   if (notifications.empty()) {
