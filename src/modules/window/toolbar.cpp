@@ -1,6 +1,7 @@
 #include "toolbar.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include <array>
 #include "modules/rocket/launch_window.h"
 #include "modules/simulation/celestial_browser.h"
 #include <modules/rocket/active_launches_window.h>
@@ -47,6 +48,30 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
         showNotificationWindow(world);
       }
       ImGui::SetItemTooltip("Notifications");
+
+      int unread = world.query_builder<const Notification>()
+                       .without<NotificationRead>()
+                       .build()
+                       .count();
+      if (unread > 0) {
+        ImDrawList *dl = ImGui::GetWindowDrawList();
+        ImVec2 btn_min = ImGui::GetItemRectMin();
+        ImVec2 btn_max = ImGui::GetItemRectMax();
+        ImVec2 badge_center = {btn_max.x - 5.0f, btn_min.y + 5.0f};
+        constexpr float badge_r = 7.0f;
+        dl->AddCircleFilled(badge_center, badge_r, IM_COL32(220, 50, 50, 255));
+        std::array<char, 4> buf{};
+        if (unread <= 9) {
+          snprintf(buf.data(), buf.size(), "%d", unread);
+        } else {
+          snprintf(buf.data(), buf.size(), "9+");
+        }
+        ImVec2 text_sz = ImGui::CalcTextSize(buf.data());
+        dl->AddText(
+            {badge_center.x - text_sz.x * 0.5f,
+             badge_center.y - text_sz.y * 0.5f},
+            IM_COL32(255, 255, 255, 255), buf.data());
+      }
       ImGui::EndMenuBar();
     }
   }
