@@ -1,9 +1,9 @@
 #include "toolbar.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include <array>
 #include "modules/rocket/launch_window.h"
 #include "modules/simulation/celestial_browser.h"
+#include <array>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/rocket/contracts_window.h>
 #include <modules/window/notification_window.h>
@@ -67,10 +67,9 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
           snprintf(buf.data(), buf.size(), "9+");
         }
         ImVec2 text_sz = ImGui::CalcTextSize(buf.data());
-        dl->AddText(
-            {badge_center.x - text_sz.x * 0.5f,
-             badge_center.y - text_sz.y * 0.5f},
-            IM_COL32(255, 255, 255, 255), buf.data());
+        dl->AddText({badge_center.x - text_sz.x * 0.5f,
+                     badge_center.y - text_sz.y * 0.5f},
+                    IM_COL32(255, 255, 255, 255), buf.data());
       }
       ImGui::EndMenuBar();
     }
