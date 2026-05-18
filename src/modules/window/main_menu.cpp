@@ -4,8 +4,6 @@
 #include "modules/engine/helpers.h"
 #include "notification_window.h"
 #include <flecs.h>
-#include <modules/rocket/active_launches_window.h>
-#include <modules/rocket/contracts_window.h>
 #include <modules/rocket/launch_window.h>
 #include <modules/simulation/celestial_browser.h>
 #include <modules/simulation/developer_window.h>
@@ -36,12 +34,6 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
       }
       if (ImGui::MenuItem("Launch Planner")) {
         showLaunchWindowAdd(world);
-      }
-      if (ImGui::MenuItem("Active Launches")) {
-        showActiveLaunchesWindow(world);
-      }
-      if (ImGui::MenuItem("Contracts")) {
-        showContractsWindow(world);
       }
       if (ImGui::MenuItem("Developer Window")) {
         showDeveloperWindow(world);
