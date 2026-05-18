@@ -2,17 +2,13 @@
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/engine/helpers.h"
-#include "notification_window.h"
 #include <flecs.h>
-#include <modules/rocket/launch_window.h>
-#include <modules/simulation/celestial_browser.h>
-#include <modules/simulation/developer_window.h>
 #include <modules/simulation/simulation.h>
 
 void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
                         const Game game, MainMenuBar) {
   auto world = winE.world();
-  auto company = world.get<Company>();
+  const auto &company = world.get<Company>();
 
   if (company.balance < 0) {
     ImGui::OpenPopup("Game Over");
@@ -28,21 +24,7 @@ void systemDrawMainMenu(flecs::entity winE, const Simulation sim,
     }
     ImGui::Text(" %s ", company.name.c_str());
     ImGui::Text(" $%s ", format_locale(company.balance).c_str());
-    if (ImGui::BeginMenu("Windows")) {
-      if (ImGui::MenuItem("Celestial Browser")) {
-        showCelestialBrowser(world);
-      }
-      if (ImGui::MenuItem("Launch Planner")) {
-        showLaunchWindowAdd(world);
-      }
-      if (ImGui::MenuItem("Developer Window")) {
-        showDeveloperWindow(world);
-      }
-      if (ImGui::MenuItem("Notifications")) {
-        showNotificationWindow(world);
-      }
-      ImGui::EndMenu();
-    }
+
     ImGui::PopItemWidth();
     ImGui::EndMainMenuBar();
   }

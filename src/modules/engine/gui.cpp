@@ -96,14 +96,14 @@ void systemInitialiseGui(flecs::iter &iter) {
   ImFontConfig fa_config;
   fa_config.MergeMode = true;
   fa_config.PixelSnapH = true;
-  io.Fonts->AddFontFromFileTTF(
-      "fonts/Font Awesome 7 Free-Regular-400.otf",
-      dpi_scaling * static_cast<float>(font.point_size), &fa_config,
-      fa_range.data());
-  io.Fonts->AddFontFromFileTTF(
-      "fonts/Font Awesome 7 Free-Solid-900.otf",
-      dpi_scaling * static_cast<float>(font.point_size), &fa_config,
-      fa_range.data());
+  io.Fonts->AddFontFromFileTTF("fonts/Font Awesome 7 Free-Regular-400.otf",
+                               dpi_scaling *
+                                   static_cast<float>(font.point_size),
+                               &fa_config, fa_range.data());
+  io.Fonts->AddFontFromFileTTF("fonts/Font Awesome 7 Free-Solid-900.otf",
+                               dpi_scaling *
+                                   static_cast<float>(font.point_size),
+                               &fa_config, fa_range.data());
 
   io.Fonts->Build();
 
