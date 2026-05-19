@@ -46,6 +46,12 @@ BaseModule::BaseModule(flecs::world &world) {
         *data = value; // Assign new value to std::string
       });
 
+  world.component<Config>()
+      .member("font", &Config::font)
+      .member("font_size", &Config::font_size)
+      .add(flecs::Singleton);
+  ;
+
   world.component<EffortRequired>()
       .member("remaining", &EffortRequired::remaining)
       .member("total", &EffortRequired::total);
@@ -72,6 +78,7 @@ BaseModule::BaseModule(flecs::world &world) {
   simTimer.stop();
   world.set<Simulation>(Simulation{simTimer});
   world.set<Game>({});
+  world.set<Config>(load_config_file());
 
   registerNotificationComponents(world);
 }

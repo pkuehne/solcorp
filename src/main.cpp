@@ -18,8 +18,6 @@ int main() {
 
   flecs::world world;
 
-  load_config_file();
-
   world.import <BaseModule>();
   world.import <LuaModule>();
   world.import <EngineModule>();
