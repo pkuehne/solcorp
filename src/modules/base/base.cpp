@@ -1,4 +1,5 @@
 #include "base.h"
+#include "modules/lua/config.h"
 #include "modules/lua/lua.h"
 #include "notification.h"
 #include <string>

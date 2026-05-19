@@ -42,7 +42,6 @@
 #include <type_traits>
 #include <utility>
 
-#include "modules/base/base.h"
 #include "modules/lua/entity.h"
 #include "modules/lua/lua_registry.h"
 
@@ -55,9 +54,6 @@ struct Mod {
 };
 
 using ModStateCallback = std::function<void(lua_State *)>;
-
-/** @brief Load config.lua and apply global startup settings. */
-Config load_config_file();
 
 /**
  * @brief Execute a named script handler on a specific mod.
