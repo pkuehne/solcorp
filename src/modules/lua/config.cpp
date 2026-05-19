@@ -52,8 +52,7 @@ Config load_config_file() {
   }
 
   Config config = parse_config(L);
-  spdlog::info("Config loaded: font='{}', font_size={}", config.font,
-               config.font_size);
+
   lua_close(L);
   return config;
 }

@@ -9,6 +9,7 @@
 #include <SDL_render.h>
 #include <SDL_ttf.h>
 #include <cstdlib>
+#include <filesystem>
 #include <flecs.h>
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
@@ -59,9 +60,11 @@ void registerRender(flecs::world &world) {
   auto fonts = world.entity("Fonts");
   world.set_scope(scope);
 
+  const auto &config = world.get<Config>();
+
   Font defaultFont;
-  defaultFont.name = "fonts/RobotoMono-Medium.ttf";
-  defaultFont.point_size = 18;
+  defaultFont.name = (std::filesystem::path("fonts") / config.font).string();
+  defaultFont.point_size = config.font_size;
   defaultFont.ptr = TTF_OpenFont(defaultFont.name.c_str(),
                                  static_cast<int>(defaultFont.point_size));
   SC_ASSERT(defaultFont.ptr != nullptr, "Failed to load font '" +

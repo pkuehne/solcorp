@@ -16,7 +16,7 @@ struct DurationRequired {
 };
 
 struct Config {
-  std::string font = "fonts/Roboto-Medium.ttf";
+  std::string font = "Roboto-Medium.ttf";
   uint32_t font_size = 16;
 };
 
