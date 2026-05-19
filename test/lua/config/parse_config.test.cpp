@@ -8,9 +8,8 @@ static lua_State *make_state() {
   return L;
 }
 
-static void push_config_table(lua_State *L,
-                               const char *font = nullptr,
-                               lua_Integer font_size = -1) {
+static void push_config_table(lua_State *L, const char *font = nullptr,
+                              lua_Integer font_size = -1) {
   lua_newtable(L);
   if (font) {
     lua_pushstring(L, font);
@@ -31,11 +30,9 @@ SCENARIO("parse_config with no table on stack") {
       Config config = parse_config(L);
 
       THEN("default font is returned") {
-        CHECK(config.font == "fonts/Roboto-Medium.ttf");
+        CHECK(config.font == "Roboto-Medium.ttf");
       }
-      THEN("default font_size is returned") {
-        CHECK(config.font_size == 16);
-      }
+      THEN("default font_size is returned") { CHECK(config.font_size == 16); }
     }
 
     lua_close(L);
@@ -51,11 +48,9 @@ SCENARIO("parse_config with empty table") {
       Config config = parse_config(L);
 
       THEN("default font is returned") {
-        CHECK(config.font == "fonts/Roboto-Medium.ttf");
+        CHECK(config.font == "Roboto-Medium.ttf");
       }
-      THEN("default font_size is returned") {
-        CHECK(config.font_size == 16);
-      }
+      THEN("default font_size is returned") { CHECK(config.font_size == 16); }
     }
 
     lua_close(L);
@@ -65,17 +60,13 @@ SCENARIO("parse_config with empty table") {
 SCENARIO("parse_config with font field") {
   GIVEN("a config table with a font string") {
     lua_State *L = make_state();
-    push_config_table(L, "fonts/MyFont.ttf");
+    push_config_table(L, "MyFont.ttf");
 
     WHEN("parse_config is called") {
       Config config = parse_config(L);
 
-      THEN("font is set from the table") {
-        CHECK(config.font == "fonts/MyFont.ttf");
-      }
-      THEN("font_size remains the default") {
-        CHECK(config.font_size == 16);
-      }
+      THEN("font is set from the table") { CHECK(config.font == "MyFont.ttf"); }
+      THEN("font_size remains the default") { CHECK(config.font_size == 16); }
     }
 
     lua_close(L);
@@ -90,11 +81,9 @@ SCENARIO("parse_config with font_size field") {
     WHEN("parse_config is called") {
       Config config = parse_config(L);
 
-      THEN("font_size is set from the table") {
-        CHECK(config.font_size == 24);
-      }
+      THEN("font_size is set from the table") { CHECK(config.font_size == 24); }
       THEN("font remains the default") {
-        CHECK(config.font == "fonts/Roboto-Medium.ttf");
+        CHECK(config.font == "Roboto-Medium.ttf");
       }
     }
 
@@ -105,17 +94,13 @@ SCENARIO("parse_config with font_size field") {
 SCENARIO("parse_config with both fields") {
   GIVEN("a config table with font and font_size") {
     lua_State *L = make_state();
-    push_config_table(L, "fonts/Custom.ttf", 32);
+    push_config_table(L, "Custom.ttf", 32);
 
     WHEN("parse_config is called") {
       Config config = parse_config(L);
 
-      THEN("font is set from the table") {
-        CHECK(config.font == "fonts/Custom.ttf");
-      }
-      THEN("font_size is set from the table") {
-        CHECK(config.font_size == 32);
-      }
+      THEN("font is set from the table") { CHECK(config.font == "Custom.ttf"); }
+      THEN("font_size is set from the table") { CHECK(config.font_size == 32); }
     }
 
     lua_close(L);
@@ -135,11 +120,9 @@ SCENARIO("parse_config with wrong-typed fields") {
       Config config = parse_config(L);
 
       THEN("font falls back to default") {
-        CHECK(config.font == "fonts/Roboto-Medium.ttf");
+        CHECK(config.font == "Roboto-Medium.ttf");
       }
-      THEN("font_size falls back to default") {
-        CHECK(config.font_size == 16);
-      }
+      THEN("font_size falls back to default") { CHECK(config.font_size == 16); }
     }
 
     lua_close(L);
