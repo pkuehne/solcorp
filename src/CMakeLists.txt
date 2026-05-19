@@ -17,6 +17,7 @@ list(APPEND SolCorpSources
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
+    modules/window/toolbar.cpp
     modules/window/building_detail_window.cpp
     modules/window/notification_window.cpp
     modules/rocket/rocket_module.cpp
@@ -55,6 +56,7 @@ list(APPEND SolCorpHeaders
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h
+    modules/window/toolbar.h
     modules/window/building_detail_window.h
     modules/window/notification_window.h
     modules/rocket/rocket_module.h

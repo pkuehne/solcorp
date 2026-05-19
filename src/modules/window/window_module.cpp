@@ -5,6 +5,7 @@
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "notification_window.h"
+#include "toolbar.h"
 #include <flecs.h>
 #include <modules/simulation/simulation.h>
 
@@ -12,6 +13,7 @@ WindowModule::WindowModule(flecs::world &world) {
 
   // Register components
   world.component<MainMenuBar>();
+  world.component<Toolbar>();
   world.component<NotificationWindow>()
       .member("severity_filter", &NotificationWindow::severity_filter)
       .member("category_filter", &NotificationWindow::category_filter)
@@ -19,6 +21,7 @@ WindowModule::WindowModule(flecs::world &world) {
 
   // Register window
   world.entity("MainMenuBar").add<MainMenuBar>();
+  world.entity("Toolbar").add<Toolbar>();
 
   // Must be registered in OnStart (outside module scope) so the entity is
   // parented to the root "Windows" node, not the WindowModule entity.
@@ -34,6 +37,7 @@ WindowModule::WindowModule(flecs::world &world) {
   world.system<const Simulation, const Game, MainMenuBar>("Draw MainMenu")
       .kind(GuiPhase)
       .each(systemDrawMainMenu);
+  world.system<Toolbar>("Draw Toolbar").kind(GuiPhase).each(systemDrawToolbar);
   world.system<Simulation, const KeyDown>("Toggle Play/Pause")
       .kind(ValidatePhase)
       .each(systemToggle);

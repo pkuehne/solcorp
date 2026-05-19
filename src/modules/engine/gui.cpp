@@ -56,7 +56,7 @@ void systemInitialiseGui(flecs::iter &iter) {
   // Set up Nerd Font
   ImVector<ImWchar> ranges;
   ImFontGlyphRangesBuilder builder;
-  constexpr std::array<ImWchar, 3> fa_range = {0xed00, 0xf2ff,
+  constexpr std::array<ImWchar, 3> fa_range = {0xed00, 0xf8ff,
                                                0}; // Font Awesome
   constexpr std::array<ImWchar, 3> fae_range = {0xe200, 0x2a9,
                                                 0}; // Font Awesome Extended
@@ -92,6 +92,19 @@ void systemInitialiseGui(flecs::iter &iter) {
   io.Fonts->AddFontFromFileTTF(
       font.name.c_str(), dpi_scaling * static_cast<float>(font.point_size),
       &config, ranges.Data);
+
+  ImFontConfig fa_config;
+  fa_config.MergeMode = true;
+  fa_config.PixelSnapH = true;
+  io.Fonts->AddFontFromFileTTF("fonts/Font Awesome 7 Free-Regular-400.otf",
+                               dpi_scaling *
+                                   static_cast<float>(font.point_size),
+                               &fa_config, fa_range.data());
+  io.Fonts->AddFontFromFileTTF("fonts/Font Awesome 7 Free-Solid-900.otf",
+                               dpi_scaling *
+                                   static_cast<float>(font.point_size),
+                               &fa_config, fa_range.data());
+
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();
