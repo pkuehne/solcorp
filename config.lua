@@ -1,4 +1,4 @@
 return {
-	font = "custom-font.ttf",
+	font = "Inter_18pt-Medium.ttf",
 	-- font_size = 14,
 }

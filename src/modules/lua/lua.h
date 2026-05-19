@@ -55,9 +55,6 @@ struct Mod {
 
 using ModStateCallback = std::function<void(lua_State *)>;
 
-/** @brief Load config.lua and apply global startup settings. */
-void load_config_file();
-
 /**
  * @brief Execute a named script handler on a specific mod.
  * @return true if the handler either does not exist or runs successfully.

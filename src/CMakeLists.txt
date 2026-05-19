@@ -9,6 +9,7 @@ list(APPEND SolCorpSources
     modules/engine/input.cpp
     modules/engine/movement.cpp
     modules/engine/render.cpp
+    modules/lua/config.cpp
     modules/lua/entity.cpp
     modules/lua/helpers.cpp
     modules/lua/lua.cpp
@@ -48,6 +49,7 @@ list(APPEND SolCorpHeaders
     modules/engine/input.h
     modules/engine/movement.h
     modules/engine/render.h
+    modules/lua/config.h
     modules/lua/entity.h
     modules/lua/helpers.h
     modules/lua/lua.h

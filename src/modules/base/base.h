@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <flecs.h>
 #include <numbers>
+#include <string>
 
 struct EffortRequired {
   uint32_t remaining = 0;
@@ -12,6 +13,11 @@ struct EffortRequired {
 struct DurationRequired {
   uint32_t remaining = 0;
   uint32_t total = 0;
+};
+
+struct Config {
+  std::string font = "Roboto-Medium.ttf";
+  uint32_t font_size = 16;
 };
 
 // Phases

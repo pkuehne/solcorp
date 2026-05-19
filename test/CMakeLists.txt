@@ -37,6 +37,7 @@ add_executable(unit_test
   lua/helpers/create_contract_payload.test.cpp
   lua/helpers/get_all_contracts.test.cpp
   lua/helpers/get_all_active_contracts.test.cpp
+  lua/config/parse_config.test.cpp
   lua/logging/load_logging.test.cpp
   lua/logging/logging_levels.test.cpp
   lua/registry/world.test.cpp
