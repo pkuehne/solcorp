@@ -15,6 +15,7 @@
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <flecs/addons/cpp/c_types.hpp>
 #include <memory>
 #include <modules/simulation/simulation.h>
 #include <vector>
@@ -54,8 +55,7 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("state", &Rocket::state)
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
-  world.component<RocketTargetState>().member("target",
-                                              &RocketTargetState::target);
+
   world.component<RocketStateTransitionBlocked>().member(
       "reason", &RocketStateTransitionBlocked::reason);
   world.component<Payload>().member("mass", &Payload::mass);
@@ -90,6 +90,8 @@ RocketModule::RocketModule(flecs::world &world) {
                          // multiple Plans assigned
   world.component<CanLiftTo>().add(flecs::Symmetric);
   world.component<RocketTargetParent>();
+  world.component<RocketCurrentState>().add(flecs::Exclusive);
+  world.component<RocketTargetState>().add(flecs::Exclusive);
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -189,6 +191,14 @@ RocketModule::RocketModule(flecs::world &world) {
       .without<DurationRequired>()
       .kind(UpdatePhase)
       .each(systemRocketCompleteAction);
+
+  auto scope = world.set_scope(0);
+  auto states = world.entity("Rocket").child_of(world.entity("States"));
+  world.entity("Invalid").child_of(states);
+  world.entity("UnderConstruction").child_of(states);
+  world.entity("Stored").child_of(states);
+  world.entity("Moving").child_of(states);
+  world.set_scope(scope);
 }
 
 /// @brief Process LaunchPlans that are due

@@ -47,6 +47,7 @@ struct Rocket {
                     .higher_is_better = false});
 };
 
+struct RocketCurrentState {}; // Relationship
 struct RocketTargetState {
   RocketStateId target;
 };
