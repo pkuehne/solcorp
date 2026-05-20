@@ -319,12 +319,13 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
   }
 }
 
-void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
+void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &,
                                 const Manufacturing &manufacturing) {
   if (!manufacturing.auto_store) {
     return;
   }
-  if (rocket.state != RocketStateId::Stored) {
+  if (!rocketE.has<RocketCurrentState>(
+          rocketE.world().lookup("States::Rocket::Stored"))) {
     return;
   }
 

@@ -26,6 +26,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A rocket in Stored state") {
     auto rocket = world.entity().add<Rocket>();
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -41,7 +42,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A rocket in Assigned state") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -57,7 +58,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A rocket under construction") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -73,7 +75,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A rocket already assigned to another plan") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     rocket.add<LaunchingOn>(world.entity());
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
@@ -90,6 +92,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A missing launchpad") {
     auto rocket = world.entity().add<Rocket>();
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     ScheduleLaunchAction launch;
     launch.rocket = rocket;
 
@@ -127,6 +130,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A valid plan") {
     auto rocket = world.entity().add<Rocket>();
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -159,7 +163,8 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
         CHECK(launch.result.target<LaunchingFrom>() == launchpad);
       }
       THEN("The rocket state is set to Assigned") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Assigned);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Assigned")));
       }
     }
   }

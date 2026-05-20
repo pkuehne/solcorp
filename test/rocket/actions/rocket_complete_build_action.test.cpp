@@ -53,7 +53,8 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
 
   GIVEN("A rocket under construction that still has EffortRequired") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
     rocket.set<EffortRequired>({.remaining = 50, .total = 300});
     RocketCompleteBuildAction complete{rocket};
 
@@ -79,8 +80,9 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
 
   GIVEN("A rocket ready to complete construction") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
+    rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
     RocketCompleteBuildAction complete{rocket};
 
     WHEN("Validated") {
@@ -105,8 +107,9 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
 
       THEN("The rocket transitions to Stored and construction markers are "
            "cleared") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
-        CHECK(!rocket.has<RocketTargetState>());
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
+        CHECK(!rocket.has<RocketTargetState>(flecs::Wildcard));
       }
     }
   }
@@ -114,7 +117,8 @@ SCENARIO("RocketCompleteBuildAction", "[action]") {
   GIVEN("A rocket ready to complete construction with a stale "
         "RocketStateTransitionBlocked marker") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
     rocket.set<RocketStateTransitionBlocked>({.reason = "stale"});
     RocketCompleteBuildAction complete{rocket};
 

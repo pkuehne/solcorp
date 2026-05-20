@@ -19,7 +19,7 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
 
   auto addStoredRocketChild = [&](flecs::entity line) {
     auto rocket = world.entity().add<Rocket>().child_of(line);
-    rocket.get_mut<Rocket>().state = RocketStateId::Stored;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     return rocket;
   };
 
@@ -37,7 +37,8 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
       callSystem(rocket, line.get<Manufacturing>());
 
       THEN("the rocket is not moved") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
         CHECK(rocket.parent() == line);
       }
     }
@@ -49,13 +50,15 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
     line.add<ManufacturingLineStorage>(storage);
 
     auto rocket = world.entity().add<Rocket>().child_of(line);
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
 
     WHEN("systemAutoStoreBuiltRocket runs") {
       callSystem(rocket, line.get<Manufacturing>());
 
       THEN("the rocket is not moved") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::UnderConstruction")));
         CHECK(rocket.parent() == line);
       }
     }
@@ -70,7 +73,8 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
       callSystem(rocket, line.get<Manufacturing>());
 
       THEN("the rocket is not moved") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
         CHECK(rocket.parent() == line);
       }
     }
@@ -87,7 +91,8 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
       callSystem(rocket, line.get<Manufacturing>());
 
       THEN("the rocket transitions to Moving") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Moving);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving")));
       }
 
       THEN("AutoStoreBlocked is cleared") {
@@ -112,7 +117,8 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
       callSystem(rocket, line.get<Manufacturing>());
 
       THEN("the rocket is not moved") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
         CHECK(rocket.parent() == line);
       }
 
@@ -144,7 +150,8 @@ SCENARIO("systemAutoStoreBuiltRocket", "[system]") {
 
       THEN("the blocked tag is cleared and the rocket begins moving") {
         CHECK(!line.has<AutoStoreBlocked>());
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Moving);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving")));
       }
     }
   }

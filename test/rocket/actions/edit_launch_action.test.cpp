@@ -27,7 +27,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
   GIVEN("The same name as another plan") {
     world.entity("Other Plan").set<LaunchPlan>({});
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -53,7 +53,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
 
   GIVEN("The same name as the plan being edited") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -78,7 +78,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
 
   GIVEN("The same rocket already on this plan (Assigned state)") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -103,9 +103,9 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
 
   GIVEN("A different rocket that is already Assigned") {
     auto oldRocket = world.entity().add<Rocket>();
-    oldRocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    oldRocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto newRocket = world.entity().add<Rocket>();
-    newRocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    newRocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     newRocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -137,7 +137,7 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
 
   GIVEN("An existing plan") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -164,15 +164,17 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
         CHECK(edit.result.target<LaunchingOn>() == rocket);
       }
       THEN("The rocket remains Assigned") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Assigned);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Assigned")));
       }
     }
   }
 
   GIVEN("An existing plan with a rocket being swapped") {
     auto oldRocket = world.entity().add<Rocket>();
-    oldRocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    oldRocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto newRocket = world.entity().add<Rocket>();
+    newRocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     newRocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
@@ -191,10 +193,12 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
       edit.execute(world);
 
       THEN("The old rocket is returned to Stored") {
-        CHECK(oldRocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(oldRocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
       }
       THEN("The new rocket is Assigned") {
-        CHECK(newRocket.get<Rocket>().state == RocketStateId::Assigned);
+        CHECK(newRocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Assigned")));
       }
     }
   }

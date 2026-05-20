@@ -26,7 +26,7 @@ SCENARIO("CancelLaunchAction", "[action]") {
 
   GIVEN("A valid plan with an assigned rocket") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto plan = world.entity("Test Plan").set<LaunchPlan>({});
     plan.add<LaunchingOn>(rocket);
     CancelLaunchAction cancel{plan};
@@ -36,7 +36,8 @@ SCENARIO("CancelLaunchAction", "[action]") {
 
       THEN("The plan is destroyed") { CHECK(!plan.is_alive()); }
       THEN("The rocket is returned to Stored") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
       }
     }
   }

@@ -206,21 +206,24 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
 
   GIVEN("A rocket under construction with effort complete") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
+    rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
 
     WHEN("systemRocketCompleteAction is called") {
       systemRocketCompleteAction(rocket, rocket.get_mut<Rocket>());
 
       THEN("The rocket transitions to Stored") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
     }
   }
 
   GIVEN("A rocket in Stored state that unexpectedly has EffortRequired") {
-    auto rocket = world.entity().add<Rocket>(); // default state: Stored
+    auto rocket = world.entity().add<Rocket>();
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     rocket.set<EffortRequired>({.remaining = 0, .total = 300});
 
     WHEN("systemRocketCompleteAction is called") {
@@ -228,7 +231,8 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
 
       THEN("Nothing happens — the system ignores states other than "
            "UnderConstruction and Moving") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
         CHECK(rocket.has<EffortRequired>());
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
@@ -239,8 +243,8 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
     auto source = world.entity();
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>().child_of(source);
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
+    rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
     rocket.add<RocketTargetParent>(destination);
 
     WHEN("systemRocketCompleteAction is called") {
@@ -249,8 +253,9 @@ SCENARIO("systemRocketCompleteAction", "[system]") {
       THEN("The rocket is reparented to its destination and move markers are "
            "cleared") {
         CHECK(rocket.parent() == destination);
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
-        CHECK(!rocket.has<RocketTargetState>());
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
+        CHECK(!rocket.has<RocketTargetState>(flecs::Wildcard));
         CHECK(!rocket.has<RocketTargetParent>());
         CHECK(!rocket.has<RocketStateTransitionBlocked>());
       }
