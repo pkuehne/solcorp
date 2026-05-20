@@ -307,7 +307,10 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
   }
 
   // Base Rocket Prefab
-  world.prefab("Rocket").child_of(core_node).add<Rocket>();
+  world.prefab("Rocket")
+      .child_of(core_node)
+      .add<Rocket>()
+      .add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
 }
 
 void systemRocketCompleteAction(flecs::entity e, Rocket &) {
