@@ -166,6 +166,10 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
         CHECK(rocket.has<RocketCurrentState>(
             world.lookup("States::Rocket::Assigned")));
       }
+      THEN("The launch plan state is set to Scheduled") {
+        CHECK(launch.result.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Scheduled")));
+      }
     }
   }
 }

@@ -79,6 +79,8 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<RocketTargetParent>();
   world.component<RocketCurrentState>().add(flecs::Exclusive);
   world.component<RocketTargetState>().add(flecs::Exclusive);
+  world.component<LaunchPlanCurrentState>().add(flecs::Exclusive);
+  world.component<LaunchPlanTargetState>().add(flecs::Exclusive);
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -95,6 +97,12 @@ RocketModule::RocketModule(flecs::world &world) {
       [](LuaFieldBuilder<RocketCurrentState> &) {});
   register_component_lua<RocketTargetState>(
       world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &) {});
+  register_component_lua<LaunchPlanCurrentState>(
+      world, "LaunchPlanCurrentState",
+      [](LuaFieldBuilder<LaunchPlanCurrentState> &) {});
+  register_component_lua<LaunchPlanTargetState>(
+      world, "LaunchPlanTargetState",
+      [](LuaFieldBuilder<LaunchPlanTargetState> &) {});
   register_component_lua<RocketStateTransitionBlocked>(
       world, "RocketStateTransitionBlocked",
       [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
@@ -167,12 +175,15 @@ RocketModule::RocketModule(flecs::world &world) {
       .each(systemRocketCompleteAction);
 
   auto scope = world.set_scope(0);
-  auto states = world.entity("Rocket").child_of(world.entity("States"));
-  world.entity("Invalid").child_of(states);
-  world.entity("UnderConstruction").child_of(states);
-  world.entity("Stored").child_of(states);
-  world.entity("Moving").child_of(states);
-  world.entity("Assigned").child_of(states);
+  auto statesRoot = world.entity("States");
+  auto rocketStates = world.entity("Rocket").child_of(statesRoot);
+  world.entity("Invalid").child_of(rocketStates);
+  world.entity("UnderConstruction").child_of(rocketStates);
+  world.entity("Stored").child_of(rocketStates);
+  world.entity("Moving").child_of(rocketStates);
+  world.entity("Assigned").child_of(rocketStates);
+  auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
+  world.entity("Scheduled").child_of(planStates);
   world.set_scope(scope);
 }
 

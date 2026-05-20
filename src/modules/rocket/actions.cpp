@@ -81,6 +81,8 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
+  planE.add<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::Scheduled"));
   rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
   for (const auto &payload : payloads) {
     if (payload.is_valid()) {

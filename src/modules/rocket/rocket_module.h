@@ -36,6 +36,9 @@ struct RocketCurrentState {};
 struct RocketTargetState {};
 struct RocketTargetParent {};
 
+struct LaunchPlanCurrentState {};
+struct LaunchPlanTargetState {};
+
 struct RocketStateTransitionBlocked {
   std::string reason;
 };
