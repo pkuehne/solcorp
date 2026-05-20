@@ -25,7 +25,7 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
   }
 
   GIVEN("A rocket that is not currently moving") {
-    auto rocket = world.entity().add<Rocket>(); // default state: Stored
+    auto rocket = world.entity().add<Rocket>(); // no RocketCurrentState(Moving)
     RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
@@ -40,7 +40,7 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
 
   GIVEN("A moving rocket without a target parent") {
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
     RocketCompleteMoveAction complete{rocket};
 
     WHEN("Validated") {
@@ -66,7 +66,7 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
   GIVEN("A moving rocket that still has DurationRequired") {
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
     rocket.add<RocketTargetParent>(destination);
     rocket.set<DurationRequired>({.remaining = 3, .total = 5});
     RocketCompleteMoveAction complete{rocket};
@@ -95,8 +95,8 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
     auto source = world.entity();
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>().child_of(source);
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
+    rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
     rocket.add<RocketTargetParent>(destination);
     RocketCompleteMoveAction complete{rocket};
 
@@ -122,8 +122,9 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
 
       THEN("The rocket is reparented and move markers are cleared") {
         CHECK(rocket.parent() == destination);
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Stored);
-        CHECK(!rocket.has<RocketTargetState>());
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Stored")));
+        CHECK(!rocket.has<RocketTargetState>(flecs::Wildcard));
         CHECK(!rocket.has<RocketTargetParent>());
       }
     }
@@ -133,8 +134,8 @@ SCENARIO("RocketCompleteMoveAction", "[action]") {
     auto source = world.entity();
     auto destination = world.entity();
     auto rocket = world.entity().add<Rocket>().child_of(source);
-    rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
+    rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
     rocket.add<RocketTargetParent>(destination);
     rocket.set<RocketStateTransitionBlocked>({.reason = "stale"});
     RocketCompleteMoveAction complete{rocket};

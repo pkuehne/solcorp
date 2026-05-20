@@ -112,7 +112,8 @@ SCENARIO("systemAutoStartNextBuild", "[system]") {
             created = child;
         });
         REQUIRE(created.is_valid());
-        CHECK(created.get<Rocket>().state == RocketStateId::UnderConstruction);
+        CHECK(created.has<RocketCurrentState>(
+            world.lookup("States::Rocket::UnderConstruction")));
         CHECK(created.has<EffortRequired>());
       }
 

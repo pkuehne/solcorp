@@ -20,9 +20,10 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
     auto e = world.entity()
                  .add<Rocket>()
                  .set<EffortRequired>({.remaining = remaining, .total = total})
-                 .set<RocketTargetState>({.target = RocketStateId::Stored})
+                 .add<RocketCurrentState>(
+                     world.lookup("States::Rocket::UnderConstruction"))
+                 .add<RocketTargetState>(world.lookup("States::Rocket::Stored"))
                  .child_of(building);
-    e.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
     return e;
   };
 
@@ -45,7 +46,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("EffortRequired is removed, signalling readiness for completion") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
+        REQUIRE(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::UnderConstruction")));
       }
     }
   }
@@ -57,7 +59,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("EffortRequired is removed, signalling readiness for completion") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
+        REQUIRE(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::UnderConstruction")));
       }
     }
   }
@@ -69,7 +72,8 @@ SCENARIO("systemBuildingUpdateManufacuringProgress", "[system]") {
       systemBuildingUpdateManufacuringProgress(rocket, effort, manuf);
       THEN("EffortRequired is removed, signalling readiness for completion") {
         REQUIRE(!rocket.has<EffortRequired>());
-        REQUIRE(rocket.get<Rocket>().state == RocketStateId::UnderConstruction);
+        REQUIRE(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::UnderConstruction")));
       }
     }
   }

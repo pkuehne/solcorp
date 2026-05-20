@@ -21,7 +21,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("No rocket selected");
   }
-  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
+  if (!rocket.has<RocketCurrentState>(world.lookup("States::Rocket::Stored"))) {
     return ValidationResult::Fail("Selected rocket is not unassigned");
   }
   if (rocket.has<LaunchingOn>(flecs::Wildcard)) {
@@ -81,7 +81,7 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
-  rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+  rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
   for (const auto &payload : payloads) {
     if (payload.is_valid()) {
       planE.add<LaunchingWith>(payload);
@@ -105,7 +105,8 @@ ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail("No rocket selected");
   }
   bool same_rocket = (rocket == plan.target<LaunchingOn>());
-  if (!same_rocket && rocket.get<Rocket>().state != RocketStateId::Stored) {
+  if (!same_rocket &&
+      !rocket.has<RocketCurrentState>(world.lookup("States::Rocket::Stored"))) {
     return ValidationResult::Fail("Selected rocket is not unassigned");
   }
   if (!same_rocket && rocket.has<LaunchingOn>(flecs::Wildcard)) {
@@ -167,7 +168,7 @@ void EditLaunchAction::execute(flecs::world &world) {
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
   planE.add<LaunchingFrom>(launchpad);
-  rocket.get_mut<Rocket>().state = RocketStateId::Assigned;
+  rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
   for (const auto &payload : payloads) {
     if (payload.is_valid()) {
       planE.add<LaunchingWith>(payload);
@@ -189,7 +190,7 @@ void CancelLaunchAction::execute(flecs::world &world) {
   }
   auto rocketE = plan.target<LaunchingOn>();
   if (rocketE.is_valid()) {
-    rocketE.get_mut<Rocket>().state = RocketStateId::Stored;
+    rocketE.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
   }
   spdlog::debug("Cancelling launch plan: {}", plan.id());
   plan.destruct();
@@ -216,12 +217,14 @@ void RocketBuildAction::execute(flecs::world &world) {
     return;
   }
 
-  auto rocket = world.entity()
-                    .is_a(this->prefab)
-                    .set<RocketTargetState>({.target = RocketStateId::Stored})
-                    .set<EffortRequired>({.remaining = 300, .total = 300})
-                    .child_of(this->line);
-  rocket.ensure<Rocket>().state = RocketStateId::UnderConstruction;
+  auto rocket =
+      world.entity()
+          .is_a(this->prefab)
+          .add<RocketCurrentState>(
+              world.lookup("States::Rocket::UnderConstruction"))
+          .add<RocketTargetState>(world.lookup("States::Rocket::Stored"))
+          .set<EffortRequired>({.remaining = 300, .total = 300})
+          .child_of(this->line);
   rocket.set_name(fmt::format("Rocket {}", Rocket::max_id++).c_str());
 
   // deduct cost
@@ -236,7 +239,8 @@ RocketCompleteBuildAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (rocket.get<Rocket>().state != RocketStateId::UnderConstruction) {
+  if (!rocket.has<RocketCurrentState>(
+          rocket.world().lookup("States::Rocket::UnderConstruction"))) {
     return ValidationResult::Fail("Rocket is not under construction");
   }
   if (rocket.has<EffortRequired>()) {
@@ -251,8 +255,8 @@ void RocketCompleteBuildAction::execute(flecs::world &world) {
     return;
   }
 
-  rocket.get_mut<Rocket>().state = RocketStateId::Stored;
-  rocket.remove<RocketTargetState>();
+  rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
+  rocket.remove<RocketTargetState>(flecs::Wildcard);
   rocket.remove<RocketStateTransitionBlocked>();
 
   instantiateNotification(world, "New rocket built",
@@ -286,7 +290,8 @@ ValidationResult RocketMoveAction::validate(const flecs::world &) const {
   if (!rocket.has<Rocket>()) {
     return ValidationResult::Fail("This is not a rocket");
   }
-  if (rocket.get<Rocket>().state != RocketStateId::Stored) {
+  if (!rocket.has<RocketCurrentState>(
+          rocket.world().lookup("States::Rocket::Stored"))) {
     return ValidationResult::Fail(
         "Rocket must be currently stored to be moved");
   }
@@ -308,8 +313,8 @@ void RocketMoveAction::execute(flecs::world &world) {
     return;
   }
   rocket.add<RocketTargetParent>(destination);
-  rocket.get_mut<Rocket>().state = RocketStateId::Moving;
-  rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+  rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Moving"));
+  rocket.add<RocketTargetState>(world.lookup("States::Rocket::Stored"));
   rocket.set<DurationRequired>({.remaining = days, .total = days});
 }
 
@@ -320,7 +325,8 @@ RocketCompleteMoveAction::validate(const flecs::world &) const {
   if (!rocket.is_valid()) {
     return ValidationResult::Fail("Rocket is not valid");
   }
-  if (rocket.get<Rocket>().state != RocketStateId::Moving) {
+  if (!rocket.has<RocketCurrentState>(
+          rocket.world().lookup("States::Rocket::Moving"))) {
     return ValidationResult::Fail("Rocket is not currently moving");
   }
   if (!rocket.target<RocketTargetParent>().is_valid()) {
@@ -346,8 +352,8 @@ void RocketCompleteMoveAction::execute(flecs::world &world) {
                           NotificationSeverity::Low);
 
   rocket.child_of(targetParent);
-  rocket.get_mut<Rocket>().state = rocket.get<RocketTargetState>().target;
-  rocket.remove<RocketTargetState>();
+  rocket.add<RocketCurrentState>(rocket.target<RocketTargetState>());
+  rocket.remove<RocketTargetState>(flecs::Wildcard);
   rocket.remove<RocketTargetParent>();
   rocket.remove<RocketStateTransitionBlocked>();
 }

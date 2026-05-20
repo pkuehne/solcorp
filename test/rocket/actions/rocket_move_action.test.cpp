@@ -29,6 +29,7 @@ SCENARIO("RocketMoveAction", "[action]") {
 
   GIVEN("An invalid Destination") {
     flecs::entity rocket = world.entity().add<Rocket>();
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     flecs::entity destination = flecs::entity::null();
     RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
                                              DestinationEntity{destination}, 3};
@@ -46,6 +47,7 @@ SCENARIO("RocketMoveAction", "[action]") {
   GIVEN("Destination is the same as current parent") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>().child_of(destination);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
                                              DestinationEntity{destination}, 3};
 
@@ -63,7 +65,8 @@ SCENARIO("RocketMoveAction", "[action]") {
   GIVEN("A rocket under construction") {
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>();
-    rocket.get_mut<Rocket>().state = RocketStateId::UnderConstruction;
+    rocket.add<RocketCurrentState>(
+        world.lookup("States::Rocket::UnderConstruction"));
     RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
                                              DestinationEntity{destination}, 3};
 
@@ -81,7 +84,7 @@ SCENARIO("RocketMoveAction", "[action]") {
     flecs::entity source = world.entity();
     flecs::entity destination = world.entity();
     flecs::entity rocket = world.entity().add<Rocket>().child_of(source);
-    rocket.set<RocketTargetState>({.target = RocketStateId::Stored});
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
     RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
                                              DestinationEntity{destination}, 5};
 
@@ -101,10 +104,11 @@ SCENARIO("RocketMoveAction", "[action]") {
         CHECK(rocket.parent() == source);
       }
       THEN("The move target and duration are recorded") {
-        CHECK(rocket.get<Rocket>().state == RocketStateId::Moving);
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving")));
         CHECK(rocket.target<RocketTargetParent>() == destination);
-        REQUIRE(rocket.has<RocketTargetState>());
-        CHECK(rocket.get<RocketTargetState>().target == RocketStateId::Stored);
+        CHECK(rocket.target<RocketTargetState>() ==
+              world.lookup("States::Rocket::Stored"));
         REQUIRE(rocket.has<DurationRequired>());
         CHECK(rocket.get<DurationRequired>().remaining == 5);
         CHECK(rocket.get<DurationRequired>().total == 5);

@@ -15,6 +15,7 @@
 #include "modules/site/helpers.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
+#include <flecs/addons/cpp/c_types.hpp>
 #include <memory>
 #include <modules/simulation/simulation.h>
 #include <vector>
@@ -38,24 +39,10 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("launchDay", &ScheduleLaunchAction::launchDay)
       .member("rocket", &ScheduleLaunchAction::rocket)
       .member("launchpad", &ScheduleLaunchAction::launchpad);
-  world.component<RocketStateId>()
-      .constant("Invalid", RocketStateId::Invalid)
-      .constant("UnderConstruction", RocketStateId::UnderConstruction)
-      .constant("Stored", RocketStateId::Stored)
-      .constant("Moving", RocketStateId::Moving)
-      .constant("Assigned", RocketStateId::Assigned)
-      .constant("IntegratingPayload", RocketStateId::IntegratingPayload)
-      .constant("IntegrationComplete", RocketStateId::IntegrationComplete)
-      .constant("RollingOut", RocketStateId::RollingOut)
-      .constant("OnPad", RocketStateId::OnPad)
-      .constant("Launched", RocketStateId::Launched)
-      .constant("Unavailable", RocketStateId::Unavailable);
   world.component<Rocket>()
-      .member("state", &Rocket::state)
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
-  world.component<RocketTargetState>().member("target",
-                                              &RocketTargetState::target);
+
   world.component<RocketStateTransitionBlocked>().member(
       "reason", &RocketStateTransitionBlocked::reason);
   world.component<Payload>().member("mass", &Payload::mass);
@@ -90,6 +77,8 @@ RocketModule::RocketModule(flecs::world &world) {
                          // multiple Plans assigned
   world.component<CanLiftTo>().add(flecs::Symmetric);
   world.component<RocketTargetParent>();
+  world.component<RocketCurrentState>().add(flecs::Exclusive);
+  world.component<RocketTargetState>().add(flecs::Exclusive);
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -98,27 +87,14 @@ RocketModule::RocketModule(flecs::world &world) {
       });
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
-        b.field<&Rocket::state>("state")
-            .nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
+        b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
             .nested<&Rocket::cost>({"cost"}, {"Stat"});
       });
-  register_enum_table_lua(world, "RocketStateId", [](LuaEnumBuilder &b) {
-    b.value("UnderConstruction", RocketStateId::UnderConstruction)
-        .value("Invalid", RocketStateId::Invalid)
-        .value("Stored", RocketStateId::Stored)
-        .value("Moving", RocketStateId::Moving)
-        .value("Assigned", RocketStateId::Assigned)
-        .value("IntegratingPayload", RocketStateId::IntegratingPayload)
-        .value("IntegrationComplete", RocketStateId::IntegrationComplete)
-        .value("RollingOut", RocketStateId::RollingOut)
-        .value("OnPad", RocketStateId::OnPad)
-        .value("Launched", RocketStateId::Launched)
-        .value("Unavailable", RocketStateId::Unavailable);
-  });
+  register_component_lua<RocketCurrentState>(
+      world, "RocketCurrentState",
+      [](LuaFieldBuilder<RocketCurrentState> &) {});
   register_component_lua<RocketTargetState>(
-      world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &b) {
-        b.field<&RocketTargetState::target>("target");
-      });
+      world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &) {});
   register_component_lua<RocketStateTransitionBlocked>(
       world, "RocketStateTransitionBlocked",
       [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
@@ -184,11 +160,20 @@ RocketModule::RocketModule(flecs::world &world) {
   world.system<Rocket>("Rocket Complete State Transition Action")
       .immediate()
       .tick_source(sim.speed)
-      .with<RocketTargetState>()
+      .with<RocketTargetState>(flecs::Wildcard)
       .without<EffortRequired>()
       .without<DurationRequired>()
       .kind(UpdatePhase)
       .each(systemRocketCompleteAction);
+
+  auto scope = world.set_scope(0);
+  auto states = world.entity("Rocket").child_of(world.entity("States"));
+  world.entity("Invalid").child_of(states);
+  world.entity("UnderConstruction").child_of(states);
+  world.entity("Stored").child_of(states);
+  world.entity("Moving").child_of(states);
+  world.entity("Assigned").child_of(states);
+  world.set_scope(scope);
 }
 
 /// @brief Process LaunchPlans that are due
@@ -276,7 +261,7 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
   notification +=
       fmt::format("\nOrbit:     {}", plan.target_orbit.name().c_str());
   notification += fmt::format("\nLaunchpad: {}", launchpadE.name().c_str());
-  notification += fmt::format("\nRocket:    {}%", rocketE.name().c_str());
+  notification += fmt::format("\nRocket:    {}", rocketE.name().c_str());
   std::string payload_list;
   for (auto payload : payloads) {
     payload_list += "\n- " + std::string(payload.name().c_str());
@@ -322,28 +307,26 @@ void systemCreateRocketPrefabs(flecs::iter &it) {
   }
 
   // Base Rocket Prefab
-  world.prefab("Rocket").child_of(core_node).add<Rocket>();
+  world.prefab("Rocket")
+      .child_of(core_node)
+      .add<Rocket>()
+      .add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
 }
 
-void systemRocketCompleteAction(flecs::entity e, Rocket &rocket) {
+void systemRocketCompleteAction(flecs::entity e, Rocket &) {
   auto world = e.world();
 
   std::unique_ptr<IAction> action;
-
-  switch (rocket.state) {
-  case RocketStateId::UnderConstruction:
+  auto current_state = e.target<RocketCurrentState>();
+  if (current_state == world.lookup("States::Rocket::UnderConstruction")) {
     action = std::make_unique<RocketCompleteBuildAction>(e);
-    break;
-  case RocketStateId::Moving:
+  } else if (current_state == world.lookup("States::Rocket::Moving")) {
     action = std::make_unique<RocketCompleteMoveAction>(e);
-    break;
-  default:
-    break;
   }
 
   if (!action) {
     spdlog::error("No completion action found for rocket {} in state: {}",
-                  e.name().c_str(), static_cast<int>(rocket.state));
+                  e.name().c_str(), current_state.name().c_str());
     return;
   }
   if (action->validate(world)) {

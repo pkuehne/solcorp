@@ -16,24 +16,9 @@ struct LaunchPlan {
       flecs::entity::null(); ///< Target orbit from CanLiftTo
 };
 
-enum class RocketStateId : uint8_t {
-  Invalid = 0,
-  UnderConstruction,
-  Stored,
-  Moving,
-  Assigned,
-  IntegratingPayload,
-  IntegrationComplete,
-  RollingOut,
-  OnPad,
-  Launched,
-  Unavailable
-};
-
 /// @brief Component to indicate entity is a rocket.
 struct Rocket {
   static uint32_t max_id;
-  RocketStateId state = RocketStateId::Stored;
   Stat failure_rate =
       Stat({.id = "failure-rate",
             .display = "Failure Rate",
@@ -47,11 +32,8 @@ struct Rocket {
                     .higher_is_better = false});
 };
 
-struct RocketTargetState {
-  RocketStateId target;
-};
-
-// Relationship
+struct RocketCurrentState {};
+struct RocketTargetState {};
 struct RocketTargetParent {};
 
 struct RocketStateTransitionBlocked {
