@@ -319,7 +319,7 @@ void systemAutoStartNextBuild(flecs::entity manufacturingE,
   }
 }
 
-void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &,
+void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &rocket,
                                 const Manufacturing &manufacturing) {
   if (!manufacturing.auto_store) {
     return;
@@ -335,7 +335,7 @@ void systemAutoStoreBuiltRocket(flecs::entity rocketE, Rocket &,
 
   auto world = rocketE.world();
   RocketMoveAction action{RocketEntity{rocketE}, DestinationEntity{storageE},
-                          1};
+                          static_cast<uint8_t>(rocket.move_days.value())};
   auto result = action.validate(world);
   if (result.ok) {
     lineE.remove<AutoStoreBlocked>();

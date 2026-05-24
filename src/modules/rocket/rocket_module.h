@@ -30,6 +30,18 @@ struct Rocket {
                     .description = "Cost to build this rocket",
                     .base = 5'000'000,
                     .higher_is_better = false});
+  Stat rollout_days = Stat(
+      {.id = "rollout-days",
+       .display = "Rollout Duration",
+       .description = "Days to move the rocket from storage to the launchpad",
+       .base = 3,
+       .higher_is_better = false});
+  Stat move_days =
+      Stat({.id = "move-days",
+            .display = "Move Duration",
+            .description = "Days to move the rocket from storage to storage",
+            .base = 1,
+            .higher_is_better = false});
 };
 
 struct RocketCurrentState {};
