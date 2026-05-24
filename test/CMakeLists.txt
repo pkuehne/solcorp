@@ -45,6 +45,9 @@ add_executable(unit_test
   rocket/systems.test.cpp
   rocket/actions/cancel_launch_action.test.cpp
   rocket/actions/edit_launch_action.test.cpp
+  rocket/actions/launch_initiate_rollout_action.test.cpp
+  rocket/actions/launch_complete_rollout_action.test.cpp
+  rocket/actions/launch_go_action.test.cpp
   rocket/actions/rocket_build_action.test.cpp
   rocket/actions/rocket_complete_build_action.test.cpp
   rocket/actions/rocket_complete_move_action.test.cpp

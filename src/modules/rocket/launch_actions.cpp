@@ -2,6 +2,7 @@
 #include "modules/base/action.h"
 #include "modules/base/base.h"
 #include "modules/site/site.h"
+#include "rocket_actions.h"
 #include "rocket_module.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
@@ -228,17 +229,29 @@ LaunchInitiateRolloutAction::validate(const flecs::world &world) const {
           world.lookup("States::LaunchPlan::Scheduled"))) {
     return ValidationResult::Fail("Launch plan is not in Scheduled state");
   }
-  if (!plan.target<LaunchingOn>().is_valid()) {
+  auto rocketE = plan.target<LaunchingOn>();
+  if (!rocketE.is_valid()) {
     return ValidationResult::Fail("Launch plan has no rocket assigned");
+  }
+  if (!rocketE.has<RocketCurrentState>(
+          world.lookup("States::Rocket::Assigned"))) {
+    return ValidationResult::Fail("Rocket is not in Assigned state");
+  }
+  if (!plan.target<LaunchingFrom>().is_valid()) {
+    return ValidationResult::Fail("Launch plan has no launchpad assigned");
   }
   return ValidationResult::Pass();
 }
 
 void LaunchInitiateRolloutAction::execute(flecs::world &world) {
   auto rocketE = plan.target<LaunchingOn>();
+  auto launchpadE = plan.target<LaunchingFrom>();
   auto rolloutDays =
-      static_cast<uint32_t>(rocketE.get<Rocket>().rollout_days.value());
-  plan.set<DurationRequired>({.remaining = rolloutDays, .total = rolloutDays});
+      static_cast<uint8_t>(rocketE.get<Rocket>().rollout_days.value());
+  RocketMoveAction{RocketEntity{rocketE}, DestinationEntity{launchpadE},
+                   rolloutDays}
+      .execute(world);
+  rocketE.add<RocketTargetState>(world.lookup("States::Rocket::Assigned"));
   plan.add<LaunchPlanCurrentState>(
       world.lookup("States::LaunchPlan::RollingOut"));
 }
@@ -254,11 +267,14 @@ LaunchCompleteRolloutAction::validate(const flecs::world &world) const {
           world.lookup("States::LaunchPlan::RollingOut"))) {
     return ValidationResult::Fail("Launch plan is not rolling out");
   }
-  if (plan.has<DurationRequired>()) {
-    return ValidationResult::Fail("Rollout is not yet complete");
+  auto rocketE = plan.target<LaunchingOn>();
+  auto launchpadE = plan.target<LaunchingFrom>();
+  if (!rocketE.is_valid()) {
+    return ValidationResult::Fail("Launch plan has no rocket assigned");
   }
-  if (!plan.target<LaunchingFrom>().is_valid()) {
-    return ValidationResult::Fail("Launch plan has no launchpad assigned");
+  if (rocketE.parent() != launchpadE) {
+    return ValidationResult::Fail(
+        "Rocket has not yet arrived at the launchpad");
   }
   return ValidationResult::Pass();
 }

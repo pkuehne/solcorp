@@ -80,6 +80,24 @@ SCENARIO("RocketMoveAction", "[action]") {
     }
   }
 
+  GIVEN("An assigned rocket and a valid destination") {
+    flecs::entity source = world.entity();
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().add<Rocket>().child_of(source);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
+
+    WHEN("Validated") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation succeeds") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
+      }
+    }
+  }
+
   GIVEN("A valid rocket and destination") {
     flecs::entity source = world.entity();
     flecs::entity destination = world.entity();

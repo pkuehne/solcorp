@@ -103,7 +103,9 @@ ValidationResult RocketMoveAction::validate(const flecs::world &) const {
     return ValidationResult::Fail("This is not a rocket");
   }
   if (!rocket.has<RocketCurrentState>(
-          rocket.world().lookup("States::Rocket::Stored"))) {
+          rocket.world().lookup("States::Rocket::Stored")) &&
+      !rocket.has<RocketCurrentState>(
+          rocket.world().lookup("States::Rocket::Assigned"))) {
     return ValidationResult::Fail(
         "Rocket must be currently stored to be moved");
   }
