@@ -8,7 +8,7 @@
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
-#include "modules/rocket/actions.h"
+#include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
