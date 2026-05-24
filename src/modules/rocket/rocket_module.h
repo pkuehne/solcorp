@@ -11,10 +11,19 @@
 struct LaunchPlan {
   static uint32_t max_id;
 
+  /// When the rocket needs to start rolling out to be ready for launch
+  uint32_t rollout_date = 0;
+  /// When the rocket needs to start pre-launch preparations to be ready for
+  /// launch
+  uint32_t prep_date = 0;
+  /// When the launch is scheduled
   uint32_t launch_date = 0;
-  flecs::entity target_orbit =
-      flecs::entity::null(); ///< Target orbit from CanLiftTo
+  /// Target orbit from CanLiftTo
+  flecs::entity target_orbit = flecs::entity::null();
 };
+
+struct LaunchPlanCurrentState {};
+struct LaunchPlanTargetState {};
 
 /// @brief Component to indicate entity is a rocket.
 struct Rocket {
@@ -47,9 +56,6 @@ struct Rocket {
 struct RocketCurrentState {};
 struct RocketTargetState {};
 struct RocketTargetParent {};
-
-struct LaunchPlanCurrentState {};
-struct LaunchPlanTargetState {};
 
 struct RocketStateTransitionBlocked {
   std::string reason;

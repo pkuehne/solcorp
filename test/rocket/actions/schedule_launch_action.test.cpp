@@ -162,6 +162,13 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
         CHECK(launch.result.target<LaunchingOn>() == rocket);
         CHECK(launch.result.target<LaunchingFrom>() == launchpad);
       }
+      THEN("The milestone dates are computed from stats") {
+        // prep_days default = 5, rollout_days default = 3, launchDay = 10
+        REQUIRE(launch.result.is_valid());
+        auto &plan = launch.result.get<LaunchPlan>();
+        CHECK(std::cmp_equal(plan.prep_date, 5));    // 10 - 5
+        CHECK(std::cmp_equal(plan.rollout_date, 2)); // 5 - 3
+      }
       THEN("The rocket state is set to Assigned") {
         CHECK(rocket.has<RocketCurrentState>(
             world.lookup("States::Rocket::Assigned")));

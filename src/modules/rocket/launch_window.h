@@ -6,6 +6,7 @@
 struct LaunchWindow {
   ScheduleLaunchAction draftPlan;
   flecs::entity editingPlan = flecs::entity::null();
+  int planningOffset = 0; ///< Extra days of buffer before rollout starts
 };
 
 void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket = nullptr,

@@ -32,15 +32,19 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   }
   auto launchPrepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  auto rolloutDays =
+      static_cast<uint32_t>(rocket.get<Rocket>().rollout_days.value());
+  auto newPrepDate = static_cast<uint32_t>(launchDay) - launchPrepDays;
   // TODO(#95): Remove this when refactoring, rockets shouldn't know about
   // launchpads
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
-    auto launch = p.get<LaunchPlan>();
-    if (std::cmp_less(launch.launch_date, launchDay) &&
-        std::cmp_greater_equal(launch.launch_date,
-                               static_cast<uint32_t>(launchDay) -
-                                   launchPrepDays)) {
+    auto &plan = p.get<LaunchPlan>();
+    auto existingPrepDate = plan.launch_date >= launchPrepDays
+                                ? plan.launch_date - launchPrepDays
+                                : 0;
+    if (newPrepDate <= plan.launch_date &&
+        existingPrepDate <= static_cast<uint32_t>(launchDay)) {
       clash = true;
     }
   });
@@ -48,10 +52,10 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail(
         "Another launch is already scheduled at that time");
   }
-  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays) {
+  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays + rolloutDays) {
     return ValidationResult::Fail(
         fmt::format("Launch needs to be planned at least {} days in advance",
-                    launchPrepDays));
+                    launchPrepDays + rolloutDays));
   }
   if (!targetOrbit.is_valid()) {
     return ValidationResult::Fail("No target orbit selected");
@@ -75,7 +79,14 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
 }
 
 void ScheduleLaunchAction::execute(flecs::world &world) {
-  auto planData = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+  auto prepDays =
+      static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  auto rollDays =
+      static_cast<uint32_t>(rocket.get<Rocket>().rollout_days.value());
+  auto prepDate = static_cast<uint32_t>(launchDay) - prepDays;
+  auto planData = LaunchPlan{.rollout_date = prepDate - rollDays,
+                             .prep_date = prepDate,
+                             .launch_date = static_cast<uint32_t>(launchDay),
                              .target_orbit = targetOrbit};
   auto planE = world.entity().set<LaunchPlan>(planData);
   planE.set_name(name.c_str());
@@ -119,16 +130,20 @@ ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
   }
   auto launchPrepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  auto rolloutDays =
+      static_cast<uint32_t>(rocket.get<Rocket>().rollout_days.value());
+  auto newPrepDate = static_cast<uint32_t>(launchDay) - launchPrepDays;
   bool clash = false;
   launchpad.each<LaunchingFrom>([&](flecs::entity p) {
     if (p == plan) {
       return;
     }
-    auto launch = p.get<LaunchPlan>();
-    if (std::cmp_less(launch.launch_date, launchDay) &&
-        std::cmp_greater_equal(launch.launch_date,
-                               static_cast<uint32_t>(launchDay) -
-                                   launchPrepDays)) {
+    auto &existingPlan = p.get<LaunchPlan>();
+    auto existingPrepDate = existingPlan.launch_date >= launchPrepDays
+                                ? existingPlan.launch_date - launchPrepDays
+                                : 0;
+    if (newPrepDate <= existingPlan.launch_date &&
+        existingPrepDate <= static_cast<uint32_t>(launchDay)) {
       clash = true;
     }
   });
@@ -136,10 +151,10 @@ ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail(
         "Another launch is already scheduled at that time");
   }
-  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays) {
+  if (static_cast<uint32_t>(launchDay) < today + launchPrepDays + rolloutDays) {
     return ValidationResult::Fail(
         fmt::format("Launch needs to be planned at least {} days in advance",
-                    launchPrepDays));
+                    launchPrepDays + rolloutDays));
   }
   if (!targetOrbit.is_valid()) {
     return ValidationResult::Fail("No target orbit selected");
@@ -164,7 +179,14 @@ ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
 
 void EditLaunchAction::execute(flecs::world &world) {
   CancelLaunchAction{plan}.execute(world);
-  auto planData = LaunchPlan{.launch_date = static_cast<uint32_t>(launchDay),
+  auto prepDays =
+      static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
+  auto rollDays =
+      static_cast<uint32_t>(rocket.get<Rocket>().rollout_days.value());
+  auto prepDate = static_cast<uint32_t>(launchDay) - prepDays;
+  auto planData = LaunchPlan{.rollout_date = prepDate - rollDays,
+                             .prep_date = prepDate,
+                             .launch_date = static_cast<uint32_t>(launchDay),
                              .target_orbit = targetOrbit};
   auto planE = world.entity().set<LaunchPlan>(planData);
   planE.set_name(name.c_str());
