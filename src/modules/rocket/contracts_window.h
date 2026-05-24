@@ -4,7 +4,7 @@
 
 // Forward declaration to avoid circular dependency with rocket_module.h
 struct Contract;
-struct ScheduleLaunchAction;
+struct LaunchScheduleAction;
 
 enum class ContractFilterStatus : uint8_t { All = 0, Open, Accepted, Closed };
 
@@ -27,7 +27,7 @@ bool contractMatchesFilter(flecs::entity contractE,
 /// window with the plan loaded. The plan will be pre-filled with the payload
 /// and target orbit from the contract.
 /// @param payloadE The payload entity
-ScheduleLaunchAction setupLaunchForPayload(flecs::entity payloadE);
+LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE);
 
 /// @brief Returns true if the accept button should be disabled for the given
 /// contract.

@@ -4,7 +4,7 @@
 #include <flecs.h>
 #include <vector>
 
-struct ScheduleLaunchAction : public IAction {
+struct LaunchScheduleAction : public IAction {
   int launchDay = 0;
   std::string name;
   flecs::entity rocket = flecs::entity::null();
@@ -19,7 +19,7 @@ struct ScheduleLaunchAction : public IAction {
   void execute(flecs::world &) override;
 };
 
-struct EditLaunchAction : public IAction {
+struct LaunchEditAction : public IAction {
   flecs::entity plan = flecs::entity::null();
   int launchDay = 0;
   std::string name;
@@ -35,11 +35,44 @@ struct EditLaunchAction : public IAction {
   void execute(flecs::world &) override;
 };
 
-struct CancelLaunchAction : public IAction {
+struct LaunchCancelAction : public IAction {
   flecs::entity plan = flecs::entity::null();
 
-  CancelLaunchAction() = default;
-  explicit CancelLaunchAction(flecs::entity p) : plan(p) {}
+  LaunchCancelAction() = default;
+  explicit LaunchCancelAction(flecs::entity p) : plan(p) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &) override;
+};
+
+struct LaunchInitiateRolloutAction : public IAction {
+  flecs::entity plan = flecs::entity::null();
+
+  LaunchInitiateRolloutAction() = default;
+  explicit LaunchInitiateRolloutAction(flecs::entity p) : plan(p) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &) override;
+};
+
+struct LaunchCompleteRolloutAction : public IAction {
+  flecs::entity plan = flecs::entity::null();
+
+  LaunchCompleteRolloutAction() = default;
+  explicit LaunchCompleteRolloutAction(flecs::entity p) : plan(p) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &) override;
+};
+
+struct LaunchGoAction : public IAction {
+  flecs::entity plan = flecs::entity::null();
+
+  LaunchGoAction() = default;
+  explicit LaunchGoAction(flecs::entity p) : plan(p) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;

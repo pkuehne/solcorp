@@ -21,7 +21,7 @@ void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
   auto state = window.try_get_mut<LaunchWindow>();
   SC_ASSERT(state, "Mission Plan state is invalid");
 
-  ScheduleLaunchAction draftPlan;
+  LaunchScheduleAction draftPlan;
   if (rocket && rocket->is_valid()) {
     draftPlan.rocket = *rocket;
   }
@@ -32,7 +32,7 @@ void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
   showLaunchWindowAdd(world, draftPlan);
 }
 
-void showLaunchWindowAdd(flecs::world world, ScheduleLaunchAction draftPlan) {
+void showLaunchWindowAdd(flecs::world world, LaunchScheduleAction draftPlan) {
 
   auto window = showWindow(world, "Mission Plan");
   SC_ASSERT(window.is_valid(),
@@ -371,7 +371,7 @@ void drawLaunchWindow(flecs::entity winE) {
   ImGui::Spacing();
 
   if (state.editingPlan.is_valid()) {
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = state.editingPlan;
     edit.launchDay = state.draftPlan.launchDay;
     edit.name = state.draftPlan.name;
@@ -385,7 +385,7 @@ void drawLaunchWindow(flecs::entity winE) {
             ButtonTooltip{.text = "Save Launch Plan to be executed"},
             valid.message)) {
       edit.execute(world);
-      state.draftPlan = ScheduleLaunchAction{};
+      state.draftPlan = LaunchScheduleAction{};
       state.editingPlan = flecs::entity::null();
       hideWindow(world, "Mission Plan");
     }
@@ -396,13 +396,13 @@ void drawLaunchWindow(flecs::entity winE) {
             ButtonTooltip{.text = "Save Launch Plan to be executed"},
             valid.message)) {
       state.draftPlan.execute(world);
-      state.draftPlan = ScheduleLaunchAction{};
+      state.draftPlan = LaunchScheduleAction{};
       hideWindow(world, "Mission Plan");
     }
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
-    state.draftPlan = ScheduleLaunchAction{};
+    state.draftPlan = LaunchScheduleAction{};
     state.editingPlan = flecs::entity::null();
     hideWindow(world, "Mission Plan");
   }

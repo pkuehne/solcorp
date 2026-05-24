@@ -71,10 +71,10 @@ void rejectContract(flecs::world &world, flecs::entity contractE) {
   contract.failed = true;
 }
 
-ScheduleLaunchAction setupLaunchForPayload(flecs::entity payloadE) {
+LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE) {
   auto world = payloadE.world();
 
-  auto draftPlan = ScheduleLaunchAction{};
+  auto draftPlan = LaunchScheduleAction{};
   draftPlan.payloads.push_back(payloadE);
 
   // Find the contract that has this payload and get the target orbit from it

@@ -35,11 +35,11 @@ RocketModule::RocketModule(flecs::world &world) {
 
   // Register components
   world.component<ContractFilterStatus>();
-  world.component<ScheduleLaunchAction>("PlannedLaunch")
-      .member("name", &ScheduleLaunchAction::name)
-      .member("launchDay", &ScheduleLaunchAction::launchDay)
-      .member("rocket", &ScheduleLaunchAction::rocket)
-      .member("launchpad", &ScheduleLaunchAction::launchpad);
+  world.component<LaunchScheduleAction>("PlannedLaunch")
+      .member("name", &LaunchScheduleAction::name)
+      .member("launchDay", &LaunchScheduleAction::launchDay)
+      .member("rocket", &LaunchScheduleAction::rocket)
+      .member("launchpad", &LaunchScheduleAction::launchpad);
   world.component<Rocket>()
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
@@ -185,6 +185,9 @@ RocketModule::RocketModule(flecs::world &world) {
   world.entity("Assigned").child_of(rocketStates);
   auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
   world.entity("Scheduled").child_of(planStates);
+  world.entity("RollingOut").child_of(planStates);
+  world.entity("Prep").child_of(planStates);
+  world.entity("Launched").child_of(planStates);
   world.set_scope(scope);
 }
 

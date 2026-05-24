@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 
 ValidationResult
-ScheduleLaunchAction::validate(const flecs::world &world) const {
+LaunchScheduleAction::validate(const flecs::world &world) const {
   uint32_t today = world.get<Game>().day;
 
   flecs::entity existing = world.lookup(name.c_str());
@@ -75,7 +75,7 @@ ScheduleLaunchAction::validate(const flecs::world &world) const {
   return ValidationResult::Pass();
 }
 
-void ScheduleLaunchAction::execute(flecs::world &world) {
+void LaunchScheduleAction::execute(flecs::world &world) {
   auto prepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   auto rollDays =
@@ -100,7 +100,7 @@ void ScheduleLaunchAction::execute(flecs::world &world) {
   result = planE;
 }
 
-ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
+ValidationResult LaunchEditAction::validate(const flecs::world &world) const {
   uint32_t today = world.get<Game>().day;
 
   if (!plan.is_valid() || !plan.is_alive()) {
@@ -174,8 +174,8 @@ ValidationResult EditLaunchAction::validate(const flecs::world &world) const {
   return ValidationResult::Pass();
 }
 
-void EditLaunchAction::execute(flecs::world &world) {
-  CancelLaunchAction{plan}.execute(world);
+void LaunchEditAction::execute(flecs::world &world) {
+  LaunchCancelAction{plan}.execute(world);
   auto prepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   auto rollDays =
@@ -198,14 +198,14 @@ void EditLaunchAction::execute(flecs::world &world) {
   result = planE;
 }
 
-ValidationResult CancelLaunchAction::validate(const flecs::world &) const {
+ValidationResult LaunchCancelAction::validate(const flecs::world &) const {
   if (!plan.is_valid() || !plan.is_alive()) {
     return ValidationResult::Fail("Launch plan is not valid");
   }
   return ValidationResult::Pass();
 }
 
-void CancelLaunchAction::execute(flecs::world &world) {
+void LaunchCancelAction::execute(flecs::world &world) {
   if (!validate(world)) {
     return;
   }
@@ -215,4 +215,79 @@ void CancelLaunchAction::execute(flecs::world &world) {
   }
   spdlog::debug("Cancelling launch plan: {}", plan.id());
   plan.destruct();
+}
+
+// ----- LaunchInitiateRolloutAction -----
+
+ValidationResult
+LaunchInitiateRolloutAction::validate(const flecs::world &world) const {
+  if (!plan.is_valid() || !plan.is_alive()) {
+    return ValidationResult::Fail("Launch plan is not valid");
+  }
+  if (!plan.has<LaunchPlanCurrentState>(
+          world.lookup("States::LaunchPlan::Scheduled"))) {
+    return ValidationResult::Fail("Launch plan is not in Scheduled state");
+  }
+  if (!plan.target<LaunchingOn>().is_valid()) {
+    return ValidationResult::Fail("Launch plan has no rocket assigned");
+  }
+  return ValidationResult::Pass();
+}
+
+void LaunchInitiateRolloutAction::execute(flecs::world &world) {
+  auto rocketE = plan.target<LaunchingOn>();
+  auto rolloutDays =
+      static_cast<uint32_t>(rocketE.get<Rocket>().rollout_days.value());
+  plan.set<DurationRequired>({.remaining = rolloutDays, .total = rolloutDays});
+  plan.add<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::RollingOut"));
+}
+
+// ----- LaunchCompleteRolloutAction -----
+
+ValidationResult
+LaunchCompleteRolloutAction::validate(const flecs::world &world) const {
+  if (!plan.is_valid() || !plan.is_alive()) {
+    return ValidationResult::Fail("Launch plan is not valid");
+  }
+  if (!plan.has<LaunchPlanCurrentState>(
+          world.lookup("States::LaunchPlan::RollingOut"))) {
+    return ValidationResult::Fail("Launch plan is not rolling out");
+  }
+  if (plan.has<DurationRequired>()) {
+    return ValidationResult::Fail("Rollout is not yet complete");
+  }
+  if (!plan.target<LaunchingFrom>().is_valid()) {
+    return ValidationResult::Fail("Launch plan has no launchpad assigned");
+  }
+  return ValidationResult::Pass();
+}
+
+void LaunchCompleteRolloutAction::execute(flecs::world &world) {
+  auto launchpadE = plan.target<LaunchingFrom>();
+  auto prepDays =
+      static_cast<uint32_t>(launchpadE.get<Launchpad>().prep_days.value());
+  plan.set<DurationRequired>({.remaining = prepDays, .total = prepDays});
+  plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::Prep"));
+}
+
+// ----- LaunchAction -----
+
+ValidationResult LaunchGoAction::validate(const flecs::world &world) const {
+  if (!plan.is_valid() || !plan.is_alive()) {
+    return ValidationResult::Fail("Launch plan is not valid");
+  }
+  if (!plan.has<LaunchPlanCurrentState>(
+          world.lookup("States::LaunchPlan::Prep"))) {
+    return ValidationResult::Fail("Launch plan is not in preparation");
+  }
+  if (plan.has<DurationRequired>()) {
+    return ValidationResult::Fail("Launch preparation is not yet complete");
+  }
+  return ValidationResult::Pass();
+}
+
+void LaunchGoAction::execute(flecs::world &world) {
+  plan.add<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::Launched"));
 }

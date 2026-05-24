@@ -5,14 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("CancelLaunchAction", "[action]") {
+SCENARIO("LaunchCancelAction", "[action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
 
   GIVEN("An invalid plan") {
-    CancelLaunchAction cancel;
+    LaunchCancelAction cancel;
 
     WHEN("Validated") {
       ValidationResult result = cancel.validate(world);
@@ -29,7 +29,7 @@ SCENARIO("CancelLaunchAction", "[action]") {
     rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     auto plan = world.entity("Test Plan").set<LaunchPlan>({});
     plan.add<LaunchingOn>(rocket);
-    CancelLaunchAction cancel{plan};
+    LaunchCancelAction cancel{plan};
 
     WHEN("Executed") {
       cancel.execute(world);

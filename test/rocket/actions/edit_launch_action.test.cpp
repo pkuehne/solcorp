@@ -5,14 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("EditLaunchAction Validation", "[validation][action]") {
+SCENARIO("LaunchEditAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
 
   GIVEN("No plan to edit") {
-    EditLaunchAction edit;
+    LaunchEditAction edit;
 
     WHEN("Validated") {
       ValidationResult result = edit.validate(world);
@@ -31,7 +31,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = world.entity("Test Plan").set<LaunchPlan>({});
     edit.plan.add<LaunchingOn>(rocket);
     edit.launchDay = 10;
@@ -57,7 +57,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = world.entity("Test Plan").set<LaunchPlan>({});
     edit.plan.add<LaunchingOn>(rocket);
     edit.launchDay = 10;
@@ -82,7 +82,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = world.entity("Test Plan").set<LaunchPlan>({});
     edit.plan.add<LaunchingOn>(rocket);
     edit.launchDay = 10;
@@ -109,7 +109,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     newRocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = world.entity("Test Plan").set<LaunchPlan>({});
     edit.plan.add<LaunchingOn>(oldRocket);
     edit.launchDay = 10;
@@ -129,7 +129,7 @@ SCENARIO("EditLaunchAction Validation", "[validation][action]") {
   }
 }
 
-SCENARIO("EditLaunchAction Execution", "[execution][action]") {
+SCENARIO("LaunchEditAction Execution", "[execution][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
@@ -146,7 +146,7 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
     existing.add<LaunchingOn>(rocket);
     existing.add<LaunchingFrom>(launchpad);
 
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = existing;
     edit.launchDay = 20;
     edit.name = "Test Plan";
@@ -181,7 +181,7 @@ SCENARIO("EditLaunchAction Execution", "[execution][action]") {
     auto existing = world.entity("Test Plan").set<LaunchPlan>({});
     existing.add<LaunchingOn>(oldRocket);
 
-    EditLaunchAction edit;
+    LaunchEditAction edit;
     edit.plan = existing;
     edit.launchDay = 10;
     edit.name = "Test Plan";

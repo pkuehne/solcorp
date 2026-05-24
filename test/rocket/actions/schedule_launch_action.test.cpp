@@ -5,14 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
-SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
+SCENARIO("LaunchScheduleAction Validation", "[validation][action]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
 
   GIVEN("An empty plan") {
-    ScheduleLaunchAction launch({});
+    LaunchScheduleAction launch({});
 
     WHEN("Validated") {
       ValidationResult result = launch.validate(world);
@@ -27,7 +27,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("A rocket in Stored state") {
     auto rocket = world.entity().add<Rocket>();
     rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.rocket = rocket;
 
     WHEN("Validated") {
@@ -43,7 +43,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("A rocket in Assigned state") {
     auto rocket = world.entity().add<Rocket>();
     rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.rocket = rocket;
 
     WHEN("Validated") {
@@ -60,7 +60,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
     auto rocket = world.entity().add<Rocket>();
     rocket.add<RocketCurrentState>(
         world.lookup("States::Rocket::UnderConstruction"));
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.rocket = rocket;
 
     WHEN("Validated") {
@@ -77,7 +77,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
     auto rocket = world.entity().add<Rocket>();
     rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
     rocket.add<LaunchingOn>(world.entity());
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.rocket = rocket;
 
     WHEN("Validated") {
@@ -93,7 +93,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
   GIVEN("A missing launchpad") {
     auto rocket = world.entity().add<Rocket>();
     rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.rocket = rocket;
 
     WHEN("Validated") {
@@ -111,7 +111,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
 
     auto rocket = world.entity().add<Rocket>();
     auto launchpad = world.entity().add<Launchpad>();
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
@@ -134,7 +134,7 @@ SCENARIO("ScheduleLaunchAction Validation", "[validation][action]") {
     auto launchpad = world.entity().add<Launchpad>();
     auto orbit = world.entity("LEO");
     rocket.set<CanLiftTo>(orbit, {.max_mass = 1000});
-    ScheduleLaunchAction launch;
+    LaunchScheduleAction launch;
     launch.launchDay = 10;
     launch.name = "Test Plan";
     launch.rocket = rocket;
