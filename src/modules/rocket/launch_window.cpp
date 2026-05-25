@@ -207,11 +207,16 @@ void drawLaunchWindow(flecs::entity winE) {
       ImGui::TableSetColumnIndex(1);
       ImGui::TextUnformatted("Stage");
 
+      bool canPreview = state.draftPlan.rocket.is_valid() &&
+                        state.draftPlan.launchpad.is_valid();
+      LaunchPlan preview =
+          canPreview ? state.draftPlan.previewPlan() : LaunchPlan{};
+
       // Rollout row
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      if (state.draftPlan.rocket.is_valid()) {
-        auto s = std::to_string(today + state.planningOffset);
+      if (canPreview) {
+        auto s = std::to_string(preview.rollout_date);
         cellCenter(s.c_str());
         ImGui::TextUnformatted(s.c_str());
       } else {
@@ -224,8 +229,8 @@ void drawLaunchWindow(flecs::entity winE) {
       // Pad prep row
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      if (state.draftPlan.launchpad.is_valid()) {
-        auto s = std::to_string(today + state.planningOffset + rolloutDays);
+      if (canPreview) {
+        auto s = std::to_string(preview.prep_date);
         cellCenter(s.c_str());
         ImGui::TextUnformatted(s.c_str());
       } else {

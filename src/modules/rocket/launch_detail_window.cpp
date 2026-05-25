@@ -59,10 +59,19 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       ImGui::TableSetupColumn("Status");
       ImGui::TableHeadersRow();
 
+      auto countdown = [&](uint32_t day) {
+        if (today >= day) {
+          ImGui::TextDisabled("today");
+        } else {
+          uint32_t n = day - today;
+          ImGui::TextDisabled("in %u day%s", n, n == 1 ? "" : "s");
+        }
+      };
+
       // Rollout row
       ImGui::TableNextRow();
-      bool rolloutActive = isRollingOut;
       bool rolloutDone = isOnPad;
+      bool rolloutActive = isRollingOut;
       if (rolloutActive) {
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
                                IM_COL32(255, 220, 60, 40));
@@ -82,7 +91,7 @@ void drawLaunchDetailWindow(flecs::entity winE) {
           ImGui::TextUnformatted("In progress");
         }
       } else {
-        ImGui::TextDisabled("Pending");
+        countdown(planData.rollout_date);
       }
 
       // On Pad row
@@ -104,10 +113,8 @@ void drawLaunchDetailWindow(flecs::entity winE) {
         } else {
           ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Ready");
         }
-      } else if (rolloutDone) {
-        ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Done");
       } else {
-        ImGui::TextDisabled("Pending");
+        countdown(planData.prep_date);
       }
 
       // Launch row
@@ -126,7 +133,7 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       if (launchReady) {
         ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Ready");
       } else {
-        ImGui::TextDisabled("Pending");
+        countdown(planData.launch_date);
       }
 
       ImGui::EndTable();

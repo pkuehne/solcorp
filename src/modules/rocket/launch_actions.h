@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../base/action.h"
+#include "rocket_module.h"
 #include <flecs.h>
 #include <vector>
 
@@ -13,6 +14,10 @@ struct LaunchScheduleAction : public IAction {
   std::vector<flecs::entity> payloads;
 
   flecs::entity result = flecs::entity::null();
+
+  /// Computes the stage dates from the current inputs without committing.
+  /// Requires rocket and launchpad to be valid.
+  [[nodiscard]] LaunchPlan previewPlan() const;
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;

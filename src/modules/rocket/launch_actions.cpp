@@ -82,16 +82,20 @@ LaunchScheduleAction::validate(const flecs::world &world) const {
   return ValidationResult::Pass();
 }
 
-void LaunchScheduleAction::execute(flecs::world &world) {
+LaunchPlan LaunchScheduleAction::previewPlan() const {
   auto prepDays =
       static_cast<uint32_t>(launchpad.get<Launchpad>().prep_days.value());
   auto rollDays =
       static_cast<uint32_t>(rocket.get<Rocket>().rollout_days.value());
   auto prepDate = static_cast<uint32_t>(launchDay) - prepDays;
-  auto planData = LaunchPlan{.rollout_date = prepDate - rollDays,
-                             .prep_date = prepDate,
-                             .launch_date = static_cast<uint32_t>(launchDay),
-                             .target_orbit = targetOrbit};
+  return LaunchPlan{.rollout_date = prepDate - rollDays,
+                    .prep_date = prepDate,
+                    .launch_date = static_cast<uint32_t>(launchDay),
+                    .target_orbit = targetOrbit};
+}
+
+void LaunchScheduleAction::execute(flecs::world &world) {
+  auto planData = previewPlan();
   auto planE = world.entity().set<LaunchPlan>(planData);
   planE.set_name(name.c_str());
   planE.add<LaunchingOn>(rocket);
