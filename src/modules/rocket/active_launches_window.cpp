@@ -16,14 +16,7 @@ bool planMatchesFilters(flecs::entity planE,
   flecs::entity siteE =
       padE.is_valid() ? findAncestorWith<Site>(padE) : flecs::entity::null();
 
-  flecs::entity payloadE = planE.target<LaunchingWith>();
-  flecs::entity orbitE = flecs::entity::null();
-  if (payloadE.is_valid()) {
-    planE.world().query_builder().with<ContractPayload>(payloadE).build().each(
-        [&](flecs::entity contractE) {
-          orbitE = contractE.target<ContractTargetOrbit>();
-        });
-  }
+  flecs::entity orbitE = planE.get<LaunchPlan>().target_orbit;
 
   if (!state.showCompleted) {
     auto currentState = planE.target<LaunchPlanCurrentState>();
@@ -150,7 +143,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
                             80.0f);
     ImGui::TableSetupColumn("Rocket");
     ImGui::TableSetupColumn("Launchpad");
-    ImGui::TableSetupColumn("Site");
+    ImGui::TableSetupColumn("State");
     ImGui::TableSetupColumn("Target Orbit");
     ImGui::TableSetupColumn("View", ImGuiTableColumnFlags_WidthFixed, 50.0f);
     ImGui::TableSetupColumn("Cancel", ImGuiTableColumnFlags_WidthFixed, 60.0f);
@@ -163,16 +156,8 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
 
       flecs::entity rocketE = planE.target<LaunchingOn>();
       flecs::entity padE = planE.target<LaunchingFrom>();
-      flecs::entity siteE = padE.is_valid() ? findAncestorWith<Site>(padE)
-                                            : flecs::entity::null();
-      flecs::entity payloadE = planE.target<LaunchingWith>();
-      flecs::entity orbitE = flecs::entity::null();
-      if (payloadE.is_valid()) {
-        world.query_builder().with<ContractPayload>(payloadE).build().each(
-            [&](flecs::entity contractE) {
-              orbitE = contractE.target<ContractTargetOrbit>();
-            });
-      }
+      flecs::entity stateE = planE.target<LaunchPlanCurrentState>();
+      flecs::entity orbitE = plan.target_orbit;
 
       planCount++;
       ImGui::TableNextRow();
@@ -192,7 +177,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
                                              : "-");
 
       ImGui::TableSetColumnIndex(4);
-      ImGui::TextUnformatted(siteE.is_valid() ? siteE.name().c_str() : "-");
+      ImGui::TextUnformatted(stateE.is_valid() ? stateE.name().c_str() : "-");
 
       ImGui::TableSetColumnIndex(5);
       if (orbitE.is_valid()) {
