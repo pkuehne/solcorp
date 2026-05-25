@@ -197,6 +197,152 @@ SCENARIO("systemLaunchRocket", "[rocket][system]") {
   }
 }
 
+SCENARIO("systemAutoInitiateRollout", "[system]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("A Scheduled plan where today is before the rollout date") {
+    uint32_t today = world.get<Game>().day;
+    auto storage = world.entity();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    auto launchpad = world.entity().add<Launchpad>();
+    auto plan = world.entity().set<LaunchPlan>({.rollout_date = today + 5});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::Scheduled"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoInitiateRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan stays in Scheduled state") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Scheduled")));
+      }
+    }
+  }
+
+  GIVEN("A Scheduled plan where today is at the rollout date") {
+    uint32_t today = world.get<Game>().day;
+    auto storage = world.entity();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    auto launchpad = world.entity().add<Launchpad>();
+    auto plan = world.entity().set<LaunchPlan>({.rollout_date = today});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::Scheduled"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoInitiateRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan transitions to RollingOut") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::RollingOut")));
+      }
+      THEN("The rocket begins moving to the launchpad") {
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving")));
+        CHECK(rocket.target<RocketTargetParent>() == launchpad);
+      }
+    }
+  }
+}
+
+SCENARIO("systemAutoCompleteRollout", "[system]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("A RollingOut plan where the rocket has not yet arrived at the "
+        "launchpad") {
+    auto storage = world.entity();
+    auto launchpad = world.entity().add<Launchpad>();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    auto plan = world.entity().set<LaunchPlan>({});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::RollingOut"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoCompleteRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan stays in RollingOut state") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::RollingOut")));
+      }
+    }
+  }
+
+  GIVEN("A RollingOut plan where the rocket is at the launchpad") {
+    auto launchpad = world.entity().add<Launchpad>();
+    auto rocket = world.entity().add<Rocket>().child_of(launchpad);
+    auto plan = world.entity().set<LaunchPlan>({});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::RollingOut"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoCompleteRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan transitions to OnPad") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::OnPad")));
+      }
+      THEN("A prep duration is set on the plan") {
+        // default prep_days = 5
+        REQUIRE(plan.has<DurationRequired>());
+        CHECK(plan.get<DurationRequired>().remaining == 5);
+        CHECK(plan.get<DurationRequired>().total == 5);
+      }
+    }
+  }
+}
+
+SCENARIO("systemAutoGoForLaunch", "[system]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("An OnPad plan where today is before the launch date") {
+    uint32_t today = world.get<Game>().day;
+    auto plan = world.entity().set<LaunchPlan>({.launch_date = today + 1});
+    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
+
+    WHEN("The system runs") {
+      systemAutoGoForLaunch(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan stays in OnPad state") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::OnPad")));
+      }
+    }
+  }
+
+  GIVEN("An OnPad plan ready to launch") {
+    uint32_t today = world.get<Game>().day;
+    auto plan = world.entity().set<LaunchPlan>({.launch_date = today});
+    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
+
+    WHEN("The system runs") {
+      systemAutoGoForLaunch(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan transitions to Launched") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Launched")));
+      }
+    }
+  }
+}
+
 SCENARIO("systemRocketCompleteAction", "[system]") {
   flecs::world world;
   world.import <BaseModule>();

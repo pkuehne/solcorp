@@ -284,7 +284,7 @@ void LaunchCompleteRolloutAction::execute(flecs::world &world) {
   auto prepDays =
       static_cast<uint32_t>(launchpadE.get<Launchpad>().prep_days.value());
   plan.set<DurationRequired>({.remaining = prepDays, .total = prepDays});
-  plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::Prep"));
+  plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
 }
 
 // ----- LaunchAction -----
@@ -294,7 +294,7 @@ ValidationResult LaunchGoAction::validate(const flecs::world &world) const {
     return ValidationResult::Fail("Launch plan is not valid");
   }
   if (!plan.has<LaunchPlanCurrentState>(
-          world.lookup("States::LaunchPlan::Prep"))) {
+          world.lookup("States::LaunchPlan::OnPad"))) {
     return ValidationResult::Fail("Launch plan is not in preparation");
   }
   if (plan.has<DurationRequired>()) {

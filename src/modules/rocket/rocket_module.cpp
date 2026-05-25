@@ -133,6 +133,26 @@ RocketModule::RocketModule(flecs::world &world) {
   register_component_lua<ContractPayload>(world, "ContractPayload");
   register_component_lua<ContractTargetOrbit>(world, "ContractTargetOrbit");
 
+  // Create state entities before system registration so they can be used in
+  // system filters
+  // TODO: We should have a guard-style class here that stores the scope, sets
+  // it to zero and restores it on destruction/close(). This should be a
+  // re-usable class as we do this in multiple places
+  auto scope = world.set_scope(0);
+  auto statesRoot = world.entity("States");
+  auto rocketStates = world.entity("Rocket").child_of(statesRoot);
+  world.entity("Invalid").child_of(rocketStates);
+  world.entity("UnderConstruction").child_of(rocketStates);
+  world.entity("Stored").child_of(rocketStates);
+  world.entity("Moving").child_of(rocketStates);
+  world.entity("Assigned").child_of(rocketStates);
+  auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
+  auto scheduledState = world.entity("Scheduled").child_of(planStates);
+  auto rollingOutState = world.entity("RollingOut").child_of(planStates);
+  auto onPadState = world.entity("OnPad").child_of(planStates);
+  auto launchedState = world.entity("Launched").child_of(planStates);
+  world.set_scope(scope);
+
   // Register systems
   world.system("Create Rocket Prefabs")
       .kind(flecs::OnStart)
@@ -152,6 +172,7 @@ RocketModule::RocketModule(flecs::world &world) {
   auto sim = world.get<Simulation>();
   world.system<LaunchPlan>("Launch Rocket")
       .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(launchedState)
       .kind(UpdatePhase)
       .each(systemLaunchRocket);
   world.system("Rocket Launch Create Windows")
@@ -175,20 +196,27 @@ RocketModule::RocketModule(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemRocketCompleteAction);
 
-  auto scope = world.set_scope(0);
-  auto statesRoot = world.entity("States");
-  auto rocketStates = world.entity("Rocket").child_of(statesRoot);
-  world.entity("Invalid").child_of(rocketStates);
-  world.entity("UnderConstruction").child_of(rocketStates);
-  world.entity("Stored").child_of(rocketStates);
-  world.entity("Moving").child_of(rocketStates);
-  world.entity("Assigned").child_of(rocketStates);
-  auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
-  world.entity("Scheduled").child_of(planStates);
-  world.entity("RollingOut").child_of(planStates);
-  world.entity("Prep").child_of(planStates);
-  world.entity("Launched").child_of(planStates);
-  world.set_scope(scope);
+  world.system<LaunchPlan>("Auto Initiate Rollout")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(scheduledState)
+      .kind(UpdatePhase)
+      .each(systemAutoInitiateRollout);
+
+  world.system<LaunchPlan>("Auto Complete Rollout")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(rollingOutState)
+      .kind(UpdatePhase)
+      .each(systemAutoCompleteRollout);
+
+  world.system<LaunchPlan>("Auto Go for Launch")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(onPadState)
+      .without<DurationRequired>()
+      .kind(UpdatePhase)
+      .each(systemAutoGoForLaunch);
 }
 
 /// @brief Process LaunchPlans that are due
@@ -348,5 +376,37 @@ void systemRocketCompleteAction(flecs::entity e, Rocket &) {
     action->execute(world);
   } else {
     action->block(world);
+  }
+}
+
+void systemAutoInitiateRollout(flecs::entity plan, LaunchPlan &planData) {
+  auto world = plan.world();
+  uint32_t today = world.get<Game>().day;
+  if (today < planData.rollout_date) {
+    return;
+  }
+  LaunchInitiateRolloutAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world);
+  }
+}
+
+void systemAutoCompleteRollout(flecs::entity plan, LaunchPlan &) {
+  auto world = plan.world();
+  LaunchCompleteRolloutAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world);
+  }
+}
+
+void systemAutoGoForLaunch(flecs::entity plan, LaunchPlan &planData) {
+  auto world = plan.world();
+  uint32_t today = world.get<Game>().day;
+  if (today < planData.launch_date) {
+    return;
+  }
+  LaunchGoAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world); // TODO: Move logic in systemLaunchRocket here
   }
 }

@@ -24,7 +24,7 @@ SCENARIO("LaunchGoAction", "[action]") {
     }
   }
 
-  GIVEN("A plan not in Prep state") {
+  GIVEN("A plan not in OnPad state") {
     auto plan = world.entity().set<LaunchPlan>({});
     plan.add<LaunchPlanCurrentState>(
         world.lookup("States::LaunchPlan::RollingOut"));
@@ -40,9 +40,9 @@ SCENARIO("LaunchGoAction", "[action]") {
     }
   }
 
-  GIVEN("A Prep plan with unfinished preparation") {
+  GIVEN("An OnPad plan with unfinished preparation") {
     auto plan = world.entity().set<LaunchPlan>({});
-    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::Prep"));
+    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
     plan.set<DurationRequired>({.remaining = 3, .total = 5});
     LaunchGoAction action{plan};
 
@@ -56,9 +56,9 @@ SCENARIO("LaunchGoAction", "[action]") {
     }
   }
 
-  GIVEN("A Prep plan ready to launch") {
+  GIVEN("An OnPad plan ready to launch") {
     auto plan = world.entity().set<LaunchPlan>({});
-    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::Prep"));
+    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
     LaunchGoAction action{plan};
 
     WHEN("Validated") {

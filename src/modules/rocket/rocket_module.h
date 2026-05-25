@@ -13,8 +13,7 @@ struct LaunchPlan {
 
   /// When the rocket needs to start rolling out to be ready for launch
   uint32_t rollout_date = 0;
-  /// When the rocket needs to start pre-launch preparations to be ready for
-  /// launch
+  /// When the rocket arrives on the pad (first day of on-pad prep)
   uint32_t prep_date = 0;
   /// When the launch is scheduled
   uint32_t launch_date = 0;
@@ -101,6 +100,9 @@ void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemCreateRocketPrefabs(flecs::iter &);
 void systemCreateRocketBuildCategory(flecs::iter &);
 void systemRocketCompleteAction(flecs::entity, Rocket &);
+void systemAutoInitiateRollout(flecs::entity, LaunchPlan &);
+void systemAutoCompleteRollout(flecs::entity, LaunchPlan &);
+void systemAutoGoForLaunch(flecs::entity, LaunchPlan &);
 
 struct RocketModule {
   RocketModule(flecs::world &);

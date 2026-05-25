@@ -76,6 +76,8 @@ void showLaunchWindowEdit(const flecs::entity &planE) {
   auto state = window.try_get_mut<LaunchWindow>();
   SC_ASSERT(state, "LaunchWindow state is invalid");
 
+  // TODO: We should not recalculate the dates here. Essentially it should be
+  // read-only after the first stage has been started.
   state->draftPlan.name = planE.name();
   state->draftPlan.launchDay = static_cast<int>(plan.launch_date);
   state->draftPlan.rocket = planE.target<LaunchingOn>();

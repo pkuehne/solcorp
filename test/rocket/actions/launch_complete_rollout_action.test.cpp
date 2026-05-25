@@ -100,9 +100,9 @@ SCENARIO("LaunchCompleteRolloutAction", "[action]") {
     WHEN("Executed") {
       action.execute(world);
 
-      THEN("The plan transitions to Prep") {
+      THEN("The plan transitions to OnPad") {
         CHECK(plan.has<LaunchPlanCurrentState>(
-            world.lookup("States::LaunchPlan::Prep")));
+            world.lookup("States::LaunchPlan::OnPad")));
       }
       THEN("A prep duration is set on the plan") {
         // default prep_days = 5
