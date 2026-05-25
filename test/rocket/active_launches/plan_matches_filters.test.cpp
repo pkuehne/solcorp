@@ -217,6 +217,36 @@ SCENARIO("planMatchesFilters - combined filters", "[filter][active_launches]") {
   }
 }
 
+SCENARIO("planMatchesFilters - showCompleted", "[filter][active_launches]") {
+  ActiveLaunchesFixture f;
+
+  GIVEN("A plan in a terminal (Launched) state") {
+    f.plan1.add<LaunchPlanCurrentState>(
+        f.world.lookup("States::LaunchPlan::Launched"));
+
+    WHEN("showCompleted is false (default)") {
+      ActiveLaunchesWindow state;
+
+      THEN("The launched plan is excluded") {
+        CHECK(!planMatchesFilters(f.plan1, state));
+      }
+      THEN("Non-terminal plans still pass") {
+        CHECK(planMatchesFilters(f.plan2, state));
+        CHECK(planMatchesFilters(f.plan3, state));
+      }
+    }
+
+    WHEN("showCompleted is true") {
+      ActiveLaunchesWindow state;
+      state.showCompleted = true;
+
+      THEN("The launched plan passes") {
+        CHECK(planMatchesFilters(f.plan1, state));
+      }
+    }
+  }
+}
+
 SCENARIO("planMatchesFilters - dead filter entities",
          "[filter][active_launches]") {
   ActiveLaunchesFixture f;

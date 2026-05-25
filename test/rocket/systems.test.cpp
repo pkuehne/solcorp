@@ -160,9 +160,11 @@ SCENARIO("systemAutoGoForLaunch", "[system]") {
     WHEN("The system runs") {
       systemAutoGoForLaunch(plan, plan.get_mut<LaunchPlan>());
 
-      THEN("The plan and rocket are destroyed") {
-        CHECK(!plan.is_alive());
+      THEN("The rocket is destroyed and the plan transitions to Launched") {
         CHECK(!rocket.is_alive());
+        CHECK(plan.is_alive());
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Launched")));
       }
     }
   }

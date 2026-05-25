@@ -51,7 +51,8 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("filterSite", &ActiveLaunchesWindow::filterSite)
       .member("filterPad", &ActiveLaunchesWindow::filterPad)
       .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
-      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel);
+      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
+      .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
   world.component<ContractsWindow>()
       .member("statusFilter", &ContractsWindow::statusFilter)
       .member("showCompleted", &ContractsWindow::showCompleted)
@@ -147,7 +148,7 @@ RocketModule::RocketModule(flecs::world &world) {
   auto scheduledState = world.entity("Scheduled").child_of(planStates);
   auto rollingOutState = world.entity("RollingOut").child_of(planStates);
   auto onPadState = world.entity("OnPad").child_of(planStates);
-  world.entity("Launched").child_of(planStates);
+  world.entity("Launched").child_of(planStates).add<StateIsTerminal>();
   world.set_scope(scope);
 
   // Register systems

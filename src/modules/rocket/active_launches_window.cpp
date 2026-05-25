@@ -25,6 +25,13 @@ bool planMatchesFilters(flecs::entity planE,
         });
   }
 
+  if (!state.showCompleted) {
+    auto currentState = planE.target<LaunchPlanCurrentState>();
+    if (currentState.is_valid() && currentState.has<StateIsTerminal>()) {
+      return false;
+    }
+  }
+
   if (state.filterSite.is_alive() && siteE != state.filterSite)
     return false;
   if (state.filterPad.is_alive() && padE != state.filterPad)
@@ -125,6 +132,9 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     state.filterOrbit = flecs::entity::null();
   }
 
+  ImGui::SameLine();
+  ImGui::Checkbox("Show Completed", &state.showCompleted);
+
   ImGui::Separator();
 
   // --- Table ---
@@ -203,9 +213,16 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(7);
-      if (ImGui::SmallButton("Cancel")) {
-        state.pendingCancel = planE;
-        openCancelModal = true;
+      {
+        auto currentState = planE.target<LaunchPlanCurrentState>();
+        bool isTerminal =
+            currentState.is_valid() && currentState.has<StateIsTerminal>();
+        ImGui::BeginDisabled(isTerminal);
+        if (ImGui::SmallButton("Cancel")) {
+          state.pendingCancel = planE;
+          openCancelModal = true;
+        }
+        ImGui::EndDisabled();
       }
 
       ImGui::PopID();

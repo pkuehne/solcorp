@@ -30,12 +30,15 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       world.lookup("States::LaunchPlan::RollingOut"));
   bool isOnPad = state.plan.has<LaunchPlanCurrentState>(
       world.lookup("States::LaunchPlan::OnPad"));
+  bool isLaunched = state.plan.has<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::Launched"));
 
   ImGui::Text("%s", state.plan.name().c_str());
   ImGui::SameLine();
   const char *stateName = isScheduled    ? "Scheduled"
                           : isRollingOut ? "Rolling Out"
                           : isOnPad      ? "On Pad"
+                          : isLaunched   ? "Launched"
                                          : "Unknown";
   ImGui::TextDisabled("(%s)", stateName);
   ImGui::Separator();
@@ -70,7 +73,7 @@ void drawLaunchDetailWindow(flecs::entity winE) {
 
       // Rollout row
       ImGui::TableNextRow();
-      bool rolloutDone = isOnPad;
+      bool rolloutDone = isOnPad || isLaunched;
       bool rolloutActive = isRollingOut;
       if (rolloutActive) {
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
@@ -106,7 +109,9 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       ImGui::TableSetColumnIndex(1);
       ImGui::TextUnformatted("On Pad");
       ImGui::TableSetColumnIndex(2);
-      if (onPadActive) {
+      if (isLaunched) {
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Done");
+      } else if (onPadActive) {
         if (state.plan.has<DurationRequired>()) {
           auto dur = state.plan.get<DurationRequired>();
           ImGui::Text("%u/%u days", dur.remaining, dur.total);
@@ -121,7 +126,7 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       ImGui::TableNextRow();
       bool launchReady = isOnPad && !state.plan.has<DurationRequired>() &&
                          today >= planData.launch_date;
-      if (launchReady) {
+      if (isLaunched || launchReady) {
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
                                IM_COL32(60, 220, 60, 40));
       }
@@ -130,7 +135,9 @@ void drawLaunchDetailWindow(flecs::entity winE) {
       ImGui::TableSetColumnIndex(1);
       ImGui::TextUnformatted("Launch");
       ImGui::TableSetColumnIndex(2);
-      if (launchReady) {
+      if (isLaunched) {
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Done");
+      } else if (launchReady) {
         ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Ready");
       } else {
         countdown(planData.launch_date);

@@ -314,5 +314,6 @@ void LaunchGoAction::execute(flecs::world &world) {
     payload.destruct();
   }
   rocketE.destruct();
-  plan.destruct();
+  plan.add<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::Launched"));
 }

@@ -116,9 +116,11 @@ SCENARIO("LaunchGoAction", "[action]") {
     WHEN("Executed") {
       action.execute(world);
 
-      THEN("The plan and rocket are destroyed") {
-        CHECK(!plan.is_alive());
+      THEN("The rocket is destroyed and the plan transitions to Launched") {
         CHECK(!rocket.is_alive());
+        CHECK(plan.is_alive());
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Launched")));
       }
     }
   }
@@ -159,11 +161,14 @@ SCENARIO("LaunchGoAction", "[action]") {
     WHEN("Executed") {
       action.execute(world);
 
-      THEN("The rocket and all payloads are destroyed") {
+      THEN("The rocket, payloads are destroyed and the plan transitions to "
+           "Launched") {
         CHECK(!rocket.is_alive());
         CHECK(!payloadA.is_alive());
         CHECK(!payloadB.is_alive());
-        CHECK(!plan.is_alive());
+        CHECK(plan.is_alive());
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Launched")));
       }
       THEN("Contracts are closed and completion payments are collected") {
         CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
