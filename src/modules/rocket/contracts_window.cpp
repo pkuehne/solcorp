@@ -1,5 +1,6 @@
 #include "contracts_window.h"
 #include "imgui.h"
+#include "launch_detail_window.h"
 #include "launch_window.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
@@ -217,9 +218,9 @@ void drawContractsWindow(flecs::entity winE) {
 
       ImGui::SameLine();
       ImGui::BeginDisabled(planButtonDisabled(contract));
-      if (ImGui::SmallButton(launchPlanE.is_valid() ? "Edit" : "Plan")) {
+      if (ImGui::SmallButton(launchPlanE.is_valid() ? "View" : "Plan")) {
         if (launchPlanE.is_valid()) {
-          showLaunchWindowEdit(launchPlanE);
+          showLaunchDetailWindow(launchPlanE);
         } else {
           setupLaunchForPayload(payloadE);
         }

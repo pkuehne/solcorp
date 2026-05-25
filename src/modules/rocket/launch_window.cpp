@@ -60,39 +60,6 @@ void showLaunchWindowAdd(flecs::world world, LaunchScheduleAction draftPlan) {
   }
 }
 
-void showLaunchWindowEdit(const flecs::entity &planE) {
-  spdlog::debug("Showing LaunchWindow");
-  if (!planE.is_alive()) {
-    spdlog::error("Showing LaunchWindow can't be done on invalid plan");
-    return;
-  }
-
-  auto world = planE.world();
-  LaunchPlan plan = planE.ensure<LaunchPlan>();
-
-  auto window = showWindow(world, "Mission Plan");
-  SC_ASSERT(window.is_valid(),
-            "showWindow returned invalid entity for Mission Plan");
-  auto state = window.try_get_mut<LaunchWindow>();
-  SC_ASSERT(state, "LaunchWindow state is invalid");
-
-  // TODO: We should not recalculate the dates here. Essentially it should be
-  // read-only after the first stage has been started.
-  state->draftPlan.name = planE.name();
-  state->draftPlan.launchDay = static_cast<int>(plan.launch_date);
-  state->draftPlan.rocket = planE.target<LaunchingOn>();
-  state->draftPlan.launchpad = planE.target<LaunchingFrom>();
-  state->draftPlan.targetOrbit = plan.target_orbit;
-  state->editingPlan = planE;
-  state->planningOffset = 0;
-
-  // Load existing payloads
-  state->draftPlan.payloads.clear();
-  planE.each<LaunchingWith>([&](flecs::entity payload) {
-    state->draftPlan.payloads.push_back(payload);
-  });
-}
-
 /// @brief Draws the Launch Planning window
 /// @param winE Entity for the window
 /// @param win LaunchWindow component
@@ -330,9 +297,7 @@ void drawLaunchWindow(flecs::entity winE) {
         }
         anyPayloads = true;
 
-        bool alreadyAssigned =
-            payloadE.has<LaunchingWith>() &&
-            payloadE.target<LaunchingWith>() != state.editingPlan;
+        bool alreadyAssigned = payloadE.has<LaunchingWith>();
 
         auto &payload = payloadE.get<Payload>();
         bool isSelected =
@@ -372,40 +337,18 @@ void drawLaunchWindow(flecs::entity winE) {
   ImGui::Spacing();
   ImGui::Spacing();
 
-  if (state.editingPlan.is_valid()) {
-    LaunchEditAction edit;
-    edit.plan = state.editingPlan;
-    edit.launchDay = state.draftPlan.launchDay;
-    edit.name = state.draftPlan.name;
-    edit.rocket = state.draftPlan.rocket;
-    edit.launchpad = state.draftPlan.launchpad;
-    edit.targetOrbit = state.draftPlan.targetOrbit;
-    edit.payloads = state.draftPlan.payloads;
-    auto valid = edit.validate(world);
-    if (Widgets::ActionButton(
-            ButtonLabel{.text = "Save"},
-            ButtonTooltip{.text = "Save Launch Plan to be executed"},
-            valid.message)) {
-      edit.execute(world);
-      state.draftPlan = LaunchScheduleAction{};
-      state.editingPlan = flecs::entity::null();
-      hideWindow(world, "Mission Plan");
-    }
-  } else {
-    auto valid = state.draftPlan.validate(world);
-    if (Widgets::ActionButton(
-            ButtonLabel{.text = "Save"},
-            ButtonTooltip{.text = "Save Launch Plan to be executed"},
-            valid.message)) {
-      state.draftPlan.execute(world);
-      state.draftPlan = LaunchScheduleAction{};
-      hideWindow(world, "Mission Plan");
-    }
+  auto valid = state.draftPlan.validate(world);
+  if (Widgets::ActionButton(
+          ButtonLabel{.text = "Save"},
+          ButtonTooltip{.text = "Save Launch Plan to be executed"},
+          valid.message)) {
+    state.draftPlan.execute(world);
+    state.draftPlan = LaunchScheduleAction{};
+    hideWindow(world, "Mission Plan");
   }
   ImGui::SameLine();
   if (ImGui::Button("Cancel")) {
     state.draftPlan = LaunchScheduleAction{};
-    state.editingPlan = flecs::entity::null();
     hideWindow(world, "Mission Plan");
   }
 }

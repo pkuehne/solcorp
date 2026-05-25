@@ -2,6 +2,7 @@
 #include "active_launches_window.h"
 #include "contracts_window.h"
 #include "launch_actions.h"
+#include "launch_detail_window.h"
 #include "launch_window.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
@@ -45,6 +46,7 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<LaunchDetailWindow>();
   world.component<ActiveLaunchesWindow>()
       .member("filterSite", &ActiveLaunchesWindow::filterSite)
       .member("filterPad", &ActiveLaunchesWindow::filterPad)
@@ -176,6 +178,8 @@ RocketModule::RocketModule(flecs::world &world) {
             .set<ActiveLaunchesWindow>({});
         registerWindow("Contracts Window", drawContractsWindow, world)
             .set<ContractsWindow>({});
+        registerWindow("Launch Detail", drawLaunchDetailWindow, world)
+            .set<LaunchDetailWindow>({});
       });
   world.system<Rocket>("Rocket Complete State Transition Action")
       .immediate()

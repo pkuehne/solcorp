@@ -1,6 +1,7 @@
 #include "active_launches_window.h"
 #include "imgui.h"
-#include "launch_window.h"
+#include "launch_actions.h"
+#include "launch_detail_window.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
@@ -141,7 +142,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     ImGui::TableSetupColumn("Launchpad");
     ImGui::TableSetupColumn("Site");
     ImGui::TableSetupColumn("Target Orbit");
-    ImGui::TableSetupColumn("Edit", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+    ImGui::TableSetupColumn("View", ImGuiTableColumnFlags_WidthFixed, 50.0f);
     ImGui::TableSetupColumn("Cancel", ImGuiTableColumnFlags_WidthFixed, 60.0f);
     ImGui::TableHeadersRow();
 
@@ -197,8 +198,8 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(6);
-      if (ImGui::SmallButton("Edit")) {
-        showLaunchWindowEdit(planE);
+      if (ImGui::SmallButton("View")) {
+        showLaunchDetailWindow(planE);
       }
 
       ImGui::TableSetColumnIndex(7);
