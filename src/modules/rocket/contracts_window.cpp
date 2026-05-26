@@ -167,10 +167,10 @@ void drawContractsWindow(flecs::entity winE) {
       }
 
       ImGui::TableNextRow();
-      ImGui::PushID(contractE.name().c_str());
+      ImGui::PushID(std::to_string(contractE.id()).c_str());
 
       ImGui::TableSetColumnIndex(0);
-      ImGui::TextUnformatted(contractE.name().c_str());
+      ImGui::TextUnformatted(contract.name.c_str());
 
       ImGui::TableSetColumnIndex(1);
       ImGui::TextUnformatted(contract.client.c_str());
@@ -250,7 +250,7 @@ void drawContractsWindow(flecs::entity winE) {
   if (ImGui::BeginPopupModal("Confirm Delete Contract", nullptr,
                              ImGuiWindowFlags_AlwaysAutoResize)) {
     if (state.pendingDelete.is_valid() && state.pendingDelete.is_alive()) {
-      ImGui::Text("Delete contract '%s'?", state.pendingDelete.name().c_str());
+      ImGui::Text("Delete contract '%s'?", state.pendingDelete.get<Contract>().name.c_str());
       ImGui::Text("This action cannot be undone.");
       ImGui::Separator();
       if (ImGui::Button("Yes, Delete")) {

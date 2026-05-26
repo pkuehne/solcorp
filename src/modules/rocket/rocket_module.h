@@ -55,6 +55,7 @@ enum class ContractStatus : uint8_t { Open, Accepted, Closed };
 struct Contract {
   static uint32_t max_id;
 
+  std::string name;
   std::string client;
   std::string description;
   uint32_t upfront_payment;

@@ -8,13 +8,14 @@ SCENARIO("create_contract", "[helpers][lua]") {
   world.import <RocketModule>();
   world.entity("Contracts");
 
-  GIVEN("a unique contract name") {
+  GIVEN("a contract name") {
     WHEN("create_contract is called") {
       auto contract = create_contract(world, "Mission1", "AcmeCorp",
                                       "Deliver satellite", 2000.0f, 8000.0f);
       THEN("a valid entity is returned") { REQUIRE(contract.is_valid()); }
       THEN("the Contract component has the correct fields") {
         auto &c = contract.get<Contract>();
+        CHECK(c.name == "Mission1");
         CHECK(c.client == "AcmeCorp");
         CHECK(c.description == "Deliver satellite");
         CHECK(c.upfront_payment == 2000.0f);
@@ -26,35 +27,18 @@ SCENARIO("create_contract", "[helpers][lua]") {
     }
   }
 
-  GIVEN("a name that already exists under Contracts") {
-    world.entity("Dup")
-        .child_of(world.lookup("Contracts"))
-        .set<Contract>({.client = "OldClient",
-                        .description = "OldDesc",
-                        .upfront_payment = 0,
-                        .completion_payment = 0,
-                        .status = ContractStatus::Open,
-                        .failed = false});
+  GIVEN("a name that is already used by another contract") {
+    auto first = create_contract(world, "Mission1", "OldClient", "OldDesc", 0, 0);
     WHEN("create_contract is called with the same name") {
-      auto contract =
-          create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
-      THEN("an invalid entity is returned") { CHECK(!contract.is_valid()); }
-    }
-  }
-
-  GIVEN("a closed contract with a given name") {
-    world.entity("ClosedContract")
-        .child_of(world.lookup("Contracts"))
-        .set<Contract>({.client = "OldClient",
-                        .description = "OldDesc",
-                        .upfront_payment = 0,
-                        .completion_payment = 0,
-                        .status = ContractStatus::Closed,
-                        .failed = false});
-    WHEN("create_contract is called with the same name") {
-      auto contract =
-          create_contract(world, "ClosedContract", "NewClient", "NewDesc", 0, 0);
-      THEN("an invalid entity is returned") { CHECK(!contract.is_valid()); }
+      auto second =
+          create_contract(world, "Mission1", "NewClient", "NewDesc", 0, 0);
+      THEN("a new valid entity is returned") {
+        REQUIRE(second.is_valid());
+        CHECK(second != first);
+      }
+      THEN("the new contract stores the name in the Contract component") {
+        CHECK(second.get<Contract>().name == "Mission1");
+      }
     }
   }
 }

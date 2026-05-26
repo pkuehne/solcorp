@@ -7,7 +7,8 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
   world.import <RocketModule>();
   auto contract = world.entity("ContractX")
-                      .set<Contract>({.client = "C",
+                      .set<Contract>({.name = "ContractX",
+                                      .client = "C",
                                       .description = "D",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,

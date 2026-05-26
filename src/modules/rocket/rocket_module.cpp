@@ -22,6 +22,7 @@
 
 uint32_t LaunchPlan::max_id = 1;
 uint32_t Rocket::max_id = 1;
+uint32_t Contract::max_id = 1;
 
 /// @brief Module Constructor
 /// Sets up all necessary components, GUIs and Systems
@@ -61,6 +62,7 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<ContractTargetOrbit>();
   world.component<ContractStatus>();
   world.component<Contract>()
+      .member("name", &Contract::name)
       .member("client", &Contract::client)
       .member("description", &Contract::description)
       .member("upfront_payment", &Contract::upfront_payment)
@@ -109,7 +111,8 @@ RocketModule::RocketModule(flecs::world &world) {
                                     });
   register_component_lua<Contract>(
       world, "Contract", [](LuaFieldBuilder<Contract> &b) {
-        b.field<&Contract::client>("client")
+        b.field<&Contract::name>("name")
+            .field<&Contract::client>("client")
             .field<&Contract::description>("description")
             .field<&Contract::upfront_payment>("upfront_payment")
             .field<&Contract::completion_payment>("completion_payment")
@@ -216,20 +219,20 @@ void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
       if (contractE.target<ContractTargetOrbit>() != plan.target_orbit) {
         spdlog::info(
             "Contract {} failed because payload {} was launched to wrong orbit",
-            contractE.name().c_str(), payload.name().c_str());
+            contract.name.c_str(), payload.name().c_str());
         contract.failed = true;
       } else if (rocket_failure) {
         spdlog::info(
             "Contract {} failed because payload {} was launched on a rocket "
             "that failed",
-            contractE.name().c_str(), payload.name().c_str());
+            contract.name.c_str(), payload.name().c_str());
         contract.failed = true;
         instantiateNotification(
             world, "Launch Failure",
             fmt::format("{} was launched on {}, which failed."
                         " Contract {} is failed.",
                         payload.name().c_str(), rocketE.name().c_str(),
-                        contractE.name().c_str()));
+                        contract.name.c_str()));
       } else {
         contract.failed = false;
         company.balance += static_cast<int64_t>(contract.completion_payment);
