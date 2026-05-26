@@ -149,6 +149,7 @@ RocketModule::RocketModule(flecs::world &world) {
   auto rollingOutState = world.entity("RollingOut").child_of(planStates);
   auto onPadState = world.entity("OnPad").child_of(planStates);
   world.entity("Launched").child_of(planStates).add<StateIsTerminal>();
+  world.entity("Cancelled").child_of(planStates).add<StateIsTerminal>();
   world.set_scope(scope);
 
   // Register systems

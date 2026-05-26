@@ -115,6 +115,10 @@ ValidationResult LaunchCancelAction::validate(const flecs::world &) const {
   if (!plan.is_valid() || !plan.is_alive()) {
     return ValidationResult::Fail("Launch plan is not valid");
   }
+  auto currentState = plan.target<LaunchPlanCurrentState>();
+  if (currentState.is_valid() && currentState.has<StateIsTerminal>()) {
+    return ValidationResult::Fail("Launch plan is already complete");
+  }
   return ValidationResult::Pass();
 }
 
@@ -122,12 +126,27 @@ void LaunchCancelAction::execute(flecs::world &world) {
   if (!validate(world)) {
     return;
   }
+
   auto rocketE = plan.target<LaunchingOn>();
   if (rocketE.is_valid()) {
+    // TODO: Replace with RocketCancelMoveAction since this is a bit of a hack
+    if (rocketE.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving"))) {
+      rocketE.remove<RocketTargetParent>();
+      rocketE.remove<RocketTargetState>(flecs::Wildcard);
+      rocketE.remove<DurationRequired>();
+    }
     rocketE.add<RocketCurrentState>(world.lookup("States::Rocket::Stored"));
   }
-  spdlog::debug("Cancelling launch plan: {}", plan.id());
-  plan.destruct();
+
+  plan.remove<LaunchingWith>(flecs::Wildcard);
+  plan.remove<LaunchingOn>(flecs::Wildcard);
+  plan.remove<LaunchingFrom>(flecs::Wildcard);
+  plan.remove<DurationRequired>();
+
+  spdlog::debug("Cancelling launch plan: {}", plan.name().c_str());
+  plan.add<LaunchPlanCurrentState>(
+      world.lookup("States::LaunchPlan::Cancelled"));
 }
 
 // ----- LaunchInitiateRolloutAction -----

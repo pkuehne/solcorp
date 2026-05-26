@@ -7,6 +7,7 @@
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_module.h"
+#include "widgets/widgets.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
@@ -132,7 +133,6 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
 
   // --- Table ---
   int planCount = 0;
-  bool openCancelModal = false;
   ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                                ImGuiTableFlags_SizingStretchProp |
                                ImGuiTableFlags_ScrollY;
@@ -199,15 +199,14 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
 
       ImGui::TableSetColumnIndex(7);
       {
-        auto currentState = planE.target<LaunchPlanCurrentState>();
-        bool isTerminal =
-            currentState.is_valid() && currentState.has<StateIsTerminal>();
-        ImGui::BeginDisabled(isTerminal);
-        if (ImGui::SmallButton("Cancel")) {
+        LaunchCancelAction cancelAction{planE};
+        auto cancelValid = cancelAction.validate(world);
+        if (Widgets::ActionButton(ButtonLabel{.text = "Cancel"},
+                                  ButtonTooltip{.text = nullptr},
+                                  cancelValid.message)) {
           state.pendingCancel = planE;
-          openCancelModal = true;
+          ImGui::OpenPopup(modalCancelLaunch);
         }
-        ImGui::EndDisabled();
       }
 
       ImGui::PopID();
@@ -216,36 +215,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     ImGui::EndTable();
   }
 
-  // OpenPopup must be called in the same ID scope as BeginPopupModal.
-  // We deferred it out of the PushID loop above.
-  if (openCancelModal) {
-    ImGui::OpenPopup("Confirm Cancel Launch");
-  }
-
-  // --- Cancel confirmation modal ---
-  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-  if (ImGui::BeginPopupModal("Confirm Cancel Launch", nullptr,
-                             ImGuiWindowFlags_AlwaysAutoResize)) {
-    if (state.pendingCancel.is_valid() && state.pendingCancel.is_alive()) {
-      ImGui::Text("Cancel launch plan '%s'?",
-                  state.pendingCancel.name().c_str());
-      ImGui::Text("This action cannot be undone.");
-      ImGui::Separator();
-      if (ImGui::Button("Yes, Cancel Launch")) {
-        LaunchCancelAction{state.pendingCancel}.execute(world);
-        state.pendingCancel = flecs::entity::null();
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::SameLine();
-      if (ImGui::Button("Keep")) {
-        state.pendingCancel = flecs::entity::null();
-        ImGui::CloseCurrentPopup();
-      }
-    } else {
-      state.pendingCancel = flecs::entity::null();
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::EndPopup();
+  if (drawLaunchCancelConfirmModal(state.pendingCancel, world)) {
+    state.pendingCancel = flecs::entity::null();
   }
 }
