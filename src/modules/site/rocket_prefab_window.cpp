@@ -94,6 +94,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
 
   auto buttonSize = ImGui::GetContentRegionAvail();
   buttonSize.y = 30;
+  (void)buttonSize;
 
   for (auto prefabE : prefabs) {
     ImGui::PushID(std::to_string(prefabE.id()).c_str());

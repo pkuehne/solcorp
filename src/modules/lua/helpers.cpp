@@ -154,8 +154,9 @@ flecs::entity create_contract(flecs::world &world, const std::string &name,
   SC_ASSERT(contracts_node.is_valid(), "Contracts node not found");
   auto existing = contracts_node.lookup(name.c_str());
   if (existing.is_valid()) {
-    spdlog::warn("Entity with name {} already exists", name);
-    return existing;
+    spdlog::warn("Contract with name {} already exists, rejecting creation",
+                 name);
+    return flecs::entity{};
   }
   instantiateNotification(world, "Contract Created",
                           fmt::format("A new contract '{}' is available", name),
@@ -173,6 +174,15 @@ flecs::entity create_contract_payload(const flecs::world &world,
                                       flecs::entity contract,
                                       const std::string &name, uint32_t mass,
                                       const std::string &target_orbit_name) {
+  if (!contract.is_valid()) {
+    spdlog::warn("Cannot add payload to invalid contract");
+    return flecs::entity{};
+  }
+  if (contract.has<ContractPayload>(flecs::Wildcard)) {
+    spdlog::warn("Contract {} already has a payload, rejecting",
+                 contract.name().c_str());
+    return flecs::entity{};
+  }
   auto payload_entity =
       world.entity(name.c_str()).set<Payload>({mass}).child_of(contract);
   contract.add<ContractPayload>(payload_entity);

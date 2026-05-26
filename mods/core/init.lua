@@ -166,6 +166,9 @@ local function create_contracts()
 		4 * 1000 * 1000,
 		4 * 1000 * 1000
 	)
+	if not contract:is_valid() then
+		return
+	end
 	solcorp.helpers.create_contract_payload(
 		contract,
 		"Satellite " .. math.random(100, 10000),

@@ -27,18 +27,34 @@ SCENARIO("create_contract", "[helpers][lua]") {
   }
 
   GIVEN("a name that already exists under Contracts") {
-    auto existing = world.entity("Dup")
-                        .child_of(world.lookup("Contracts"))
-                        .set<Contract>({.client = "OldClient",
-                                        .description = "OldDesc",
-                                        .upfront_payment = 0,
-                                        .completion_payment = 0,
-                                        .status = ContractStatus::Open,
-                                        .failed = false});
+    world.entity("Dup")
+        .child_of(world.lookup("Contracts"))
+        .set<Contract>({.client = "OldClient",
+                        .description = "OldDesc",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .status = ContractStatus::Open,
+                        .failed = false});
     WHEN("create_contract is called with the same name") {
       auto contract =
           create_contract(world, "Dup", "NewClient", "NewDesc", 0, 0);
-      THEN("the existing entity is returned") { CHECK(contract == existing); }
+      THEN("an invalid entity is returned") { CHECK(!contract.is_valid()); }
+    }
+  }
+
+  GIVEN("a closed contract with a given name") {
+    world.entity("ClosedContract")
+        .child_of(world.lookup("Contracts"))
+        .set<Contract>({.client = "OldClient",
+                        .description = "OldDesc",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .status = ContractStatus::Closed,
+                        .failed = false});
+    WHEN("create_contract is called with the same name") {
+      auto contract =
+          create_contract(world, "ClosedContract", "NewClient", "NewDesc", 0, 0);
+      THEN("an invalid entity is returned") { CHECK(!contract.is_valid()); }
     }
   }
 }
