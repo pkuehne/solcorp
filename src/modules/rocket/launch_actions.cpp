@@ -129,7 +129,8 @@ void LaunchCancelAction::execute(flecs::world &world) {
 
   auto rocketE = plan.target<LaunchingOn>();
   if (rocketE.is_valid()) {
-    // TODO: Replace with RocketCancelMoveAction since this is a bit of a hack
+    // TODO(#200): Replace with RocketCancelMoveAction since this is a bit of a
+    // hack
     if (rocketE.has<RocketCurrentState>(
             world.lookup("States::Rocket::Moving"))) {
       rocketE.remove<RocketTargetParent>();

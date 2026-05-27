@@ -133,8 +133,8 @@ RocketModule::RocketModule(flecs::world &world) {
 
   // Create state entities before system registration so they can be used in
   // system filters
-  // TODO: We should have a guard-style class here that stores the scope, sets
-  // it to zero and restores it on destruction/close(). This should be a
+  // TODO(#201): We should have a guard-style class here that stores the scope,
+  // sets it to zero and restores it on destruction/close(). This should be a
   // re-usable class as we do this in multiple places
   auto scope = world.set_scope(0);
   auto statesRoot = world.entity("States");
