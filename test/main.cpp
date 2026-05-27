@@ -1,8 +1,8 @@
 #define CATCH_CONFIG_RUNNER
 #include "spdlog/cfg/env.h"
 #include "spdlog/details/log_msg_buffer.h"
-#include "spdlog/sinks/ansicolor_sink.h"
 #include "spdlog/sinks/sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 #include <catch2/catch_all.hpp>
 #include <iostream>
@@ -27,8 +27,7 @@ public:
 
   void dump_to_stderr() {
     std::scoped_lock lock(mutex_);
-    spdlog::sinks::ansicolor_stderr_sink_st color_sink(
-        spdlog::color_mode::always);
+    spdlog::sinks::stderr_color_sink_st color_sink(spdlog::color_mode::always);
     for (auto const &msg : buffer_) {
       color_sink.log(msg);
     }
