@@ -1,7 +1,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/rocket/actions.h"
 #include "modules/rocket/contracts_window.h"
+#include "modules/rocket/launch_actions.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include <catch2/catch_test_macros.hpp>

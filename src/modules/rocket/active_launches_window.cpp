@@ -1,11 +1,13 @@
 #include "active_launches_window.h"
 #include "imgui.h"
-#include "launch_window.h"
+#include "launch_actions.h"
+#include "launch_detail_window.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "rocket_module.h"
+#include "widgets/widgets.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 
@@ -15,13 +17,13 @@ bool planMatchesFilters(flecs::entity planE,
   flecs::entity siteE =
       padE.is_valid() ? findAncestorWith<Site>(padE) : flecs::entity::null();
 
-  flecs::entity payloadE = planE.target<LaunchingWith>();
-  flecs::entity orbitE = flecs::entity::null();
-  if (payloadE.is_valid()) {
-    planE.world().query_builder().with<ContractPayload>(payloadE).build().each(
-        [&](flecs::entity contractE) {
-          orbitE = contractE.target<ContractTargetOrbit>();
-        });
+  flecs::entity orbitE = planE.get<LaunchPlan>().target_orbit;
+
+  if (!state.showCompleted) {
+    auto currentState = planE.target<LaunchPlanCurrentState>();
+    if (currentState.is_valid() && currentState.has<StateIsTerminal>()) {
+      return false;
+    }
   }
 
   if (state.filterSite.is_alive() && siteE != state.filterSite)
@@ -124,11 +126,13 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     state.filterOrbit = flecs::entity::null();
   }
 
+  ImGui::SameLine();
+  ImGui::Checkbox("Show Completed", &state.showCompleted);
+
   ImGui::Separator();
 
   // --- Table ---
   int planCount = 0;
-  bool openCancelModal = false;
   ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                                ImGuiTableFlags_SizingStretchProp |
                                ImGuiTableFlags_ScrollY;
@@ -139,9 +143,9 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
                             80.0f);
     ImGui::TableSetupColumn("Rocket");
     ImGui::TableSetupColumn("Launchpad");
-    ImGui::TableSetupColumn("Site");
+    ImGui::TableSetupColumn("State");
     ImGui::TableSetupColumn("Target Orbit");
-    ImGui::TableSetupColumn("Edit", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+    ImGui::TableSetupColumn("View", ImGuiTableColumnFlags_WidthFixed, 50.0f);
     ImGui::TableSetupColumn("Cancel", ImGuiTableColumnFlags_WidthFixed, 60.0f);
     ImGui::TableHeadersRow();
 
@@ -152,16 +156,8 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
 
       flecs::entity rocketE = planE.target<LaunchingOn>();
       flecs::entity padE = planE.target<LaunchingFrom>();
-      flecs::entity siteE = padE.is_valid() ? findAncestorWith<Site>(padE)
-                                            : flecs::entity::null();
-      flecs::entity payloadE = planE.target<LaunchingWith>();
-      flecs::entity orbitE = flecs::entity::null();
-      if (payloadE.is_valid()) {
-        world.query_builder().with<ContractPayload>(payloadE).build().each(
-            [&](flecs::entity contractE) {
-              orbitE = contractE.target<ContractTargetOrbit>();
-            });
-      }
+      flecs::entity stateE = planE.target<LaunchPlanCurrentState>();
+      flecs::entity orbitE = plan.target_orbit;
 
       planCount++;
       ImGui::TableNextRow();
@@ -181,7 +177,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
                                              : "-");
 
       ImGui::TableSetColumnIndex(4);
-      ImGui::TextUnformatted(siteE.is_valid() ? siteE.name().c_str() : "-");
+      ImGui::TextUnformatted(stateE.is_valid() ? stateE.name().c_str() : "-");
 
       ImGui::TableSetColumnIndex(5);
       if (orbitE.is_valid()) {
@@ -197,14 +193,20 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(6);
-      if (ImGui::SmallButton("Edit")) {
-        showLaunchWindowEdit(planE);
+      if (ImGui::SmallButton("View")) {
+        showLaunchDetailWindow(planE);
       }
 
       ImGui::TableSetColumnIndex(7);
-      if (ImGui::SmallButton("Cancel")) {
-        state.pendingCancel = planE;
-        openCancelModal = true;
+      {
+        LaunchCancelAction cancelAction{planE};
+        auto cancelValid = cancelAction.validate(world);
+        if (Widgets::ActionButton(ButtonLabel{.text = "Cancel"},
+                                  ButtonTooltip{.text = nullptr},
+                                  cancelValid.message)) {
+          state.pendingCancel = planE;
+          ImGui::OpenPopup(modalCancelLaunch);
+        }
       }
 
       ImGui::PopID();
@@ -213,36 +215,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
     ImGui::EndTable();
   }
 
-  // OpenPopup must be called in the same ID scope as BeginPopupModal.
-  // We deferred it out of the PushID loop above.
-  if (openCancelModal) {
-    ImGui::OpenPopup("Confirm Cancel Launch");
-  }
-
-  // --- Cancel confirmation modal ---
-  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-  if (ImGui::BeginPopupModal("Confirm Cancel Launch", nullptr,
-                             ImGuiWindowFlags_AlwaysAutoResize)) {
-    if (state.pendingCancel.is_valid() && state.pendingCancel.is_alive()) {
-      ImGui::Text("Cancel launch plan '%s'?",
-                  state.pendingCancel.name().c_str());
-      ImGui::Text("This action cannot be undone.");
-      ImGui::Separator();
-      if (ImGui::Button("Yes, Cancel Launch")) {
-        CancelLaunchAction{state.pendingCancel}.execute(world);
-        state.pendingCancel = flecs::entity::null();
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::SameLine();
-      if (ImGui::Button("Keep")) {
-        state.pendingCancel = flecs::entity::null();
-        ImGui::CloseCurrentPopup();
-      }
-    } else {
-      state.pendingCancel = flecs::entity::null();
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::EndPopup();
+  if (drawLaunchCancelConfirmModal(state.pendingCancel, world)) {
+    state.pendingCancel = flecs::entity::null();
   }
 }

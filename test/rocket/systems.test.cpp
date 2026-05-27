@@ -1,5 +1,4 @@
 #include "modules/base/base.h"
-#include "modules/engine/render.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
@@ -31,167 +30,141 @@ SCENARIO("systemCreateRocketPrefabs", "[rocket][system]") {
   }
 }
 
-SCENARIO("systemLaunchRocket", "[rocket][system]") {
+SCENARIO("systemAutoInitiateRollout", "[system]") {
   flecs::world world;
   world.import <SimulationModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
 
-  auto site = world.entity().add<Site>().add<CurrentSite>();
-  auto launchpad = world.entity("Main Pad")
-                       .add<Launchpad>()
-                       .child_of(site)
-                       .set<SiteLocation>({.x = 0, .y = 0})
-                       .set<Transform>({})
-                       .set<Sprite>({});
-  auto rocket = world.entity("Falcon 9").add<Rocket>();
-  rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
+  GIVEN("A Scheduled plan where today is before the rollout date") {
+    uint32_t today = world.get<Game>().day;
+    auto storage = world.entity();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    auto launchpad = world.entity().add<Launchpad>();
+    auto plan = world.entity().set<LaunchPlan>({.rollout_date = today + 5});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::Scheduled"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
 
-  GIVEN("A launch plan due today with multiple payloads and matching contract "
-        "orbit") {
+    WHEN("The system runs") {
+      systemAutoInitiateRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan stays in Scheduled state") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Scheduled")));
+      }
+    }
+  }
+
+  GIVEN("A Scheduled plan where today is at the rollout date") {
+    uint32_t today = world.get<Game>().day;
+    auto storage = world.entity();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    auto launchpad = world.entity().add<Launchpad>();
+    auto plan = world.entity().set<LaunchPlan>({.rollout_date = today});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::Scheduled"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoInitiateRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan transitions to RollingOut") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::RollingOut")));
+      }
+      THEN("The rocket begins moving to the launchpad") {
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Moving")));
+        CHECK(rocket.target<RocketTargetParent>() == launchpad);
+      }
+    }
+  }
+}
+
+SCENARIO("systemAutoCompleteRollout", "[system]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("A RollingOut plan where the rocket has not yet arrived at the "
+        "launchpad") {
+    auto storage = world.entity();
+    auto launchpad = world.entity().add<Launchpad>();
+    auto rocket = world.entity().add<Rocket>().child_of(storage);
+    auto plan = world.entity().set<LaunchPlan>({});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::RollingOut"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoCompleteRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan stays in RollingOut state") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::RollingOut")));
+      }
+    }
+  }
+
+  GIVEN("A RollingOut plan where the rocket is at the launchpad") {
+    auto launchpad = world.entity().add<Launchpad>();
+    auto rocket = world.entity().add<Rocket>().child_of(launchpad);
+    auto plan = world.entity().set<LaunchPlan>({});
+    plan.add<LaunchPlanCurrentState>(
+        world.lookup("States::LaunchPlan::RollingOut"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
+
+    WHEN("The system runs") {
+      systemAutoCompleteRollout(plan, plan.get_mut<LaunchPlan>());
+
+      THEN("The plan transitions to OnPad") {
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::OnPad")));
+      }
+      THEN("A prep duration is set on the plan") {
+        // default prep_days = 5
+        REQUIRE(plan.has<DurationRequired>());
+        CHECK(plan.get<DurationRequired>().remaining == 5);
+        CHECK(plan.get<DurationRequired>().total == 5);
+      }
+    }
+  }
+}
+
+SCENARIO("systemAutoGoForLaunch", "[system]") {
+  flecs::world world;
+  world.import <SimulationModule>();
+  world.import <SiteModule>();
+  world.import <RocketModule>();
+
+  GIVEN("An OnPad plan ready to launch") {
     uint32_t today = world.get<Game>().day;
     auto targetOrbit = world.entity("LEO");
-    auto contractA = world.entity("Contract A1")
-                         .set<Contract>({
-                             .client = "Client",
-                             .description = "Description",
-                             .upfront_payment = 1000u,
-                             .completion_payment = 2000u,
-                             .status = ContractStatus::Accepted,
-                             .failed = false,
-                         });
-    auto contractB = world.entity("Contract A2")
-                         .set<Contract>({
-                             .client = "Client",
-                             .description = "Description",
-                             .upfront_payment = 1000u,
-                             .completion_payment = 2000u,
-                             .status = ContractStatus::Accepted,
-                             .failed = false,
-                         });
-    contractA.add<ContractTargetOrbit>(targetOrbit);
-    contractB.add<ContractTargetOrbit>(targetOrbit);
-    auto payloadA = world.entity("Payload A1").set<Payload>({1000});
-    auto payloadB = world.entity("Payload A2").set<Payload>({2000});
-    contractA.add<ContractPayload>(payloadA);
-    contractB.add<ContractPayload>(payloadB);
+    auto launchpad = world.entity().add<Launchpad>();
+    auto rocket = world.entity().add<Rocket>();
+    rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
+    auto plan = world.entity().set<LaunchPlan>(
+        {.launch_date = today, .target_orbit = targetOrbit});
+    plan.add<LaunchPlanCurrentState>(world.lookup("States::LaunchPlan::OnPad"));
+    plan.add<LaunchingOn>(rocket);
+    plan.add<LaunchingFrom>(launchpad);
 
-    auto planE = world.entity("Test Plan")
-                     .set<LaunchPlan>(
-                         {.launch_date = today, .target_orbit = targetOrbit})
-                     .add<LaunchingOn>(rocket)
-                     .add<LaunchingFrom>(launchpad)
-                     .add<LaunchingWith>(payloadA)
-                     .add<LaunchingWith>(payloadB);
-    REQUIRE(planE.is_valid());
-    REQUIRE(planE.get<LaunchPlan>().launch_date == today);
-    REQUIRE(rocket.is_valid());
-    REQUIRE(payloadA.is_valid());
-    REQUIRE(payloadB.is_valid());
-    REQUIRE(contractA.is_valid());
-    REQUIRE(contractB.is_valid());
+    WHEN("The system runs") {
+      systemAutoGoForLaunch(plan, plan.get_mut<LaunchPlan>());
 
-    WHEN("The launch system runs") {
-      systemLaunchRocket(planE, planE.get_mut<LaunchPlan>());
-      THEN("The rocket and all payloads are removed and contracts are closed") {
+      THEN("The rocket is destroyed and the plan transitions to Launched") {
         CHECK(!rocket.is_alive());
-        CHECK(!payloadA.is_alive());
-        CHECK(!payloadB.is_alive());
-        CHECK(!planE.is_alive());
-        CHECK(contractA.is_alive());
-        CHECK(contractB.is_alive());
-        CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
-        CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
-        CHECK(contractA.get<Contract>().failed == false);
-        CHECK(contractB.get<Contract>().failed == false);
-      }
-      THEN("The completion payments are added to the company balance") {
-        CHECK(world.get<Company>().balance == 4000);
-      }
-    }
-  }
-
-  GIVEN(
-      "A launch plan due today with multiple payloads and mismatched contract "
-      "orbit") {
-    uint32_t today = world.get<Game>().day;
-    auto launchedOrbit = world.entity("LEO");
-    auto contractOrbit = world.entity("GTO");
-    auto contractA = world.entity("Contract B1")
-                         .set<Contract>({
-                             .client = "Client",
-                             .description = "Description",
-                             .upfront_payment = 1000u,
-                             .completion_payment = 2000u,
-                             .status = ContractStatus::Accepted,
-                             .failed = false,
-                         });
-    auto contractB = world.entity("Contract B2")
-                         .set<Contract>({
-                             .client = "Client",
-                             .description = "Description",
-                             .upfront_payment = 1000u,
-                             .completion_payment = 2000u,
-                             .status = ContractStatus::Accepted,
-                             .failed = false,
-                         });
-    contractA.add<ContractTargetOrbit>(contractOrbit);
-    contractB.add<ContractTargetOrbit>(contractOrbit);
-    auto payloadA = world.entity("Payload B1").set<Payload>({1000});
-    auto payloadB = world.entity("Payload B2").set<Payload>({2000});
-    contractA.add<ContractPayload>(payloadA);
-    contractB.add<ContractPayload>(payloadB);
-
-    auto planE = world.entity("Test Plan 2")
-                     .set<LaunchPlan>(
-                         {.launch_date = today, .target_orbit = launchedOrbit})
-                     .add<LaunchingOn>(rocket)
-                     .add<LaunchingFrom>(launchpad)
-                     .add<LaunchingWith>(payloadA)
-                     .add<LaunchingWith>(payloadB);
-    REQUIRE(planE.is_valid());
-    REQUIRE(planE.get<LaunchPlan>().launch_date == today);
-    REQUIRE(rocket.is_valid());
-    REQUIRE(payloadA.is_valid());
-    REQUIRE(payloadB.is_valid());
-    REQUIRE(contractA.is_valid());
-    REQUIRE(contractB.is_valid());
-
-    WHEN("The launch system runs") {
-      systemLaunchRocket(planE, planE.get_mut<LaunchPlan>());
-      THEN("All contracts are marked failed and closed") {
-        CHECK(!rocket.is_alive());
-        CHECK(!payloadA.is_alive());
-        CHECK(!payloadB.is_alive());
-        CHECK(!planE.is_alive());
-        CHECK(contractA.is_alive());
-        CHECK(contractB.is_alive());
-        CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
-        CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
-        CHECK(contractA.get<Contract>().failed == true);
-        CHECK(contractB.get<Contract>().failed == true);
-      }
-      THEN("No payment is added to the company balance") {
-        CHECK(world.get<Company>().balance == 0);
-      }
-    }
-  }
-
-  GIVEN("A launch plan not due yet") {
-    uint32_t today = world.get<Game>().day;
-    auto planE = world.entity("Test Plan")
-                     .set<LaunchPlan>({.launch_date = today + 1})
-                     .add<LaunchingOn>(rocket)
-                     .add<LaunchingFrom>(launchpad);
-    REQUIRE(planE.is_valid());
-    REQUIRE(planE.get<LaunchPlan>().launch_date == today + 1);
-    REQUIRE(rocket.is_valid());
-
-    WHEN("The launch system runs") {
-      systemLaunchRocket(planE, planE.get_mut<LaunchPlan>());
-      THEN("The rocket remains") {
-        CHECK(rocket.is_alive());
-        CHECK(planE.is_alive());
+        CHECK(plan.is_alive());
+        CHECK(plan.has<LaunchPlanCurrentState>(
+            world.lookup("States::LaunchPlan::Launched")));
       }
     }
   }

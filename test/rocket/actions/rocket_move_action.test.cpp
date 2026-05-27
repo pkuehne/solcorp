@@ -1,4 +1,4 @@
-#include "modules/rocket/actions.h"
+#include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/window/window_module.h"
@@ -76,6 +76,24 @@ SCENARIO("RocketMoveAction", "[action]") {
       THEN("The validation fails") {
         CHECK(!result);
         CHECK(result.message == "Rocket must be currently stored to be moved");
+      }
+    }
+  }
+
+  GIVEN("An assigned rocket and a valid destination") {
+    flecs::entity source = world.entity();
+    flecs::entity destination = world.entity();
+    flecs::entity rocket = world.entity().add<Rocket>().child_of(source);
+    rocket.add<RocketCurrentState>(world.lookup("States::Rocket::Assigned"));
+    RocketMoveAction move = RocketMoveAction{RocketEntity{rocket},
+                                             DestinationEntity{destination}, 3};
+
+    WHEN("Validated") {
+      ValidationResult result = move.validate(world);
+
+      THEN("The validation succeeds") {
+        CHECK(result.ok);
+        CHECK(result.message == "");
       }
     }
   }
