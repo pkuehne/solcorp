@@ -48,7 +48,7 @@ LaunchScheduleAction::validate(const flecs::world &world) const {
                                 ? plan.launch_date - launchPrepDays
                                 : 0;
     if (newPrepDate <= plan.launch_date &&
-        existingPrepDate <= static_cast<uint32_t>(launchDay)) {
+        std::cmp_less_equal(existingPrepDate, launchDay)) {
       clash = true;
     }
   });
