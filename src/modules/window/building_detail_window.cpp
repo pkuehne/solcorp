@@ -5,10 +5,10 @@
 #include "modules/engine/gui.h"
 #include "modules/rocket/launch_detail_window.h"
 #include "modules/rocket/launch_window.h"
-#include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/rocket_prefab_window.h"
 #include "modules/site/site.h"
+#include "rocket_detail_window.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
 #include "widgets/stat_widget.h"
@@ -21,10 +21,6 @@
 void drawManufacturingSection(flecs::entity &entity);
 void drawStorageSection(flecs::entity &entity);
 void drawLaunchpadSection(flecs::entity &entity);
-void drawRocketButtons(flecs::entity &rocket);
-void storagePickerPopup(const char *popupId, bool open, flecs::world &world,
-                        flecs::entity excluded,
-                        const std::function<void(flecs::entity)> &onConfirm);
 
 void showBuildingDetailWindow(const flecs::entity &entity) {
   spdlog::debug("Showing BuildingDetailWindow");
@@ -101,9 +97,11 @@ void drawManufacturingSection(flecs::entity &entity) {
   if (e.is_valid()) {
     // There is a rocket on the line
     ImGui::Text("Constructing %s", e.name().c_str());
-
+    ImGui::SameLine();
+    if (ImGui::SmallButton("View")) {
+      showRocketDetailWindow(e);
+    }
     ImGui::ProgressBar(getEntityEffortRequired(e));
-    drawRocketButtons(e);
 
   } else {
     // Nothing yet - the line is empty
@@ -172,7 +170,10 @@ void drawStorageSection(flecs::entity &entity) {
                 plan.is_valid()
                     ? fmt::format("({})", plan.name().c_str()).c_str()
                     : "");
-    drawRocketButtons(rocket);
+    ImGui::SameLine();
+    if (ImGui::SmallButton("View")) {
+      showRocketDetailWindow(rocket);
+    }
     ImGui::Separator();
     ImGui::PopID();
   });
@@ -202,47 +203,6 @@ void drawLaunchpadSection(flecs::entity &entity) {
   ImGui::Separator();
   if (ImGui::Button("Schedule Launch")) {
     showLaunchWindowAdd(world, nullptr, &entity);
-  }
-}
-
-void drawRocketButtons(flecs::entity &rocket) {
-  std::string issue;
-  if (!rocket.has<RocketCurrentState>(
-          rocket.world().lookup("States::Rocket::Stored"))) {
-    issue = "Rocket is not available";
-  }
-
-  bool openPopup = Widgets::ActionButton(
-      ButtonLabel{.text = "Move"},
-      ButtonTooltip{.text = "Move the rocket to another storage at this site"},
-      issue);
-  ImGui::SameLine();
-
-  auto target = rocket.target<LaunchingOn>();
-  std::string tooltip =
-      target.is_valid() ? "View launch plan" : "Schedule the rocket for launch";
-  if (Widgets::ActionButton(
-          ButtonLabel{.text = target.is_valid() ? "View Plan" : "Schedule"},
-          ButtonTooltip{.text = tooltip.c_str()}, issue)) {
-    if (target.is_valid()) {
-      showLaunchDetailWindow(target);
-    } else {
-      showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
-    }
-  }
-  auto world = rocket.world();
-  auto currentStorage = rocket.parent();
-  auto site = findAncestorWith<Site>(currentStorage);
-  if (site.is_valid()) {
-    auto moveDurationDays =
-        static_cast<uint8_t>(rocket.get<Rocket>().move_days.value());
-    storagePickerPopup("Move Rocket", openPopup, world, currentStorage,
-                       [&](flecs::entity dest) {
-                         RocketMoveAction action{RocketEntity{rocket},
-                                                 DestinationEntity{dest},
-                                                 moveDurationDays};
-                         action.execute(world);
-                       });
   }
 }
 
