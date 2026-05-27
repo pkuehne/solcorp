@@ -7,7 +7,8 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
   flecs::world world;
   world.import <RocketModule>();
   auto contract = world.entity("ContractX")
-                      .set<Contract>({.client = "C",
+                      .set<Contract>({.name = "ContractX",
+                                      .client = "C",
                                       .description = "D",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,
@@ -52,6 +53,27 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
       THEN("no ContractTargetOrbit is set") {
         CHECK(!contract.has<ContractTargetOrbit>());
       }
+    }
+  }
+
+  GIVEN("a contract that already has a payload") {
+    create_contract_payload(world, contract, "SatFirst", 400, "");
+    WHEN("create_contract_payload is called again") {
+      auto payload2 =
+          create_contract_payload(world, contract, "SatSecond", 600, "");
+      THEN("an invalid entity is returned") { CHECK(!payload2.is_valid()); }
+      THEN("the contract still has only the original payload") {
+        CHECK(contract.has<ContractPayload>(flecs::Wildcard));
+        CHECK(!contract.has<ContractPayload>(world.lookup("SatSecond")));
+      }
+    }
+  }
+
+  GIVEN("an invalid contract entity") {
+    WHEN("create_contract_payload is called") {
+      auto payload = create_contract_payload(world, flecs::entity{},
+                                             "SatInvalid", 100, "");
+      THEN("an invalid entity is returned") { CHECK(!payload.is_valid()); }
     }
   }
 }

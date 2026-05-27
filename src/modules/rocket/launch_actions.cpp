@@ -273,20 +273,20 @@ void LaunchGoAction::execute(flecs::world &world) {
       if (contractE.target<ContractTargetOrbit>() != planData.target_orbit) {
         spdlog::info(
             "Contract {} failed because payload {} was launched to wrong orbit",
-            contractE.name().c_str(), payload.name().c_str());
+            contract.name.c_str(), payload.name().c_str());
         contract.failed = true;
       } else if (rocket_failure) {
         spdlog::info(
             "Contract {} failed because payload {} was launched on a rocket "
             "that failed",
-            contractE.name().c_str(), payload.name().c_str());
+            contract.name.c_str(), payload.name().c_str());
         contract.failed = true;
         instantiateNotification(
             world, "Launch Failure",
             fmt::format("{} was launched on {}, which failed."
                         " Contract {} is failed.",
                         payload.name().c_str(), rocketE.name().c_str(),
-                        contractE.name().c_str()));
+                        contract.name.c_str()));
       } else {
         contract.failed = false;
         company.balance += static_cast<int64_t>(contract.completion_payment);
