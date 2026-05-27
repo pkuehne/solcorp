@@ -28,7 +28,8 @@ SCENARIO("create_contract", "[helpers][lua]") {
   }
 
   GIVEN("a name that is already used by another contract") {
-    auto first = create_contract(world, "Mission1", "OldClient", "OldDesc", 0, 0);
+    auto first =
+        create_contract(world, "Mission1", "OldClient", "OldDesc", 0, 0);
     WHEN("create_contract is called with the same name") {
       auto second =
           create_contract(world, "Mission1", "NewClient", "NewDesc", 0, 0);

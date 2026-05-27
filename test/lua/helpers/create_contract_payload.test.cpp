@@ -71,8 +71,8 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
 
   GIVEN("an invalid contract entity") {
     WHEN("create_contract_payload is called") {
-      auto payload =
-          create_contract_payload(world, flecs::entity{}, "SatInvalid", 100, "");
+      auto payload = create_contract_payload(world, flecs::entity{},
+                                             "SatInvalid", 100, "");
       THEN("an invalid entity is returned") { CHECK(!payload.is_valid()); }
     }
   }

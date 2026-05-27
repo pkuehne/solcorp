@@ -251,7 +251,8 @@ void drawContractsWindow(flecs::entity winE) {
   if (ImGui::BeginPopupModal("Confirm Delete Contract", nullptr,
                              ImGuiWindowFlags_AlwaysAutoResize)) {
     if (state.pendingDelete.is_valid() && state.pendingDelete.is_alive()) {
-      ImGui::Text("Delete contract '%s'?", state.pendingDelete.get<Contract>().name.c_str());
+      ImGui::Text("Delete contract '%s'?",
+                  state.pendingDelete.get<Contract>().name.c_str());
       ImGui::Text("This action cannot be undone.");
       ImGui::Separator();
       if (ImGui::Button("Yes, Delete")) {
