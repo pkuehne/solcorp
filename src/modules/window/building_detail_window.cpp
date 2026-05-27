@@ -3,8 +3,9 @@
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/rocket/actions.h"
+#include "modules/rocket/launch_detail_window.h"
 #include "modules/rocket/launch_window.h"
+#include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/rocket_prefab_window.h"
 #include "modules/site/site.h"
@@ -193,9 +194,8 @@ void drawLaunchpadSection(flecs::entity &entity) {
     ImGui::PushID(std::to_string(planE.id()).c_str());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
-    if (ImGui::SmallButton("Open")) {
-      ImGui::OpenPopup("Not Implemented");
-      showLaunchWindowEdit(planE);
+    if (ImGui::SmallButton("View")) {
+      showLaunchDetailWindow(planE);
     }
     ImGui::PopID();
   });
@@ -219,14 +219,13 @@ void drawRocketButtons(flecs::entity &rocket) {
   ImGui::SameLine();
 
   auto target = rocket.target<LaunchingOn>();
-  std::string tooltip = "Schedule the rocket for launch";
-  if (target.is_valid()) {
-    tooltip = "Edit launch plan";
-  }
-  if (Widgets::ActionButton(ButtonLabel{.text = "Schedule"},
-                            ButtonTooltip{.text = tooltip.c_str()}, issue)) {
+  std::string tooltip =
+      target.is_valid() ? "View launch plan" : "Schedule the rocket for launch";
+  if (Widgets::ActionButton(
+          ButtonLabel{.text = target.is_valid() ? "View Plan" : "Schedule"},
+          ButtonTooltip{.text = tooltip.c_str()}, issue)) {
     if (target.is_valid()) {
-      showLaunchWindowEdit(target);
+      showLaunchDetailWindow(target);
     } else {
       showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
     }
@@ -235,7 +234,8 @@ void drawRocketButtons(flecs::entity &rocket) {
   auto currentStorage = rocket.parent();
   auto site = findAncestorWith<Site>(currentStorage);
   if (site.is_valid()) {
-    constexpr uint8_t moveDurationDays = 2;
+    auto moveDurationDays =
+        static_cast<uint8_t>(rocket.get<Rocket>().move_days.value());
     storagePickerPopup("Move Rocket", openPopup, world, currentStorage,
                        [&](flecs::entity dest) {
                          RocketMoveAction action{RocketEntity{rocket},

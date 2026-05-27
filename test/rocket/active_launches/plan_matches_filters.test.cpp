@@ -17,9 +17,6 @@ struct ActiveLaunchesFixture {
   flecs::entity orbit1;
   flecs::entity orbit2;
 
-  flecs::entity payload1;
-  flecs::entity payload2;
-
   flecs::entity plan1;
   flecs::entity plan2;
   flecs::entity plan3;
@@ -43,36 +40,12 @@ struct ActiveLaunchesFixture {
     orbit2 = world.entity().set<TargetOrbit>(
         {.altitude = 400000.0, .inclination = 1.5708});
 
-    payload1 = world.entity().set<Payload>({.mass = 500u});
-    payload2 = world.entity().set<Payload>({.mass = 800u});
-
-    world.entity()
-        .set<Contract>({.client = "Client A",
-                        .description = "Desc",
-                        .upfront_payment = 1000u,
-                        .completion_payment = 5000u,
-                        .status = ContractStatus::Open,
-                        .failed = false})
-        .add<ContractPayload>(payload1)
-        .add<ContractTargetOrbit>(orbit1);
-    world.entity()
-        .set<Contract>({.client = "Client B",
-                        .description = "Desc",
-                        .upfront_payment = 2000u,
-                        .completion_payment = 8000u,
-                        .status = ContractStatus::Open,
-                        .failed = false})
-        .add<ContractPayload>(payload2)
-        .add<ContractTargetOrbit>(orbit2);
-
     plan1 = world.entity("Plan Alpha")
-                .set<LaunchPlan>({.launch_date = 10u})
-                .add<LaunchingFrom>(pad1)
-                .add<LaunchingWith>(payload1);
+                .set<LaunchPlan>({.launch_date = 10u, .target_orbit = orbit1})
+                .add<LaunchingFrom>(pad1);
     plan2 = world.entity("Plan Beta")
-                .set<LaunchPlan>({.launch_date = 20u})
-                .add<LaunchingFrom>(pad2)
-                .add<LaunchingWith>(payload2);
+                .set<LaunchPlan>({.launch_date = 20u, .target_orbit = orbit2})
+                .add<LaunchingFrom>(pad2);
     plan3 = world.entity("Plan Gamma")
                 .set<LaunchPlan>({.launch_date = 30u})
                 .add<LaunchingFrom>(pad1);
@@ -156,7 +129,7 @@ SCENARIO("planMatchesFilters - orbit filter", "[filter][active_launches]") {
     ActiveLaunchesWindow state;
     state.filterOrbit = f.orbit1;
 
-    THEN("plan1 (targeting orbit1 via its contract) passes") {
+    THEN("plan1 (targeting orbit1) passes") {
       CHECK(planMatchesFilters(f.plan1, state));
     }
     THEN("plan2 (targeting orbit2) is excluded") {
@@ -171,7 +144,7 @@ SCENARIO("planMatchesFilters - orbit filter", "[filter][active_launches]") {
     ActiveLaunchesWindow state;
     state.filterOrbit = f.orbit2;
 
-    THEN("plan2 (targeting orbit2 via its contract) passes") {
+    THEN("plan2 (targeting orbit2) passes") {
       CHECK(planMatchesFilters(f.plan2, state));
     }
     THEN("plan1 and plan3 are excluded") {
@@ -213,6 +186,36 @@ SCENARIO("planMatchesFilters - combined filters", "[filter][active_launches]") {
     }
     THEN("plan2 (pad2, orbit2) is excluded") {
       CHECK(!planMatchesFilters(f.plan2, state));
+    }
+  }
+}
+
+SCENARIO("planMatchesFilters - showCompleted", "[filter][active_launches]") {
+  ActiveLaunchesFixture f;
+
+  GIVEN("A plan in a terminal (Launched) state") {
+    f.plan1.add<LaunchPlanCurrentState>(
+        f.world.lookup("States::LaunchPlan::Launched"));
+
+    WHEN("showCompleted is false (default)") {
+      ActiveLaunchesWindow state;
+
+      THEN("The launched plan is excluded") {
+        CHECK(!planMatchesFilters(f.plan1, state));
+      }
+      THEN("Non-terminal plans still pass") {
+        CHECK(planMatchesFilters(f.plan2, state));
+        CHECK(planMatchesFilters(f.plan3, state));
+      }
+    }
+
+    WHEN("showCompleted is true") {
+      ActiveLaunchesWindow state;
+      state.showCompleted = true;
+
+      THEN("The launched plan passes") {
+        CHECK(planMatchesFilters(f.plan1, state));
+      }
     }
   }
 }

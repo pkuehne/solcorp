@@ -1,5 +1,6 @@
 #include "contracts_window.h"
 #include "imgui.h"
+#include "launch_detail_window.h"
 #include "launch_window.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
@@ -71,10 +72,10 @@ void rejectContract(flecs::world &world, flecs::entity contractE) {
   contract.failed = true;
 }
 
-ScheduleLaunchAction setupLaunchForPayload(flecs::entity payloadE) {
+LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE) {
   auto world = payloadE.world();
 
-  auto draftPlan = ScheduleLaunchAction{};
+  auto draftPlan = LaunchScheduleAction{};
   draftPlan.payloads.push_back(payloadE);
 
   // Find the contract that has this payload and get the target orbit from it
@@ -217,9 +218,9 @@ void drawContractsWindow(flecs::entity winE) {
 
       ImGui::SameLine();
       ImGui::BeginDisabled(planButtonDisabled(contract));
-      if (ImGui::SmallButton(launchPlanE.is_valid() ? "Edit" : "Plan")) {
+      if (ImGui::SmallButton(launchPlanE.is_valid() ? "View" : "Plan")) {
         if (launchPlanE.is_valid()) {
-          showLaunchWindowEdit(launchPlanE);
+          showLaunchDetailWindow(launchPlanE);
         } else {
           setupLaunchForPayload(payloadE);
         }

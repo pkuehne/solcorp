@@ -11,10 +11,18 @@
 struct LaunchPlan {
   static uint32_t max_id;
 
+  /// When the rocket needs to start rolling out to be ready for launch
+  uint32_t rollout_date = 0;
+  /// When the rocket arrives on the pad (first day of on-pad prep)
+  uint32_t prep_date = 0;
+  /// When the launch is scheduled
   uint32_t launch_date = 0;
-  flecs::entity target_orbit =
-      flecs::entity::null(); ///< Target orbit from CanLiftTo
+  /// Target orbit from CanLiftTo
+  flecs::entity target_orbit = flecs::entity::null();
 };
+
+struct LaunchPlanCurrentState {};
+struct LaunchPlanTargetState {};
 
 /// @brief Component to indicate entity is a rocket.
 struct Rocket {
@@ -30,6 +38,18 @@ struct Rocket {
                     .description = "Cost to build this rocket",
                     .base = 5'000'000,
                     .higher_is_better = false});
+  Stat rollout_days = Stat(
+      {.id = "rollout-days",
+       .display = "Rollout Duration",
+       .description = "Days to move the rocket from storage to the launchpad",
+       .base = 3,
+       .higher_is_better = false});
+  Stat move_days =
+      Stat({.id = "move-days",
+            .display = "Move Duration",
+            .description = "Days to move the rocket from storage to storage",
+            .base = 1,
+            .higher_is_better = false});
 };
 
 struct RocketCurrentState {};
@@ -76,10 +96,12 @@ struct ContractPayload {};     ///< Which contract is fullfilled by a Payload
 struct ContractTargetOrbit {}; ///< Which orbit is targeted by a contract
 
 // Systems
-void systemLaunchRocket(flecs::entity, LaunchPlan &);
 void systemCreateRocketPrefabs(flecs::iter &);
 void systemCreateRocketBuildCategory(flecs::iter &);
 void systemRocketCompleteAction(flecs::entity, Rocket &);
+void systemAutoInitiateRollout(flecs::entity, LaunchPlan &);
+void systemAutoCompleteRollout(flecs::entity, LaunchPlan &);
+void systemAutoGoForLaunch(flecs::entity, LaunchPlan &);
 
 struct RocketModule {
   RocketModule(flecs::world &);

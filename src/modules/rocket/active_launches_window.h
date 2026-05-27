@@ -7,6 +7,7 @@ struct ActiveLaunchesWindow {
   flecs::entity filterPad = flecs::entity::null();
   flecs::entity filterOrbit = flecs::entity::null();
   flecs::entity pendingCancel = flecs::entity::null();
+  bool showCompleted = false;
 };
 
 void showActiveLaunchesWindow(flecs::world &world);

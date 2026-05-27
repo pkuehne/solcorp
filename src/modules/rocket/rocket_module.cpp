@@ -1,24 +1,21 @@
 #include "rocket_module.h"
-#include "actions.h"
 #include "active_launches_window.h"
 #include "contracts_window.h"
+#include "launch_actions.h"
+#include "launch_detail_window.h"
 #include "launch_window.h"
 #include "modules/base/action.h"
-#include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
-
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
-#include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
-#include "modules/site/helpers.h"
+#include "rocket_actions.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 #include <flecs/addons/cpp/c_types.hpp>
 #include <memory>
 #include <modules/simulation/simulation.h>
-#include <vector>
 
 uint32_t LaunchPlan::max_id = 1;
 uint32_t Rocket::max_id = 1;
@@ -34,11 +31,11 @@ RocketModule::RocketModule(flecs::world &world) {
 
   // Register components
   world.component<ContractFilterStatus>();
-  world.component<ScheduleLaunchAction>("PlannedLaunch")
-      .member("name", &ScheduleLaunchAction::name)
-      .member("launchDay", &ScheduleLaunchAction::launchDay)
-      .member("rocket", &ScheduleLaunchAction::rocket)
-      .member("launchpad", &ScheduleLaunchAction::launchpad);
+  world.component<LaunchScheduleAction>("PlannedLaunch")
+      .member("name", &LaunchScheduleAction::name)
+      .member("launchDay", &LaunchScheduleAction::launchDay)
+      .member("rocket", &LaunchScheduleAction::rocket)
+      .member("launchpad", &LaunchScheduleAction::launchpad);
   world.component<Rocket>()
       .member("failure_rate", &Rocket::failure_rate)
       .member("cost", &Rocket::cost);
@@ -49,11 +46,13 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
   world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
+  world.component<LaunchDetailWindow>();
   world.component<ActiveLaunchesWindow>()
       .member("filterSite", &ActiveLaunchesWindow::filterSite)
       .member("filterPad", &ActiveLaunchesWindow::filterPad)
       .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
-      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel);
+      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
+      .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
   world.component<ContractsWindow>()
       .member("statusFilter", &ContractsWindow::statusFilter)
       .member("showCompleted", &ContractsWindow::showCompleted)
@@ -79,6 +78,8 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<RocketTargetParent>();
   world.component<RocketCurrentState>().add(flecs::Exclusive);
   world.component<RocketTargetState>().add(flecs::Exclusive);
+  world.component<LaunchPlanCurrentState>().add(flecs::Exclusive);
+  world.component<LaunchPlanTargetState>().add(flecs::Exclusive);
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -95,6 +96,12 @@ RocketModule::RocketModule(flecs::world &world) {
       [](LuaFieldBuilder<RocketCurrentState> &) {});
   register_component_lua<RocketTargetState>(
       world, "RocketTargetState", [](LuaFieldBuilder<RocketTargetState> &) {});
+  register_component_lua<LaunchPlanCurrentState>(
+      world, "LaunchPlanCurrentState",
+      [](LuaFieldBuilder<LaunchPlanCurrentState> &) {});
+  register_component_lua<LaunchPlanTargetState>(
+      world, "LaunchPlanTargetState",
+      [](LuaFieldBuilder<LaunchPlanTargetState> &) {});
   register_component_lua<RocketStateTransitionBlocked>(
       world, "RocketStateTransitionBlocked",
       [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
@@ -124,6 +131,27 @@ RocketModule::RocketModule(flecs::world &world) {
   register_component_lua<ContractPayload>(world, "ContractPayload");
   register_component_lua<ContractTargetOrbit>(world, "ContractTargetOrbit");
 
+  // Create state entities before system registration so they can be used in
+  // system filters
+  // TODO(#201): We should have a guard-style class here that stores the scope,
+  // sets it to zero and restores it on destruction/close(). This should be a
+  // re-usable class as we do this in multiple places
+  auto scope = world.set_scope(0);
+  auto statesRoot = world.entity("States");
+  auto rocketStates = world.entity("Rocket").child_of(statesRoot);
+  world.entity("Invalid").child_of(rocketStates);
+  world.entity("UnderConstruction").child_of(rocketStates);
+  world.entity("Stored").child_of(rocketStates);
+  world.entity("Moving").child_of(rocketStates);
+  world.entity("Assigned").child_of(rocketStates);
+  auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
+  auto scheduledState = world.entity("Scheduled").child_of(planStates);
+  auto rollingOutState = world.entity("RollingOut").child_of(planStates);
+  auto onPadState = world.entity("OnPad").child_of(planStates);
+  world.entity("Launched").child_of(planStates).add<StateIsTerminal>();
+  world.entity("Cancelled").child_of(planStates).add<StateIsTerminal>();
+  world.set_scope(scope);
+
   // Register systems
   world.system("Create Rocket Prefabs")
       .kind(flecs::OnStart)
@@ -141,10 +169,6 @@ RocketModule::RocketModule(flecs::world &world) {
       .immediate()
       .run(systemCreateRocketBuildCategory);
   auto sim = world.get<Simulation>();
-  world.system<LaunchPlan>("Launch Rocket")
-      .tick_source(sim.speed)
-      .kind(UpdatePhase)
-      .each(systemLaunchRocket);
   world.system("Rocket Launch Create Windows")
       .kind(flecs::OnStart)
       .immediate()
@@ -156,6 +180,8 @@ RocketModule::RocketModule(flecs::world &world) {
             .set<ActiveLaunchesWindow>({});
         registerWindow("Contracts Window", drawContractsWindow, world)
             .set<ContractsWindow>({});
+        registerWindow("Launch Detail", drawLaunchDetailWindow, world)
+            .set<LaunchDetailWindow>({});
       });
   world.system<Rocket>("Rocket Complete State Transition Action")
       .immediate()
@@ -166,119 +192,27 @@ RocketModule::RocketModule(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemRocketCompleteAction);
 
-  auto scope = world.set_scope(0);
-  auto states = world.entity("Rocket").child_of(world.entity("States"));
-  world.entity("Invalid").child_of(states);
-  world.entity("UnderConstruction").child_of(states);
-  world.entity("Stored").child_of(states);
-  world.entity("Moving").child_of(states);
-  world.entity("Assigned").child_of(states);
-  world.set_scope(scope);
-}
+  world.system<LaunchPlan>("Auto Initiate Rollout")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(scheduledState)
+      .kind(UpdatePhase)
+      .each(systemAutoInitiateRollout);
 
-/// @brief Process LaunchPlans that are due
-/// Ensures that the rocket is destroyed after being launched
-/// Also removes the launchplan and clears all relationships
-/// @param planE The plan's entity
-/// @param plan The plan's component
-void systemLaunchRocket(flecs::entity planE, LaunchPlan &plan) {
-  auto world = planE.world();
-  uint32_t today = world.get<Game>().day;
+  world.system<LaunchPlan>("Auto Complete Rollout")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(rollingOutState)
+      .kind(UpdatePhase)
+      .each(systemAutoCompleteRollout);
 
-  if (plan.launch_date > today) {
-    return;
-  }
-
-  auto rocketE = planE.target<LaunchingOn>();
-
-  bool rocket_failure = roll_random(rocketE.get<Rocket>().failure_rate.value());
-  spdlog::info("Rocket Launch failure {} based on chance: {}", rocket_failure,
-               rocketE.get<Rocket>().failure_rate.value());
-  std::vector<flecs::entity> payloads;
-  planE.each<LaunchingWith>([&](flecs::entity payload) {
-    if (payload.is_valid() && payload.has<Payload>()) {
-      payloads.push_back(payload);
-    }
-  });
-
-  auto &company = world.get_mut<Company>();
-  uint32_t total_payment = 0;
-
-  for (auto payload : payloads) {
-    if (payload.is_valid() && payload.has<Payload>()) {
-      spdlog::debug("Removing payload: {}", payload.name().c_str());
-      auto contractE = payload.target<ContractPayload>();
-      SC_ASSERT(contractE.is_valid() && contractE.has<Contract>(),
-                "Payload {} has ContractPayload relationship to invalid or "
-                "non-contract entity");
-
-      auto &contract = contractE.get_mut<Contract>();
-      if (contractE.target<ContractTargetOrbit>() != plan.target_orbit) {
-        spdlog::info(
-            "Contract {} failed because payload {} was launched to wrong orbit",
-            contractE.name().c_str(), payload.name().c_str());
-        contract.failed = true;
-      } else if (rocket_failure) {
-        spdlog::info(
-            "Contract {} failed because payload {} was launched on a rocket "
-            "that failed",
-            contractE.name().c_str(), payload.name().c_str());
-        contract.failed = true;
-        instantiateNotification(
-            world, "Launch Failure",
-            fmt::format("{} was launched on {}, which failed."
-                        " Contract {} is failed.",
-                        payload.name().c_str(), rocketE.name().c_str(),
-                        contractE.name().c_str()));
-      } else {
-        contract.failed = false;
-        company.balance += static_cast<int64_t>(contract.completion_payment);
-        total_payment += contract.completion_payment;
-        instantiateNotification(
-            world, "Payload Launched",
-            fmt::format("{} was launched on {} to {}", payload.name().c_str(),
-                        rocketE.name().c_str(),
-                        plan.target_orbit.name().c_str()),
-            world.lookup("NotificationCategories::Rocket Launch"));
-      }
-      contract.status = ContractStatus::Closed;
-    }
-  }
-
-  auto launchpadE = planE.target<LaunchingFrom>();
-  spdlog::debug("Removing plan: {} launch_date: {} today: {}", planE.id(),
-                plan.launch_date, today);
-
-  std::string notification;
-  if (rocket_failure) {
-    notification = std::format("{} failed - {} exploded on launch",
-                               planE.name().c_str(), rocketE.name().c_str());
-  } else {
-    notification = std::format("{} launched {} successfully ({})",
-                               planE.name().c_str(), rocketE.name().c_str(),
-                               ("$" + format_locale(total_payment)).c_str());
-  }
-  notification +=
-      fmt::format("\nOrbit:     {}", plan.target_orbit.name().c_str());
-  notification += fmt::format("\nLaunchpad: {}", launchpadE.name().c_str());
-  notification += fmt::format("\nRocket:    {}", rocketE.name().c_str());
-  std::string payload_list;
-  for (auto payload : payloads) {
-    payload_list += "\n- " + std::string(payload.name().c_str());
-  }
-  notification += "\nPayloads:" + payload_list;
-
-  instantiateBuildingNotification(world, launchpadE, notification);
-  instantiateNotification(world, "Launch Complete", notification,
-                          world.lookup("NotificationCategories::Rocket Launch"),
-                          rocket_failure ? NotificationSeverity::Critical
-                                         : NotificationSeverity::High);
-
-  for (auto payload : payloads) {
-    payload.destruct();
-  }
-  rocketE.destruct();
-  planE.destruct();
+  world.system<LaunchPlan>("Auto Go for Launch")
+      .immediate()
+      .tick_source(sim.speed)
+      .with<LaunchPlanCurrentState>(onPadState)
+      .without<DurationRequired>()
+      .kind(UpdatePhase)
+      .each(systemAutoGoForLaunch);
 }
 
 void systemCreateRocketBuildCategory(flecs::iter &it) {
@@ -333,5 +267,33 @@ void systemRocketCompleteAction(flecs::entity e, Rocket &) {
     action->execute(world);
   } else {
     action->block(world);
+  }
+}
+
+void systemAutoInitiateRollout(flecs::entity plan, LaunchPlan &planData) {
+  auto world = plan.world();
+  uint32_t today = world.get<Game>().day;
+  if (today < planData.rollout_date) {
+    return;
+  }
+  LaunchInitiateRolloutAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world);
+  }
+}
+
+void systemAutoCompleteRollout(flecs::entity plan, LaunchPlan &) {
+  auto world = plan.world();
+  LaunchCompleteRolloutAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world);
+  }
+}
+
+void systemAutoGoForLaunch(flecs::entity plan, LaunchPlan &) {
+  auto world = plan.world();
+  LaunchGoAction action{plan};
+  if (action.validate(world)) {
+    action.execute(world);
   }
 }

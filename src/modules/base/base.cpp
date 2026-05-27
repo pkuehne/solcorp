@@ -53,6 +53,7 @@ BaseModule::BaseModule(flecs::world &world) {
       .add(flecs::Singleton);
   ;
 
+  world.component<StateIsTerminal>();
   world.component<EffortRequired>()
       .member("remaining", &EffortRequired::remaining)
       .member("total", &EffortRequired::total);

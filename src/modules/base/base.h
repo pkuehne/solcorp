@@ -5,6 +5,10 @@
 #include <numbers>
 #include <string>
 
+/// Tag placed on state entities that are terminal (no further transitions).
+/// Queries use this to distinguish active from completed/archived records.
+struct StateIsTerminal {};
+
 struct EffortRequired {
   uint32_t remaining = 0;
   uint32_t total = 0;
