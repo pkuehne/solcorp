@@ -22,6 +22,7 @@ list(APPEND SolCorpSources
     modules/window/building_detail_window.cpp
     modules/window/notification_window.cpp
     modules/window/rocket_detail_window.cpp
+    modules/window/rocket_list_window.cpp
     modules/window/storage_picker.cpp
     modules/rocket/rocket_module.cpp
     modules/rocket/launch_actions.cpp
@@ -66,6 +67,7 @@ list(APPEND SolCorpHeaders
     modules/window/building_detail_window.h
     modules/window/notification_window.h
     modules/window/rocket_detail_window.h
+    modules/window/rocket_list_window.h
     modules/window/storage_picker.h
     modules/rocket/rocket_module.h
     modules/rocket/launch_actions.h

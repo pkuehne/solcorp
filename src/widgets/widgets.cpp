@@ -7,7 +7,8 @@ namespace {
 bool actionButtonImpl(bool small, ButtonLabel label, ButtonTooltip tooltip,
                       const std::string &issue) {
   ImGui::BeginDisabled(!issue.empty());
-  bool retval = small ? ImGui::SmallButton(label.text) : ImGui::Button(label.text);
+  bool retval =
+      small ? ImGui::SmallButton(label.text) : ImGui::Button(label.text);
   if ((tooltip.text || !issue.empty()) && ImGui::BeginItemTooltip()) {
     if (tooltip.text) {
       ImGui::Text("%s", tooltip.text);

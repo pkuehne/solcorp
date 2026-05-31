@@ -6,6 +6,7 @@
 #include "modules/engine/input.h"
 #include "notification_window.h"
 #include "rocket_detail_window.h"
+#include "rocket_list_window.h"
 #include "toolbar.h"
 #include <flecs.h>
 #include <modules/simulation/simulation.h>
@@ -16,6 +17,7 @@ WindowModule::WindowModule(flecs::world &world) {
   world.component<MainMenuBar>();
   world.component<Toolbar>();
   world.component<RocketDetailWindow>();
+  world.component<RocketListWindow>();
   world.component<NotificationWindow>()
       .member("severity_filter", &NotificationWindow::severity_filter)
       .member("category_filter", &NotificationWindow::category_filter)
@@ -35,6 +37,8 @@ WindowModule::WindowModule(flecs::world &world) {
             .set<NotificationWindow>({});
         registerWindow("Rocket Detail", drawRocketDetailWindow, w)
             .set<RocketDetailWindow>({});
+        registerWindow("Rocket List", drawRocketListWindow, w)
+            .add<RocketListWindow>();
       });
 
   // Register Systems

@@ -7,6 +7,7 @@
 #include <modules/rocket/active_launches_window.h>
 #include <modules/rocket/contracts_window.h>
 #include <modules/window/notification_window.h>
+#include <modules/window/rocket_list_window.h>
 
 void systemDrawToolbar(flecs::entity winE, Toolbar) {
   auto world = winE.world();
@@ -20,6 +21,11 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
   if (ImGui::BeginViewportSideBar("##Toolbar", viewport, ImGuiDir_Up, height,
                                   toolbar_flags)) {
     if (ImGui::BeginMenuBar()) {
+      if (ImGui::Button("\xef\x92\x94")) { // fa-warehouse f494
+        showRocketListWindow(world);
+      }
+      ImGui::SetItemTooltip("Rocket Fleet");
+      ImGui::SameLine();
       if (ImGui::Button("\xef\x84\xb5")) { // fa-rocket f135
         showActiveLaunchesWindow(world);
       }
