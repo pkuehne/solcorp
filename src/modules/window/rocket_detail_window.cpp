@@ -73,11 +73,11 @@ void drawRocketDetailWindow(flecs::entity winE) {
         showBuildingDetailWindow(buildingE);
       }
       ImGui::SameLine();
-      openMovePopup = Widgets::ActionButton(
+      openMovePopup = Widgets::SmallActionButton(
           ButtonLabel{.text = "Move"},
           ButtonTooltip{.text =
                             "Move the rocket to another storage at this site"},
-          actionIssue, true);
+          actionIssue);
     } else if (facilityE.is_valid()) {
       ImGui::TextUnformatted(facilityE.name().c_str());
     } else {
@@ -96,10 +96,10 @@ void drawRocketDetailWindow(flecs::entity winE) {
     } else {
       ImGui::TextUnformatted("None");
       ImGui::SameLine();
-      if (Widgets::ActionButton(
+      if (Widgets::SmallActionButton(
               ButtonLabel{.text = "Schedule"},
               ButtonTooltip{.text = "Schedule the rocket for launch"},
-              actionIssue, true)) {
+              actionIssue)) {
         showLaunchWindowAdd(world, &state.rocket, nullptr);
       }
     }

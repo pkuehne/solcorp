@@ -11,7 +11,7 @@ struct ButtonTooltip {
 };
 
 namespace Widgets {
-bool ActionButton(ButtonLabel, ButtonTooltip, const std::string &issue,
-                  bool small = false);
+bool ActionButton(ButtonLabel, ButtonTooltip, const std::string &issue);
+bool SmallActionButton(ButtonLabel, ButtonTooltip, const std::string &issue);
 void NotImplementedPopup();
 } // namespace Widgets

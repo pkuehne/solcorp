@@ -3,11 +3,11 @@
 
 namespace Widgets {
 
-bool ActionButton(ButtonLabel label, ButtonTooltip tooltip,
-                  const std::string &issue, bool small) {
-  bool retval = false;
+namespace {
+bool actionButtonImpl(bool small, ButtonLabel label, ButtonTooltip tooltip,
+                      const std::string &issue) {
   ImGui::BeginDisabled(!issue.empty());
-  retval = small ? ImGui::SmallButton(label.text) : ImGui::Button(label.text);
+  bool retval = small ? ImGui::SmallButton(label.text) : ImGui::Button(label.text);
   if ((tooltip.text || !issue.empty()) && ImGui::BeginItemTooltip()) {
     if (tooltip.text) {
       ImGui::Text("%s", tooltip.text);
@@ -20,6 +20,17 @@ bool ActionButton(ButtonLabel label, ButtonTooltip tooltip,
   }
   ImGui::EndDisabled();
   return retval;
+}
+} // namespace
+
+bool ActionButton(ButtonLabel label, ButtonTooltip tooltip,
+                  const std::string &issue) {
+  return actionButtonImpl(false, label, tooltip, issue);
+}
+
+bool SmallActionButton(ButtonLabel label, ButtonTooltip tooltip,
+                       const std::string &issue) {
+  return actionButtonImpl(true, label, tooltip, issue);
 }
 
 void NotImplementedPopup() {
