@@ -32,7 +32,10 @@ void drawRocketDetailWindow(flecs::entity winE) {
 
   auto &rocketData = state.rocket.get<Rocket>();
   auto stateE = state.rocket.target<RocketCurrentState>();
-  const char *stateName = stateE.is_valid() ? stateE.name().c_str() : "Unknown";
+  const char *stateName =
+      stateE.is_valid() && stateE.has<Label>()
+          ? stateE.get<Label>().label.c_str()
+          : (stateE.is_valid() ? stateE.name().c_str() : "Unknown");
 
   std::string actionIssue;
   if (!state.rocket.has<RocketCurrentState>(

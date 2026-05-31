@@ -38,7 +38,7 @@ WindowModule::WindowModule(flecs::world &world) {
         registerWindow("Rocket Detail", drawRocketDetailWindow, w)
             .set<RocketDetailWindow>({});
         registerWindow("Rocket List", drawRocketListWindow, w)
-            .add<RocketListWindow>();
+            .set<RocketListWindow>({});
       });
 
   // Register Systems

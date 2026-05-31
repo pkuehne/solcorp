@@ -142,11 +142,13 @@ RocketModule::RocketModule(flecs::world &world) {
   auto scope = world.set_scope(0);
   auto statesRoot = world.entity("States");
   auto rocketStates = world.entity("Rocket").child_of(statesRoot);
-  world.entity("Invalid").child_of(rocketStates);
-  world.entity("UnderConstruction").child_of(rocketStates);
-  world.entity("Stored").child_of(rocketStates);
-  world.entity("Moving").child_of(rocketStates);
-  world.entity("Assigned").child_of(rocketStates);
+  world.entity("Invalid").child_of(rocketStates).add<StateIsTerminal>();
+  world.entity("UnderConstruction")
+      .child_of(rocketStates)
+      .set<Label>({"Under Construction"});
+  world.entity("Stored").child_of(rocketStates).set<Label>({"In Storage"});
+  world.entity("Moving").child_of(rocketStates).set<Label>({"Moving"});
+  world.entity("Assigned").child_of(rocketStates).set<Label>({"Assigned"});
   auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
   auto scheduledState = world.entity("Scheduled").child_of(planStates);
   auto rollingOutState = world.entity("RollingOut").child_of(planStates);

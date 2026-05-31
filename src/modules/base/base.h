@@ -9,6 +9,13 @@
 /// Queries use this to distinguish active from completed/archived records.
 struct StateIsTerminal {};
 
+/// User-visible display name for any entity. Entities without this component
+/// fall back to their ECS name in UI; entities intended as internal/debug only
+/// should omit it.
+struct Label {
+  std::string label;
+};
+
 struct EffortRequired {
   uint32_t remaining = 0;
   uint32_t total = 0;

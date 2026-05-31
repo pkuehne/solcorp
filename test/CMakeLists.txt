@@ -69,6 +69,7 @@ add_executable(unit_test
   stats/stats.test.cpp
   window/building_detail_window.test.cpp
   window/notification_window.test.cpp
+  window/rocket_list_window.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)
