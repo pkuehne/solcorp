@@ -7,4 +7,3 @@ struct RocketDetailWindow {
 
 void showRocketDetailWindow(flecs::entity rocketE);
 void drawRocketDetailWindow(flecs::entity winE);
-void drawRocketButtons(flecs::entity &rocket);

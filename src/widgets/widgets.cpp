@@ -4,18 +4,18 @@
 namespace Widgets {
 
 bool ActionButton(ButtonLabel label, ButtonTooltip tooltip,
-                  const std::string &issue) {
+                  const std::string &issue, bool small) {
   bool retval = false;
   ImGui::BeginDisabled(!issue.empty());
-  if (ImGui::Button(label.text)) {
-    retval = true;
-  }
+  retval = small ? ImGui::SmallButton(label.text) : ImGui::Button(label.text);
   if ((tooltip.text || !issue.empty()) && ImGui::BeginItemTooltip()) {
-    if (tooltip.text)
+    if (tooltip.text) {
       ImGui::Text("%s", tooltip.text);
-    if (!issue.empty())
+    }
+    if (!issue.empty()) {
       ImGui::TextColored((ImVec4)ImColor::HSV(1.0, 1.0, 1.0), "%s",
                          issue.c_str());
+    }
     ImGui::EndTooltip();
   }
   ImGui::EndDisabled();

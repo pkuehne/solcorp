@@ -33,6 +33,14 @@ void drawRocketDetailWindow(flecs::entity winE) {
   auto stateE = state.rocket.target<RocketCurrentState>();
   const char *stateName = stateE.is_valid() ? stateE.name().c_str() : "Unknown";
 
+  std::string actionIssue;
+  if (!state.rocket.has<RocketCurrentState>(
+          world.lookup("States::Rocket::Stored"))) {
+    actionIssue = "Rocket is not available";
+  }
+
+  bool openMovePopup = false;
+
   ImGui::Text("%s", state.rocket.name().c_str());
   ImGui::SameLine();
   ImGui::TextDisabled("(%s)", stateName);
@@ -63,6 +71,12 @@ void drawRocketDetailWindow(flecs::entity winE) {
       if (ImGui::SmallButton("View##building")) {
         showBuildingDetailWindow(buildingE);
       }
+      ImGui::SameLine();
+      openMovePopup = Widgets::ActionButton(
+          ButtonLabel{.text = "Move"},
+          ButtonTooltip{.text =
+                            "Move the rocket to another storage at this site"},
+          actionIssue, true);
     } else if (facilityE.is_valid()) {
       ImGui::TextUnformatted(facilityE.name().c_str());
     } else {
@@ -80,6 +94,13 @@ void drawRocketDetailWindow(flecs::entity winE) {
       }
     } else {
       ImGui::TextUnformatted("None");
+      ImGui::SameLine();
+      if (Widgets::ActionButton(
+              ButtonLabel{.text = "Schedule"},
+              ButtonTooltip{.text = "Schedule the rocket for launch"},
+              actionIssue, true)) {
+        showLaunchWindowAdd(world, &state.rocket, nullptr);
+      }
     }
     ImGui::Spacing();
 
@@ -129,54 +150,28 @@ void drawRocketDetailWindow(flecs::entity winE) {
     ImGui::EndTable();
   }
 
-  ImGui::Spacing();
-  ImGui::Separator();
-
-  drawRocketButtons(state.rocket);
-  ImGui::SameLine();
-  if (ImGui::Button("Close")) {
-    hideWindow(world, "Rocket Detail");
-    state.rocket = flecs::entity::null();
-  }
-}
-
-void drawRocketButtons(flecs::entity &rocket) {
-  std::string issue;
-  if (!rocket.has<RocketCurrentState>(
-          rocket.world().lookup("States::Rocket::Stored"))) {
-    issue = "Rocket is not available";
-  }
-
-  bool openPopup = Widgets::ActionButton(
-      ButtonLabel{.text = "Move"},
-      ButtonTooltip{.text = "Move the rocket to another storage at this site"},
-      issue);
-  ImGui::SameLine();
-
-  auto target = rocket.target<LaunchingOn>();
-  std::string tooltip =
-      target.is_valid() ? "View launch plan" : "Schedule the rocket for launch";
-  if (Widgets::ActionButton(
-          ButtonLabel{.text = target.is_valid() ? "View Plan" : "Schedule"},
-          ButtonTooltip{.text = tooltip.c_str()}, issue)) {
-    if (target.is_valid()) {
-      showLaunchDetailWindow(target);
-    } else {
-      showLaunchWindowAdd(rocket.world(), &rocket, nullptr);
-    }
-  }
-  auto world = rocket.world();
-  auto currentStorage = rocket.parent();
+  auto currentStorage = state.rocket.parent();
   auto site = findAncestorWith<Site>(currentStorage);
   if (site.is_valid()) {
-    auto moveDurationDays =
-        static_cast<uint8_t>(rocket.get<Rocket>().move_days.value());
-    storagePickerPopup("Move Rocket", openPopup, world, currentStorage,
+    auto moveDurationDays = static_cast<uint8_t>(rocketData.move_days.value());
+    storagePickerPopup("Move Rocket", openMovePopup, world, currentStorage,
                        [&](flecs::entity dest) {
-                         RocketMoveAction action{RocketEntity{rocket},
+                         RocketMoveAction action{RocketEntity{state.rocket},
                                                  DestinationEntity{dest},
                                                  moveDurationDays};
                          action.execute(world);
                        });
+  }
+
+  ImGui::Spacing();
+  ImGui::Separator();
+
+  float closeWidth =
+      ImGui::CalcTextSize("Close").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+  ImGui::SetCursorPosX(ImGui::GetWindowWidth() - closeWidth -
+                       ImGui::GetStyle().WindowPadding.x);
+  if (ImGui::Button("Close")) {
+    hideWindow(world, "Rocket Detail");
+    state.rocket = flecs::entity::null();
   }
 }
