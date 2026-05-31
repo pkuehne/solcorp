@@ -9,6 +9,7 @@
 #include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
+#include "storage_picker.h"
 #include "widgets/stat_widget.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
@@ -166,10 +167,6 @@ void drawRocketDetailWindow(flecs::entity winE) {
   ImGui::Spacing();
   ImGui::Separator();
 
-  float closeWidth =
-      ImGui::CalcTextSize("Close").x + ImGui::GetStyle().FramePadding.x * 2.0f;
-  ImGui::SetCursorPosX(ImGui::GetWindowWidth() - closeWidth -
-                       ImGui::GetStyle().WindowPadding.x);
   if (ImGui::Button("Close")) {
     hideWindow(world, "Rocket Detail");
     state.rocket = flecs::entity::null();

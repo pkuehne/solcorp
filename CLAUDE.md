@@ -190,10 +190,15 @@ Use Given/When/Then format for clarity. Test edge cases and failure modes, not j
 
 ### UI Windows
 
+All UI windows and cross-cutting UI components belong in [src/modules/window/](src/modules/window/). This keeps a clean separation of concerns: domain modules (rocket, site, etc.) own ECS data and logic; the window module owns all ImGui rendering. Windows that span multiple domain modules (e.g. a rocket detail window that queries site data) must live in `modules/window/` to avoid circular dependencies between domain modules.
+
+Window component registration (`world.component<MyWindow>()`) and `registerWindow(...)` calls also belong in `window_module.cpp`, not in the domain module.
+
 UI windows follow this pattern:
-1. Define struct with `show()` method in module header
-2. Implement ImGui code in `.cpp` (use `ImGui::Begin/End`, query ECS)
-3. Call from [src/modules/engine/gui.cpp](src/modules/engine/gui.cpp) GUI system
+1. Define state struct and declare `show*` / `draw*` functions in `src/modules/window/mywindow.h`
+2. Implement ImGui code in `src/modules/window/mywindow.cpp` (use `ImGui::Begin/End`, query ECS)
+3. Register the component and window in `src/modules/window/window_module.cpp`
+4. Add both files to the window section of [src/CMakeLists.txt](src/CMakeLists.txt)
 
 ## Configuration
 
