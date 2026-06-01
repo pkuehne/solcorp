@@ -13,6 +13,7 @@
 #include "widgets/stat_widget.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <format>
 #include <functional>
 
 void showRocketDetailWindow(flecs::entity rocketE) {
@@ -59,6 +60,26 @@ void drawRocketDetailWindow(flecs::entity winE) {
     }
   }
   ImGui::Separator();
+
+  {
+    float fraction = -1.0f;
+    if (state.rocket.has<EffortRequired>()) {
+      const auto &e = state.rocket.get<EffortRequired>();
+      fraction = e.total > 0 ? static_cast<float>(e.total - e.remaining) /
+                                   static_cast<float>(e.total)
+                             : 0.0f;
+    } else if (state.rocket.has<DurationRequired>()) {
+      const auto &d = state.rocket.get<DurationRequired>();
+      fraction = d.total > 0 ? static_cast<float>(d.total - d.remaining) /
+                                   static_cast<float>(d.total)
+                             : 0.0f;
+    }
+    if (fraction >= 0.0f) {
+      auto label = std::format("{:.0f}%", fraction * 100.0f);
+      ImGui::ProgressBar(fraction, ImVec2(-1, 0), label.c_str());
+      ImGui::Spacing();
+    }
+  }
 
   if (ImGui::BeginTable("##rocketDetailLayout", 2,
                         ImGuiTableFlags_SizingStretchProp)) {

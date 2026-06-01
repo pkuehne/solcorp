@@ -89,7 +89,23 @@ void drawRocketListWindow(flecs::entity winE) {
               stateE.is_valid() && stateE.has<Label>()
                   ? stateE.get<Label>().label.c_str()
                   : (stateE.is_valid() ? stateE.name().c_str() : "-");
-          ImGui::TextUnformatted(stateLabel);
+          float fraction = -1.0f;
+          if (rocketE.has<EffortRequired>()) {
+            const auto &e = rocketE.get<EffortRequired>();
+            fraction = e.total > 0 ? static_cast<float>(e.total - e.remaining) /
+                                         static_cast<float>(e.total)
+                                   : 0.0f;
+          } else if (rocketE.has<DurationRequired>()) {
+            const auto &d = rocketE.get<DurationRequired>();
+            fraction = d.total > 0 ? static_cast<float>(d.total - d.remaining) /
+                                         static_cast<float>(d.total)
+                                   : 0.0f;
+          }
+          if (fraction >= 0.0f) {
+            ImGui::ProgressBar(fraction, ImVec2(-1, 0), stateLabel);
+          } else {
+            ImGui::TextUnformatted(stateLabel);
+          }
           if (rocketE.has<RocketStateTransitionBlocked>()) {
             const auto &blocked = rocketE.get<RocketStateTransitionBlocked>();
             ImGui::SameLine();
