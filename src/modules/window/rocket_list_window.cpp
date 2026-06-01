@@ -61,7 +61,8 @@ void drawRocketListWindow(flecs::entity winE) {
   // --- Table ---
   constexpr ImGuiTableFlags tableFlags =
       ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-      ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY;
+      ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY |
+      ImGuiTableFlags_Resizable;
 
   if (ImGui::BeginTable("rockets", 4, tableFlags)) {
     ImGui::TableSetupScrollFreeze(0, 1);
