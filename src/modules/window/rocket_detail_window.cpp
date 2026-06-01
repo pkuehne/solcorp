@@ -48,6 +48,16 @@ void drawRocketDetailWindow(flecs::entity winE) {
   ImGui::Text("%s", state.rocket.name().c_str());
   ImGui::SameLine();
   ImGui::TextDisabled("(%s)", stateName);
+  if (state.rocket.has<RocketStateTransitionBlocked>()) {
+    const auto &blocked = state.rocket.get<RocketStateTransitionBlocked>();
+    ImGui::SameLine();
+    ImGui::TextColored((ImVec4)ImColor::HSV(0.13f, 1.0f, 1.0f),
+                       "\xef\x81\xb1"); // fa-triangle-exclamation f071
+    if (ImGui::BeginItemTooltip()) {
+      ImGui::Text("%s", blocked.reason.c_str());
+      ImGui::EndTooltip();
+    }
+  }
   ImGui::Separator();
 
   if (ImGui::BeginTable("##rocketDetailLayout", 2,

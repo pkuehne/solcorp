@@ -6,6 +6,7 @@
 #include "modules/site/site.h"
 #include "rocket_detail_window.h"
 #include <flecs.h>
+#include <string>
 
 bool rocketMatchesFilter(flecs::entity rocketE, const RocketListWindow &state) {
   auto stateE = rocketE.target<RocketCurrentState>();
@@ -89,6 +90,16 @@ void drawRocketListWindow(flecs::entity winE) {
                   ? stateE.get<Label>().label.c_str()
                   : (stateE.is_valid() ? stateE.name().c_str() : "-");
           ImGui::TextUnformatted(stateLabel);
+          if (rocketE.has<RocketStateTransitionBlocked>()) {
+            const auto &blocked = rocketE.get<RocketStateTransitionBlocked>();
+            ImGui::SameLine();
+            ImGui::TextColored((ImVec4)ImColor::HSV(0.13f, 1.0f, 1.0f),
+                               "\xef\x81\xb1"); // fa-triangle-exclamation f071
+            if (ImGui::BeginItemTooltip()) {
+              ImGui::Text("%s", blocked.reason.c_str());
+              ImGui::EndTooltip();
+            }
+          }
 
           ImGui::TableSetColumnIndex(2);
           auto facilityE = rocketE.parent();
