@@ -1,5 +1,7 @@
 #include "stats.h"
+#include "modules/engine/helpers.h"
 #include "modules/lua/lua.h"
+#include <format>
 #include <modules/base/base.h>
 
 void systemInitialiseStats(flecs::iter &iter);
@@ -67,6 +69,18 @@ const std::string &Stat::display() const { return m_display; }
 const std::string &Stat::description() const { return m_description; }
 const std::vector<EffectModifier> &Stat::modifiers() const {
   return m_modifiers;
+}
+
+std::string Stat::format(double value) const {
+  switch (m_format) {
+  case Format::Currency:
+    return "$" + format_locale(value);
+  case Format::Percentage:
+    return std::format("{:.0f}%", value * 100);
+  case Format::Number:
+  default:
+    return std::format("{:.0f}", value);
+  }
 }
 
 bool Stat::addModifier(const Modifier &modifier,

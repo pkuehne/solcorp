@@ -146,8 +146,7 @@ void drawRocketDetailWindow(flecs::entity winE) {
 
     ImGui::TextDisabled("Stats");
     Widgets::StatTooltip(&rocketData.failure_rate);
-    Widgets::StatTooltip(&rocketData.cost,
-                         [](double v) { return "$" + format_locale(v); });
+    Widgets::StatTooltip(&rocketData.cost);
     Widgets::StatTooltip(&rocketData.rollout_days);
     Widgets::StatTooltip(&rocketData.move_days);
 
