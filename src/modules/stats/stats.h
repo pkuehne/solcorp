@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <flecs.h>
 #include <string>
 #include <vector>
@@ -28,15 +29,23 @@ struct StatInit {
   std::string description;
   double base = 0.0;
   bool higher_is_better = true;
+  enum class Format : std::uint8_t {
+    Number,
+    Currency,
+    Percentage
+  } format = Format::Number;
 };
 
 /// Represents a modifiable stat.
 class Stat {
 public:
+  using Format = StatInit::Format;
+
   Stat() = default;
   explicit Stat(const StatInit &init)
       : m_id(init.id), m_display(init.display), m_description(init.description),
-        m_base(init.base), higher_is_better(init.higher_is_better) {}
+        m_base(init.base), higher_is_better(init.higher_is_better),
+        m_format(init.format) {}
 
   /// Gets the base value of the stat.
   /// @return The base value.
@@ -73,6 +82,9 @@ public:
   /// @return The list of modifiers.
   [[nodiscard]] const std::vector<EffectModifier> &modifiers() const;
 
+  /// Formats a value according to this stat's display type.
+  [[nodiscard]] std::string format(double value) const;
+
   /// @brief Checks if higher values of the stat are better.
   /// @return True if higher values are better, false otherwise.
   [[nodiscard]] bool isHigherBetter() const { return higher_is_better; }
@@ -87,6 +99,7 @@ public:
   double m_multiplicative_modifiers =
       1.0f;                     ///< The total multiplicative modifiers.
   bool higher_is_better = true; ///< Indicates if higher values are better.
+  Format m_format = Format::Number;
 };
 
 /// Applies modifiers to the stats of an entity.

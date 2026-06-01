@@ -47,3 +47,40 @@ SCENARIO("Stats", "[stats]") {
     }
   }
 }
+
+SCENARIO("Stat formatting", "[stats]") {
+  GIVEN("a default number stat") {
+    Stat stat{{.id = "count",
+               .display = "Count",
+               .description = "A plain number",
+               .base = 12.4}};
+
+    THEN("it formats as a rounded number") {
+      REQUIRE(stat.format(12.4) == "12");
+    }
+  }
+
+  GIVEN("a currency stat") {
+    Stat stat{{.id = "cost",
+               .display = "Cost",
+               .description = "A money value",
+               .base = 1'250,
+               .format = Stat::Format::Currency}};
+
+    THEN("it formats with a dollar prefix and separators") {
+      REQUIRE(stat.format(1250) == "$1,250");
+    }
+  }
+
+  GIVEN("a percentage stat") {
+    Stat stat{{.id = "failure-rate",
+               .display = "Failure Rate",
+               .description = "A probability",
+               .base = 0.1,
+               .format = Stat::Format::Percentage}};
+
+    THEN("it formats probabilities as whole percentages") {
+      REQUIRE(stat.format(stat.base()) == "10%");
+    }
+  }
+}

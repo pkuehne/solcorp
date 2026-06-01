@@ -32,12 +32,14 @@ struct Rocket {
             .display = "Failure Rate",
             .description = "Likelyhood the rocket will fail on take-off",
             .base = 0.1,
-            .higher_is_better = false});
+            .higher_is_better = false,
+            .format = Stat::Format::Percentage});
   Stat cost = Stat({.id = "cost",
                     .display = "Cost",
                     .description = "Cost to build this rocket",
                     .base = 5'000'000,
-                    .higher_is_better = false});
+                    .higher_is_better = false,
+                    .format = Stat::Format::Currency});
   Stat rollout_days = Stat(
       {.id = "rollout-days",
        .display = "Rollout Duration",

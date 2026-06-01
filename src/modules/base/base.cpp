@@ -54,6 +54,7 @@ BaseModule::BaseModule(flecs::world &world) {
   ;
 
   world.component<StateIsTerminal>();
+  world.component<Label>().member("label", &Label::label);
   world.component<EffortRequired>()
       .member("remaining", &EffortRequired::remaining)
       .member("total", &EffortRequired::total);
