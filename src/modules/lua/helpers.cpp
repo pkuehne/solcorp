@@ -163,6 +163,7 @@ flecs::entity create_contract(flecs::world &world, const std::string &name,
                       .description = description,
                       .upfront_payment = upfront_payment,
                       .completion_payment = completion_payment})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Open"))
       .child_of(contracts_node);
 }
 
@@ -202,13 +203,14 @@ std::vector<flecs::entity> get_all_contracts(const flecs::world &world) {
 
 std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world) {
   std::vector<flecs::entity> result;
-  world.query_builder<Contract>().build().each(
-      [&](flecs::entity e, Contract &c) {
-        if (c.status == ContractStatus::Open ||
-            c.status == ContractStatus::Accepted) {
-          result.push_back(e);
-        }
-      });
+  world.query_builder<Contract>().build().each([&](flecs::entity e,
+                                                   Contract &) {
+    if (e.has<ContractCurrentState>(world.lookup("States::Contract::Open")) ||
+        e.has<ContractCurrentState>(
+            world.lookup("States::Contract::Accepted"))) {
+      result.push_back(e);
+    }
+  });
   return result;
 }
 

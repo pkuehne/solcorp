@@ -293,7 +293,8 @@ void drawLaunchWindow(flecs::entity winE) {
 
     bool anyPayloads = false;
     contractQuery.each([&](flecs::entity contractE, Contract &contract) {
-      if (contract.status != ContractStatus::Accepted) {
+      if (!contractE.has<ContractCurrentState>(
+              world.lookup("States::Contract::Accepted"))) {
         return;
       }
       contractE.each<ContractPayload>([&](flecs::entity payloadE) {

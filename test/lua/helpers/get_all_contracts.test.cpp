@@ -19,19 +19,16 @@ SCENARIO("get_all_contracts", "[helpers][lua]") {
                                       .description = "Desc",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,
-                                      .status = ContractStatus::Open,
                                       .failed = false});
     world.entity("C2").set<Contract>({.client = "Client",
                                       .description = "Desc",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,
-                                      .status = ContractStatus::Open,
                                       .failed = false});
     world.entity("C3").set<Contract>({.client = "Client",
                                       .description = "Desc",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,
-                                      .status = ContractStatus::Open,
                                       .failed = false});
     WHEN("get_all_contracts is called") {
       auto result = get_all_contracts(world);

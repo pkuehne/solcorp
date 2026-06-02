@@ -8,37 +8,41 @@ SCENARIO("get_all_active_contracts", "[helpers][lua]") {
   world.import <RocketModule>();
 
   GIVEN("contracts with Open, Accepted, and Closed statuses") {
-    world.entity("Open1").set<Contract>({.client = "C",
-                                         .description = "D",
-                                         .upfront_payment = 0,
-                                         .completion_payment = 0,
-                                         .status = ContractStatus::Open,
-                                         .failed = false});
-    world.entity("Open2").set<Contract>({.client = "C",
-                                         .description = "D",
-                                         .upfront_payment = 0,
-                                         .completion_payment = 0,
-                                         .status = ContractStatus::Open,
-                                         .failed = false});
+    world.entity("Open1")
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Open"));
+    world.entity("Open2")
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Open"));
     world.entity("Accepted1")
         .set<Contract>({.client = "C",
                         .description = "D",
                         .upfront_payment = 0,
                         .completion_payment = 0,
-                        .status = ContractStatus::Accepted,
-                        .failed = false});
-    world.entity("Closed1").set<Contract>({.client = "C",
-                                           .description = "D",
-                                           .upfront_payment = 0,
-                                           .completion_payment = 0,
-                                           .status = ContractStatus::Closed,
-                                           .failed = false});
-    world.entity("Closed2").set<Contract>({.client = "C",
-                                           .description = "D",
-                                           .upfront_payment = 0,
-                                           .completion_payment = 0,
-                                           .status = ContractStatus::Closed,
-                                           .failed = false});
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Accepted"));
+    world.entity("Closed1")
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
+    world.entity("Closed2")
+        .set<Contract>({.client = "C",
+                        .description = "D",
+                        .upfront_payment = 0,
+                        .completion_payment = 0,
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
 
     WHEN("get_all_active_contracts is called") {
       auto result = get_all_active_contracts(world);
@@ -54,8 +58,8 @@ SCENARIO("get_all_active_contracts", "[helpers][lua]") {
                         .description = "D",
                         .upfront_payment = 0,
                         .completion_payment = 0,
-                        .status = ContractStatus::Closed,
-                        .failed = false});
+                        .failed = false})
+        .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
     WHEN("get_all_active_contracts is called") {
       auto result = get_all_active_contracts(world);
       THEN("an empty vector is returned") { CHECK(result.empty()); }

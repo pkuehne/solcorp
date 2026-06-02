@@ -1,6 +1,6 @@
 #include "modules/base/base.h"
-#include "modules/rocket/contracts_window.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/window/contracts_window.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -14,25 +14,25 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Open,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Open"));
   world.entity("AcceptedContract")
       .set<Contract>({.client = "TestClient",
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Accepted,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Accepted"));
   world.entity("ClosedContract")
       .set<Contract>({.client = "TestClient",
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Closed,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
 
   GIVEN("An Open Contract") {
-    auto &contract = world.entity("OpenContract").get_mut<Contract>();
+    auto contract = world.entity("OpenContract");
     THEN("Accept button is enabled") {
       REQUIRE(!acceptButtonDisabled(contract));
     }
@@ -43,7 +43,7 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("An Accepted Contract") {
-    auto &contract = world.entity("AcceptedContract").get_mut<Contract>();
+    auto contract = world.entity("AcceptedContract");
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));
     }
@@ -54,8 +54,8 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("A failed Closed Contract") {
-    auto &contract = world.entity("ClosedContract").get_mut<Contract>();
-    contract.failed = true;
+    auto contract = world.entity("ClosedContract");
+    contract.get_mut<Contract>().failed = true;
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));
     }
@@ -66,8 +66,8 @@ SCENARIO("Accept/Reject/Plan buttons enabled state", "[contracts_window]") {
   }
 
   GIVEN("A successful Closed Contract") {
-    auto &contract = world.entity("ClosedContract").get_mut<Contract>();
-    contract.failed = false;
+    auto contract = world.entity("ClosedContract");
+    contract.get_mut<Contract>().failed = false;
     THEN("Accept button is disabled") {
       REQUIRE(acceptButtonDisabled(contract));
     }

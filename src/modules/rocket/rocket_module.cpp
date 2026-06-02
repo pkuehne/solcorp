@@ -1,6 +1,5 @@
 #include "rocket_module.h"
 #include "active_launches_window.h"
-#include "contracts_window.h"
 #include "launch_actions.h"
 #include "launch_detail_window.h"
 #include "launch_window.h"
@@ -31,7 +30,6 @@ RocketModule::RocketModule(flecs::world &world) {
   registerEngineComponents(world);
 
   // Register components
-  world.component<ContractFilterStatus>();
   world.component<LaunchScheduleAction>("PlannedLaunch")
       .member("name", &LaunchScheduleAction::name)
       .member("launchDay", &LaunchScheduleAction::launchDay)
@@ -54,19 +52,13 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
       .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
       .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
-  world.component<ContractsWindow>()
-      .member("statusFilter", &ContractsWindow::statusFilter)
-      .member("showCompleted", &ContractsWindow::showCompleted)
-      .member("pendingDelete", &ContractsWindow::pendingDelete);
   world.component<ContractTargetOrbit>();
-  world.component<ContractStatus>();
   world.component<Contract>()
       .member("name", &Contract::name)
       .member("client", &Contract::client)
       .member("description", &Contract::description)
       .member("upfront_payment", &Contract::upfront_payment)
       .member("completion_payment", &Contract::completion_payment)
-      .member("status", &Contract::status)
       .member("failed", &Contract::failed);
   world.component<ContractPayload>().add(flecs::Symmetric);
 
@@ -82,6 +74,8 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<RocketTargetState>().add(flecs::Exclusive);
   world.component<LaunchPlanCurrentState>().add(flecs::Exclusive);
   world.component<LaunchPlanTargetState>().add(flecs::Exclusive);
+  world.component<ContractCurrentState>().add(flecs::Exclusive);
+  world.component<ContractTargetState>().add(flecs::Exclusive);
 
   // Register Lua bindings
   register_component_lua<LaunchPlan>(
@@ -104,6 +98,12 @@ RocketModule::RocketModule(flecs::world &world) {
   register_component_lua<LaunchPlanTargetState>(
       world, "LaunchPlanTargetState",
       [](LuaFieldBuilder<LaunchPlanTargetState> &) {});
+  register_component_lua<ContractCurrentState>(
+      world, "ContractCurrentState",
+      [](LuaFieldBuilder<ContractCurrentState> &) {});
+  register_component_lua<ContractTargetState>(
+      world, "ContractTargetState",
+      [](LuaFieldBuilder<ContractTargetState> &) {});
   register_component_lua<RocketStateTransitionBlocked>(
       world, "RocketStateTransitionBlocked",
       [](LuaFieldBuilder<RocketStateTransitionBlocked> &b) {
@@ -123,14 +123,8 @@ RocketModule::RocketModule(flecs::world &world) {
             .field<&Contract::description>("description")
             .field<&Contract::upfront_payment>("upfront_payment")
             .field<&Contract::completion_payment>("completion_payment")
-            .field<&Contract::status>("status")
             .field<&Contract::failed>("failed");
       });
-  register_enum_table_lua(world, "ContractStatus", [](LuaEnumBuilder &b) {
-    b.value("Open", ContractStatus::Open)
-        .value("Accepted", ContractStatus::Accepted)
-        .value("Closed", ContractStatus::Closed);
-  });
   register_component_lua<ContractPayload>(world, "ContractPayload");
   register_component_lua<ContractTargetOrbit>(world, "ContractTargetOrbit");
 
@@ -155,6 +149,10 @@ RocketModule::RocketModule(flecs::world &world) {
   auto onPadState = world.entity("OnPad").child_of(planStates);
   world.entity("Launched").child_of(planStates).add<StateIsTerminal>();
   world.entity("Cancelled").child_of(planStates).add<StateIsTerminal>();
+  auto contractStates = world.entity("Contract").child_of(statesRoot);
+  world.entity("Open").child_of(contractStates);
+  world.entity("Accepted").child_of(contractStates);
+  world.entity("Closed").child_of(contractStates).add<StateIsTerminal>();
   world.set_scope(scope);
 
   // Register systems
@@ -183,8 +181,6 @@ RocketModule::RocketModule(flecs::world &world) {
             .set<LaunchWindow>({});
         registerWindow("Active Launches", drawActiveLaunchesWindow, world)
             .set<ActiveLaunchesWindow>({});
-        registerWindow("Contracts Window", drawContractsWindow, world)
-            .set<ContractsWindow>({});
         registerWindow("Launch Detail", drawLaunchDetailWindow, world)
             .set<LaunchDetailWindow>({});
       });
