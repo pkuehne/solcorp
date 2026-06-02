@@ -12,7 +12,6 @@ SCENARIO("create_contract_payload", "[helpers][lua]") {
                                       .description = "D",
                                       .upfront_payment = 0,
                                       .completion_payment = 0,
-                                      .status = ContractStatus::Open,
                                       .failed = false});
 
   GIVEN("a contract, payload name, and no orbit") {

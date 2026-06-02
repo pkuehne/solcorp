@@ -25,6 +25,7 @@ list(APPEND SolCorpSources
     modules/window/rocket_list_window.cpp
     modules/window/storage_picker.cpp
     modules/rocket/rocket_module.cpp
+    modules/rocket/contract_actions.cpp
     modules/rocket/launch_actions.cpp
     modules/rocket/rocket_actions.cpp
     modules/rocket/launch_window.cpp
@@ -70,6 +71,7 @@ list(APPEND SolCorpHeaders
     modules/window/rocket_list_window.h
     modules/window/storage_picker.h
     modules/rocket/rocket_module.h
+    modules/rocket/contract_actions.h
     modules/rocket/launch_actions.h
     modules/rocket/rocket_actions.h
     modules/rocket/launch_window.h

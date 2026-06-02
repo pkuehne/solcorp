@@ -14,29 +14,29 @@ SCENARIO("Displaying contracts in the ContractsWindow", "[contracts_window]") {
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Open,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Open"));
   world.entity("AcceptedContract")
       .set<Contract>({.client = "TestClient",
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Accepted,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Accepted"));
   world.entity("ClosedContract")
       .set<Contract>({.client = "TestClient",
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Closed,
-                      .failed = false});
+                      .failed = false})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
   world.entity("FailedContract")
       .set<Contract>({.client = "TestClient",
                       .description = "TestDesc",
                       .upfront_payment = 1000u,
                       .completion_payment = 2000u,
-                      .status = ContractStatus::Closed,
-                      .failed = true});
+                      .failed = true})
+      .add<ContractCurrentState>(world.lookup("States::Contract::Closed"));
 
   WHEN("ContractsWindow with All filter and showCompleted=true") {
     ContractsWindow state{.statusFilter = ContractFilterStatus::All,

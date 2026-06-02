@@ -1,13 +1,15 @@
 #include "contracts_window.h"
+#include "contract_actions.h"
 #include "imgui.h"
 #include "launch_detail_window.h"
 #include "launch_window.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
-#include "modules/simulation/simulation.h"
 #include "rocket_module.h"
-#include <flecs.h>
+#include <flecs/addons/cpp/entity.hpp>
+#include <flecs/addons/cpp/mixins/query/impl.hpp>
 #include <spdlog/spdlog.h>
+#include <string>
 
 bool contractMatchesFilter(flecs::entity contractE,
                            const ContractsWindow &state) {
@@ -16,19 +18,24 @@ bool contractMatchesFilter(flecs::entity contractE,
     return false;
   }
 
+  auto world = contractE.world();
+  auto openState = world.lookup("States::Contract::Open");
+  auto acceptedState = world.lookup("States::Contract::Accepted");
+  auto closedState = world.lookup("States::Contract::Closed");
+
   // Filter by status
   if (state.statusFilter != ContractFilterStatus::All) {
     switch (state.statusFilter) {
     case ContractFilterStatus::Open:
-      if (contract->status != ContractStatus::Open)
+      if (!contractE.has<ContractCurrentState>(openState))
         return false;
       break;
     case ContractFilterStatus::Accepted:
-      if (contract->status != ContractStatus::Accepted)
+      if (!contractE.has<ContractCurrentState>(acceptedState))
         return false;
       break;
     case ContractFilterStatus::Closed:
-      if (contract->status != ContractStatus::Closed)
+      if (!contractE.has<ContractCurrentState>(closedState))
         return false;
       break;
     case ContractFilterStatus::All:
@@ -37,39 +44,32 @@ bool contractMatchesFilter(flecs::entity contractE,
   }
 
   // Filter completed contracts
-  if (!state.showCompleted && contract->status == ContractStatus::Closed) {
+  if (!state.showCompleted && contractE.has<ContractCurrentState>(closedState)) {
     return false;
   }
 
   return true;
 }
 
-bool acceptButtonDisabled(const Contract &contract) {
-  return contract.status == ContractStatus::Closed ||
-         contract.status == ContractStatus::Accepted;
+bool acceptButtonDisabled(flecs::entity contractE) {
+  return !ContractAcceptAction{contractE}.validate(contractE.world());
 }
 
-bool rejectButtonDisabled(const Contract &contract) {
-  return contract.status == ContractStatus::Closed;
+bool rejectButtonDisabled(flecs::entity contractE) {
+  return !ContractRejectAction{contractE}.validate(contractE.world());
 }
 
-bool planButtonDisabled(const Contract &contract) {
-  return contract.status != ContractStatus::Accepted;
+bool planButtonDisabled(flecs::entity contractE) {
+  return !contractE.has<ContractCurrentState>(
+      contractE.world().lookup("States::Contract::Accepted"));
 }
 
 void acceptContract(flecs::world &world, flecs::entity contractE) {
-  auto &contract = contractE.get_mut<Contract>();
-  contract.status = ContractStatus::Accepted;
-  world.get_mut<Company>().balance += contract.upfront_payment;
+  ContractAcceptAction{contractE}.execute(world);
 }
 
 void rejectContract(flecs::world &world, flecs::entity contractE) {
-  auto &contract = contractE.get_mut<Contract>();
-  if (contract.status == ContractStatus::Accepted) {
-    world.get_mut<Company>().balance -= contract.upfront_payment;
-  }
-  contract.status = ContractStatus::Closed;
-  contract.failed = true;
+  ContractRejectAction{contractE}.execute(world);
 }
 
 LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE) {
@@ -180,10 +180,9 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(contract.description.c_str());
 
       ImGui::TableSetColumnIndex(3);
-      const char *statusStr = contract.status == ContractStatus::Open ? "Open"
-                              : contract.status == ContractStatus::Accepted
-                                  ? "Accepted"
-                                  : "Closed";
+      auto contractState = contractE.target<ContractCurrentState>();
+      const char *statusStr =
+          contractState.is_valid() ? contractState.name().c_str() : "-";
       ImGui::TextUnformatted(statusStr);
 
       ImGui::TableSetColumnIndex(4);
@@ -201,7 +200,7 @@ void drawContractsWindow(flecs::entity winE) {
 
       ImGui::TableSetColumnIndex(7);
 
-      ImGui::BeginDisabled(acceptButtonDisabled(contract));
+      ImGui::BeginDisabled(acceptButtonDisabled(contractE));
       if (ImGui::SmallButton("Accept")) {
         acceptContract(world, contractE);
         spdlog::debug("Contract {} accepted", contractE.id());
@@ -209,7 +208,7 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::EndDisabled();
 
       ImGui::SameLine();
-      ImGui::BeginDisabled(rejectButtonDisabled(contract));
+      ImGui::BeginDisabled(rejectButtonDisabled(contractE));
       if (ImGui::SmallButton("Reject")) {
         rejectContract(world, contractE);
         spdlog::debug("Contract {} rejected", contractE.id());
@@ -217,7 +216,7 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::EndDisabled();
 
       ImGui::SameLine();
-      ImGui::BeginDisabled(planButtonDisabled(contract));
+      ImGui::BeginDisabled(planButtonDisabled(contractE));
       if (ImGui::SmallButton(launchPlanE.is_valid() ? "View" : "Plan")) {
         if (launchPlanE.is_valid()) {
           showLaunchDetailWindow(launchPlanE);
@@ -228,7 +227,8 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::EndDisabled();
 
       ImGui::TableSetColumnIndex(8);
-      if (contract.status == ContractStatus::Closed) {
+      if (contractE.has<ContractCurrentState>(
+              world.lookup("States::Contract::Closed"))) {
         if (ImGui::SmallButton("Delete")) {
           state.pendingDelete = contractE;
           openDeleteModal = true;

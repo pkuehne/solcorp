@@ -69,8 +69,6 @@ struct Payload {
   uint32_t mass; /// in kg
 };
 
-enum class ContractStatus : uint8_t { Open, Accepted, Closed };
-
 /// @brief Contract for a launch service. Note that the contract is not
 /// directly tied to a LaunchPlan, but rather to a payload and target orbit,
 /// which can then be fulfilled by any suitable LaunchPlan
@@ -82,9 +80,11 @@ struct Contract {
   std::string description;
   uint32_t upfront_payment;
   uint32_t completion_payment;
-  ContractStatus status = ContractStatus::Open;
   bool failed = false; ///< Whether the contract was failed
 };
+
+struct ContractCurrentState {};
+struct ContractTargetState {};
 
 // Relationships
 struct LaunchingFrom {}; ///< From which launchpad?

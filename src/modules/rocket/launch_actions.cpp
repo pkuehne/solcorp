@@ -1,4 +1,5 @@
 #include "launch_actions.h"
+#include "contract_actions.h"
 #include "modules/base/action.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
@@ -258,7 +259,6 @@ void LaunchGoAction::execute(flecs::world &world) {
     }
   });
 
-  auto &company = world.get_mut<Company>();
   uint32_t total_payment = 0;
 
   for (auto payload : payloads) {
@@ -270,17 +270,18 @@ void LaunchGoAction::execute(flecs::world &world) {
                 "non-contract entity");
 
       auto &contract = contractE.get_mut<Contract>();
+      bool contractFailed = false;
       if (contractE.target<ContractTargetOrbit>() != planData.target_orbit) {
         spdlog::info(
             "Contract {} failed because payload {} was launched to wrong orbit",
             contract.name.c_str(), payload.name().c_str());
-        contract.failed = true;
+        contractFailed = true;
       } else if (rocket_failure) {
         spdlog::info(
             "Contract {} failed because payload {} was launched on a rocket "
             "that failed",
             contract.name.c_str(), payload.name().c_str());
-        contract.failed = true;
+        contractFailed = true;
         instantiateNotification(
             world, "Launch Failure",
             fmt::format("{} was launched on {}, which failed."
@@ -288,8 +289,6 @@ void LaunchGoAction::execute(flecs::world &world) {
                         payload.name().c_str(), rocketE.name().c_str(),
                         contract.name.c_str()));
       } else {
-        contract.failed = false;
-        company.balance += static_cast<int64_t>(contract.completion_payment);
         total_payment += contract.completion_payment;
         instantiateNotification(
             world, "Payload Launched",
@@ -298,7 +297,7 @@ void LaunchGoAction::execute(flecs::world &world) {
                         planData.target_orbit.name().c_str()),
             world.lookup("NotificationCategories::Rocket Launch"));
       }
-      contract.status = ContractStatus::Closed;
+      ContractCompleteAction{contractE, contractFailed}.execute(world);
     }
   }
 

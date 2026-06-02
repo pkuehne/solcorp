@@ -135,14 +135,16 @@ SCENARIO("LaunchGoAction", "[action]") {
                          .set<Contract>({.client = "Client",
                                          .description = "Desc",
                                          .upfront_payment = 1000u,
-                                         .completion_payment = 2000u,
-                                         .status = ContractStatus::Accepted});
+                                         .completion_payment = 2000u})
+                         .add<ContractCurrentState>(
+                             world.lookup("States::Contract::Accepted"));
     auto contractB = world.entity("Contract A2")
                          .set<Contract>({.client = "Client",
                                          .description = "Desc",
                                          .upfront_payment = 1000u,
-                                         .completion_payment = 3000u,
-                                         .status = ContractStatus::Accepted});
+                                         .completion_payment = 3000u})
+                         .add<ContractCurrentState>(
+                             world.lookup("States::Contract::Accepted"));
     contractA.add<ContractTargetOrbit>(targetOrbit);
     contractB.add<ContractTargetOrbit>(targetOrbit);
     auto payloadA = world.entity("Payload A1").set<Payload>({1000});
@@ -171,9 +173,11 @@ SCENARIO("LaunchGoAction", "[action]") {
             world.lookup("States::LaunchPlan::Launched")));
       }
       THEN("Contracts are closed and completion payments are collected") {
-        CHECK(contractA.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractA.has<ContractCurrentState>(
+            world.lookup("States::Contract::Closed")));
         CHECK(contractA.get<Contract>().failed == false);
-        CHECK(contractB.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contractB.has<ContractCurrentState>(
+            world.lookup("States::Contract::Closed")));
         CHECK(contractB.get<Contract>().failed == false);
         CHECK(world.get<Company>().balance == 5000);
       }
@@ -191,8 +195,9 @@ SCENARIO("LaunchGoAction", "[action]") {
                         .set<Contract>({.client = "Client",
                                         .description = "Desc",
                                         .upfront_payment = 1000u,
-                                        .completion_payment = 2000u,
-                                        .status = ContractStatus::Accepted});
+                                        .completion_payment = 2000u})
+                        .add<ContractCurrentState>(
+                            world.lookup("States::Contract::Accepted"));
     contract.add<ContractTargetOrbit>(contractOrbit);
     auto payload = world.entity("Payload B1").set<Payload>({1000});
     contract.add<ContractPayload>(payload);
@@ -208,7 +213,8 @@ SCENARIO("LaunchGoAction", "[action]") {
       action.execute(world);
 
       THEN("The contract is marked failed and closed") {
-        CHECK(contract.get<Contract>().status == ContractStatus::Closed);
+        CHECK(contract.has<ContractCurrentState>(
+            world.lookup("States::Contract::Closed")));
         CHECK(contract.get<Contract>().failed == true);
       }
       THEN("No payment is added to the company balance") {

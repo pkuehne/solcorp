@@ -21,9 +21,10 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
                                      .description = "TestDesc",
                                      .upfront_payment = 1000u,
                                      .completion_payment = 2000u,
-                                     .status = ContractStatus::Accepted,
                                      .failed = false,
-                                 });
+                                 })
+                                 .add<ContractCurrentState>(
+                                     world.lookup("States::Contract::Accepted"));
     auto targetOrbit = world.entity("LEO");
     contract.add<ContractTargetOrbit>(targetOrbit);
     auto payload = world.entity("TestPayload").set<Payload>({.mass = 1000});

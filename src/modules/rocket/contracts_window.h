@@ -1,9 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <flecs.h>
 
-// Forward declaration to avoid circular dependency with rocket_module.h
-struct Contract;
 struct LaunchScheduleAction;
 
 enum class ContractFilterStatus : uint8_t { All = 0, Open, Accepted, Closed };
@@ -30,27 +29,24 @@ bool contractMatchesFilter(flecs::entity contractE,
 LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE);
 
 /// @brief Returns true if the accept button should be disabled for the given
-/// contract.
-/// @param contract The contract to check
+/// contract entity.
 /// @return True if the accept button should be disabled, false otherwise
-bool acceptButtonDisabled(const Contract &contract);
+bool acceptButtonDisabled(flecs::entity contractE);
 
 /// @brief Returns true if the reject button should be disabled for the given
-/// contract.
-/// @param contract The contract to check
+/// contract entity.
 /// @return True if the reject button should be disabled, false otherwise
-bool rejectButtonDisabled(const Contract &contract);
+bool rejectButtonDisabled(flecs::entity contractE);
 
 /// @brief Returns true if the plan button should be disabled for the given
-/// contract.
-/// @param contract The contract to check
+/// contract entity.
 /// @return True if the plan button should be disabled, false otherwise
-bool planButtonDisabled(const Contract &contract);
+bool planButtonDisabled(flecs::entity contractE);
 
-/// @brief Accepts a contract: sets status to Accepted and credits upfront
+/// @brief Accepts a contract: moves it to Accepted and credits upfront
 /// payment to the company balance.
 void acceptContract(flecs::world &world, flecs::entity contractE);
 
-/// @brief Rejects a contract: sets status to Closed/failed and refunds the
+/// @brief Rejects a contract: moves it to Closed/failed and refunds the
 /// upfront payment if the contract was previously Accepted.
 void rejectContract(flecs::world &world, flecs::entity contractE);
