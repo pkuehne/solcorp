@@ -2,6 +2,7 @@
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/base/notification.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -10,6 +11,7 @@ SCENARIO("LaunchGoAction", "[action]") {
   world.import <SimulationModule>();
   world.import <SiteModule>();
   world.import <RocketModule>();
+  createNotificationCategory(world, "Contracts");
 
   GIVEN("An invalid plan") {
     LaunchGoAction action;
@@ -132,14 +134,16 @@ SCENARIO("LaunchGoAction", "[action]") {
     auto rocket = world.entity("Rocket A").add<Rocket>();
     rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
     auto contractA = world.entity("Contract A1")
-                         .set<Contract>({.client = "Client",
+                         .set<Contract>({.name = "AlphaSat Delivery",
+                                         .client = "Client",
                                          .description = "Desc",
                                          .upfront_payment = 1000u,
                                          .completion_payment = 2000u})
                          .add<ContractCurrentState>(
                              world.lookup("States::Contract::Accepted"));
     auto contractB = world.entity("Contract A2")
-                         .set<Contract>({.client = "Client",
+                         .set<Contract>({.name = "BetaSat Delivery",
+                                         .client = "Client",
                                          .description = "Desc",
                                          .upfront_payment = 1000u,
                                          .completion_payment = 3000u})
@@ -181,6 +185,26 @@ SCENARIO("LaunchGoAction", "[action]") {
         CHECK(contractB.get<Contract>().failed == false);
         CHECK(world.get<Company>().balance == 5000);
       }
+      THEN("Contract completion notifications are created") {
+        int matched = 0;
+        world.query_builder<Notification>().build().each(
+            [&](flecs::entity notifE, Notification &notification) {
+              if (notification.title != "Contract Completed") {
+                return;
+              }
+              CHECK(notifE.has<NotificationCategory>(
+                  world.lookup("NotificationCategories::Contracts")));
+              if (notification.text ==
+                  "AlphaSat Delivery has been completed and paid out $2,000") {
+                matched++;
+              }
+              if (notification.text ==
+                  "BetaSat Delivery has been completed and paid out $3,000") {
+                matched++;
+              }
+            });
+        CHECK(matched == 2);
+      }
     }
   }
 
@@ -192,7 +216,8 @@ SCENARIO("LaunchGoAction", "[action]") {
     auto rocket = world.entity("Rocket B").add<Rocket>();
     rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
     auto contract = world.entity("Contract B1")
-                        .set<Contract>({.client = "Client",
+                        .set<Contract>({.name = "GTO Delivery",
+                                        .client = "Client",
                                         .description = "Desc",
                                         .upfront_payment = 1000u,
                                         .completion_payment = 2000u})
@@ -219,6 +244,22 @@ SCENARIO("LaunchGoAction", "[action]") {
       }
       THEN("No payment is added to the company balance") {
         CHECK(world.get<Company>().balance == 0);
+      }
+      THEN("A contract failure notification is created") {
+        bool found = false;
+        world.query_builder<Notification>().build().each(
+            [&](flecs::entity notifE, Notification &notification) {
+              if (notification.title != "Contract Failed") {
+                return;
+              }
+              CHECK(notifE.has<NotificationCategory>(
+                  world.lookup("NotificationCategories::Contracts")));
+              CHECK(notification.severity == NotificationSeverity::Important);
+              if (notification.text == "GTO Delivery has failed") {
+                found = true;
+              }
+            });
+        CHECK(found);
       }
     }
   }

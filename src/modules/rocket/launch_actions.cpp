@@ -5,7 +5,6 @@
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
 #include "modules/engine/helpers.h"
-#include "modules/simulation/simulation.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
 #include "rocket_actions.h"
@@ -270,24 +269,23 @@ void LaunchGoAction::execute(flecs::world &world) {
                 "non-contract entity");
 
       auto &contract = contractE.get_mut<Contract>();
-      bool contractFailed = false;
       if (contractE.target<ContractTargetOrbit>() != planData.target_orbit) {
         spdlog::info(
             "Contract {} failed because payload {} was launched to wrong orbit",
             contract.name.c_str(), payload.name().c_str());
-        contractFailed = true;
+        ContractFailAction{contractE}.execute(world);
       } else if (rocket_failure) {
         spdlog::info(
             "Contract {} failed because payload {} was launched on a rocket "
             "that failed",
             contract.name.c_str(), payload.name().c_str());
-        contractFailed = true;
         instantiateNotification(
             world, "Launch Failure",
             fmt::format("{} was launched on {}, which failed."
                         " Contract {} is failed.",
                         payload.name().c_str(), rocketE.name().c_str(),
                         contract.name.c_str()));
+        ContractFailAction{contractE}.execute(world);
       } else {
         total_payment += contract.completion_payment;
         instantiateNotification(
@@ -296,8 +294,8 @@ void LaunchGoAction::execute(flecs::world &world) {
                         rocketE.name().c_str(),
                         planData.target_orbit.name().c_str()),
             world.lookup("NotificationCategories::Rocket Launch"));
+        ContractSuccessAction{contractE}.execute(world);
       }
-      ContractCompleteAction{contractE, contractFailed}.execute(world);
     }
   }
 

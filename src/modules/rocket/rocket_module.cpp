@@ -1,6 +1,5 @@
 #include "rocket_module.h"
 #include "active_launches_window.h"
-#include "contract_actions.h"
 #include "contracts_window.h"
 #include "launch_actions.h"
 #include "launch_detail_window.h"

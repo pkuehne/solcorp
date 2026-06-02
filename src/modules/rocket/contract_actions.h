@@ -25,13 +25,22 @@ struct ContractRejectAction : public IAction {
   void execute(flecs::world &world) override;
 };
 
-struct ContractCompleteAction : public IAction {
+struct ContractSuccessAction : public IAction {
   flecs::entity contract = flecs::entity::null();
-  bool failed = false;
 
-  ContractCompleteAction() = default;
-  ContractCompleteAction(flecs::entity c, bool failed)
-      : contract(c), failed(failed) {}
+  ContractSuccessAction() = default;
+  explicit ContractSuccessAction(flecs::entity c) : contract(c) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &world) override;
+};
+
+struct ContractFailAction : public IAction {
+  flecs::entity contract = flecs::entity::null();
+
+  ContractFailAction() = default;
+  explicit ContractFailAction(flecs::entity c) : contract(c) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
