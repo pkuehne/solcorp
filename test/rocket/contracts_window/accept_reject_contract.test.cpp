@@ -1,7 +1,7 @@
 #include "modules/base/base.h"
-#include "modules/rocket/contracts_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
+#include "modules/window/contracts_window.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -12,16 +12,16 @@ SCENARIO("acceptContract and rejectContract update balance",
   world.import <SimulationModule>();
   world.import <RocketModule>();
 
-  auto contractE = world.entity("TestContract")
-                       .set<Contract>({
-                           .client = "Client",
-                           .description = "Description",
-                           .upfront_payment = 500,
-                           .completion_payment = 1000,
-                           .failed = false,
-                       })
-                       .add<ContractCurrentState>(
-                           world.lookup("States::Contract::Open"));
+  auto contractE =
+      world.entity("TestContract")
+          .set<Contract>({
+              .client = "Client",
+              .description = "Description",
+              .upfront_payment = 500,
+              .completion_payment = 1000,
+              .failed = false,
+          })
+          .add<ContractCurrentState>(world.lookup("States::Contract::Open"));
 
   GIVEN("An open contract") {
     WHEN("acceptContract is called") {

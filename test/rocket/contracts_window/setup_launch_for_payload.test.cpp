@@ -1,9 +1,9 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/rocket/contracts_window.h"
 #include "modules/rocket/launch_actions.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/window/contracts_window.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -23,8 +23,8 @@ SCENARIO("setupLaunchForPayload creates a launch plan for a contract payload "
                                      .completion_payment = 2000u,
                                      .failed = false,
                                  })
-                                 .add<ContractCurrentState>(
-                                     world.lookup("States::Contract::Accepted"));
+                                 .add<ContractCurrentState>(world.lookup(
+                                     "States::Contract::Accepted"));
     auto targetOrbit = world.entity("LEO");
     contract.add<ContractTargetOrbit>(targetOrbit);
     auto payload = world.entity("TestPayload").set<Payload>({.mass = 1000});

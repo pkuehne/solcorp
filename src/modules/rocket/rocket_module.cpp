@@ -1,6 +1,5 @@
 #include "rocket_module.h"
 #include "active_launches_window.h"
-#include "contracts_window.h"
 #include "launch_actions.h"
 #include "launch_detail_window.h"
 #include "launch_window.h"
@@ -31,7 +30,6 @@ RocketModule::RocketModule(flecs::world &world) {
   registerEngineComponents(world);
 
   // Register components
-  world.component<ContractFilterStatus>();
   world.component<LaunchScheduleAction>("PlannedLaunch")
       .member("name", &LaunchScheduleAction::name)
       .member("launchDay", &LaunchScheduleAction::launchDay)
@@ -54,10 +52,6 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
       .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
       .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
-  world.component<ContractsWindow>()
-      .member("statusFilter", &ContractsWindow::statusFilter)
-      .member("showCompleted", &ContractsWindow::showCompleted)
-      .member("pendingDelete", &ContractsWindow::pendingDelete);
   world.component<ContractTargetOrbit>();
   world.component<Contract>()
       .member("name", &Contract::name)
@@ -187,8 +181,6 @@ RocketModule::RocketModule(flecs::world &world) {
             .set<LaunchWindow>({});
         registerWindow("Active Launches", drawActiveLaunchesWindow, world)
             .set<ActiveLaunchesWindow>({});
-        registerWindow("Contracts Window", drawContractsWindow, world)
-            .set<ContractsWindow>({});
         registerWindow("Launch Detail", drawLaunchDetailWindow, world)
             .set<LaunchDetailWindow>({});
       });

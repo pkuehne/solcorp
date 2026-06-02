@@ -1,8 +1,8 @@
+#include "modules/base/notification.h"
 #include "modules/rocket/launch_actions.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
-#include "modules/base/notification.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 
@@ -195,11 +195,12 @@ SCENARIO("LaunchGoAction", "[action]") {
               CHECK(notifE.has<NotificationCategory>(
                   world.lookup("NotificationCategories::Contracts")));
               if (notification.text ==
-                  "AlphaSat Delivery has been completed and paid out $2,000") {
+                  "'AlphaSat Delivery' has been completed and paid out "
+                  "$2,000") {
                 matched++;
               }
               if (notification.text ==
-                  "BetaSat Delivery has been completed and paid out $3,000") {
+                  "'BetaSat Delivery' has been completed and paid out $3,000") {
                 matched++;
               }
             });
@@ -255,7 +256,7 @@ SCENARIO("LaunchGoAction", "[action]") {
               CHECK(notifE.has<NotificationCategory>(
                   world.lookup("NotificationCategories::Contracts")));
               CHECK(notification.severity == NotificationSeverity::Important);
-              if (notification.text == "GTO Delivery has failed") {
+              if (notification.text == "'GTO Delivery' has failed") {
                 found = true;
               }
             });

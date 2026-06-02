@@ -5,7 +5,7 @@
 #include "modules/simulation/celestial_browser.h"
 #include <array>
 #include <modules/rocket/active_launches_window.h>
-#include <modules/rocket/contracts_window.h>
+#include <modules/window/contracts_window.h>
 #include <modules/window/notification_window.h>
 #include <modules/window/rocket_list_window.h>
 
@@ -32,7 +32,7 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
       ImGui::SetItemTooltip("View Active Launches");
       ImGui::SameLine();
       if (ImGui::Button("\xef\x95\xac")) { // fa-file-contract f56c
-        showContractsWindow(world);
+        showContractListWindow(world);
       }
       ImGui::SetItemTooltip("View Contracts");
       ImGui::SameLine();

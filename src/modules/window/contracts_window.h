@@ -1,26 +1,22 @@
 #pragma once
 
-#include <cstdint>
 #include <flecs.h>
 
 struct LaunchScheduleAction;
 
-enum class ContractFilterStatus : uint8_t { All = 0, Open, Accepted, Closed };
-
-struct ContractsWindow {
-  ContractFilterStatus statusFilter = ContractFilterStatus::All;
-  bool showCompleted = true;
-  flecs::entity pendingDelete = flecs::entity::null();
+struct ContractListWindow {
+  flecs::entity stateFilter = flecs::entity::null();
+  bool hideTerminal = true;
 };
 
-void showContractsWindow(flecs::world &world);
-void drawContractsWindow(flecs::entity winE);
+void showContractListWindow(flecs::world &world);
+void drawContractListWindow(flecs::entity winE);
 
 /// @brief Returns true if contract passes the status filter in state.
 /// @param contractE The contract entity
 /// @param state The window state with active filters
 bool contractMatchesFilter(flecs::entity contractE,
-                           const ContractsWindow &state);
+                           const ContractListWindow &state);
 
 /// @brief Creates a launch plan for the given payload and opens the launch
 /// window with the plan loaded. The plan will be pre-filled with the payload

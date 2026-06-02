@@ -20,6 +20,7 @@ list(APPEND SolCorpSources
     modules/window/main_menu.cpp
     modules/window/toolbar.cpp
     modules/window/building_detail_window.cpp
+    modules/window/contracts_window.cpp
     modules/window/contract_detail_window.cpp
     modules/window/notification_window.cpp
     modules/window/rocket_detail_window.cpp
@@ -32,7 +33,6 @@ list(APPEND SolCorpSources
     modules/rocket/launch_window.cpp
     modules/rocket/launch_detail_window.cpp
     modules/rocket/active_launches_window.cpp
-    modules/rocket/contracts_window.cpp
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
@@ -67,6 +67,7 @@ list(APPEND SolCorpHeaders
     modules/window/main_menu.h
     modules/window/toolbar.h
     modules/window/building_detail_window.h
+    modules/window/contracts_window.h
     modules/window/contract_detail_window.h
     modules/window/notification_window.h
     modules/window/rocket_detail_window.h
@@ -79,7 +80,6 @@ list(APPEND SolCorpHeaders
     modules/rocket/launch_window.h
     modules/rocket/launch_detail_window.h
     modules/rocket/active_launches_window.h
-    modules/rocket/contracts_window.h
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h

@@ -203,14 +203,14 @@ std::vector<flecs::entity> get_all_contracts(const flecs::world &world) {
 
 std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world) {
   std::vector<flecs::entity> result;
-  world.query_builder<Contract>().build().each(
-      [&](flecs::entity e, Contract &) {
-        if (e.has<ContractCurrentState>(world.lookup("States::Contract::Open")) ||
-            e.has<ContractCurrentState>(
-                world.lookup("States::Contract::Accepted"))) {
-          result.push_back(e);
-        }
-      });
+  world.query_builder<Contract>().build().each([&](flecs::entity e,
+                                                   Contract &) {
+    if (e.has<ContractCurrentState>(world.lookup("States::Contract::Open")) ||
+        e.has<ContractCurrentState>(
+            world.lookup("States::Contract::Accepted"))) {
+      result.push_back(e);
+    }
+  });
   return result;
 }
 

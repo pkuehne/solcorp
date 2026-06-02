@@ -1,6 +1,7 @@
 #include "window_module.h"
 #include "SDL_keycode.h"
 #include "contract_detail_window.h"
+#include "contracts_window.h"
 #include "main_menu.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
@@ -17,6 +18,9 @@ WindowModule::WindowModule(flecs::world &world) {
   // Register components
   world.component<MainMenuBar>();
   world.component<Toolbar>();
+  world.component<ContractListWindow>()
+      .member("stateFilter", &ContractListWindow::stateFilter)
+      .member("hideTerminal", &ContractListWindow::hideTerminal);
   world.component<ContractDetailWindow>();
   world.component<RocketDetailWindow>();
   world.component<RocketListWindow>();
@@ -39,6 +43,8 @@ WindowModule::WindowModule(flecs::world &world) {
             .set<NotificationWindow>({});
         registerWindow("Contract Detail", drawContractDetailWindow, w)
             .set<ContractDetailWindow>({});
+        registerWindow("Contract List", drawContractListWindow, w)
+            .set<ContractListWindow>({});
         registerWindow("Rocket Detail", drawRocketDetailWindow, w)
             .set<RocketDetailWindow>({});
         registerWindow("Rocket List", drawRocketListWindow, w)
