@@ -20,6 +20,7 @@ list(APPEND SolCorpSources
     modules/window/main_menu.cpp
     modules/window/toolbar.cpp
     modules/window/building_detail_window.cpp
+    modules/window/contract_detail_window.cpp
     modules/window/notification_window.cpp
     modules/window/rocket_detail_window.cpp
     modules/window/rocket_list_window.cpp
@@ -66,6 +67,7 @@ list(APPEND SolCorpHeaders
     modules/window/main_menu.h
     modules/window/toolbar.h
     modules/window/building_detail_window.h
+    modules/window/contract_detail_window.h
     modules/window/notification_window.h
     modules/window/rocket_detail_window.h
     modules/window/rocket_list_window.h

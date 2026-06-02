@@ -5,6 +5,7 @@
 #include "launch_window.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
+#include "modules/window/contract_detail_window.h"
 #include "rocket_module.h"
 #include <flecs/addons/cpp/entity.hpp>
 #include <flecs/addons/cpp/mixins/query/impl.hpp>
@@ -44,7 +45,8 @@ bool contractMatchesFilter(flecs::entity contractE,
   }
 
   // Filter completed contracts
-  if (!state.showCompleted && contractE.has<ContractCurrentState>(closedState)) {
+  if (!state.showCompleted &&
+      contractE.has<ContractCurrentState>(closedState)) {
     return false;
   }
 
@@ -143,6 +145,7 @@ void drawContractsWindow(flecs::entity winE) {
                             100.0f);
     ImGui::TableSetupColumn("Failed", ImGuiTableColumnFlags_WidthFixed, 45.0f);
 
+    ImGui::TableSetupColumn("Details", ImGuiTableColumnFlags_WidthFixed, 60.0f);
     ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed,
                             180.0f);
     ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed, 50.0f);
@@ -199,6 +202,11 @@ void drawContractsWindow(flecs::entity winE) {
       ImGui::TextUnformatted(contract.failed ? "Yes" : "No");
 
       ImGui::TableSetColumnIndex(7);
+      if (ImGui::SmallButton("View##contract")) {
+        showContractDetailWindow(contractE);
+      }
+
+      ImGui::TableSetColumnIndex(8);
 
       ImGui::BeginDisabled(acceptButtonDisabled(contractE));
       if (ImGui::SmallButton("Accept")) {
@@ -226,7 +234,7 @@ void drawContractsWindow(flecs::entity winE) {
       }
       ImGui::EndDisabled();
 
-      ImGui::TableSetColumnIndex(8);
+      ImGui::TableSetColumnIndex(9);
       if (contractE.has<ContractCurrentState>(
               world.lookup("States::Contract::Closed"))) {
         if (ImGui::SmallButton("Delete")) {

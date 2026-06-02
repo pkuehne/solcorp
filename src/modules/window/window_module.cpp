@@ -1,5 +1,6 @@
 #include "window_module.h"
 #include "SDL_keycode.h"
+#include "contract_detail_window.h"
 #include "main_menu.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
@@ -16,6 +17,7 @@ WindowModule::WindowModule(flecs::world &world) {
   // Register components
   world.component<MainMenuBar>();
   world.component<Toolbar>();
+  world.component<ContractDetailWindow>();
   world.component<RocketDetailWindow>();
   world.component<RocketListWindow>();
   world.component<NotificationWindow>()
@@ -35,6 +37,8 @@ WindowModule::WindowModule(flecs::world &world) {
         auto w = it.world();
         registerWindow("Notifications", drawNotificationWindow, w)
             .set<NotificationWindow>({});
+        registerWindow("Contract Detail", drawContractDetailWindow, w)
+            .set<ContractDetailWindow>({});
         registerWindow("Rocket Detail", drawRocketDetailWindow, w)
             .set<RocketDetailWindow>({});
         registerWindow("Rocket List", drawRocketListWindow, w)
