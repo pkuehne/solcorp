@@ -4,7 +4,6 @@
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
 #include "modules/rocket/contract_actions.h"
-#include "modules/rocket/launch_detail_window.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/window/contract_detail_window.h"
@@ -66,6 +65,10 @@ LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE) {
   showLaunchWindowAdd(world, draftPlan);
 
   return draftPlan;
+}
+
+void openLaunchWindowForPayload(flecs::entity payloadE) {
+  setupLaunchForPayload(payloadE);
 }
 
 void showContractListWindow(flecs::world &world) {

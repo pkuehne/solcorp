@@ -24,6 +24,11 @@ bool contractMatchesFilter(flecs::entity contractE,
 /// @param payloadE The payload entity
 LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE);
 
+/// @brief Creates a launch plan for the given payload and opens the launch
+/// window with the plan loaded.
+/// @param payloadE The payload entity
+void openLaunchWindowForPayload(flecs::entity payloadE);
+
 /// @brief Returns true if the accept button should be disabled for the given
 /// contract entity.
 /// @return True if the accept button should be disabled, false otherwise
