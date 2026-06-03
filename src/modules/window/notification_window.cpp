@@ -3,6 +3,7 @@
 #include "modules/engine/gui.h"
 #include <algorithm>
 #include <flecs.h>
+#include <format>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -37,6 +38,8 @@ static NotifAction drawNotification(flecs::entity notifE, ImDrawList *dl) {
   ImGui::BeginGroup();
   ImGui::Dummy({0.0f, 2.0f});
 
+  ImGui::TextUnformatted(std::format("Day {}: ", notif.date).c_str());
+  ImGui::SameLine();
   ImGui::TextUnformatted(notif.title.c_str());
   ImGui::SameLine();
   ImGui::TextColored(severityColor(notif.severity), "[%s]",

@@ -61,4 +61,31 @@ SCENARIO("instantiateNotification", "[base][notification]") {
       }
     }
   }
+
+  GIVEN("The current game day is set to 42") {
+    world.set<Game>({.day = 42});
+
+    WHEN("A notification is created") {
+      auto e = instantiateNotification(world, "Day 42 Alert", "text");
+
+      THEN("The notification date matches the current game day") {
+        CHECK(e.get<Notification>().date == 42);
+      }
+    }
+  }
+
+  GIVEN("Multiple notifications created on different game days") {
+    world.set<Game>({.day = 10});
+    auto early = instantiateNotification(world, "Early", "text");
+
+    world.set<Game>({.day = 55});
+    auto late = instantiateNotification(world, "Late", "text");
+
+    WHEN("Their dates are compared") {
+      THEN("Each notification records the day it was created") {
+        CHECK(early.get<Notification>().date == 10);
+        CHECK(late.get<Notification>().date == 55);
+      }
+    }
+  }
 }

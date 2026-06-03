@@ -1,4 +1,5 @@
 #include "notification.h"
+#include "modules/base/base.h"
 
 uint32_t Notification::max_id = 0;
 #include "modules/lua/lua.h"
@@ -58,8 +59,12 @@ flecs::entity instantiateNotification(flecs::world &world,
   if (!notificationsNode.is_valid()) {
     notificationsNode = world.entity("Notifications");
   }
+
+  auto date = world.get<Game>().day;
+
   auto e = world.entity()
                .set<Notification>({.id = Notification::max_id++,
+                                   .date = date,
                                    .title = title,
                                    .text = text,
                                    .severity = severity})
