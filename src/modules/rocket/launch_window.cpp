@@ -10,37 +10,32 @@
 #include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
-#include <utility>
 
-void showLaunchWindowAdd(flecs::world world, flecs::entity *rocket,
-                         flecs::entity *launchpad) {
-
-  auto window = showWindow(world, "Mission Plan");
-  SC_ASSERT(window.is_valid(),
-            "showWindow returned invalid entity for Mission Plan");
-  auto state = window.try_get_mut<LaunchWindow>();
-  SC_ASSERT(state, "Mission Plan state is invalid");
-
+LaunchScheduleAction
+buildLaunchScheduleDraft(const LaunchWindowDraftOptions &options) {
   LaunchScheduleAction draftPlan;
-  if (rocket && rocket->is_valid()) {
-    draftPlan.rocket = *rocket;
+  if (options.rocket.is_valid()) {
+    draftPlan.rocket = options.rocket;
   }
-  if (launchpad && launchpad->is_valid()) {
-    draftPlan.launchpad = *launchpad;
+  if (options.launchpad.is_valid()) {
+    draftPlan.launchpad = options.launchpad;
   }
-
-  showLaunchWindowAdd(world, draftPlan);
+  if (options.targetOrbit.is_valid()) {
+    draftPlan.targetOrbit = options.targetOrbit;
+  }
+  draftPlan.payloads = options.payloads;
+  return draftPlan;
 }
 
-void showLaunchWindowAdd(flecs::world world, LaunchScheduleAction draftPlan) {
-
+void showLaunchWindowAdd(flecs::world world,
+                         const LaunchWindowDraftOptions &options) {
   auto window = showWindow(world, "Mission Plan");
   SC_ASSERT(window.is_valid(),
             "showWindow returned invalid entity for Mission Plan");
   auto state = window.try_get_mut<LaunchWindow>();
   SC_ASSERT(state, "LaunchWindow state is invalid");
 
-  state->draftPlan = std::move(draftPlan);
+  state->draftPlan = buildLaunchScheduleDraft(options);
   state->planningOffset = 0;
 
   // Default the plan to today; drawLaunchWindow will snap forward once stats

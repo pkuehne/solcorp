@@ -42,7 +42,7 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
       ImGui::SetItemTooltip("Celestial Browser");
       ImGui::SameLine();
       if (ImGui::Button("\xef\x89\xb1")) { // fa-calendar-plus f271
-        showLaunchWindowAdd(world);
+        showLaunchWindowAdd(world, LaunchWindowDraftOptions{});
       }
       ImGui::SetItemTooltip("Plan a Launch");
 

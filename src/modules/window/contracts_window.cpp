@@ -4,7 +4,6 @@
 #include "modules/engine/gui.h"
 #include "modules/engine/helpers.h"
 #include "modules/rocket/contract_actions.h"
-#include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/window/contract_detail_window.h"
 #include <flecs/addons/cpp/entity.hpp>
@@ -48,27 +47,6 @@ void acceptContract(flecs::world &world, flecs::entity contractE) {
 
 void rejectContract(flecs::world &world, flecs::entity contractE) {
   ContractRejectAction{contractE}.execute(world);
-}
-
-LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE) {
-  auto world = payloadE.world();
-
-  auto draftPlan = LaunchScheduleAction{};
-  draftPlan.payloads.push_back(payloadE);
-
-  // Find the contract that has this payload and get the target orbit from it
-  world.query_builder().with<ContractPayload>(payloadE).build().each(
-      [&draftPlan](flecs::entity contractE) {
-        draftPlan.targetOrbit = contractE.target<ContractTargetOrbit>();
-      });
-
-  showLaunchWindowAdd(world, draftPlan);
-
-  return draftPlan;
-}
-
-void openLaunchWindowForPayload(flecs::entity payloadE) {
-  setupLaunchForPayload(payloadE);
 }
 
 void showContractListWindow(flecs::world &world) {

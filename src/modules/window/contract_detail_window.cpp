@@ -4,6 +4,7 @@
 #include "modules/engine/helpers.h"
 #include "modules/rocket/contract_actions.h"
 #include "modules/rocket/launch_detail_window.h"
+#include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/window/contracts_window.h"
 #include "widgets/widgets.h"
@@ -153,7 +154,10 @@ void drawContractDetailWindow(flecs::entity winE) {
               ButtonLabel{.text = "Plan"},
               ButtonTooltip{.text = "Create a launch plan for this contract"},
               planIssue)) {
-        openLaunchWindowForPayload(payloadE);
+        LaunchWindowDraftOptions options;
+        options.targetOrbit = targetOrbit;
+        options.payloads = {payloadE};
+        showLaunchWindowAdd(world, options);
       }
     }
 

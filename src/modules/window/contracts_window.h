@@ -2,8 +2,6 @@
 
 #include <flecs.h>
 
-struct LaunchScheduleAction;
-
 struct ContractListWindow {
   flecs::entity stateFilter = flecs::entity::null();
   bool hideTerminal = true;
@@ -17,17 +15,6 @@ void drawContractListWindow(flecs::entity winE);
 /// @param state The window state with active filters
 bool contractMatchesFilter(flecs::entity contractE,
                            const ContractListWindow &state);
-
-/// @brief Creates a launch plan for the given payload and opens the launch
-/// window with the plan loaded. The plan will be pre-filled with the payload
-/// and target orbit from the contract.
-/// @param payloadE The payload entity
-LaunchScheduleAction setupLaunchForPayload(flecs::entity payloadE);
-
-/// @brief Creates a launch plan for the given payload and opens the launch
-/// window with the plan loaded.
-/// @param payloadE The payload entity
-void openLaunchWindowForPayload(flecs::entity payloadE);
 
 /// @brief Returns true if the accept button should be disabled for the given
 /// contract entity.

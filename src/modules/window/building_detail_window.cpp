@@ -185,7 +185,7 @@ void drawStorageSection(flecs::entity &entity) {
 void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
-  auto launchpad = entity.get<Launchpad>();
+  const auto &launchpad = entity.get<Launchpad>();
   Widgets::StatTooltip(&launchpad.max_weight);
   Widgets::StatTooltip(&launchpad.prep_days);
 
@@ -203,7 +203,9 @@ void drawLaunchpadSection(flecs::entity &entity) {
   });
   ImGui::Separator();
   if (ImGui::Button("Schedule Launch")) {
-    showLaunchWindowAdd(world, nullptr, &entity);
+    LaunchWindowDraftOptions options;
+    options.launchpad = entity;
+    showLaunchWindowAdd(world, options);
   }
 }
 
