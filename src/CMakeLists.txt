@@ -41,6 +41,7 @@ list(APPEND SolCorpSources
     modules/site/helpers.cpp
     modules/site/site.cpp
     modules/site/site_construction.cpp
+    modules/site/weather.cpp
     modules/staff/staff.cpp
     modules/stats/stats.cpp
 )
@@ -88,6 +89,7 @@ list(APPEND SolCorpHeaders
     modules/site/helpers.h
     modules/site/site.h
     modules/site/site_construction.h
+    modules/site/weather.h
     modules/staff/staff.h
     modules/stats/stats.h
 )

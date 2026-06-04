@@ -8,6 +8,12 @@ bool roll_random(double probability) {
   return dist(rng) < probability;
 }
 
+double random_double() {
+  static std::mt19937 rng{std::random_device{}()};
+  static std::uniform_real_distribution<double> dist{0.0, 1.0};
+  return dist(rng);
+}
+
 std::string format_locale(int64_t amount) {
   std::string result = "";
   if (amount < 0) {

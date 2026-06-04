@@ -10,6 +10,9 @@
 /// @return true if the roll succeeds, false otherwise.
 bool roll_random(double probability);
 
+/// @brief Returns a uniform random value in [0.0, 1.0).
+double random_double();
+
 /// @brief Formats an amount with commas as thousands separators, and a minus
 /// sign if negative.
 /// @details Despite the name, is not locale-aware and always uses commas and a
