@@ -17,6 +17,7 @@ enum class NotificationSeverity : uint8_t {
 struct Notification {
   static uint32_t max_id;
   uint32_t id = 0;
+  uint32_t date = 0;
   std::string title;
   std::string text;
   NotificationSeverity severity = NotificationSeverity::Low;

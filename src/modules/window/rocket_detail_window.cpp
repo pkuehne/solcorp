@@ -134,7 +134,9 @@ void drawRocketDetailWindow(flecs::entity winE) {
               ButtonLabel{.text = "Schedule"},
               ButtonTooltip{.text = "Schedule the rocket for launch"},
               actionIssue)) {
-        showLaunchWindowAdd(world, &state.rocket, nullptr);
+        LaunchWindowDraftOptions options;
+        options.rocket = state.rocket;
+        showLaunchWindowAdd(world, options);
       }
     }
     ImGui::Spacing();
