@@ -19,6 +19,7 @@ list(APPEND SolCorpSources
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
     modules/window/toolbar.cpp
+    modules/window/weather_widget.cpp
     modules/window/building_detail_window.cpp
     modules/window/contracts_window.cpp
     modules/window/contract_detail_window.cpp
@@ -67,6 +68,7 @@ list(APPEND SolCorpHeaders
     modules/window/window_module.h
     modules/window/main_menu.h
     modules/window/toolbar.h
+    modules/window/weather_widget.h
     modules/window/building_detail_window.h
     modules/window/contracts_window.h
     modules/window/contract_detail_window.h
