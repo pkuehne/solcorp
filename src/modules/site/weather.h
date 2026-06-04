@@ -1,8 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <flecs.h>
 #include <string>
 #include <vector>
+
+struct Site;
 
 struct WeatherPattern {
   std::string icon_glyph;
@@ -26,6 +29,8 @@ struct WeatherTransitionData {
   double probability;
 };
 
+constexpr uint32_t WEATHER_TRANSITION_INTERVAL = 7;
+
 std::vector<WeatherTransitionData>
 getWeatherTransitions(flecs::entity patternE);
 
@@ -34,3 +39,7 @@ flecs::entity
 selectNextWeather(flecs::entity current,
                   const std::vector<WeatherTransitionData> &transitions,
                   double roll);
+
+void systemAdvanceWeather(flecs::entity siteE);
+void systemInitSiteWeather(flecs::entity siteE, const Site &);
+void initWeather(flecs::world &world);
