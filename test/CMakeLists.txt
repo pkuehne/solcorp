@@ -69,6 +69,7 @@ add_executable(unit_test
   stats/stats.test.cpp
   weather/weather_select_next.test.cpp
   weather/weather_advancement.test.cpp
+  weather/weather_failure_rate.test.cpp
   window/building_detail_window.test.cpp
   window/notification_window.test.cpp
   window/rocket_list_window.test.cpp
