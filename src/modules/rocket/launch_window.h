@@ -18,7 +18,7 @@ struct LaunchWindow {
 
 LaunchScheduleAction
 buildLaunchScheduleDraft(const LaunchWindowDraftOptions &options);
-void showLaunchWindowAdd(flecs::world world,
-                         const LaunchWindowDraftOptions &options =
-                             LaunchWindowDraftOptions{});
+void showLaunchWindowAdd(
+    flecs::world world,
+    const LaunchWindowDraftOptions &options = LaunchWindowDraftOptions{});
 void drawLaunchWindow(flecs::entity winE);
