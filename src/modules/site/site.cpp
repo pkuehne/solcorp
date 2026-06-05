@@ -15,6 +15,7 @@
 #include "modules/window/building_detail_window.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
+#include "weather.h"
 #include <format>
 #include <spdlog/spdlog.h>
 
@@ -140,6 +141,8 @@ SiteModule::SiteModule(flecs::world &world) {
         statsApplyModifiers(e, &pad.max_weight);
         statsApplyModifiers(e, &pad.prep_days);
       });
+
+  initWeather(world);
 
   world.system<const Site, const Transform>("Draw Site Border")
       .with<CurrentSite>()

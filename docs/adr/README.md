@@ -18,3 +18,5 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 | [004](/adr/004-action-pattern.md) | UI Action Pattern | Accepted |
 | [005](/adr/005-game-calendar.md) | Game Calendar System | Accepted |
 | [006](/adr/006-rocket-fsm.md) | Rocket and Launch Plan Workflow | Accepted |
+| [007](/adr/007-launch-plan-timeline-and-automation.md) | Launch Plan Timeline and Automation | Accepted |
+| [008](/adr/008-central-stat-registry.md) | Central Stat Registry via Reflection | Proposed |

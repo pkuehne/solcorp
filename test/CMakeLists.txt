@@ -67,6 +67,9 @@ add_executable(unit_test
   site/rocket_prefab_window/compute_build_cost.test.cpp
   site/rocket_prefab_window/can_afford_rocket_prefab.test.cpp
   stats/stats.test.cpp
+  weather/weather_select_next.test.cpp
+  weather/weather_advancement.test.cpp
+  weather/weather_failure_rate.test.cpp
   window/building_detail_window.test.cpp
   window/notification_window.test.cpp
   window/rocket_list_window.test.cpp

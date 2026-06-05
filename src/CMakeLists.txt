@@ -1,6 +1,7 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
     widgets/stat_widget.cpp
+    widgets/weather_widget.cpp
     modules/base/base.cpp
     modules/base/notification.cpp
     modules/engine/engine.cpp
@@ -41,12 +42,14 @@ list(APPEND SolCorpSources
     modules/site/helpers.cpp
     modules/site/site.cpp
     modules/site/site_construction.cpp
+    modules/site/weather.cpp
     modules/staff/staff.cpp
     modules/stats/stats.cpp
 )
 list(APPEND SolCorpHeaders
     widgets/widgets.h
     widgets/stat_widget.h
+    widgets/weather_widget.h
     modules/base/base.h
     modules/base/assert.h
     modules/base/notification.h
@@ -88,6 +91,7 @@ list(APPEND SolCorpHeaders
     modules/site/helpers.h
     modules/site/site.h
     modules/site/site_construction.h
+    modules/site/weather.h
     modules/staff/staff.h
     modules/stats/stats.h
 )

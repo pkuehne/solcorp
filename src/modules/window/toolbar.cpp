@@ -3,6 +3,7 @@
 #include "imgui_internal.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/simulation/celestial_browser.h"
+#include "widgets/weather_widget.h"
 #include <array>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/window/contracts_window.h>
@@ -47,9 +48,18 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
       ImGui::SetItemTooltip("Plan a Launch");
 
       static const char *envelope = "\xef\x83\xa0"; // fa-envelope f0e0
-      float envelope_width = ImGui::CalcTextSize(envelope).x +
-                             ImGui::GetStyle().FramePadding.x * 2;
-      ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - envelope_width);
+      static const char *weather_ref =
+          "\xef\x86\x85"; // fa-sun, representative FA glyph
+      float envelope_btn_width = ImGui::CalcTextSize(envelope).x +
+                                 ImGui::GetStyle().FramePadding.x * 2;
+      float weather_text_width = ImGui::CalcTextSize(weather_ref).x;
+      float item_spacing = ImGui::GetStyle().ItemSpacing.x;
+      // Right-align: weather text (no frame padding) + spacing + envelope
+      // button
+      ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - weather_text_width -
+                           item_spacing - envelope_btn_width);
+      drawWeatherToolbarItem(world);
+      ImGui::SameLine();
       if (ImGui::Button(envelope)) {
         showNotificationWindow(world);
       }

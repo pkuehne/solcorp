@@ -214,6 +214,13 @@ RocketModule::RocketModule(flecs::world &world) {
       .without<DurationRequired>()
       .kind(UpdatePhase)
       .each(systemAutoGoForLaunch);
+
+  world.system<Rocket>("Refresh Rocket Stats")
+      .tick_source(sim.speed)
+      .kind(UpdatePhase)
+      .each([](flecs::entity rocketE, Rocket &rocket) {
+        statsApplyModifiers(rocketE, &rocket.failure_rate);
+      });
 }
 
 void systemCreateRocketBuildCategory(flecs::iter &it) {
