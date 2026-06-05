@@ -116,7 +116,7 @@ SCENARIO("getWeatherTransitions", "[weather]") {
         for (const auto &t : result) {
           total += t.probability;
         }
-        CHECK(total == Catch::Approx(0.35));
+        CHECK(total == 0.35);
       }
 
       THEN("Targets are correct") {
