@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <flecs.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 /// Represents an effect in the system.
@@ -111,6 +112,28 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats);
 /// @param e The entity.
 /// @param stat The stat to apply modifiers to.
 void statsApplyModifiers(flecs::entity e, Stat *stat);
+
+struct StatComponentRegistration {
+  flecs::id_t component_id = 0;
+  std::vector<int32_t> offsets;
+  bool system_registered = false;
+};
+
+struct StatRegistry {
+  std::unordered_map<flecs::id_t, StatComponentRegistration> components;
+};
+
+/// Discovers reflected component members whose type is Stat.
+void discoverStatComponents(flecs::world &world);
+
+/// Registers automatic modifier application systems for discovered stats.
+void registerStatSystems(flecs::world &world);
+
+/// Finds a reflected Stat by id on an entity.
+///
+/// The returned pointer is into ECS component storage. Use it immediately and do
+/// not store it across ECS mutations or progress calls.
+[[nodiscard]] Stat *findStat(flecs::entity e, std::string_view id);
 
 /// Represents the stats module.
 struct StatsModule {

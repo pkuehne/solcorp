@@ -1,6 +1,27 @@
 #include "modules/stats/stats.h"
 #include <catch2/catch_test_macros.hpp>
 
+namespace {
+
+struct ReflectedStats {
+  Stat thrust{{.id = "thrust",
+               .display = "Thrust",
+               .description = "Engine thrust",
+               .base = 100.0}};
+  Stat cost{{.id = "cost",
+             .display = "Cost",
+             .description = "Build cost",
+             .base = 1000.0,
+             .higher_is_better = false,
+             .format = Stat::Format::Currency}};
+  Stat hidden{{.id = "hidden",
+               .display = "Hidden",
+               .description = "Not reflected",
+               .base = 5.0}};
+};
+
+} // namespace
+
 SCENARIO("Stats", "[stats]") {
   GIVEN("A test stat with value 10") {
     Stat stat{{.id = "test_stat",
@@ -43,6 +64,58 @@ SCENARIO("Stats", "[stats]") {
       THEN("The result is again 10") {
         REQUIRE(result == false);
         REQUIRE(stat.value() == 10.0);
+      }
+    }
+  }
+}
+
+SCENARIO("Reflected stat registry", "[stats]") {
+  flecs::world world;
+  world.import <StatsModule>();
+
+  world.component<ReflectedStats>()
+      .member("thrust", &ReflectedStats::thrust)
+      .member("cost", &ReflectedStats::cost);
+
+  GIVEN("an entity with a reflected stats component and matching effects") {
+    auto source = world.entity("Source");
+    auto effect = world.entity("Engine Upgrade").add<Effect>();
+    world.entity()
+        .child_of(effect)
+        .set<Modifier>(
+            {.target_stat = "thrust", .additive = 25.0, .multiplicative = 1.0});
+    world.entity()
+        .child_of(effect)
+        .set<Modifier>(
+            {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
+    source.add<HasEffect>(effect);
+
+    auto entity = world.entity("Vehicle").child_of(source).set<ReflectedStats>(
+        {});
+
+    WHEN("the world progresses") {
+      world.progress();
+
+      THEN("all reflected stats receive their modifiers automatically") {
+        const auto &stats = entity.get<ReflectedStats>();
+        CHECK(stats.thrust.value() == 125.0);
+        CHECK(stats.cost.value() == 1250.0);
+      }
+
+      THEN("unregistered stat members are not discovered") {
+        const auto &stats = entity.get<ReflectedStats>();
+        CHECK(stats.hidden.value() == 5.0);
+        CHECK(findStat(entity, "hidden") == nullptr);
+      }
+    }
+
+    WHEN("a stat is found by id") {
+      world.progress();
+      auto *stat = findStat(entity, "cost");
+
+      THEN("the reflected stat pointer is returned") {
+        REQUIRE(stat != nullptr);
+        CHECK(stat->display() == "Cost");
       }
     }
   }

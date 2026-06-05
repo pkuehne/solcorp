@@ -135,13 +135,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 
-  world.system<Launchpad>()
-      .kind(UpdatePhase)
-      .each([](flecs::entity e, Launchpad &pad) {
-        statsApplyModifiers(e, &pad.max_weight);
-        statsApplyModifiers(e, &pad.prep_days);
-      });
-
   initWeather(world);
 
   world.system<const Site, const Transform>("Draw Site Border")
