@@ -125,6 +125,5 @@ void initWeather(flecs::world &world) {
   world.system<const Site>("Init Site Weather")
       .without<CurrentWeather>(flecs::Wildcard)
       .kind(UpdatePhase)
-      .tick_source(sim.speed)
       .each(systemInitSiteWeather);
 }

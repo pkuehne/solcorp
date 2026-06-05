@@ -1,6 +1,7 @@
 list(APPEND SolCorpSources
     widgets/widgets.cpp
     widgets/stat_widget.cpp
+    widgets/weather_widget.cpp
     modules/base/base.cpp
     modules/base/notification.cpp
     modules/engine/engine.cpp
@@ -19,7 +20,6 @@ list(APPEND SolCorpSources
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
     modules/window/toolbar.cpp
-    modules/window/weather_widget.cpp
     modules/window/building_detail_window.cpp
     modules/window/contracts_window.cpp
     modules/window/contract_detail_window.cpp
@@ -49,6 +49,7 @@ list(APPEND SolCorpSources
 list(APPEND SolCorpHeaders
     widgets/widgets.h
     widgets/stat_widget.h
+    widgets/weather_widget.h
     modules/base/base.h
     modules/base/assert.h
     modules/base/notification.h
@@ -68,7 +69,6 @@ list(APPEND SolCorpHeaders
     modules/window/window_module.h
     modules/window/main_menu.h
     modules/window/toolbar.h
-    modules/window/weather_widget.h
     modules/window/building_detail_window.h
     modules/window/contracts_window.h
     modules/window/contract_detail_window.h

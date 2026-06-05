@@ -3,7 +3,7 @@
 #include "imgui_internal.h"
 #include "modules/rocket/launch_window.h"
 #include "modules/simulation/celestial_browser.h"
-#include "weather_widget.h"
+#include "widgets/weather_widget.h"
 #include <array>
 #include <modules/rocket/active_launches_window.h>
 #include <modules/window/contracts_window.h>

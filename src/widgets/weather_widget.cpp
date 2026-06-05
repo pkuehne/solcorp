@@ -5,7 +5,6 @@
 #include "modules/stats/stats.h"
 #include <cctype>
 
-// "failure-rate" -> "Failure Rate"
 static std::string formatStatName(const std::string &kebab) {
   std::string result;
   result.reserve(kebab.size());
@@ -25,30 +24,28 @@ static std::string formatStatName(const std::string &kebab) {
 }
 
 void drawWeatherToolbarItem(flecs::world &world) {
-  // fa-sun — used as placeholder and for width reference (FA glyphs are
-  // monospaced)
-  static const char *placeholder = "\xef\x86\x85";
+  static const char *placeholder = "\xef\x86\x85"; // fa-sun
 
   auto siteE =
       world.query_builder<const Site>().with<CurrentSite>().build().first();
 
-  if (!siteE.is_valid()) {
-    ImGui::Dummy(
-        {ImGui::CalcTextSize(placeholder).x, ImGui::GetTextLineHeight()});
-    return;
+  flecs::entity currentPattern;
+  if (siteE.is_valid()) {
+    currentPattern = siteE.target<CurrentWeather>();
   }
 
-  auto currentPattern = siteE.target<CurrentWeather>();
+  const char *icon =
+      (currentPattern.is_valid())
+          ? currentPattern.get<WeatherPattern>().icon_glyph.c_str()
+          : placeholder;
+  ImGui::TextUnformatted(icon);
+
   if (!currentPattern.is_valid()) {
-    // Site exists but weather not yet initialised — show greyed placeholder
-    ImGui::TextDisabled("%s", placeholder);
     return;
   }
-
-  const auto &wp = currentPattern.get<WeatherPattern>();
-  ImGui::TextUnformatted(wp.icon_glyph.c_str());
 
   if (ImGui::BeginItemTooltip()) {
+    const auto &wp = currentPattern.get<WeatherPattern>();
     ImGui::TextUnformatted(wp.description.c_str());
 
     bool hasModifiers = false;
