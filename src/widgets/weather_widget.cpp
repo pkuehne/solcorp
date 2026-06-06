@@ -3,23 +3,20 @@
 #include "modules/site/site.h"
 #include "modules/site/weather.h"
 #include "modules/stats/stats.h"
-#include <cctype>
+#include "widgets/stat_widget.h"
 
-static std::string formatStatName(const std::string &kebab) {
-  std::string result;
-  result.reserve(kebab.size());
-  bool nextUpper = true;
-  for (char c : kebab) {
-    if (c == '-') {
-      result += ' ';
-      nextUpper = true;
-    } else if (nextUpper) {
-      result += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-      nextUpper = false;
-    } else {
-      result += c;
-    }
+static Stat *findAffectedStat(flecs::entity root, const std::string &id) {
+  if (auto *stat = findStat(root, id)) {
+    return stat;
   }
+
+  Stat *result = nullptr;
+  root.children([&](flecs::entity child) {
+    if (result) {
+      return;
+    }
+    result = findAffectedStat(child, id);
+  });
   return result;
 }
 
@@ -62,13 +59,12 @@ void drawWeatherToolbarItem(flecs::world &world) {
           return;
         }
         const auto &mod = child.get<Modifier>();
-        if (mod.additive != 0.0) {
-          ImColor colour = (mod.additive > 0) ? ImColor(220, 80, 80, 255)
-                                              : ImColor(80, 200, 80, 255);
-          ImGui::Text("%s:", formatStatName(mod.target_stat).c_str());
-          ImGui::SameLine();
-          ImGui::TextColored(colour, "%+.0f%%", mod.additive * 100.0);
-        }
+        auto *stat = findAffectedStat(siteE, mod.target_stat);
+        const auto &label = stat ? stat->display() : mod.target_stat;
+        Widgets::ModifierLine(
+            label.c_str(), mod, stat,
+            {.fallback_format = Stat::Format::Percentage,
+             .fallback_higher_is_better = false});
       });
     }
 
