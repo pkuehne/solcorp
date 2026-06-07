@@ -1,53 +1,34 @@
 #include "stat_widget.h"
 #include "imgui.h"
-#include "modules/engine/helpers.h"
 #include <format>
 
 namespace Widgets {
 
 namespace {
 
-std::string formatModifierValue(double value, Stat::Format format) {
-  switch (format) {
-  case Stat::Format::Currency:
-    return "$" + format_locale(value);
-  case Stat::Format::Percentage:
-    return std::format("{:.0f}%", value * 100);
-  case Stat::Format::Number:
-  default:
-    return std::format("{:.0f}", value);
-  }
-}
-
-ImVec4 modifierColour(const Modifier &mod, const Stat *stat,
-                      ModifierDisplayOptions options) {
+ImVec4 modifierColour(const Modifier &mod, const StatDef &definition) {
   constexpr ImVec4 red = ImVec4(1.0, 0.0, 0.0, 1.0);
   constexpr ImVec4 green = ImVec4(0.0, 0.5, 0.0, 1.0);
   constexpr ImVec4 neutral = ImVec4(0.7, 0.7, 0.7, 1.0);
-  const bool higherIsBetter =
-      stat ? stat->isHigherBetter() : options.fallback_higher_is_better;
 
   if (mod.additive > 0.0 || mod.multiplicative > 1.0) {
-    return higherIsBetter ? green : red;
+    return definition.higher_is_better ? green : red;
   }
   if (mod.additive < 0.0 || mod.multiplicative < 1.0) {
-    return higherIsBetter ? red : green;
+    return definition.higher_is_better ? red : green;
   }
   return neutral;
 }
 
 } // namespace
 
-std::string ModifierValueText(const Modifier &mod, const Stat *stat,
-                              ModifierDisplayOptions options) {
+std::string ModifierValueText(const Modifier &mod,
+                              const StatDef &definition) {
   if (mod.additive > 0.0) {
-    return "+" + (stat ? stat->format(mod.additive)
-                       : formatModifierValue(mod.additive,
-                                             options.fallback_format));
+    return "+" + definition.formatValue(mod.additive);
   }
   if (mod.additive < 0.0) {
-    return stat ? stat->format(mod.additive)
-                : formatModifierValue(mod.additive, options.fallback_format);
+    return definition.formatValue(mod.additive);
   }
   if (mod.multiplicative > 1.0) {
     return std::format("+{:.0f}%", (mod.multiplicative - 1.0) * 100);
@@ -58,33 +39,36 @@ std::string ModifierValueText(const Modifier &mod, const Stat *stat,
   return {};
 }
 
-bool ModifierLine(const char *label, const Modifier &mod, const Stat *stat,
-                  ModifierDisplayOptions options) {
-  const auto modValue = ModifierValueText(mod, stat, options);
+bool ModifierLine(const char *label, const Modifier &mod,
+                  const StatDef &definition) {
+  const auto modValue = ModifierValueText(mod, definition);
   if (modValue.empty()) {
     return false;
   }
 
   ImGui::Text("%s:", label);
   ImGui::SameLine();
-  ImGui::TextColored(modifierColour(mod, stat, options), "%s",
+  ImGui::TextColored(modifierColour(mod, definition), "%s",
                      modValue.c_str());
   return true;
 }
 
-void StatTooltip(const Stat *stat) {
-  ImGui::Text("%s: %s", stat->display().c_str(),
-              stat->format(stat->value()).c_str());
+void StatTooltip(flecs::world &world, const Stat *stat) {
+  const auto definition = statDef(world, stat->id());
+  ImGui::Text("%s: %s", definition.display.c_str(),
+              definition.formatValue(stat->value()).c_str());
 
   if (ImGui::BeginItemTooltip()) {
-    ImGui::Text("%s", stat->description().c_str());
+    ImGui::Text("%s", definition.description.c_str());
     ImGui::Separator();
-    ImGui::Text("Base Value: %s", stat->format(stat->base()).c_str());
+    ImGui::Text("Base Value: %s",
+                definition.formatValue(stat->base()).c_str());
     for (const auto &item : stat->modifiers()) {
-      ModifierLine(item.effectName.c_str(), item.mod, stat);
+      ModifierLine(item.effectName.c_str(), item.mod, definition);
     }
     ImGui::Separator();
-    ImGui::Text("Final Value: %s", stat->format(stat->value()).c_str());
+    ImGui::Text("Final Value: %s",
+                definition.formatValue(stat->value()).c_str());
     ImGui::EndTooltip();
   }
 }

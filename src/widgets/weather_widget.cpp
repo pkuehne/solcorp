@@ -5,21 +5,6 @@
 #include "modules/stats/stats.h"
 #include "widgets/stat_widget.h"
 
-static Stat *findAffectedStat(flecs::entity root, const std::string &id) {
-  if (auto *stat = findStat(root, id)) {
-    return stat;
-  }
-
-  Stat *result = nullptr;
-  root.children([&](flecs::entity child) {
-    if (result) {
-      return;
-    }
-    result = findAffectedStat(child, id);
-  });
-  return result;
-}
-
 void drawWeatherToolbarItem(flecs::world &world) {
   static const char *placeholder = "\xef\x86\x85"; // fa-sun
 
@@ -59,12 +44,8 @@ void drawWeatherToolbarItem(flecs::world &world) {
           return;
         }
         const auto &mod = child.get<Modifier>();
-        auto *stat = findAffectedStat(siteE, mod.target_stat);
-        const auto &label = stat ? stat->display() : mod.target_stat;
-        Widgets::ModifierLine(
-            label.c_str(), mod, stat,
-            {.fallback_format = Stat::Format::Percentage,
-             .fallback_higher_is_better = false});
+        const auto definition = statDef(world, mod.target_stat);
+        Widgets::ModifierLine(definition.display.c_str(), mod, definition);
       });
     }
 

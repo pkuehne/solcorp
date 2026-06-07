@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <format>
 #include <modules/base/base.h>
+#include <utility>
 
 void systemInitialiseStats(flecs::iter &iter);
 void systemApplyReflectedStats(flecs::iter &iter);
@@ -42,10 +43,18 @@ StatsModule::StatsModule(flecs::world &world) {
   // Register components
   world.component<StatRegistry>().add(flecs::Singleton);
   world.set<StatRegistry>({});
+  world.component<StatDef::Format>("StatFormat")
+      .constant("Number", StatDef::Format::Number)
+      .constant("Currency", StatDef::Format::Currency)
+      .constant("Percentage", StatDef::Format::Percentage);
+  world.component<StatDef>("StatDef")
+      .member("id", &StatDef::id)
+      .member("display", &StatDef::display)
+      .member("description", &StatDef::description)
+      .member("higher_is_better", &StatDef::higher_is_better)
+      .member("format", &StatDef::format);
   world.component<Stat>("Stat")
       .member("id", &Stat::m_id)
-      .member("display", &Stat::m_display)
-      .member("description", &Stat::m_description)
       .member("base", &Stat::m_base);
   world.component<Effect>();
   world.component<HasEffect>();
@@ -59,10 +68,23 @@ StatsModule::StatsModule(flecs::world &world) {
     b.computed<[](const Stat *s) { return s->base(); },
                [](Stat *s, double v) { s->setBase(v); }>("base")
         .getter<[](const Stat *s) { return s->value(); }>("value")
-        .getter<[](const Stat *s) { return s->id(); }>("id")
-        .getter<[](const Stat *s) { return s->display(); }>("display")
-        .getter<[](const Stat *s) { return s->description(); }>("description");
+        .getter<[](const Stat *s) { return s->id(); }>("id");
   });
+  register_enum_table_lua(world, "StatFormat", [](LuaEnumBuilder &b) {
+    b.value("Number", StatDef::Format::Number)
+        .value("Currency", StatDef::Format::Currency)
+        .value("Percentage", StatDef::Format::Percentage);
+  });
+  register_component_lua<StatDef>(world, "StatDef",
+                                  [](LuaFieldBuilder<StatDef> &b) {
+                                    b.field<&StatDef::id>("id")
+                                        .field<&StatDef::display>("display")
+                                        .field<&StatDef::description>(
+                                            "description")
+                                        .field<&StatDef::higher_is_better>(
+                                            "higher_is_better")
+                                        .field<&StatDef::format>("format");
+                                  });
 
   register_component_lua<Effect>(world, "Effect");
 
@@ -97,14 +119,12 @@ void Stat::reset() {
 }
 
 const std::string &Stat::id() const { return m_id; }
-const std::string &Stat::display() const { return m_display; }
-const std::string &Stat::description() const { return m_description; }
 const std::vector<EffectModifier> &Stat::modifiers() const {
   return m_modifiers;
 }
 
-std::string Stat::format(double value) const {
-  switch (m_format) {
+std::string StatDef::formatValue(double value) const {
+  switch (format) {
   case Format::Currency:
     return "$" + format_locale(value);
   case Format::Percentage:
@@ -207,6 +227,40 @@ void registerStatSystems(flecs::world &world) {
   }
 }
 
+void registerStatDef(flecs::world &world, StatDef definition) {
+  if (definition.id.empty()) {
+    return;
+  }
+  if (definition.display.empty()) {
+    definition.display = definition.id;
+  }
+
+  auto &registry = world.ensure<StatRegistry>();
+  registry.definitions.insert_or_assign(definition.id, std::move(definition));
+}
+
+const StatDef *findStatDef(flecs::world &world, std::string_view id) {
+  const auto *registry = world.try_get<StatRegistry>();
+  if (!registry) {
+    return nullptr;
+  }
+
+  const auto it = registry->definitions.find(std::string(id));
+  if (it == registry->definitions.end()) {
+    return nullptr;
+  }
+  return &it->second;
+}
+
+StatDef statDef(flecs::world &world, std::string_view id) {
+  if (const auto *definition = findStatDef(world, id)) {
+    return *definition;
+  }
+
+  const auto fallback = std::string(id);
+  return {.id = fallback, .display = fallback, .description = {}};
+}
+
 Stat *findStat(flecs::entity e, std::string_view id) {
   if (!e.is_valid()) {
     return nullptr;
@@ -237,17 +291,14 @@ Stat *findStat(flecs::entity e, std::string_view id) {
 
 void systemApplyReflectedStats(flecs::iter &iter) {
   auto world = iter.world();
-  auto *registry = world.try_get<StatRegistry>();
-  if (!registry) {
-    return;
-  }
+  auto &registry = world.ensure<StatRegistry>();
 
   std::vector<Stat *> stats;
 
   while (iter.next()) {
     const flecs::id_t component_id = ecs_field_id(iter.c_ptr(), 0);
-    const auto entry_it = registry->components.find(component_id);
-    if (entry_it == registry->components.end()) {
+    const auto entry_it = registry.components.find(component_id);
+    if (entry_it == registry.components.end()) {
       continue;
     }
 
@@ -259,7 +310,8 @@ void systemApplyReflectedStats(flecs::iter &iter) {
       stats.clear();
 
       for (const auto offset : offsets) {
-        stats.push_back(statAt(component, offset));
+        auto *stat = statAt(component, offset);
+        stats.push_back(stat);
       }
 
       applyModifiers(iter.entity(row), stats);
