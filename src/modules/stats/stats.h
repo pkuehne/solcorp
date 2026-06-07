@@ -49,8 +49,7 @@ public:
   using Format = StatDef::Format;
 
   Stat() = default;
-  explicit Stat(const StatInit &init)
-      : m_id(init.id), m_base(init.base) {}
+  explicit Stat(const StatInit &init) : m_id(init.id), m_base(init.base) {}
 
   /// Gets the base value of the stat.
   /// @return The base value.
@@ -85,7 +84,7 @@ public:
   double m_base = 0.0f;                    ///< The base value of the stat.
   double m_additive_modifiers = 0.0f;      ///< The total additive modifiers.
   double m_multiplicative_modifiers =
-      1.0f;                     ///< The total multiplicative modifiers.
+      1.0f; ///< The total multiplicative modifiers.
 };
 
 /// Applies modifiers to the stats of an entity.
@@ -130,8 +129,8 @@ void registerStatSystems(flecs::world &world);
 
 /// Finds a reflected Stat by id on an entity.
 ///
-/// The returned pointer is into ECS component storage. Use it immediately and do
-/// not store it across ECS mutations or progress calls.
+/// The returned pointer is into ECS component storage. Use it immediately and
+/// do not store it across ECS mutations or progress calls.
 [[nodiscard]] Stat *findStat(flecs::entity e, std::string_view id);
 
 /// Represents the stats module.

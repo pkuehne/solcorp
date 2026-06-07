@@ -27,12 +27,10 @@ struct LaunchPlanTargetState {};
 /// @brief Component to indicate entity is a rocket.
 struct Rocket {
   static uint32_t max_id;
-  Stat failure_rate =
-      Stat({.id = "failure-rate", .base = 0.1});
+  Stat failure_rate = Stat({.id = "failure-rate", .base = 0.1});
   Stat cost = Stat({.id = "cost", .base = 5'000'000});
   Stat rollout_days = Stat({.id = "rollout-days", .base = 3});
-  Stat move_days =
-      Stat({.id = "move-days", .base = 1});
+  Stat move_days = Stat({.id = "move-days", .base = 1});
 };
 
 struct RocketCurrentState {};

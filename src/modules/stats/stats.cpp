@@ -75,16 +75,14 @@ StatsModule::StatsModule(flecs::world &world) {
         .value("Currency", StatDef::Format::Currency)
         .value("Percentage", StatDef::Format::Percentage);
   });
-  register_component_lua<StatDef>(world, "StatDef",
-                                  [](LuaFieldBuilder<StatDef> &b) {
-                                    b.field<&StatDef::id>("id")
-                                        .field<&StatDef::display>("display")
-                                        .field<&StatDef::description>(
-                                            "description")
-                                        .field<&StatDef::higher_is_better>(
-                                            "higher_is_better")
-                                        .field<&StatDef::format>("format");
-                                  });
+  register_component_lua<StatDef>(
+      world, "StatDef", [](LuaFieldBuilder<StatDef> &b) {
+        b.field<&StatDef::id>("id")
+            .field<&StatDef::display>("display")
+            .field<&StatDef::description>("description")
+            .field<&StatDef::higher_is_better>("higher_is_better")
+            .field<&StatDef::format>("format");
+      });
 
   register_component_lua<Effect>(world, "Effect");
 
@@ -183,29 +181,28 @@ void discoverStatComponents(flecs::world &world) {
   auto &registry = world.ensure<StatRegistry>();
   const flecs::id_t stat_id = world.component<Stat>().id();
 
-  world.query<const EcsStruct>().each(
-      [&](flecs::entity component, const EcsStruct &metadata) {
-        std::vector<int32_t> offsets;
-        const int32_t count = ecs_vec_count(&metadata.members);
-        offsets.reserve(static_cast<size_t>(count));
+  world.query<const EcsStruct>().each([&](flecs::entity component,
+                                          const EcsStruct &metadata) {
+    std::vector<int32_t> offsets;
+    const int32_t count = ecs_vec_count(&metadata.members);
+    offsets.reserve(static_cast<size_t>(count));
 
-        for (int32_t i = 0; i < count; ++i) {
-          const auto *member =
-              ecs_vec_get_t(&metadata.members, ecs_member_t, i);
-          if (member->type == stat_id) {
-            offsets.push_back(member->offset);
-          }
-        }
+    for (int32_t i = 0; i < count; ++i) {
+      const auto *member = ecs_vec_get_t(&metadata.members, ecs_member_t, i);
+      if (member->type == stat_id) {
+        offsets.push_back(member->offset);
+      }
+    }
 
-        if (offsets.empty()) {
-          return;
-        }
+    if (offsets.empty()) {
+      return;
+    }
 
-        std::ranges::sort(offsets);
-        auto &entry = registry.components[component.id()];
-        entry.component_id = component.id();
-        entry.offsets = std::move(offsets);
-      });
+    std::ranges::sort(offsets);
+    auto &entry = registry.components[component.id()];
+    entry.component_id = component.id();
+    entry.offsets = std::move(offsets);
+  });
 }
 
 void registerStatSystems(flecs::world &world) {

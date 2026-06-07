@@ -40,28 +40,28 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("cost", &Rocket::cost)
       .member("rollout_days", &Rocket::rollout_days)
       .member("move_days", &Rocket::move_days);
-  registerStatDef(world, {.id = "failure-rate",
-                          .display = "Failure Rate",
-                          .description =
-                              "Likelyhood the rocket will fail on take-off",
-                          .higher_is_better = false,
-                          .format = Stat::Format::Percentage});
+  registerStatDef(world,
+                  {.id = "failure-rate",
+                   .display = "Failure Rate",
+                   .description = "Likelihood the rocket will fail on take-off",
+                   .higher_is_better = false,
+                   .format = Stat::Format::Percentage});
   registerStatDef(world, {.id = "cost",
                           .display = "Cost",
                           .description = "Cost to build this rocket",
                           .higher_is_better = false,
                           .format = Stat::Format::Currency});
-  registerStatDef(world,
-                  {.id = "rollout-days",
-                   .display = "Rollout Duration",
-                   .description =
-                       "Days to move the rocket from storage to the launchpad",
-                   .higher_is_better = false});
-  registerStatDef(world, {.id = "move-days",
-                          .display = "Move Duration",
-                          .description =
-                              "Days to move the rocket from storage to storage",
-                          .higher_is_better = false});
+  registerStatDef(
+      world,
+      {.id = "rollout-days",
+       .display = "Rollout Duration",
+       .description = "Days to move the rocket from storage to the launchpad",
+       .higher_is_better = false});
+  registerStatDef(
+      world, {.id = "move-days",
+              .display = "Move Duration",
+              .description = "Days to move the rocket from storage to storage",
+              .higher_is_better = false});
 
   world.component<RocketStateTransitionBlocked>().member(
       "reason", &RocketStateTransitionBlocked::reason);

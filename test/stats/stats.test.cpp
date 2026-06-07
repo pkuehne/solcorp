@@ -1,4 +1,5 @@
 #include "modules/stats/stats.h"
+#include "widgets/stat_widget.h"
 #include <catch2/catch_test_macros.hpp>
 
 namespace {
@@ -66,18 +67,14 @@ SCENARIO("Reflected stat registry", "[stats]") {
   GIVEN("an entity with a reflected stats component and matching effects") {
     auto source = world.entity("Source");
     auto effect = world.entity("Engine Upgrade").add<Effect>();
-    world.entity()
-        .child_of(effect)
-        .set<Modifier>(
-            {.target_stat = "thrust", .additive = 25.0, .multiplicative = 1.0});
-    world.entity()
-        .child_of(effect)
-        .set<Modifier>(
-            {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "thrust", .additive = 25.0, .multiplicative = 1.0});
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
     source.add<HasEffect>(effect);
 
-    auto entity = world.entity("Vehicle").child_of(source).set<ReflectedStats>(
-        {});
+    auto entity =
+        world.entity("Vehicle").child_of(source).set<ReflectedStats>({});
 
     WHEN("the world progresses") {
       world.progress();
@@ -152,9 +149,8 @@ SCENARIO("Stat definitions", "[stats]") {
 
 SCENARIO("Stat formatting", "[stats]") {
   GIVEN("a default number stat definition") {
-    StatDef definition{.id = "count",
-                       .display = "Count",
-                       .description = "A plain number"};
+    StatDef definition{
+        .id = "count", .display = "Count", .description = "A plain number"};
 
     THEN("it formats as a rounded number") {
       REQUIRE(definition.formatValue(12.4) == "12");
@@ -180,6 +176,46 @@ SCENARIO("Stat formatting", "[stats]") {
 
     THEN("it formats probabilities as whole percentages") {
       REQUIRE(definition.formatValue(0.1) == "10%");
+    }
+  }
+}
+
+SCENARIO("Modifier presentation", "[stats]") {
+  StatDef numberDef{.id = "capacity", .display = "Capacity"};
+  StatDef percentDef{.id = "failure-rate",
+                     .display = "Failure Rate",
+                     .format = Stat::Format::Percentage};
+
+  GIVEN("an additive number modifier") {
+    Modifier mod{.target_stat = "capacity", .additive = 5.0};
+
+    THEN("it is formatted with a sign") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+5");
+    }
+  }
+
+  GIVEN("an additive percentage modifier") {
+    Modifier mod{.target_stat = "failure-rate", .additive = 0.25};
+
+    THEN("it is formatted using the stat definition") {
+      CHECK(Widgets::ModifierValueText(mod, percentDef) == "+25%");
+    }
+  }
+
+  GIVEN("a multiplicative modifier") {
+    Modifier mod{.target_stat = "capacity", .multiplicative = 1.2};
+
+    THEN("it is formatted as a relative percentage") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+20%");
+    }
+  }
+
+  GIVEN("an invalid mixed additive and multiplicative modifier") {
+    Modifier mod{
+        .target_stat = "capacity", .additive = 5.0, .multiplicative = 1.2};
+
+    THEN("the additive part is presented as the modifier value") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+5");
     }
   }
 }

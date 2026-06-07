@@ -22,8 +22,7 @@ ImVec4 modifierColour(const Modifier &mod, const StatDef &definition) {
 
 } // namespace
 
-std::string ModifierValueText(const Modifier &mod,
-                              const StatDef &definition) {
+std::string ModifierValueText(const Modifier &mod, const StatDef &definition) {
   if (mod.additive > 0.0) {
     return "+" + definition.formatValue(mod.additive);
   }
@@ -48,8 +47,7 @@ bool ModifierLine(const char *label, const Modifier &mod,
 
   ImGui::Text("%s:", label);
   ImGui::SameLine();
-  ImGui::TextColored(modifierColour(mod, definition), "%s",
-                     modValue.c_str());
+  ImGui::TextColored(modifierColour(mod, definition), "%s", modValue.c_str());
   return true;
 }
 
@@ -61,8 +59,7 @@ void StatTooltip(flecs::world &world, const Stat *stat) {
   if (ImGui::BeginItemTooltip()) {
     ImGui::Text("%s", definition.description.c_str());
     ImGui::Separator();
-    ImGui::Text("Base Value: %s",
-                definition.formatValue(stat->base()).c_str());
+    ImGui::Text("Base Value: %s", definition.formatValue(stat->base()).c_str());
     for (const auto &item : stat->modifiers()) {
       ModifierLine(item.effectName.c_str(), item.mod, definition);
     }

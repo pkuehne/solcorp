@@ -65,15 +65,15 @@ SiteModule::SiteModule(flecs::world &world) {
                           .description =
                               "The maximum number of desks this facility can "
                               "hold"});
-  registerStatDef(world, {.id = "max-weight",
-                          .display = "Max Weight",
-                          .description =
-                              "The maximum weight the pad can support"});
-  registerStatDef(world, {.id = "prep-days",
-                          .display = "Prep Days",
-                          .description =
-                              "Number of days required to prepare a launch",
-                          .higher_is_better = false});
+  registerStatDef(world,
+                  {.id = "max-weight",
+                   .display = "Max Weight",
+                   .description = "The maximum weight the pad can support"});
+  registerStatDef(world,
+                  {.id = "prep-days",
+                   .display = "Prep Days",
+                   .description = "Number of days required to prepare a launch",
+                   .higher_is_better = false});
   world.component<BuildingDetailWindow>().member(
       "buildingE", &BuildingDetailWindow::buildingE);
   world.component<ConstructionSiteWindow>().member(
