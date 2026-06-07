@@ -1,12 +1,20 @@
 #include "modules/stats/stats.h"
+#include "widgets/stat_widget.h"
 #include <catch2/catch_test_macros.hpp>
+
+namespace {
+
+struct ReflectedStats {
+  Stat thrust{{.id = "thrust", .base = 100.0}};
+  Stat cost{{.id = "cost", .base = 1000.0}};
+  Stat hidden{{.id = "hidden", .base = 5.0}};
+};
+
+} // namespace
 
 SCENARIO("Stats", "[stats]") {
   GIVEN("A test stat with value 10") {
-    Stat stat{{.id = "test_stat",
-               .display = "Displ",
-               .description = "More Text",
-               .base = 10.0}};
+    Stat stat{{.id = "test_stat", .base = 10.0}};
 
     THEN("The base value is 10") { REQUIRE(stat.base() == 10.0); }
 
@@ -48,39 +56,166 @@ SCENARIO("Stats", "[stats]") {
   }
 }
 
+SCENARIO("Reflected stat registry", "[stats]") {
+  flecs::world world;
+  world.import <StatsModule>();
+
+  world.component<ReflectedStats>()
+      .member("thrust", &ReflectedStats::thrust)
+      .member("cost", &ReflectedStats::cost);
+
+  GIVEN("an entity with a reflected stats component and matching effects") {
+    auto source = world.entity("Source");
+    auto effect = world.entity("Engine Upgrade").add<Effect>();
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "thrust", .additive = 25.0, .multiplicative = 1.0});
+    world.entity().child_of(effect).set<Modifier>(
+        {.target_stat = "cost", .additive = 250.0, .multiplicative = 1.0});
+    source.add<HasEffect>(effect);
+
+    auto entity =
+        world.entity("Vehicle").child_of(source).set<ReflectedStats>({});
+
+    WHEN("the world progresses") {
+      world.progress();
+
+      THEN("all reflected stats receive their modifiers automatically") {
+        const auto &stats = entity.get<ReflectedStats>();
+        CHECK(stats.thrust.value() == 125.0);
+        CHECK(stats.cost.value() == 1250.0);
+      }
+
+      THEN("unregistered stat members are not discovered") {
+        const auto &stats = entity.get<ReflectedStats>();
+        CHECK(stats.hidden.value() == 5.0);
+        CHECK(findStat(entity, "hidden") == nullptr);
+      }
+    }
+
+    WHEN("a stat is found by id") {
+      world.progress();
+      auto *stat = findStat(entity, "cost");
+
+      THEN("the reflected stat pointer is returned") {
+        REQUIRE(stat != nullptr);
+        CHECK(stat->id() == "cost");
+      }
+    }
+  }
+}
+
+SCENARIO("Stat definitions", "[stats]") {
+  flecs::world world;
+  world.import <StatsModule>();
+
+  GIVEN("the stats module is imported") {
+    THEN("StatDef and its format enum are reflected") {
+      const auto statDef = world.component<StatDef>();
+      const auto statFormat = world.component<StatDef::Format>();
+
+      CHECK(statDef.has<EcsStruct>());
+      CHECK(statFormat.has<EcsEnum>());
+      CHECK(statFormat.lookup("Number").is_valid());
+      CHECK(statFormat.lookup("Currency").is_valid());
+      CHECK(statFormat.lookup("Percentage").is_valid());
+    }
+  }
+
+  GIVEN("a registered stat definition") {
+    registerStatDef(world, {.id = "failure-rate",
+                            .display = "Failure Rate",
+                            .description = "Chance of launch failure",
+                            .higher_is_better = false,
+                            .format = Stat::Format::Percentage});
+
+    THEN("it can be looked up without a live stat instance") {
+      const auto *definition = findStatDef(world, "failure-rate");
+      REQUIRE(definition != nullptr);
+      CHECK(definition->display == "Failure Rate");
+      CHECK(definition->higher_is_better == false);
+      CHECK(definition->formatValue(0.1) == "10%");
+    }
+  }
+
+  GIVEN("an unknown stat id") {
+    THEN("a default display definition is available") {
+      const auto definition = statDef(world, "modded-stat");
+      CHECK(definition.id == "modded-stat");
+      CHECK(definition.display == "modded-stat");
+      CHECK(definition.description.empty());
+    }
+  }
+}
+
 SCENARIO("Stat formatting", "[stats]") {
-  GIVEN("a default number stat") {
-    Stat stat{{.id = "count",
-               .display = "Count",
-               .description = "A plain number",
-               .base = 12.4}};
+  GIVEN("a default number stat definition") {
+    StatDef definition{
+        .id = "count", .display = "Count", .description = "A plain number"};
 
     THEN("it formats as a rounded number") {
-      REQUIRE(stat.format(12.4) == "12");
+      REQUIRE(definition.formatValue(12.4) == "12");
     }
   }
 
-  GIVEN("a currency stat") {
-    Stat stat{{.id = "cost",
-               .display = "Cost",
-               .description = "A money value",
-               .base = 1'250,
-               .format = Stat::Format::Currency}};
+  GIVEN("a currency stat definition") {
+    StatDef definition{.id = "cost",
+                       .display = "Cost",
+                       .description = "A money value",
+                       .format = Stat::Format::Currency};
 
     THEN("it formats with a dollar prefix and separators") {
-      REQUIRE(stat.format(1250) == "$1,250");
+      REQUIRE(definition.formatValue(1250) == "$1,250");
     }
   }
 
-  GIVEN("a percentage stat") {
-    Stat stat{{.id = "failure-rate",
-               .display = "Failure Rate",
-               .description = "A probability",
-               .base = 0.1,
-               .format = Stat::Format::Percentage}};
+  GIVEN("a percentage stat definition") {
+    StatDef definition{.id = "failure-rate",
+                       .display = "Failure Rate",
+                       .description = "A probability",
+                       .format = Stat::Format::Percentage};
 
     THEN("it formats probabilities as whole percentages") {
-      REQUIRE(stat.format(stat.base()) == "10%");
+      REQUIRE(definition.formatValue(0.1) == "10%");
+    }
+  }
+}
+
+SCENARIO("Modifier presentation", "[stats]") {
+  StatDef numberDef{.id = "capacity", .display = "Capacity"};
+  StatDef percentDef{.id = "failure-rate",
+                     .display = "Failure Rate",
+                     .format = Stat::Format::Percentage};
+
+  GIVEN("an additive number modifier") {
+    Modifier mod{.target_stat = "capacity", .additive = 5.0};
+
+    THEN("it is formatted with a sign") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+5");
+    }
+  }
+
+  GIVEN("an additive percentage modifier") {
+    Modifier mod{.target_stat = "failure-rate", .additive = 0.25};
+
+    THEN("it is formatted using the stat definition") {
+      CHECK(Widgets::ModifierValueText(mod, percentDef) == "+25%");
+    }
+  }
+
+  GIVEN("a multiplicative modifier") {
+    Modifier mod{.target_stat = "capacity", .multiplicative = 1.2};
+
+    THEN("it is formatted as a relative percentage") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+20%");
+    }
+  }
+
+  GIVEN("an invalid mixed additive and multiplicative modifier") {
+    Modifier mod{
+        .target_stat = "capacity", .additive = 5.0, .multiplicative = 1.2};
+
+    THEN("the additive part is presented as the modifier value") {
+      CHECK(Widgets::ModifierValueText(mod, numberDef) == "+5");
     }
   }
 }

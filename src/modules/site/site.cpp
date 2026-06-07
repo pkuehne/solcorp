@@ -60,6 +60,20 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Launchpad>()
       .member("max_weight", &Launchpad::max_weight)
       .member("prep_days", &Launchpad::prep_days);
+  registerStatDef(world, {.id = "max-desks",
+                          .display = "Max Desks",
+                          .description =
+                              "The maximum number of desks this facility can "
+                              "hold"});
+  registerStatDef(world,
+                  {.id = "max-weight",
+                   .display = "Max Weight",
+                   .description = "The maximum weight the pad can support"});
+  registerStatDef(world,
+                  {.id = "prep-days",
+                   .display = "Prep Days",
+                   .description = "Number of days required to prepare a launch",
+                   .higher_is_better = false});
   world.component<BuildingDetailWindow>().member(
       "buildingE", &BuildingDetailWindow::buildingE);
   world.component<ConstructionSiteWindow>().member(
@@ -134,13 +148,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .with<ConstructionSiteNeedsUpdating>()
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
-
-  world.system<Launchpad>()
-      .kind(UpdatePhase)
-      .each([](flecs::entity e, Launchpad &pad) {
-        statsApplyModifiers(e, &pad.max_weight);
-        statsApplyModifiers(e, &pad.prep_days);
-      });
 
   initWeather(world);
 

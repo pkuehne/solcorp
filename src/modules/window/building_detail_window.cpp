@@ -186,8 +186,8 @@ void drawLaunchpadSection(flecs::entity &entity) {
   auto world = entity.world();
 
   const auto &launchpad = entity.get<Launchpad>();
-  Widgets::StatTooltip(&launchpad.max_weight);
-  Widgets::StatTooltip(&launchpad.prep_days);
+  Widgets::StatTooltip(world, &launchpad.max_weight);
+  Widgets::StatTooltip(world, &launchpad.prep_days);
 
   ImGui::Separator();
   flecs::query<LaunchPlan> query =

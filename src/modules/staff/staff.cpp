@@ -4,6 +4,8 @@
 void systemSeedStaff(flecs::iter &it);
 
 StaffModule::StaffModule(flecs::world &world) {
+  world.import <StatsModule>();
+
   // Register components
   world.component<Person>()
       .member("first_name", &Person::first_name)
@@ -14,6 +16,18 @@ StaffModule::StaffModule(flecs::world &world) {
       .member("domain_skill", &Employee::domain_skill)
       .member("leadership_skill", &Employee::leadership_skill)
       .member("motivation", &Employee::motivation);
+  registerStatDef(world,
+                  {.id = "motivation",
+                   .display = "Motivation",
+                   .description = "How well motivated this employee is"});
+  registerStatDef(world,
+                  {.id = "leadership_skill",
+                   .display = "Leadership Skills",
+                   .description = "How good this person is at leading others"});
+  registerStatDef(world,
+                  {.id = "domains_skills",
+                   .display = "Domain Skills",
+                   .description = "How good this person is at their job"});
 
   world.component<Team>().member("name", &Team::name);
 

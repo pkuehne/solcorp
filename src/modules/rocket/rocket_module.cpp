@@ -37,7 +37,31 @@ RocketModule::RocketModule(flecs::world &world) {
       .member("launchpad", &LaunchScheduleAction::launchpad);
   world.component<Rocket>()
       .member("failure_rate", &Rocket::failure_rate)
-      .member("cost", &Rocket::cost);
+      .member("cost", &Rocket::cost)
+      .member("rollout_days", &Rocket::rollout_days)
+      .member("move_days", &Rocket::move_days);
+  registerStatDef(world,
+                  {.id = "failure-rate",
+                   .display = "Failure Rate",
+                   .description = "Likelihood the rocket will fail on take-off",
+                   .higher_is_better = false,
+                   .format = Stat::Format::Percentage});
+  registerStatDef(world, {.id = "cost",
+                          .display = "Cost",
+                          .description = "Cost to build this rocket",
+                          .higher_is_better = false,
+                          .format = Stat::Format::Currency});
+  registerStatDef(
+      world,
+      {.id = "rollout-days",
+       .display = "Rollout Duration",
+       .description = "Days to move the rocket from storage to the launchpad",
+       .higher_is_better = false});
+  registerStatDef(
+      world, {.id = "move-days",
+              .display = "Move Duration",
+              .description = "Days to move the rocket from storage to storage",
+              .higher_is_better = false});
 
   world.component<RocketStateTransitionBlocked>().member(
       "reason", &RocketStateTransitionBlocked::reason);
@@ -85,7 +109,9 @@ RocketModule::RocketModule(flecs::world &world) {
   register_component_lua<Rocket>(
       world, "Rocket", [](LuaFieldBuilder<Rocket> &b) {
         b.nested<&Rocket::failure_rate>({"failure_rate"}, {"Stat"})
-            .nested<&Rocket::cost>({"cost"}, {"Stat"});
+            .nested<&Rocket::cost>({"cost"}, {"Stat"})
+            .nested<&Rocket::rollout_days>({"rollout_days"}, {"Stat"})
+            .nested<&Rocket::move_days>({"move_days"}, {"Stat"});
       });
   register_component_lua<RocketCurrentState>(
       world, "RocketCurrentState",
@@ -214,13 +240,6 @@ RocketModule::RocketModule(flecs::world &world) {
       .without<DurationRequired>()
       .kind(UpdatePhase)
       .each(systemAutoGoForLaunch);
-
-  world.system<Rocket>("Refresh Rocket Stats")
-      .tick_source(sim.speed)
-      .kind(UpdatePhase)
-      .each([](flecs::entity rocketE, Rocket &rocket) {
-        statsApplyModifiers(rocketE, &rocket.failure_rate);
-      });
 }
 
 void systemCreateRocketBuildCategory(flecs::iter &it) {

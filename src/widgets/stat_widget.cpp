@@ -4,41 +4,68 @@
 
 namespace Widgets {
 
-void StatTooltip(const Stat *stat) {
-  ImGui::Text("%s: %s", stat->display().c_str(),
-              stat->format(stat->value()).c_str());
+namespace {
+
+ImVec4 modifierColour(const Modifier &mod, const StatDef &definition) {
+  constexpr ImVec4 red = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+  constexpr ImVec4 green = ImVec4(0.0f, 0.5f, 0.0f, 1.0f);
+  constexpr ImVec4 neutral = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+
+  if (mod.additive > 0.0 || mod.multiplicative > 1.0) {
+    return definition.higher_is_better ? green : red;
+  }
+  if (mod.additive < 0.0 || mod.multiplicative < 1.0) {
+    return definition.higher_is_better ? red : green;
+  }
+  return neutral;
+}
+
+} // namespace
+
+std::string ModifierValueText(const Modifier &mod, const StatDef &definition) {
+  if (mod.additive > 0.0) {
+    return "+" + definition.formatValue(mod.additive);
+  }
+  if (mod.additive < 0.0) {
+    return definition.formatValue(mod.additive);
+  }
+  if (mod.multiplicative > 1.0) {
+    return std::format("+{:.0f}%", (mod.multiplicative - 1.0) * 100);
+  }
+  if (mod.multiplicative < 1.0) {
+    return std::format("{:.0f}%", (mod.multiplicative - 1.0) * 100);
+  }
+  return {};
+}
+
+bool ModifierLine(const char *label, const Modifier &mod,
+                  const StatDef &definition) {
+  const auto modValue = ModifierValueText(mod, definition);
+  if (modValue.empty()) {
+    return false;
+  }
+
+  ImGui::Text("%s:", label);
+  ImGui::SameLine();
+  ImGui::TextColored(modifierColour(mod, definition), "%s", modValue.c_str());
+  return true;
+}
+
+void StatTooltip(flecs::world &world, const Stat *stat) {
+  const auto definition = statDef(world, stat->id());
+  ImGui::Text("%s: %s", definition.display.c_str(),
+              definition.formatValue(stat->value()).c_str());
 
   if (ImGui::BeginItemTooltip()) {
-    ImGui::Text("%s", stat->description().c_str());
+    ImGui::Text("%s", definition.description.c_str());
     ImGui::Separator();
-    ImGui::Text("Base Value: %s", stat->format(stat->base()).c_str());
-    constexpr ImVec4 red = ImVec4(1.0, 0.0, 0.0, 1.0);
-    constexpr ImVec4 green = ImVec4(0.0, 0.5, 0.0, 1.0);
+    ImGui::Text("Base Value: %s", definition.formatValue(stat->base()).c_str());
     for (const auto &item : stat->modifiers()) {
-      std::string modValue = "";
-      ImVec4 colour;
-      if (item.mod.additive > 0) {
-        modValue = "+" + stat->format(item.mod.additive);
-        colour = stat->isHigherBetter() ? green : red;
-      } else if (item.mod.additive < 0) {
-        modValue = stat->format(item.mod.additive);
-        colour = stat->isHigherBetter() ? red : green;
-      }
-      if (item.mod.multiplicative > 1) {
-        modValue = std::format("+{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = stat->isHigherBetter() ? green : red;
-      } else if (item.mod.multiplicative < 1) {
-        modValue = std::format("{:.0f}%", (item.mod.multiplicative - 1) * 100);
-        colour = stat->isHigherBetter() ? red : green;
-      }
-      ImGui::Text("%s:", item.effectName.c_str());
-      ImGui::SameLine();
-      if (!modValue.empty()) {
-        ImGui::TextColored(colour, "%s", modValue.c_str());
-      }
+      ModifierLine(item.effectName.c_str(), item.mod, definition);
     }
     ImGui::Separator();
-    ImGui::Text("Final Value: %s", stat->format(stat->value()).c_str());
+    ImGui::Text("Final Value: %s",
+                definition.formatValue(stat->value()).c_str());
     ImGui::EndTooltip();
   }
 }

@@ -178,10 +178,10 @@ void drawRocketDetailWindow(flecs::entity winE) {
     ImGui::TableSetColumnIndex(1);
 
     ImGui::TextDisabled("Stats");
-    Widgets::StatTooltip(&rocketData.failure_rate);
-    Widgets::StatTooltip(&rocketData.cost);
-    Widgets::StatTooltip(&rocketData.rollout_days);
-    Widgets::StatTooltip(&rocketData.move_days);
+    Widgets::StatTooltip(world, &rocketData.failure_rate);
+    Widgets::StatTooltip(world, &rocketData.cost);
+    Widgets::StatTooltip(world, &rocketData.rollout_days);
+    Widgets::StatTooltip(world, &rocketData.move_days);
 
     ImGui::EndTable();
   }
