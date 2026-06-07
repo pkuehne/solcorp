@@ -7,9 +7,9 @@ namespace Widgets {
 namespace {
 
 ImVec4 modifierColour(const Modifier &mod, const StatDef &definition) {
-  constexpr ImVec4 red = ImVec4(1.0, 0.0, 0.0, 1.0);
-  constexpr ImVec4 green = ImVec4(0.0, 0.5, 0.0, 1.0);
-  constexpr ImVec4 neutral = ImVec4(0.7, 0.7, 0.7, 1.0);
+  constexpr ImVec4 red = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+  constexpr ImVec4 green = ImVec4(0.0f, 0.5f, 0.0f, 1.0f);
+  constexpr ImVec4 neutral = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
 
   if (mod.additive > 0.0 || mod.multiplicative > 1.0) {
     return definition.higher_is_better ? green : red;
