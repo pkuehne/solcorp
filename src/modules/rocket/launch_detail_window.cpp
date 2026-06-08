@@ -3,6 +3,8 @@
 #include "launch_actions.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
+#include "modules/window/building_detail_window.h"
+#include "modules/window/rocket_detail_window.h"
 #include "rocket_module.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
@@ -154,12 +156,27 @@ void drawLaunchDetailWindow(flecs::entity winE) {
     ImGui::TableSetColumnIndex(1);
 
     ImGui::TextDisabled("Rocket");
-    ImGui::TextUnformatted(rocketE.is_valid() ? rocketE.name().c_str() : "-");
+    if (rocketE.is_valid()) {
+      ImGui::TextUnformatted(rocketE.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##rocket")) {
+        showRocketDetailWindow(rocketE);
+      }
+    } else {
+      ImGui::TextDisabled("None");
+    }
     ImGui::Spacing();
 
     ImGui::TextDisabled("Launchpad");
-    ImGui::TextUnformatted(
-        launchpadE.is_valid() ? launchpadE.parent().name().c_str() : "-");
+    if (launchpadE.is_valid()) {
+      ImGui::TextUnformatted(launchpadE.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##pad")) {
+        showBuildingDetailWindow(launchpadE.parent());
+      }
+    } else {
+      ImGui::TextDisabled("None");
+    }
     ImGui::Spacing();
 
     ImGui::TextDisabled("Orbit");
