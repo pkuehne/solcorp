@@ -1,12 +1,12 @@
 #include "launch_detail_window.h"
+#include "building_detail_window.h"
+#include "contract_detail_window.h"
 #include "imgui.h"
-#include "launch_actions.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/window/building_detail_window.h"
-#include "modules/window/contract_detail_window.h"
-#include "modules/window/rocket_detail_window.h"
-#include "rocket_module.h"
+#include "modules/rocket/launch_actions.h"
+#include "modules/rocket/rocket_module.h"
+#include "rocket_detail_window.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
 #include <string>

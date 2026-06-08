@@ -2,6 +2,8 @@
 #include "SDL_keycode.h"
 #include "contract_detail_window.h"
 #include "contracts_window.h"
+#include "launch_detail_window.h"
+#include "launch_window.h"
 #include "main_menu.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
@@ -24,6 +26,11 @@ WindowModule::WindowModule(flecs::world &world) {
   world.component<ContractDetailWindow>();
   world.component<RocketDetailWindow>();
   world.component<RocketListWindow>();
+  // Registered without the draftPlan reflection member: its type
+  // (LaunchScheduleAction) is a rocket-domain action registered later in
+  // RocketModule, which is imported after WindowModule.
+  world.component<LaunchWindow>();
+  world.component<LaunchDetailWindow>();
   world.component<NotificationWindow>()
       .member("severity_filter", &NotificationWindow::severity_filter)
       .member("category_filter", &NotificationWindow::category_filter)
@@ -49,6 +56,10 @@ WindowModule::WindowModule(flecs::world &world) {
             .set<RocketDetailWindow>({});
         registerWindow("Rocket List", drawRocketListWindow, w)
             .set<RocketListWindow>({});
+        registerWindow("Mission Plan", drawLaunchWindow, w)
+            .set<LaunchWindow>({});
+        registerWindow("Launch Detail", drawLaunchDetailWindow, w)
+            .set<LaunchDetailWindow>({});
       });
 
   // Register Systems

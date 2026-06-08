@@ -26,13 +26,13 @@ list(APPEND SolCorpSources
     modules/window/notification_window.cpp
     modules/window/rocket_detail_window.cpp
     modules/window/rocket_list_window.cpp
+    modules/window/launch_window.cpp
+    modules/window/launch_detail_window.cpp
     modules/window/storage_picker.cpp
     modules/rocket/rocket_module.cpp
     modules/rocket/contract_actions.cpp
     modules/rocket/launch_actions.cpp
     modules/rocket/rocket_actions.cpp
-    modules/rocket/launch_window.cpp
-    modules/rocket/launch_detail_window.cpp
     modules/rocket/active_launches_window.cpp
     modules/simulation/celestial_browser.cpp
     modules/simulation/developer_window.cpp
@@ -75,13 +75,13 @@ list(APPEND SolCorpHeaders
     modules/window/notification_window.h
     modules/window/rocket_detail_window.h
     modules/window/rocket_list_window.h
+    modules/window/launch_window.h
+    modules/window/launch_detail_window.h
     modules/window/storage_picker.h
     modules/rocket/rocket_module.h
     modules/rocket/contract_actions.h
     modules/rocket/launch_actions.h
     modules/rocket/rocket_actions.h
-    modules/rocket/launch_window.h
-    modules/rocket/launch_detail_window.h
     modules/rocket/active_launches_window.h
     modules/simulation/celestial_browser.h
     modules/simulation/developer_window.h

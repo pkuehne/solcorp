@@ -1,11 +1,11 @@
 #include "active_launches_window.h"
 #include "imgui.h"
 #include "launch_actions.h"
-#include "launch_detail_window.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/launch_detail_window.h"
 #include "rocket_module.h"
 #include "widgets/widgets.h"
 #include <flecs.h>

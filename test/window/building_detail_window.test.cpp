@@ -98,9 +98,7 @@ SCENARIO("activeLaunchPlansForPad", "[window]") {
     WHEN("Querying active plans for the pad") {
       std::vector<flecs::entity> results;
       activeLaunchPlansForPad(pad).each(
-          [&](flecs::entity planE, LaunchPlan &) {
-            results.push_back(planE);
-          });
+          [&](flecs::entity planE, LaunchPlan &) { results.push_back(planE); });
 
       THEN("Only the non-terminal plans on that pad are returned") {
         CHECK(results.size() == 2);

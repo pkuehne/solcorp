@@ -1,8 +1,6 @@
 #include "rocket_module.h"
 #include "active_launches_window.h"
 #include "launch_actions.h"
-#include "launch_detail_window.h"
-#include "launch_window.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
@@ -68,8 +66,6 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
-  world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
-  world.component<LaunchDetailWindow>();
   world.component<ActiveLaunchesWindow>()
       .member("filterSite", &ActiveLaunchesWindow::filterSite)
       .member("filterPad", &ActiveLaunchesWindow::filterPad)
@@ -207,12 +203,8 @@ RocketModule::RocketModule(flecs::world &world) {
       .immediate()
       .run([](flecs::iter &it) {
         auto world = it.world();
-        registerWindow("Mission Plan", drawLaunchWindow, world)
-            .set<LaunchWindow>({});
         registerWindow("Active Launches", drawActiveLaunchesWindow, world)
             .set<ActiveLaunchesWindow>({});
-        registerWindow("Launch Detail", drawLaunchDetailWindow, world)
-            .set<LaunchDetailWindow>({});
       });
   world.system<Rocket>("Rocket Complete State Transition Action")
       .immediate()

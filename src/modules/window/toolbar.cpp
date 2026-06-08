@@ -1,7 +1,7 @@
 #include "toolbar.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "modules/rocket/launch_window.h"
+#include "launch_window.h"
 #include "modules/simulation/celestial_browser.h"
 #include "widgets/weather_widget.h"
 #include <array>
