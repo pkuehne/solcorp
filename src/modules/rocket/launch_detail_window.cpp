@@ -4,10 +4,12 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/window/building_detail_window.h"
+#include "modules/window/contract_detail_window.h"
 #include "modules/window/rocket_detail_window.h"
 #include "rocket_module.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <string>
 
 void showLaunchDetailWindow(flecs::entity planE) {
   auto world = planE.world();
@@ -189,8 +191,17 @@ void drawLaunchDetailWindow(flecs::entity winE) {
     bool anyPayloads = false;
     state.plan.each<LaunchingWith>([&](flecs::entity payload) {
       if (payload.is_valid() && payload.has<Payload>()) {
+        ImGui::PushID(std::to_string(payload.id()).c_str());
         ImGui::Text("  %s (%u kg)", payload.name().c_str(),
                     payload.get<Payload>().mass);
+        auto contractE = payload.target<ContractPayload>();
+        if (contractE.is_valid() && contractE.has<Contract>()) {
+          ImGui::SameLine();
+          if (ImGui::SmallButton("View")) {
+            showContractDetailWindow(contractE);
+          }
+        }
+        ImGui::PopID();
         anyPayloads = true;
       }
     });

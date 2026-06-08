@@ -193,7 +193,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(6);
-      if (ImGui::SmallButton("View")) {
+      if (ImGui::Button("View")) {
         showLaunchDetailWindow(planE);
       }
 

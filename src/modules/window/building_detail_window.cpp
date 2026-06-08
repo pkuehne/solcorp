@@ -166,14 +166,19 @@ void drawStorageSection(flecs::entity &entity) {
       return;
     }
     ImGui::PushID(std::to_string(rocket.id()).c_str());
-    auto plan = rocket.target<LaunchingOn>();
-    ImGui::Text("%s %s", rocket.name().c_str(),
-                plan.is_valid()
-                    ? fmt::format("({})", plan.name().c_str()).c_str()
-                    : "");
+    ImGui::TextUnformatted(rocket.name().c_str());
     ImGui::SameLine();
-    if (ImGui::SmallButton("View")) {
+    if (ImGui::SmallButton("View##rocket")) {
       showRocketDetailWindow(rocket);
+    }
+    auto plan = rocket.target<LaunchingOn>();
+    if (plan.is_valid()) {
+      ImGui::SameLine();
+      ImGui::Text("(%s)", plan.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##plan")) {
+        showLaunchDetailWindow(plan);
+      }
     }
     ImGui::Separator();
     ImGui::PopID();
