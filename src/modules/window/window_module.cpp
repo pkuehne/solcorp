@@ -8,6 +8,8 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
+#include "modules/window/active_launches_window.h"
+#include "modules/window/celestial_browser_window.h"
 #include "notification_window.h"
 #include "rocket_detail_window.h"
 #include "rocket_list_window.h"
@@ -26,6 +28,14 @@ WindowModule::WindowModule(flecs::world &world) {
   world.component<ContractDetailWindow>();
   world.component<RocketDetailWindow>();
   world.component<RocketListWindow>();
+  world.component<CelestialBrowser>().member("selected_body",
+                                             &CelestialBrowser::selected_body);
+  world.component<ActiveLaunchesWindow>()
+      .member("filterSite", &ActiveLaunchesWindow::filterSite)
+      .member("filterPad", &ActiveLaunchesWindow::filterPad)
+      .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
+      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
+      .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
   // Registered without the draftPlan reflection member: its type
   // (LaunchScheduleAction) is a rocket-domain action registered later in
   // RocketModule, which is imported after WindowModule.
@@ -60,6 +70,10 @@ WindowModule::WindowModule(flecs::world &world) {
             .set<LaunchWindow>({});
         registerWindow("Launch Detail", drawLaunchDetailWindow, w)
             .set<LaunchDetailWindow>({});
+        registerWindow("Active Launches", drawActiveLaunchesWindow, w)
+            .set<ActiveLaunchesWindow>({});
+        registerWindow("Celestial Browser", drawCelestialBrowser, w)
+            .set<CelestialBrowser>({});
       });
 
   // Register Systems
