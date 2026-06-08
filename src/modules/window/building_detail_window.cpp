@@ -190,9 +190,8 @@ void drawLaunchpadSection(flecs::entity &entity) {
   Widgets::StatTooltip(world, &launchpad.prep_days);
 
   ImGui::Separator();
-  flecs::query<LaunchPlan> query =
-      world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
-  query.each([](flecs::entity planE, LaunchPlan &plan) {
+  activeLaunchPlansForPad(entity).each([](flecs::entity planE,
+                                          LaunchPlan &plan) {
     ImGui::PushID(std::to_string(planE.id()).c_str());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
@@ -207,6 +206,21 @@ void drawLaunchpadSection(flecs::entity &entity) {
     options.launchpad = entity;
     showLaunchWindowAdd(world, options);
   }
+}
+
+flecs::query<LaunchPlan> activeLaunchPlansForPad(flecs::entity padE) {
+  // Match plans on this pad whose current-state entity ($state) is not
+  // terminal. Filtering at the query level avoids iterating over completed
+  // launches, which accumulate without bound as the game progresses.
+  return padE.world()
+      .query_builder<LaunchPlan>()
+      .with<LaunchingFrom>(padE)
+      .with<LaunchPlanCurrentState>()
+      .second("$state")
+      .with<StateIsTerminal>()
+      .src("$state")
+      .not_()
+      .build();
 }
 
 float getEntityEffortRequired(flecs::entity &entity) {

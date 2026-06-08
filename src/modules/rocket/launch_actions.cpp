@@ -262,7 +262,7 @@ void LaunchGoAction::execute(flecs::world &world) {
 
   for (auto payload : payloads) {
     if (payload.is_valid() && payload.has<Payload>()) {
-      spdlog::debug("Removing payload: {}", payload.name().c_str());
+      spdlog::debug("Launching payload: {}", payload.name().c_str());
       auto contractE = payload.target<ContractPayload>();
       SC_ASSERT(contractE.is_valid() && contractE.has<Contract>(),
                 "Payload {} has ContractPayload relationship to invalid or "
@@ -327,10 +327,22 @@ void LaunchGoAction::execute(flecs::world &world) {
                           rocket_failure ? NotificationSeverity::Critical
                                          : NotificationSeverity::High);
 
-  for (auto payload : payloads) {
-    payload.destruct();
+  // Retain the rocket and payloads as a historical record so the completed
+  // plan can still be inspected via the detail window (#195). The rocket
+  // transitions to its terminal Launched state and moves, along with its
+  // payloads, from the launchpad to the target orbit (their remains now reside
+  // there). The payloads stay attached to the plan via LaunchingWith. Both are
+  // excluded from active/available queries via StateIsTerminal and their
+  // now-closed contracts.
+  rocketE.add<RocketCurrentState>(world.lookup("States::Rocket::Launched"));
+  if (planData.target_orbit.is_valid()) {
+    rocketE.child_of(planData.target_orbit);
+    for (auto payload : payloads) {
+      payload.child_of(planData.target_orbit);
+    }
+  } else if (launchpadE.is_valid() && rocketE.parent() == launchpadE) {
+    rocketE.remove(flecs::ChildOf, launchpadE);
   }
-  rocketE.destruct();
   plan.add<LaunchPlanCurrentState>(
       world.lookup("States::LaunchPlan::Launched"));
 }

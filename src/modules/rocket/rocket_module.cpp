@@ -169,6 +169,10 @@ RocketModule::RocketModule(flecs::world &world) {
   world.entity("Stored").child_of(rocketStates).set<Label>({"In Storage"});
   world.entity("Moving").child_of(rocketStates).set<Label>({"Moving"});
   world.entity("Assigned").child_of(rocketStates).set<Label>({"Assigned"});
+  world.entity("Launched")
+      .child_of(rocketStates)
+      .set<Label>({"Launched"})
+      .add<StateIsTerminal>();
   auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
   auto scheduledState = world.entity("Scheduled").child_of(planStates);
   auto rollingOutState = world.entity("RollingOut").child_of(planStates);

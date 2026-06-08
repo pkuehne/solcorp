@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modules/rocket/rocket_module.h"
 #include <flecs.h>
 
 struct BuildingDetailWindow {
@@ -14,3 +15,11 @@ void drawBuildingDetailWindow(flecs::entity winE);
 /// @return A float between 0 and 1 representing the progress of the effort, or
 /// 1 if there is no EffortRequired component
 float getEntityEffortRequired(flecs::entity &entity);
+
+/// @brief Builds a query for the active launch plans assigned to a launchpad
+/// @param[in] padE The launchpad facility entity
+/// @return A query matching launch plans launching from padE whose current
+/// state is not terminal (i.e. excluding Launched/Cancelled). Completed plans
+/// are filtered at the query level so the launchpad section never iterates over
+/// historical launches.
+flecs::query<LaunchPlan> activeLaunchPlansForPad(flecs::entity padE);

@@ -97,6 +97,8 @@ SCENARIO("LaunchGoAction", "[action]") {
     auto targetOrbit = world.entity("LEO");
     auto launchpad = world.entity("Main Pad").add<Launchpad>();
     auto rocket = world.entity("Falcon 9").add<Rocket>();
+    // Post-rollout the rocket physically sits on the launchpad
+    rocket.child_of(launchpad);
     rocket.get_mut<Rocket>().failure_rate.setBase(0.0);
     auto plan = world.entity("Test Plan")
                     .set<LaunchPlan>(
@@ -118,8 +120,13 @@ SCENARIO("LaunchGoAction", "[action]") {
     WHEN("Executed") {
       action.execute(world);
 
-      THEN("The rocket is destroyed and the plan transitions to Launched") {
-        CHECK(!rocket.is_alive());
+      THEN("The rocket is retained in its Launched terminal state, moved to "
+           "the target orbit, and the plan transitions to Launched") {
+        CHECK(rocket.is_alive());
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Launched")));
+        CHECK(rocket.parent() == targetOrbit);
+        CHECK(plan.has<LaunchingOn>(rocket));
         CHECK(plan.is_alive());
         CHECK(plan.has<LaunchPlanCurrentState>(
             world.lookup("States::LaunchPlan::Launched")));
@@ -167,11 +174,19 @@ SCENARIO("LaunchGoAction", "[action]") {
     WHEN("Executed") {
       action.execute(world);
 
-      THEN("The rocket, payloads are destroyed and the plan transitions to "
-           "Launched") {
-        CHECK(!rocket.is_alive());
-        CHECK(!payloadA.is_alive());
-        CHECK(!payloadB.is_alive());
+      THEN("The rocket and payloads are retained, moved to the target orbit, "
+           "and the plan transitions to Launched") {
+        CHECK(rocket.is_alive());
+        CHECK(rocket.has<RocketCurrentState>(
+            world.lookup("States::Rocket::Launched")));
+        CHECK(rocket.parent() == targetOrbit);
+        CHECK(payloadA.is_alive());
+        CHECK(payloadB.is_alive());
+        CHECK(payloadA.parent() == targetOrbit);
+        CHECK(payloadB.parent() == targetOrbit);
+        CHECK(plan.has<LaunchingOn>(rocket));
+        CHECK(plan.has<LaunchingWith>(payloadA));
+        CHECK(plan.has<LaunchingWith>(payloadB));
         CHECK(plan.is_alive());
         CHECK(plan.has<LaunchPlanCurrentState>(
             world.lookup("States::LaunchPlan::Launched")));
