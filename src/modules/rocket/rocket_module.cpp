@@ -1,13 +1,9 @@
 #include "rocket_module.h"
-#include "active_launches_window.h"
 #include "launch_actions.h"
-#include "launch_detail_window.h"
-#include "launch_window.h"
 #include "modules/base/action.h"
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
 #include "modules/engine/engine.h"
-#include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
 #include "rocket_actions.h"
 #include "spdlog/spdlog.h"
@@ -68,14 +64,6 @@ RocketModule::RocketModule(flecs::world &world) {
   world.component<Payload>().member("mass", &Payload::mass);
   world.component<CanLiftTo>().member("max_mass", &CanLiftTo::max_mass);
   world.component<LaunchPlan>();
-  world.component<LaunchWindow>().member("draftPlan", &LaunchWindow::draftPlan);
-  world.component<LaunchDetailWindow>();
-  world.component<ActiveLaunchesWindow>()
-      .member("filterSite", &ActiveLaunchesWindow::filterSite)
-      .member("filterPad", &ActiveLaunchesWindow::filterPad)
-      .member("filterOrbit", &ActiveLaunchesWindow::filterOrbit)
-      .member("pendingCancel", &ActiveLaunchesWindow::pendingCancel)
-      .member("showCompleted", &ActiveLaunchesWindow::showCompleted);
   world.component<ContractTargetOrbit>();
   world.component<Contract>()
       .member("name", &Contract::name)
@@ -169,6 +157,10 @@ RocketModule::RocketModule(flecs::world &world) {
   world.entity("Stored").child_of(rocketStates).set<Label>({"In Storage"});
   world.entity("Moving").child_of(rocketStates).set<Label>({"Moving"});
   world.entity("Assigned").child_of(rocketStates).set<Label>({"Assigned"});
+  world.entity("Launched")
+      .child_of(rocketStates)
+      .set<Label>({"Launched"})
+      .add<StateIsTerminal>();
   auto planStates = world.entity("LaunchPlan").child_of(statesRoot);
   auto scheduledState = world.entity("Scheduled").child_of(planStates);
   auto rollingOutState = world.entity("RollingOut").child_of(planStates);
@@ -198,18 +190,6 @@ RocketModule::RocketModule(flecs::world &world) {
       .immediate()
       .run(systemCreateRocketBuildCategory);
   auto sim = world.get<Simulation>();
-  world.system("Rocket Launch Create Windows")
-      .kind(flecs::OnStart)
-      .immediate()
-      .run([](flecs::iter &it) {
-        auto world = it.world();
-        registerWindow("Mission Plan", drawLaunchWindow, world)
-            .set<LaunchWindow>({});
-        registerWindow("Active Launches", drawActiveLaunchesWindow, world)
-            .set<ActiveLaunchesWindow>({});
-        registerWindow("Launch Detail", drawLaunchDetailWindow, world)
-            .set<LaunchDetailWindow>({});
-      });
   world.system<Rocket>("Rocket Complete State Transition Action")
       .immediate()
       .tick_source(sim.speed)

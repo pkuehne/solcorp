@@ -1,10 +1,10 @@
 #include "building_detail_window.h"
 #include "imgui.h"
+#include "launch_detail_window.h"
+#include "launch_window.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "modules/rocket/launch_detail_window.h"
-#include "modules/rocket/launch_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/rocket_prefab_window.h"
 #include "modules/site/site.h"
@@ -166,14 +166,19 @@ void drawStorageSection(flecs::entity &entity) {
       return;
     }
     ImGui::PushID(std::to_string(rocket.id()).c_str());
-    auto plan = rocket.target<LaunchingOn>();
-    ImGui::Text("%s %s", rocket.name().c_str(),
-                plan.is_valid()
-                    ? fmt::format("({})", plan.name().c_str()).c_str()
-                    : "");
+    ImGui::TextUnformatted(rocket.name().c_str());
     ImGui::SameLine();
-    if (ImGui::SmallButton("View")) {
+    if (ImGui::SmallButton("View##rocket")) {
       showRocketDetailWindow(rocket);
+    }
+    auto plan = rocket.target<LaunchingOn>();
+    if (plan.is_valid()) {
+      ImGui::SameLine();
+      ImGui::Text("(%s)", plan.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##plan")) {
+        showLaunchDetailWindow(plan);
+      }
     }
     ImGui::Separator();
     ImGui::PopID();
@@ -190,9 +195,8 @@ void drawLaunchpadSection(flecs::entity &entity) {
   Widgets::StatTooltip(world, &launchpad.prep_days);
 
   ImGui::Separator();
-  flecs::query<LaunchPlan> query =
-      world.query_builder<LaunchPlan>().with<LaunchingFrom>(entity).build();
-  query.each([](flecs::entity planE, LaunchPlan &plan) {
+  activeLaunchPlansForPad(entity).each([](flecs::entity planE,
+                                          LaunchPlan &plan) {
     ImGui::PushID(std::to_string(planE.id()).c_str());
     ImGui::Text("%s launching on %d", planE.name().c_str(), plan.launch_date);
     ImGui::SameLine();
@@ -207,6 +211,21 @@ void drawLaunchpadSection(flecs::entity &entity) {
     options.launchpad = entity;
     showLaunchWindowAdd(world, options);
   }
+}
+
+flecs::query<LaunchPlan> activeLaunchPlansForPad(flecs::entity padE) {
+  // Match plans on this pad whose current-state entity ($state) is not
+  // terminal. Filtering at the query level avoids iterating over completed
+  // launches, which accumulate without bound as the game progresses.
+  return padE.world()
+      .query_builder<LaunchPlan>()
+      .with<LaunchingFrom>(padE)
+      .with<LaunchPlanCurrentState>()
+      .second("$state")
+      .with<StateIsTerminal>()
+      .src("$state")
+      .not_()
+      .build();
 }
 
 float getEntityEffortRequired(flecs::entity &entity) {

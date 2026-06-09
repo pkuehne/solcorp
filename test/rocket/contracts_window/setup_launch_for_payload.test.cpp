@@ -1,4 +1,4 @@
-#include "modules/rocket/launch_window.h"
+#include "modules/window/launch_window.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 

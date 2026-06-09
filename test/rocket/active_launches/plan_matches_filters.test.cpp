@@ -1,7 +1,7 @@
-#include "modules/rocket/active_launches_window.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
+#include "modules/window/active_launches_window.h"
 #include "modules/window/window_module.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>

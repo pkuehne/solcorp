@@ -4,8 +4,8 @@
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
-#include "rocket_module.h"
 #include "widgets/widgets.h"
 #include <algorithm>
 #include <flecs.h>

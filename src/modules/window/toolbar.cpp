@@ -1,11 +1,11 @@
 #include "toolbar.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "modules/rocket/launch_window.h"
-#include "modules/simulation/celestial_browser.h"
+#include "launch_window.h"
+#include "modules/window/celestial_browser_window.h"
 #include "widgets/weather_widget.h"
 #include <array>
-#include <modules/rocket/active_launches_window.h>
+#include <modules/window/active_launches_window.h>
 #include <modules/window/contracts_window.h>
 #include <modules/window/notification_window.h>
 #include <modules/window/rocket_list_window.h>

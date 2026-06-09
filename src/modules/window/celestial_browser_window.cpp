@@ -1,7 +1,7 @@
-#include "celestial_browser.h"
+#include "modules/window/celestial_browser_window.h"
 #include "imgui.h"
 #include "modules/engine/gui.h"
-#include "simulation.h"
+#include "modules/simulation/simulation.h"
 #include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>

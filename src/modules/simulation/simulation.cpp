@@ -5,8 +5,8 @@
 #include "modules/engine/gui.h"
 #include "modules/engine/input.h"
 #include "modules/lua/lua.h"
-#include "modules/simulation/celestial_browser.h"
 #include "modules/simulation/developer_window.h"
+#include "modules/window/celestial_browser_window.h"
 #include "spdlog/spdlog.h"
 
 void systemUpdateSimDate(Game &game);
@@ -38,8 +38,6 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.component<Developer>().add(flecs::Singleton);
   world.component<DeveloperWindow>().member(
       "show_metrics_window", &DeveloperWindow::show_metrics_window);
-  world.component<CelestialBrowser>().member("selected_body",
-                                             &CelestialBrowser::selected_body);
   world.component<TargetOrbit>()
       .member("altitude", &TargetOrbit::altitude)
       .member("inclination", &TargetOrbit::inclination);
@@ -108,8 +106,6 @@ void systemShowWindows(flecs::iter &it, size_t, const KeyDown event) {
 
 void systemRegisterWindows(flecs::iter &it) {
   auto world = it.world();
-  registerWindow("Celestial Browser", drawCelestialBrowser, world)
-      .set<CelestialBrowser>({});
   registerWindow("Developer Window", drawDeveloperWindow, world)
       .set<DeveloperWindow>({});
 }

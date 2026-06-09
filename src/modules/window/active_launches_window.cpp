@@ -1,12 +1,12 @@
-#include "active_launches_window.h"
+#include "modules/window/active_launches_window.h"
 #include "imgui.h"
-#include "launch_actions.h"
-#include "launch_detail_window.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
+#include "modules/rocket/launch_actions.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
-#include "rocket_module.h"
+#include "modules/window/launch_detail_window.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
 #include <spdlog/spdlog.h>
@@ -193,7 +193,7 @@ void drawActiveLaunchesWindow(flecs::entity winE) {
       }
 
       ImGui::TableSetColumnIndex(6);
-      if (ImGui::SmallButton("View")) {
+      if (ImGui::Button("View")) {
         showLaunchDetailWindow(planE);
       }
 

@@ -1,11 +1,15 @@
 #include "launch_detail_window.h"
+#include "building_detail_window.h"
+#include "contract_detail_window.h"
 #include "imgui.h"
-#include "launch_actions.h"
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
-#include "rocket_module.h"
+#include "modules/rocket/launch_actions.h"
+#include "modules/rocket/rocket_module.h"
+#include "rocket_detail_window.h"
 #include "widgets/widgets.h"
 #include <flecs.h>
+#include <string>
 
 void showLaunchDetailWindow(flecs::entity planE) {
   auto world = planE.world();
@@ -154,12 +158,27 @@ void drawLaunchDetailWindow(flecs::entity winE) {
     ImGui::TableSetColumnIndex(1);
 
     ImGui::TextDisabled("Rocket");
-    ImGui::TextUnformatted(rocketE.is_valid() ? rocketE.name().c_str() : "-");
+    if (rocketE.is_valid()) {
+      ImGui::TextUnformatted(rocketE.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##rocket")) {
+        showRocketDetailWindow(rocketE);
+      }
+    } else {
+      ImGui::TextDisabled("None");
+    }
     ImGui::Spacing();
 
     ImGui::TextDisabled("Launchpad");
-    ImGui::TextUnformatted(
-        launchpadE.is_valid() ? launchpadE.parent().name().c_str() : "-");
+    if (launchpadE.is_valid()) {
+      ImGui::TextUnformatted(launchpadE.name().c_str());
+      ImGui::SameLine();
+      if (ImGui::SmallButton("View##pad")) {
+        showBuildingDetailWindow(launchpadE.parent());
+      }
+    } else {
+      ImGui::TextDisabled("None");
+    }
     ImGui::Spacing();
 
     ImGui::TextDisabled("Orbit");
@@ -172,8 +191,17 @@ void drawLaunchDetailWindow(flecs::entity winE) {
     bool anyPayloads = false;
     state.plan.each<LaunchingWith>([&](flecs::entity payload) {
       if (payload.is_valid() && payload.has<Payload>()) {
+        ImGui::PushID(std::to_string(payload.id()).c_str());
         ImGui::Text("  %s (%u kg)", payload.name().c_str(),
                     payload.get<Payload>().mass);
+        auto contractE = payload.target<ContractPayload>();
+        if (contractE.is_valid() && contractE.has<Contract>()) {
+          ImGui::SameLine();
+          if (ImGui::SmallButton("View")) {
+            showContractDetailWindow(contractE);
+          }
+        }
+        ImGui::PopID();
         anyPayloads = true;
       }
     });
