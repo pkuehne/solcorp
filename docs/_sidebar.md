@@ -2,9 +2,10 @@
 
 - Gameplay
   - [Overview](gameplay/README.md)
-  - [Core Concepts](gameplay/core-concepts.md)
-  - [Contracts & Launches](gameplay/contracts-and-launches.md)
+  - [Introduction](gameplay/introduction.md)
   - [Simulation](gameplay/simulation.md)
+  - [Concepts](gameplay/concepts/README.md)
+  - [Windows](gameplay/concepts/README.md)
 
 - Design
   - [Finance System](design/finance-system.md)
