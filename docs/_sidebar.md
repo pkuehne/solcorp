@@ -2,9 +2,22 @@
 
 - Gameplay
   - [Overview](gameplay/README.md)
-  - [Core Concepts](gameplay/core-concepts.md)
-  - [Contracts & Launches](gameplay/contracts-and-launches.md)
+  - [Introduction](gameplay/introduction.md)
   - [Simulation](gameplay/simulation.md)
+  - [Concepts](gameplay/concepts/README.md)
+    - [Building](gameplay/concepts/building.md)
+    - [Contract](gameplay/concepts/contract.md)
+    - [Launch Plan](gameplay/concepts/launch-plan.md)
+    - [Rocket](gameplay/concepts/rocket.md)
+    - [Site](gameplay/concepts/site.md)
+  - [Windows](gameplay/windows/README.md)
+    - [Main Toolbar](gameplay/windows/main-toolbar.md)
+    - [Rocket List](gameplay/windows/rocket-list.md)
+    - [Rocket Detail](gameplay/windows/rocket-detail.md)
+    - [Contract List](gameplay/windows/contract-list.md)
+    - [Contract Detail](gameplay/windows/contract-detail.md)
+    - [Active Launches](gameplay/windows/active-launches.md)
+    - [Launch Plan](gameplay/windows/launch-plan.md)
 
 - Design
   - [Finance System](design/finance-system.md)
