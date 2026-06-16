@@ -1,30 +1,25 @@
 # Contract
 
-**Contracts** are offered by client companies and describe a mission to be performed. To see the list of available contracts, open the "Contracts" window from the toolbar. In the window you will see the list of available contracts. Click on the "view" button to see the details of a contract and decide whether to accept or reject it.
+**Contracts** are offered by client companies and describe a mission to be performed. Contracts are generated periodically. Once accepted, the contract is added to your active contracts and the payloads become available to be scheduled onto a launch.
 
-Each contract will specify:
-- A client company (e.g. "Acme Corp")
-- A description of the mission (e.g. "Launch a communications satellite into low Earth orbit")
-- The total payment for successful completion (e.g. $10 million)
-- The Target Orbit (e.g. "Low Earth Orbit")
-- Buttons to accept or reject the contract
+Each contract specifies:
+- A client company (e.g. *Acme Corp*)
+- A description of the mission
+- A payment split into an upfront amount (paid on acceptance) and a completion amount (paid on successful delivery)
+- A target orbit the payload must reach
 
-![Contracts Window](../../assets/contracts-window.png "The contracts window showing a list of available contracts with details and rewards")
+## Payloads
 
-Contracts are generated periodically. Once accepted, the contract is added to your active contracts and the payloads become available to be scheduled onto a launch (See below).
+Each contract comes with one or more payloads. Each payload specifies:
 
-An upfront payment is awarded for accepting the contract and the remaining reward is paid out upon successful completion of the contract (i.e. delivering the payload to the target orbit).
-
-![Contract Details](../../assets/contract-details.png "The contract details window showing the mission description, target orbit, and reward")
-
-### Payloads
-
-Each payload specifies:
-
-- A name (e.g. "Satellite 4231")
+- A name (e.g. *Satellite 4231*)
 - A mass (kg)
-- A target orbit path (e.g. `Low Orbit`)
+- A target orbit (e.g. `Low Orbit`)
 
-Payloads are tied to a contract and a [site](gameplay/concepts/site.md) and can be attached to a rocket launch via a launch plan. The total mass of attached payloads must be within the rocket's payload capacity for the launch plan to be valid.
+Payloads are attached to a [launch plan](gameplay/concepts/launch-plan.md). The total mass of all loaded payloads must be within the rocket's capacity for the target orbit.
 
 ![Payload Launch](../../assets/payload-launch.png "Example of payloads attached to a launch plan")
+
+## Managing Contracts
+
+Use the [Contract List](gameplay/windows/contract-list.md) window to browse available and active contracts, and the [Contract Detail](gameplay/windows/contract-detail.md) window to review terms and accept or reject a contract.
