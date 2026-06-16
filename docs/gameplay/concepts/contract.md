@@ -15,6 +15,7 @@ Contracts are generated periodically. Once accepted, the contract is added to yo
 
 An upfront payment is awarded for accepting the contract and the remaining reward is paid out upon successful completion of the contract (i.e. delivering the payload to the target orbit).
 
+![Contract Details](../../assets/contract-details.png "The contract details window showing the mission description, target orbit, and reward")
 
 ### Payloads
 

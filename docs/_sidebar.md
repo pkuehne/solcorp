@@ -5,7 +5,14 @@
   - [Introduction](gameplay/introduction.md)
   - [Simulation](gameplay/simulation.md)
   - [Concepts](gameplay/concepts/README.md)
-  - [Windows](gameplay/concepts/README.md)
+  - [Windows](gameplay/windows/README.md)
+    - [Main Toolbar](gameplay/windows/main-toolbar.md)
+    - [Rocket List](gameplay/windows/rocket-list.md)
+    - [Rocket Detail](gameplay/windows/rocket-detail.md)
+    - [Contract List](gameplay/windows/contract-list.md)
+    - [Contract Detail](gameplay/windows/contract-detail.md)
+    - [Active Launches](gameplay/windows/active-launches.md)
+    - [Launch Plan](gameplay/windows/launch-plan.md)
 
 - Design
   - [Finance System](design/finance-system.md)
