@@ -11,7 +11,7 @@ Each body has core orbital parameters:
 - Longitude of ascending node
 - Argument of periapsis
 - Mean anomaly at epoch
-- Retrograge indicator
+- Retrograde indicator
 
 The body's physical parameters include:
 - Radius
@@ -28,4 +28,4 @@ The details for all bodies, can be seen in the Celestial Browser via the Windows
 
 ## Orbital Mechanics
 
-Orbital calculations have not yet been implemented, but the plan is to use a patched conic approximation for launch and transfer calculations. This will allow us to model multi-body systems without the complexity of n-body simulations. The simulation will calculate orbital parameters for rockets and payloads, allowing for accurate contract requirements and launch planning.
+Orbital calculations use a patched conic approximation for launch and transfer calculations, which models multi-body systems without the complexity of n-body simulations. The simulation calculates orbital parameters for rockets and payloads, supporting accurate contract requirements and launch planning.

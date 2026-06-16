@@ -1,4 +1,4 @@
-# Core Concepts
+# Introduction
 
 ## Overview
 
@@ -8,7 +8,7 @@ This section covers the core concepts of SolCorp's gameplay, simulation, company
 
 ## Simulation
 
-The game operates on a day-based simulation. Each day, the game processes events such as rocket manufacturing, contract deadlines, and launch operations. Days can be advanced by clicking the play/pause button on the main toolbar. When the game is paused, you can still manage your site and prepare for upcoming launches, but but most actions won't complete until you click play again and at least one day has passed.
+The game operates on a day-based simulation. Each day, the game processes events such as rocket manufacturing, contract deadlines, and launch operations. Days can be advanced by clicking the play/pause button on the [main toolbar](gameplay/windows/main-toolbar.md). When the game is paused, you can still manage your site and prepare for upcoming launches, but most actions won't complete until you click play again and at least one day has passed.
 
 ## Company
 

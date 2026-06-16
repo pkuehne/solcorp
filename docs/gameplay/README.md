@@ -5,9 +5,9 @@ SolCorp is a space launch company management simulation. You build and operate l
 ## Contents
 
 - [Introduction](gameplay/introduction.md) — Basic overview of how to play
-- [Concepts](gameplay/concepts/README.md) - An overview of key concepts in Solcorp
+- [Concepts](gameplay/concepts/README.md) — An overview of key concepts in Solcorp
 - [Simulation](gameplay/simulation.md) — Orbital mechanics and celestial bodies
-- [Windows](gameplay/windows/README.md) - The interfaces for managing the company
+- [Windows](gameplay/windows/README.md) — The interfaces for managing the company
 
 ## The Game Loop
 
