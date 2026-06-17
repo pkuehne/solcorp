@@ -1,4 +1,5 @@
 #include "site.h"
+#include "connector.h"
 #include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
@@ -33,6 +34,8 @@ SiteModule::SiteModule(flecs::world &world) {
   registerEngineComponents(world);
 
   world.import <RocketModule>();
+
+  registerConnectors(world);
 
   // Register components
   world.component<CurrentSite>();

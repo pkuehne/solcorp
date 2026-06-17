@@ -37,6 +37,7 @@ list(APPEND SolCorpSources
     modules/rocket/rocket_actions.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
+    modules/site/connector.cpp
     modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
     modules/site/helpers.cpp
@@ -86,6 +87,7 @@ list(APPEND SolCorpHeaders
     modules/rocket/rocket_actions.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/connector.h
     modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
     modules/site/helpers.h
@@ -212,6 +214,9 @@ endif()
 file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
 file(COPY ${TEXTURES}
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+
+file(COPY "${CMAKE_SOURCE_DIR}/assets"
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(run
     COMMAND solcorp

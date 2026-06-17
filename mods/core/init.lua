@@ -65,6 +65,9 @@ local function on_start()
 	-- Create a new site
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
+	-- Add a road connector
+	solcorp.helpers.create_connector("Road 2,2", ConnectorVariant.Straight, 0, 2, 2, site, "roads_asphalt", "roads_markings")
+
 	-- Add some buildings to the site
 	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
 	local storage = solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 1, 0, site)
