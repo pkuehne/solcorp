@@ -73,6 +73,10 @@ Texture loadTexture(const std::string &, flecs::world &);
 Texture loadTexture(const unsigned char *data, unsigned int len,
                     const flecs::world &world);
 
+void renderTile(const Renderer &renderer, const Texture &texture,
+                int src_col, int src_row, int tile_size,
+                const Transform &transform, double rotation);
+
 void initialiseGraphics(flecs::world &);
 
 void registerRender(flecs::world &);
