@@ -20,3 +20,5 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 | [006](/adr/006-rocket-fsm.md) | Rocket and Launch Plan Workflow | Accepted |
 | [007](/adr/007-launch-plan-timeline-and-automation.md) | Launch Plan Timeline and Automation | Accepted |
 | [008](/adr/008-central-stat-registry.md) | Central Stat Registry via Reflection | Proposed |
+| [009](/adr/009-lua-mod-registry.md) | Lua Mod Registry and Prefab Override System | Accepted |
+| [011](/adr/011-building-tileset-metadata.md) | Data-Driven Building Tileset Metadata | Accepted |
