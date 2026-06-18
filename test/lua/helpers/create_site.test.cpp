@@ -17,8 +17,8 @@ SCENARIO("create_site", "[helpers][lua]") {
         CHECK(s.width == 10);
         CHECK(s.height == 20);
       }
-      THEN("entity has ConstructionSiteNeedsUpdating") {
-        CHECK(site.has<ConstructionSiteNeedsUpdating>());
+      THEN("entity has SiteNeedsRelayout") {
+        CHECK(site.has<SiteNeedsRelayout>());
       }
       THEN("entity does not have CurrentSite") {
         CHECK(!site.has<CurrentSite>());

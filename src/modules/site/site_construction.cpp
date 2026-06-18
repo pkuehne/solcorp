@@ -101,5 +101,5 @@ void systemUpdateConstructionSiteLocations(flecs::entity entity, Site &site) {
     }
   }
 
-  entity.remove<ConstructionSiteNeedsUpdating>();
+  entity.remove<SiteNeedsRelayout>();
 }

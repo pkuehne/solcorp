@@ -35,12 +35,10 @@ SiteModule::SiteModule(flecs::world &world) {
 
   world.import <RocketModule>();
 
-  registerConnectors(world);
-
   // Register components
   world.component<CurrentSite>();
   world.component<ConstructionSite>();
-  world.component<ConstructionSiteNeedsUpdating>();
+  world.component<SiteNeedsRelayout>();
   world.component<Site>()
       .member("width", &Site::width)
       .member("height", &Site::height);
@@ -109,6 +107,12 @@ SiteModule::SiteModule(flecs::world &world) {
             .field<&Manufacturing::auto_store>("auto_store");
       });
 
+  // Connectors register their own components and the retile system, which
+  // queries Site / SiteNeedsRelayout — so this must run after those are
+  // registered above, and before the scatter system below so the autotiler
+  // runs first in ValidatePhase.
+  registerConnectors(world);
+
   // Register Systems
   world.system("Site Create Prefabs")
       .kind(flecs::OnStart)
@@ -148,7 +152,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .each(systemMatchClickToBuilding);
 
   world.system<Site>("Update Construction Sites")
-      .with<ConstructionSiteNeedsUpdating>()
+      .with<SiteNeedsRelayout>()
       .kind(ValidatePhase)
       .each(systemUpdateConstructionSiteLocations);
 

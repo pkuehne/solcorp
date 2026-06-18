@@ -2,11 +2,121 @@
 #include "modules/base/base.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
+#include "modules/site/site.h"
+#include <cstdint>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static constexpr int TILE_SIZE = 32;
 static constexpr int TILESET_COLS = 3;
+
+uint8_t rotateConnectorMaskCW(uint8_t mask) {
+  // N(bit0)->E(bit1)->S(bit2)->W(bit3)->N: a left shift, with the top bit
+  // wrapping back round to North.
+  return static_cast<uint8_t>(((mask << 1) | (mask >> 3)) & 0xF);
+}
+
+namespace {
+// Connections each variant makes at rotation_deg == 0. These must match the
+// tilesheet artwork; Straight/DeadEnd are pinned by the existing Lua content,
+// Corner/TJunction by the art's authored orientation. See ADR 010.
+constexpr uint8_t kStraightBase = NeighbourEast | NeighbourWest; // horizontal
+constexpr uint8_t kCornerBase = NeighbourEast | NeighbourSouth;  // opens E+S
+constexpr uint8_t kTJunctionBase =
+    NeighbourNorth | NeighbourEast | NeighbourSouth; // closed side faces West
+constexpr uint8_t kDeadEndBase = NeighbourEast;      // stub opens East
+
+// Smallest clockwise rotation (in degrees) that turns the base connection mask
+// into the target mask. Both masks always have the same number of bits set.
+double rotationToMatch(uint8_t base, uint8_t target) {
+  for (int step = 0; step < 4; ++step) {
+    if (base == target) {
+      return step * 90.0;
+    }
+    base = rotateConnectorMaskCW(base);
+  }
+  return 0.0; // unreachable for well-formed connector masks
+}
+} // namespace
+
+std::optional<ConnectorTiling> computeConnectorTiling(uint8_t neighbourMask) {
+  const uint8_t mask = neighbourMask & 0xF;
+  switch (__builtin_popcount(mask)) {
+  case 0:
+    // Isolated tile: keep whatever the author placed.
+    return std::nullopt;
+  case 1:
+    return ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
+                           .rotation_deg = rotationToMatch(kDeadEndBase, mask)};
+  case 2: {
+    const bool opposite = (mask == (NeighbourNorth | NeighbourSouth)) ||
+                          (mask == (NeighbourEast | NeighbourWest));
+    if (opposite) {
+      return ConnectorTiling{.variant = ConnectorVariant::Straight,
+                             .rotation_deg =
+                                 rotationToMatch(kStraightBase, mask)};
+    }
+    return ConnectorTiling{.variant = ConnectorVariant::Corner,
+                           .rotation_deg = rotationToMatch(kCornerBase, mask)};
+  }
+  case 3:
+    return ConnectorTiling{.variant = ConnectorVariant::TJunction,
+                           .rotation_deg =
+                               rotationToMatch(kTJunctionBase, mask)};
+  default: // 4 neighbours
+    return ConnectorTiling{.variant = ConnectorVariant::Crossing,
+                           .rotation_deg = 0.0};
+  }
+}
+
+void systemRetileSiteConnectors(flecs::entity site) {
+  auto key = [](int x, int y) { return (y << 8) | x; };
+
+  std::unordered_map<int, flecs::entity> grid;
+  std::vector<std::pair<flecs::entity, SiteLocation>> tiles;
+  site.children([&](flecs::entity child) {
+    if (child.has<ConnectorTile>() && child.has<SiteLocation>()) {
+      const SiteLocation loc = child.get<SiteLocation>();
+      grid[key(loc.x, loc.y)] = child;
+      tiles.emplace_back(child, loc);
+    }
+  });
+
+  auto occupied = [&](int x, int y) {
+    if (x < 0 || y < 0) {
+      return false;
+    }
+    return grid.find(key(x, y)) != grid.end();
+  };
+
+  for (auto &[e, loc] : tiles) {
+    const int x = loc.x;
+    const int y = loc.y;
+    uint8_t mask = 0;
+    if (occupied(x, y - 1)) {
+      mask |= NeighbourNorth;
+    }
+    if (occupied(x + 1, y)) {
+      mask |= NeighbourEast;
+    }
+    if (occupied(x, y + 1)) {
+      mask |= NeighbourSouth;
+    }
+    if (occupied(x - 1, y)) {
+      mask |= NeighbourWest;
+    }
+
+    const auto tiling = computeConnectorTiling(mask);
+    if (!tiling.has_value()) {
+      continue;
+    }
+    e.set<ConnectorTile>(
+        {.variant = tiling->variant, .rotation_deg = tiling->rotation_deg});
+  }
+}
 
 static void renderLayer(const Renderer &renderer, flecs::entity tileset_e,
                         int src_col, int src_row, const Transform &transform,
@@ -59,8 +169,20 @@ void registerConnectors(flecs::world &world) {
             .field<&ConnectorTile::rotation_deg>("rotation_deg");
       });
 
-  world.system<const ConnectorTile, const Transform, const Renderer>(
-           "Render Connectors")
+  // Re-tile a site's connectors whenever its layout changed. Matches only
+  // sites flagged SiteNeedsRelayout, so it does no work on a steady frame.
+  // Registered before the scatter "Update Construction Sites" system (which
+  // also keys off the tag and is responsible for clearing it), so this runs
+  // first and must not remove the tag itself.
+  world.system<Site>("Retile Connectors")
+      .with<SiteNeedsRelayout>()
+      .kind(ValidatePhase)
+      .each(
+          [](flecs::entity site, Site &) { systemRetileSiteConnectors(site); });
+
+  world
+      .system<const ConnectorTile, const Transform, const Renderer>(
+          "Render Connectors")
       .kind(RenderPhase)
       .each(systemRenderConnector);
 }

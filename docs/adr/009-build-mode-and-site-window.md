@@ -206,21 +206,26 @@ specifies the derivation **kernel** (the neighbour-mask → variant mapping and 
 from which rotation is computed). This section covers how that kernel is *triggered* and *applied*.
 
 **Trigger — a single site relayout flag.** A site whose layout changed — a connector or building
-placed (§4), or a tile deleted (demolition, later) — is tagged `SiteNeedsRelayout`. This is the
-renamed `ConstructionSiteNeedsUpdating`: the same site-level dirty flag, repurposed to mean "recompute
-this site's derived layout state" now that the scatter construction it originally drove is gone (§5).
-A single `ValidatePhase` system matches only flagged sites, so it runs on change, never every frame.
+placed (§4), `create_connector` called from Lua, or a tile deleted (demolition, later) — is tagged
+`SiteNeedsRelayout`. This is the renamed `ConstructionSiteNeedsUpdating`: the same site-level dirty
+flag, repurposed to mean "recompute this site's derived layout state." A single `ValidatePhase`
+system matches only flagged sites, so it runs on change, never every frame.
 
 **Retile system** (`connector.cpp`). For each flagged site it gathers the site's connector children
 into a set of occupied connector cells, builds each tile's N/E/S/W neighbour mask (only other
 connectors count toward the join, not buildings), computes `{variant, rotation_deg}` via the ADR 010
-kernel, writes it back, and then removes `SiteNeedsRelayout`. The autotiler is the **sole** consumer
-of the tag; the scatter system that previously set and cleared it has been deleted (§5).
+kernel, and writes it back.
 
-The Lua `create_connector` API keeps explicit variant/rotation for scripted seeding, but because seed
-connectors live on a site that is flagged at creation, the autotiler corrects them on the first
-relayout pass — those explicit values are advisory. Interactive placement never asks the player to
-choose.
+**Coexistence with the scatter system.** Until the scatter system is removed (Phase 3), it remains the
+*owner* of the tag's lifecycle: it still clears `SiteNeedsRelayout` at the end of its pass. The
+autotiler is therefore registered *before* the scatter system in `ValidatePhase` and deliberately does
+**not** clear the tag — it runs first, retiles, and leaves the scatter system to clear. When the
+scatter system is deleted in Phase 3, the autotiler becomes the sole consumer and takes over clearing
+the tag.
+
+The Lua `create_connector` API keeps explicit variant/rotation for scripted seeding, but it also flags
+the owning site `SiteNeedsRelayout`, so the autotiler corrects those tiles on the next relayout pass —
+the explicit values are advisory. Interactive placement never asks the player to choose.
 
 This system depends only on the relayout tag and a site's connector children — not on `BuildMode`,
 the Site Window, or `canPlace` — so it can be implemented independently of the other build-mode
@@ -273,9 +278,10 @@ Per the project rule that all UI windows live in `modules/window/`:
 - `systemUpdateConstructionSiteLocations` and the scatter `ConstructionSite` ghosts are retired
   entirely. The `ConstructionSite` *prefab/sprite* is kept and repurposed as the build-mode ghost
   cursor.
-- The site dirty flag `ConstructionSiteNeedsUpdating` is renamed `SiteNeedsRelayout`: with the
-  scatter system gone, its meaning shifts from "rescatter construction ghosts" to "recompute this
-  site's derived layout state," and the connector autotiler (§6) becomes its sole consumer.
+- The site dirty flag `ConstructionSiteNeedsUpdating` is renamed `SiteNeedsRelayout` to reflect its
+  broader meaning ("recompute this site's derived layout state"). The connector autotiler (§6) and the
+  scatter system consume it side by side until the latter is removed in Phase 3, after which the
+  autotiler is its sole consumer.
 - The `ConstructionSiteWindow` (palette-as-popup-on-a-cell) is replaced by the Site Window palette.
 - Placement rules become unit-tested in isolation, decoupled from rendering and from the live world.
 - Sites gain a first-class info window.
@@ -308,14 +314,13 @@ Per the project rule that all UI windows live in `modules/window/`:
 | 4 | Variable building rectangles: rubber-band drag clamped to a 2×2 minimum and the site bounds, multi-tile region placement, `TooSmall` feedback. |
 | 5 | 9-slice rendering for multi-tile buildings (corner/edge/fill from a tilesheet). |
 | 6 | Connector click-drag runs (the autotiler from Phase A already fixes variants). |
-| A | **Autotiler (independent):** rename `ConstructionSiteNeedsUpdating` → `SiteNeedsRelayout`; the `SiteNeedsRelayout`-driven retile system in `connector.cpp` + the pure `computeConnectorTiling` kernel (ADR 010) with full unit tests; remove the scatter system so the autotiler is the tag's sole consumer. Depends only on the relayout tag and connector children, so it does not wait on Phases 1–6. |
+| A | **Autotiler (independent):** rename `ConstructionSiteNeedsUpdating` → `SiteNeedsRelayout`; the `SiteNeedsRelayout`-driven retile system in `connector.cpp` + the pure `computeConnectorTiling` kernel (ADR 010) with full unit tests. The autotiler coexists with the still-present scatter system (it runs first and lets scatter clear the tag, §6). Depends only on the relayout tag and connector children, so it does not wait on Phases 1–6. |
 
 Each phase is independently shippable. Phase A is listed out of order deliberately: the connector
 autotiler shares none of build mode's machinery (`BuildMode`, the Site Window, `canPlace`) and is
-being implemented first to stop scripted/seeded roads from forming invalid junctions. Because it
-makes the autotiler the sole consumer of `SiteNeedsRelayout`, Phase A removes the scatter system
-(`systemUpdateConstructionSiteLocations`); the interactive *building* placement the scatter window
-provided does not return until the Site Window build mode (Phases 2–4) lands.
+implemented first to stop scripted/seeded roads from forming invalid junctions. It leaves the scatter
+system in place — interactive building placement keeps working unchanged — and the scatter system is
+not retired until Phase 3.
 
 ## Non-Goals
 

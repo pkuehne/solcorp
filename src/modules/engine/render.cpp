@@ -274,9 +274,9 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
                     static_cast<SDL_RendererFlip>(text.flip));
 }
 
-void renderTile(const Renderer &renderer, const Texture &texture,
-                int src_col, int src_row, int tile_size,
-                const Transform &transform, double rotation) {
+void renderTile(const Renderer &renderer, const Texture &texture, int src_col,
+                int src_row, int tile_size, const Transform &transform,
+                double rotation) {
   SDL_Rect source = {src_col * tile_size, src_row * tile_size, tile_size,
                      tile_size};
   SDL_FRect dest = {transform.worldPosition.x, transform.worldPosition.y,

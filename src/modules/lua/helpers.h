@@ -74,7 +74,7 @@ flecs::entity create_contract_payload(const flecs::world &world,
 std::vector<flecs::entity> get_all_contracts(const flecs::world &world);
 std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world);
 flecs::entity create_connector(flecs::world &world, const std::string &name,
-                                ConnectorVariant variant, double rotation,
-                                uint8_t x, uint8_t y, flecs::entity site,
-                                const std::string &base_tileset,
-                                const std::string &markings_tileset);
+                               ConnectorVariant variant, double rotation,
+                               uint8_t x, uint8_t y, flecs::entity site,
+                               const std::string &base_tileset,
+                               const std::string &markings_tileset);
