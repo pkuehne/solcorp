@@ -28,6 +28,19 @@ flecs::entity create_site(const flecs::world &world, const std::string &name,
   return site;
 }
 
+// Creates (or, if it already exists, reuses) a named prefab under `parent`.
+// Scoping the creation makes the name resolve relative to `parent`, so a repeat
+// call with the same name returns the existing prefab instead of creating a
+// conflicting root entity. This keeps prefab registration idempotent, which the
+// developer "Reload Prefabs" path relies on.
+static flecs::entity prefab_under(const flecs::world &world,
+                                  flecs::entity parent, flecs::entity base,
+                                  const std::string &name) {
+  flecs::entity prefab;
+  world.scope(parent, [&] { prefab = world.prefab(name.c_str()).is_a(base); });
+  return prefab;
+}
+
 flecs::entity create_building_prefab(const flecs::world &world,
                                      const std::string &name) {
   auto buildings_node = world.lookup("Prefabs::Buildings");
@@ -35,9 +48,7 @@ flecs::entity create_building_prefab(const flecs::world &world,
   auto building_prefab = world.lookup("Prefabs::Core::Building");
   SC_ASSERT(building_prefab.is_valid(),
             "Prefabs::Core::Building prefab not found");
-  return world.prefab(name.c_str())
-      .is_a(building_prefab)
-      .child_of(buildings_node);
+  return prefab_under(world, buildings_node, building_prefab, name);
 }
 
 flecs::entity create_rocket_prefab(const flecs::world &world,
@@ -46,7 +57,7 @@ flecs::entity create_rocket_prefab(const flecs::world &world,
   SC_ASSERT(rockets_node.is_valid(), "Prefabs::Rockets node not found");
   auto rocket_prefab = world.lookup("Prefabs::Core::Rocket");
   SC_ASSERT(rocket_prefab.is_valid(), "Prefabs::Core::Rocket prefab not found");
-  return world.prefab(name.c_str()).is_a(rocket_prefab).child_of(rockets_node);
+  return prefab_under(world, rockets_node, rocket_prefab, name);
 }
 
 flecs::entity add_facility_to_building(const flecs::world &world,
@@ -55,7 +66,7 @@ flecs::entity add_facility_to_building(const flecs::world &world,
   auto facility_prefab = world.lookup("Prefabs::Core::Facility");
   SC_ASSERT(facility_prefab.is_valid(),
             "Prefabs::Core::Facility prefab not found");
-  return world.prefab(name.c_str()).is_a(facility_prefab).child_of(building);
+  return prefab_under(world, building, facility_prefab, name);
 }
 
 flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
@@ -102,10 +113,14 @@ flecs::entity create_texture(flecs::world world, const TextureName &name,
   auto location =
       (std::filesystem::path("mods") / mod_name.value / filename.value)
           .string();
+  // Scope the lookup under Textures so a repeat call (e.g. reloading prefabs)
+  // reuses the existing texture entity and overwrites its Texture, rather than
+  // creating a conflicting root entity named the same.
   auto texture_node = world.entity("Textures");
-  return world.entity(name.value.c_str())
-      .child_of(texture_node)
-      .set<Texture>(loadTexture(location, world));
+  flecs::entity texture;
+  world.scope(texture_node,
+              [&] { texture = world.entity(name.value.c_str()); });
+  return texture.set<Texture>(loadTexture(location, world));
 }
 
 flecs::entity create_effect(const flecs::world &world, const std::string &name,

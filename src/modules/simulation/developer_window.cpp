@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "modules/engine/gui.h"
 #include "modules/lua/lua.h"
+#include "modules/lua/mod_content.h"
 #include "modules/simulation/simulation.h"
 #include <algorithm>
 #include <flecs.h>
@@ -84,7 +85,27 @@ void drawModsTab(flecs::world &world) {
     return lhs.id < rhs.id;
   });
 
+  // Header row: mod count on the left, reload button right-aligned.
+  ImGui::AlignTextToFramePadding();
   ImGui::Text("Loaded mods: %zu", mods.size());
+
+  const char *reloadLabel = "Reload Prefabs";
+  const float reloadWidth = ImGui::CalcTextSize(reloadLabel).x +
+                            ImGui::GetStyle().FramePadding.x * 2.0f;
+  ImGui::SameLine(ImGui::GetContentRegionAvail().x - reloadWidth);
+  if (ImGui::Button(reloadLabel)) {
+    // Request a reload; an immediate system performs it outside readonly mode,
+    // since structural changes are illegal during GUI draw.
+    world.add<ReloadPrefabsRequest>();
+  }
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip(
+        "Re-reads every mod's textures.lua and buildings.lua from "
+        "disk and re-applies them in place. Existing entities keep "
+        "their identity, so placed buildings pick up updated "
+        "sprites. Entries removed from a data file are not pruned.");
+  }
+
   ImGui::Separator();
 
   constexpr ImGuiTableFlags tableFlags =

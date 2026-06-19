@@ -40,6 +40,43 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
     }
   }
 
+  GIVEN("the same building definition applied twice (a reload)") {
+    BuildingDef factory;
+    factory.id = "factory";
+    factory.name = "Factory";
+    factory.facilities = {
+        {.name = "Line 1", .type = "Manufacturing"},
+    };
+
+    WHEN("the definition is applied a second time") {
+      applyBuildingData(world, {factory});
+      applyBuildingData(world, {factory});
+
+      THEN("the prefab and its facility are reused, not duplicated") {
+        auto prefab = world.lookup("Prefabs::Buildings::Factory");
+        REQUIRE(prefab.is_valid());
+
+        int building_count = 0;
+        world.lookup("Prefabs::Buildings").children([&](flecs::entity child) {
+          if (child.name() == "Factory") {
+            ++building_count;
+          }
+        });
+        CHECK(building_count == 1);
+
+        int line_count = 0;
+        prefab.children([&](flecs::entity child) {
+          if (child.name() == "Line 1") {
+            ++line_count;
+          }
+        });
+        CHECK(line_count == 1);
+        CHECK(world.lookup("Prefabs::Buildings::Factory::Line 1")
+                  .has<Manufacturing>());
+      }
+    }
+  }
+
   GIVEN("a building definition whose sprite clips a known texture") {
     // clip_sprite_from_texture looks the texture up by name under Textures::.
     auto textures = world.entity("Textures");

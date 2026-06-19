@@ -20,6 +20,16 @@
 #include <vector>
 
 /**
+ * @brief Singleton tag requesting a reload of mod prefab content.
+ *
+ * Set it from any context, including a GUI handler running while the world is
+ * in readonly mode (`world.add<ReloadPrefabsRequest>()`). A dedicated immediate
+ * system consumes the tag and runs loadModContent outside of readonly mode,
+ * where the structural changes it performs are legal.
+ */
+struct ReloadPrefabsRequest {};
+
+/**
  * @brief Add the facility-type component named by `type` to `facility`.
  *
  * Maps a buildings.lua facility `type` string onto its ECS component

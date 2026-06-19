@@ -1,5 +1,6 @@
 #include "lua.h"
 #include "modules/base/base.h"
+#include "modules/base/notification.h"
 #include "modules/lua/entity.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
@@ -38,6 +39,7 @@ LuaModule::LuaModule(flecs::world &world) {
       .member("author", &Mod::author)
       .member("load_order", &Mod::load_order); //
   //.member("state", &Mod::state); //
+  world.component<ReloadPrefabsRequest>();
 
   // Load mods
   load_all_mods(world);
@@ -57,6 +59,25 @@ LuaModule::LuaModule(flecs::world &world) {
       .kind(PostStartPhase)
       .immediate()
       .each(mod_on_start);
+
+  // Consume a reload request raised from elsewhere (e.g. the developer window's
+  // "Reload Prefabs" button). Matching the singleton tag means the body only
+  // runs on a frame where a reload was requested. immediate() runs it outside
+  // readonly mode, where loadModContent's structural changes are legal.
+  world.system("Reload Mod Content")
+      .with<ReloadPrefabsRequest>()
+      .kind(flecs::OnUpdate)
+      .immediate()
+      .each([](flecs::entity e) {
+        flecs::world world = e.world();
+        world.remove<ReloadPrefabsRequest>();
+        loadModContent(world);
+        spdlog::info("Reloaded mod content (textures and building prefabs)");
+        instantiateNotification(
+            world, "Prefabs Reloaded",
+            "Reloaded mod textures and building prefabs from disk.", {},
+            NotificationSeverity::Medium);
+      });
 
   world.system<Mod>("Mod on_frame Event")
       .kind(flecs::OnUpdate)
