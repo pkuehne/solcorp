@@ -117,8 +117,11 @@ textures via `create_texture`, which reads from `mods/<modname>/`; mods have no 
 
 ### Lua exposure
 
-`ConnectorVariant` is registered as a global enum table via `register_enum_table_lua` so Lua mods
-can write `ConnectorVariant.Straight`. `ConnectorTile` is registered via `register_component_lua`
+`ConnectorVariant` is registered as an enum table under the `solcorp.constants` namespace via
+`register_enum_table_lua`, so Lua mods write `solcorp.constants.ConnectorVariant.Straight` (usually
+aliased to a local). Namespacing all enums under `solcorp.constants` keeps `solcorp` the only engine
+global, so luacheck needs no per-enum declarations. `ConnectorTile` is registered via
+`register_component_lua`
 for get/set/has/remove access. Relationship setup (tileset binding) is handled inside
 `create_connector` in `helpers.cpp` because Lua has no direct relationship API.
 

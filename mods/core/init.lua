@@ -66,6 +66,7 @@ local function on_start()
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
 	-- Add a road connector
+	local ConnectorVariant = solcorp.constants.ConnectorVariant
 	for i = 0, 9 do
 		solcorp.helpers.create_connector(
 			"Road 3," .. i,
