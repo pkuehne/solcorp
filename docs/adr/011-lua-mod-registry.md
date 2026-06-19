@@ -1,4 +1,4 @@
-# 009 — Lua Mod Registry and Prefab Override System
+# 011 — Lua Mod Registry and Prefab Override System
 
 **Status:** Accepted
 
