@@ -41,6 +41,14 @@ Everything below concerns the Lua side up to that mapping point.
 
 ### 1. Registry via deep merge
 
+> Amendment (2026-06): the declaration surface is a **returned table**, not imperative `register`
+> calls. Each mod *may* include a dedicated `buildings.lua` that **returns a table** of
+> `id → definition`; the engine collects each mod's table and deep-merges them in load order. The
+> `register(...)` signature below is retained as the *internal* merge primitive the engine calls per
+> entry while folding a mod's returned table in — `mod_name`/`load_order` still drive provenance and
+> merge order — but mods no longer call it directly. The merge semantics, `DELETE` sentinel,
+> provenance, flags, and validation in the rest of this ADR are unchanged.
+
 All mod definitions are applied through a single
 `buildings.register(id, overrides, mod_name, load_order)` call. Internally this performs a deep merge
 onto the existing registry entry, creating a new entry if none exists:
