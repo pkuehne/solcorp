@@ -34,6 +34,8 @@ enum ConnectorNeighbour : uint8_t {
 struct ConnectorTiling {
   ConnectorVariant variant;
   double rotation_deg;
+
+  bool operator==(const ConnectorTiling &) const = default;
 };
 
 /// @brief Rotate a 4-bit neighbour mask 90 degrees clockwise (N->E->S->W).

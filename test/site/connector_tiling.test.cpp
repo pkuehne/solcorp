@@ -41,19 +41,17 @@ SCENARIO("computeConnectorTiling", "[connector]") {
     WHEN("The neighbour is to the north") {
       auto tiling = computeConnectorTiling(NeighbourNorth);
       THEN("It is a dead-end facing north (rotation 270)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::DeadEnd);
         // Matches the Lua-authored north-facing dead-end orientation.
-        CHECK(tiling->rotation_deg == 270.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
+                                        .rotation_deg = 270.0});
       }
     }
 
     WHEN("The neighbour is to the east") {
       auto tiling = computeConnectorTiling(NeighbourEast);
       THEN("It is a dead-end at the base rotation (0)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::DeadEnd);
-        CHECK(tiling->rotation_deg == 0.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
+                                        .rotation_deg = 0.0});
       }
     }
   }
@@ -62,19 +60,17 @@ SCENARIO("computeConnectorTiling", "[connector]") {
     WHEN("They run east-west") {
       auto tiling = computeConnectorTiling(NeighbourEast | NeighbourWest);
       THEN("It is a horizontal straight (rotation 0)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::Straight);
-        CHECK(tiling->rotation_deg == 0.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Straight,
+                                        .rotation_deg = 0.0});
       }
     }
 
     WHEN("They run north-south") {
       auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourSouth);
       THEN("It is a vertical straight (rotation 90)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::Straight);
         // Matches the Lua-authored vertical road orientation.
-        CHECK(tiling->rotation_deg == 90.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Straight,
+                                        .rotation_deg = 90.0});
       }
     }
   }
@@ -83,18 +79,16 @@ SCENARIO("computeConnectorTiling", "[connector]") {
     WHEN("They are east and south (the base corner)") {
       auto tiling = computeConnectorTiling(NeighbourEast | NeighbourSouth);
       THEN("It is a corner at rotation 0") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::Corner);
-        CHECK(tiling->rotation_deg == 0.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Corner,
+                                        .rotation_deg = 0.0});
       }
     }
 
     WHEN("They are north and east") {
       auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast);
       THEN("It is a corner rotated to face north-east (270)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::Corner);
-        CHECK(tiling->rotation_deg == 270.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Corner,
+                                        .rotation_deg = 270.0});
       }
     }
   }
@@ -104,9 +98,8 @@ SCENARIO("computeConnectorTiling", "[connector]") {
       auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast |
                                            NeighbourSouth);
       THEN("It is a T-junction at rotation 0") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::TJunction);
-        CHECK(tiling->rotation_deg == 0.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::TJunction,
+                                        .rotation_deg = 0.0});
       }
     }
 
@@ -114,9 +107,8 @@ SCENARIO("computeConnectorTiling", "[connector]") {
       auto tiling = computeConnectorTiling(NeighbourEast | NeighbourSouth |
                                            NeighbourWest);
       THEN("It is a T-junction rotated once clockwise (90)") {
-        REQUIRE(tiling.has_value());
-        CHECK(tiling->variant == ConnectorVariant::TJunction);
-        CHECK(tiling->rotation_deg == 90.0);
+        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::TJunction,
+                                        .rotation_deg = 90.0});
       }
     }
   }
@@ -125,9 +117,8 @@ SCENARIO("computeConnectorTiling", "[connector]") {
     auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast |
                                          NeighbourSouth | NeighbourWest);
     THEN("It is a crossing at rotation 0") {
-      REQUIRE(tiling.has_value());
-      CHECK(tiling->variant == ConnectorVariant::Crossing);
-      CHECK(tiling->rotation_deg == 0.0);
+      CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Crossing,
+                                      .rotation_deg = 0.0});
     }
   }
 }
