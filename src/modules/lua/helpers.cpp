@@ -4,6 +4,7 @@
 #include "modules/engine/render.h"
 #include "modules/lua/entity.h"
 #include "modules/lua/lua_registry.h"
+#include "modules/site/connector.h"
 #include "modules/site/helpers.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -17,7 +18,7 @@ flecs::entity create_site(const flecs::world &world, const std::string &name,
                   .set<Site>({.width = width, .height = height})
                   .set<Transform>({.relativePosition = {.x = 340, .y = 240},
                                    .worldPosition = {}})
-                  .add<ConstructionSiteNeedsUpdating>();
+                  .add<SiteNeedsRelayout>();
   if (make_current) {
     site.add<CurrentSite>();
   }
@@ -201,6 +202,51 @@ std::vector<flecs::entity> get_all_contracts(const flecs::world &world) {
   return result;
 }
 
+flecs::entity create_connector(flecs::world &world, const std::string &name,
+                               ConnectorVariant variant, double rotation,
+                               uint8_t x, uint8_t y, flecs::entity site,
+                               const std::string &base_tileset,
+                               const std::string &markings_tileset) {
+  if (!site.is_valid()) {
+    spdlog::error("Cannot create connector: site entity is not valid");
+    return {};
+  }
+
+  Transform t;
+  t.relativePosition.x = static_cast<float>(x) * 32;
+  t.relativePosition.y = static_cast<float>(y) * 32;
+
+  auto e =
+      world.entity(name.c_str())
+          .set<ConnectorTile>({.variant = variant, .rotation_deg = rotation})
+          .set<SiteLocation>({.x = x, .y = y})
+          .set<Transform>(t)
+          .child_of(site);
+
+  auto base_e = world.lookup(("Textures::" + base_tileset).c_str());
+  if (!base_e.is_valid()) {
+    spdlog::error("Connector base tileset '{}' not found", base_tileset);
+  } else {
+    e.add<TilesetBase>(base_e);
+  }
+
+  if (!markings_tileset.empty()) {
+    auto markings_e = world.lookup(("Textures::" + markings_tileset).c_str());
+    if (!markings_e.is_valid()) {
+      spdlog::error("Connector markings tileset '{}' not found",
+                    markings_tileset);
+    } else {
+      e.add<TilesetMarkings>(markings_e);
+    }
+  }
+
+  // A connector was added: flag the site so the autotiler recomputes every
+  // tile's variant/rotation from its neighbours on the next relayout pass.
+  site.add<SiteNeedsRelayout>();
+
+  return e;
+}
+
 std::vector<flecs::entity> get_all_active_contracts(const flecs::world &world) {
   std::vector<flecs::entity> result;
   world.query_builder<Contract>().build().each([&](flecs::entity e,
@@ -346,6 +392,21 @@ static int add_modifier_wrapper(lua_State *L) {
   return 0;
 }
 
+static int create_connector_wrapper(lua_State *L) {
+  const char *name = luaL_checkstring(L, 1);
+  auto variant = static_cast<ConnectorVariant>(luaL_checkinteger(L, 2));
+  double rotation = luaL_checknumber(L, 3);
+  auto x = static_cast<uint8_t>(luaL_checkinteger(L, 4));
+  auto y = static_cast<uint8_t>(luaL_checkinteger(L, 5));
+  flecs::entity site = lua_check_entity(L, 6);
+  const char *base_tileset = luaL_checkstring(L, 7);
+  const char *markings_tileset = luaL_optstring(L, 8, "");
+  lua_push_entity(L,
+                  create_connector(*lua_get_world(L), name, variant, rotation,
+                                   x, y, site, base_tileset, markings_tileset));
+  return 1;
+}
+
 static int clip_sprite_from_texture_wrapper(lua_State *L) {
   const char *texture = luaL_checkstring(L, 1);
   auto x = (int)luaL_checkinteger(L, 2);
@@ -386,6 +447,7 @@ void load_helpers_namespace(lua_State *L) {
   lua_register_function(L, "add_modifier", add_modifier_wrapper);
   lua_register_function(L, "clip_sprite_from_texture",
                         clip_sprite_from_texture_wrapper);
+  lua_register_function(L, "create_connector", create_connector_wrapper);
 
   lua_pop(L, 2); // helpers, solcorp
 }

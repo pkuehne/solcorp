@@ -48,7 +48,7 @@ void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
       .set<Transform>(t)
       .child_of(constructionE.parent());
 
-  constructionE.parent().add<ConstructionSiteNeedsUpdating>();
+  constructionE.parent().add<SiteNeedsRelayout>();
 }
 
 /// @brief System encapsulating the draw commands for the ConstructionSiteWindow

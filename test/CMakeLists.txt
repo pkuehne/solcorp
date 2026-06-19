@@ -59,6 +59,7 @@ add_executable(unit_test
   rocket/contracts_window/button_enabled_state.test.cpp
   simulation/update_sim_date.test.cpp
   simulation/generate_sol_system.test.cpp
+  site/connector_tiling.test.cpp
   site/create_site_prefabs.test.cpp
   site/auto_start_next_build.test.cpp
   site/auto_store_built_rocket.test.cpp

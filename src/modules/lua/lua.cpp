@@ -157,11 +157,17 @@ void register_enum_table_lua(
     flecs::world &world, const std::string &name,
     const std::function<void(LuaEnumBuilder &)> &register_func) {
   run_on_every_mod(world, [&name, &register_func](lua_State *L) {
-    lua_newtable(L);
+    // Register under solcorp.constants.<name> rather than as a bare global, so
+    // mods (and luacheck) only need to know about the single `solcorp` global.
+    lua_getglobal(L, "solcorp");             // [solcorp]
+    lua_get_or_create_table(L, "constants"); // [solcorp, constants]
+    lua_newtable(L);                         // [solcorp, constants, enum]
     int tbl_idx = lua_gettop(L);
     LuaEnumBuilder builder(L, tbl_idx);
     register_func(builder);
-    lua_setglobal(L, name.c_str());
+    lua_setfield(L, -2,
+                 name.c_str()); // constants[name] = enum; [solcorp, constants]
+    lua_pop(L, 2);              // []
   });
 }
 

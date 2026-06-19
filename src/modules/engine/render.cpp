@@ -56,9 +56,26 @@ void registerRender(flecs::world &world) {
   });
 
   auto scope = world.set_scope(0);
-  world.entity("Textures");
+  auto textures = world.entity("Textures");
   auto fonts = world.entity("Fonts");
   world.set_scope(scope);
+
+  static const std::filesystem::path asset_texture_dir("assets/textures");
+  if (std::filesystem::is_directory(asset_texture_dir)) {
+    for (const auto &entry :
+         std::filesystem::directory_iterator(asset_texture_dir)) {
+      if (entry.path().extension() == ".png") {
+        auto name = entry.path().stem().string();
+        world.entity(name.c_str())
+            .child_of(textures)
+            .set<Texture>(loadTexture(entry.path().string(), world));
+        spdlog::debug("Loaded asset texture: {}", name);
+      }
+    }
+  } else {
+    spdlog::warn("Asset texture directory '{}' not found",
+                 asset_texture_dir.string());
+  }
 
   const auto &config = world.get<Config>();
 
@@ -255,6 +272,18 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
                     text.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(text.flip));
+}
+
+void renderTile(const Renderer &renderer, const Texture &texture, int src_col,
+                int src_row, int tile_size, const Transform &transform,
+                double rotation) {
+  SDL_Rect source = {src_col * tile_size, src_row * tile_size, tile_size,
+                     tile_size};
+  SDL_FRect dest = {transform.worldPosition.x, transform.worldPosition.y,
+                    static_cast<float>(tile_size),
+                    static_cast<float>(tile_size)};
+  SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &dest, rotation,
+                    nullptr, SDL_FLIP_NONE);
 }
 
 /// @brief Loads the given texture into a Texture component

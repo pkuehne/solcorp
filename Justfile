@@ -1,6 +1,7 @@
 set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 
 build_dir := "build"
+aseprite := "/mnt/c/Program Files (x86)/Steam/steamapps/common/Aseprite/aseprite.exe"
 
 # List available commands
 help:
@@ -91,3 +92,8 @@ lint-fix-cpp:
 # Serve documentation locally
 docs:
     python3 -m http.server 8000 --directory docs
+
+# Export tilesets from Aseprite files in the assets/aseprite directory to PNG files in the assets/textures directory
+export-tilesets:
+    "{{ aseprite }}" -b --layer "road_asphalt" assets/aseprite/solcorp_roads.aseprite --export-tileset --sheet assets/textures/roads_asphalt.png
+    "{{ aseprite }}" -b --layer "road_markings" assets/aseprite/solcorp_roads.aseprite --export-tileset --sheet assets/textures/roads_markings.png

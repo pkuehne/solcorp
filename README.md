@@ -1,7 +1,6 @@
 # Sol, Corp.
 
 [![Latest Release](https://img.shields.io/github/v/release/pkuehne/solcorp?sort=semver&color=blue)](https://github.com/pkuehne/solcorp/releases)
-[![GitHub milestone details](https://img.shields.io/github/milestones/progress-percent/pkuehne/solcorp/2)](https://github.com/pkuehne/solcorp/milestone/2)
 [![GitHub milestone details](https://img.shields.io/github/milestones/progress-percent/pkuehne/solcorp/3)](https://github.com/pkuehne/solcorp/milestone/3)
 [![CI](https://img.shields.io/github/actions/workflow/status/pkuehne/solcorp/ci.yml?branch=main&label=Build)](https://github.com/pkuehne/solcorp/actions/workflows/ci.yml)
 [![Release Please](https://img.shields.io/github/actions/workflow/status/pkuehne/solcorp/release-please.yml?branch=main&label=Release)](https://github.com/pkuehne/solcorp/actions/workflows/release-please.yml)

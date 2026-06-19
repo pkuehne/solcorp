@@ -63,7 +63,9 @@ struct Launchpad {
 /// @brief Indiciates the entity is a future building location
 struct ConstructionSite {};
 
-struct ConstructionSiteNeedsUpdating {};
+/// @brief Tag on a Site meaning its layout changed and derived state (e.g.
+/// connector autotiling) must be recomputed. Consumed in ValidatePhase.
+struct SiteNeedsRelayout {};
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);
