@@ -100,7 +100,7 @@ world.system<ComponentType>("system_name")
 
 1. Define struct in module header (e.g., [src/modules/simulation/simulation.h](src/modules/simulation/simulation.h))
 2. Add to [src/CMakeLists.txt](src/CMakeLists.txt) source lists
-3. If Lua-exposed: Call `register_lua_user_type<ComponentType>()` in [src/modules/lua/lua.cpp](src/modules/lua/lua.cpp)
+3. If Lua-exposed: Call `register_component_lua<ComponentType>()` in [src/modules/lua/lua.cpp](src/modules/lua/lua.cpp)
 
 ## Lua Integration
 
@@ -118,7 +118,10 @@ solcorp.script.handlers.on_frame = function() end   -- Called per frame
 
 ### Lua Component Access
 
-Components exposed to Lua use sol2 bindings via `register_lua_user_type<T>()`. This creates:
+Components are exposed to Lua through a hand-rolled raw Lua C API binding (declared in
+[src/modules/lua/lua.h](src/modules/lua/lua.h)), not a third-party library. Call
+`register_component_lua<T>(world, name, register_fields)`; it creates a `solcorp.<name>` metatable, a
+`solcorp.components.<name>` constructor, and entity accessor methods:
 ```lua
 local pos = entity:getPosition()      -- getter
 entity:setPosition(pos)               -- setter
@@ -248,8 +251,10 @@ When proposing or reviewing a change that affects core architecture (new framewo
 Fetched via CMake FetchContent:
 - Flecs v4.1.2 (ECS framework)
 - spdlog (logging)
-- sol3 (Lua bindings)
 - Catch2 v3.6.0 (testing)
+
+Lua bindings are hand-rolled against the raw Lua 5.4 C API (see [Lua Integration](#lua-integration));
+the project does not use sol2/sol3. (Sol3 headers are vendored under `dist/` but unused.)
 
 System dependencies (via Nix or package manager):
 - SDL2, SDL2_image, SDL2_ttf, SDL2_mixer

@@ -1,6 +1,6 @@
 # 009 — Build Mode and Site Window
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 
@@ -48,6 +48,12 @@ struct Buildable {};
 An Earth site is `Buildable` of `Prefabs::Buildings` and `Prefabs::Roads`; a future station is
 `Buildable` of `Prefabs::Modules`. The Site Window renders one palette section per buildable
 target. This relationship is the seam that lets stations and moons reuse the whole system.
+
+> Note: ADR 011 also defines a per-prefab `buildable` *boolean* (does this specific prefab appear in
+> the player build UI). That is a finer axis than this relationship and composes with it: the
+> `Buildable` relationship here decides which *categories* a site accepts and therefore which palette
+> *sections* exist; ADR 011's flag decides whether an *individual* prefab within an accepted category
+> is offered to the player. See [ADR 011 §3](/adr/011-lua-mod-registry.md).
 
 ### 2. Footprint is chosen at placement time; a tag marks the fixed-size exceptions
 
@@ -247,6 +253,11 @@ This needs a current-mouse-cell each frame, so a `MouseMove`/hover-cell signal i
 existing `MouseDown`/`MouseUp` ([input.h](../../src/modules/engine/input.h)).
 
 ### 8. Multi-tile buildings are 9-sliced from a tilesheet
+
+> Refined by ADR 012: the fixed corner/edge/centre index scheme described in this section is
+> generalised into a data-driven tile registry (roles become tile fields; a role may have multiple
+> candidate tiles). The 9-slice *roles* survive; the *fixed index → position* mapping does not. Read
+> this section together with [ADR 012](/adr/012-building-tileset-metadata.md).
 
 A variable building's rectangle is rendered as a 9-slice: four corner tiles, four edge tiles
 (stretched/tiled along each run), and a fill tile for the interior. The building prefab references a
