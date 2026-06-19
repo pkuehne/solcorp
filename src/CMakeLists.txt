@@ -14,8 +14,10 @@ list(APPEND SolCorpSources
     modules/lua/entity.cpp
     modules/lua/helpers.cpp
     modules/lua/lua.cpp
+    modules/lua/lua_data.cpp
     modules/lua/logging.cpp
     modules/lua/lua_registry.cpp
+    modules/lua/mod_manifest.cpp
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
@@ -64,8 +66,10 @@ list(APPEND SolCorpHeaders
     modules/lua/entity.h
     modules/lua/helpers.h
     modules/lua/lua.h
+    modules/lua/lua_data.h
     modules/lua/logging.h
     modules/lua/lua_registry.h
+    modules/lua/mod_manifest.h
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h

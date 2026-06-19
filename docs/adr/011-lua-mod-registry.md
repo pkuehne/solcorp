@@ -173,11 +173,9 @@ buildings.register("habitat", {
 
 ### Load order
 
-> Prerequisite, not current state: mods are loaded today by iterating the `mods/` directory in
-> unspecified filesystem order, with no manifest and no dependency declaration
-> ([lua.cpp](../../src/modules/lua/lua.cpp) `load_all_mods`). The `load_order` argument to `register`
-> and the manifest below do not exist yet — this ADR introduces them. Deep merge is only deterministic
-> once a defined load order exists, so that ordering is a hard prerequisite of this design.
+> Resolved (2026-06): the manifest, dependency declaration, and `load_order` described here are now
+> implemented — see the **Mod manifest and dependency resolution** section below. The text in this
+> section describes the resulting behaviour.
 
 Mods declare dependencies via manifest. Load order determines merge order; later mods win on field
 conflicts. A mod that hides an entry that a later mod then patches is not an error — the patch is
@@ -187,6 +185,62 @@ validation time:
 ```
 core → scenario mod → overhaul mod → cosmetic mod → [dev_overrides]
 ```
+
+## Mod manifest and dependency resolution
+
+> Amendment (2026-06): this section promotes the "Load order" prerequisite above into a concrete,
+> implemented decision. It introduces the manifest format, the dependency-resolution algorithm, and
+> the failure policy. The merge/override semantics in §1–§6 are unchanged.
+
+### Manifest format — `mod.lua`
+
+A directory under `mods/` is recognised as a mod **iff it contains a `mod.lua` manifest**. `mod.lua`
+is a Lua file that **returns a table** (read with no side effects, before `init.lua` runs). The
+directory name is the canonical **id** that dependencies reference; `name` is a display string.
+`init.lua` is now **optional** — a graphics/data-only mod with no event handlers omits it.
+
+```lua
+-- mods/core/mod.lua
+return {
+  name = "Core",              -- display name (optional; defaults to the directory id)
+  version = "0.1.0",          -- "major.minor.patch"; missing components default to 0
+  description = "...",        -- human-readable summary (optional)
+  author = "SolCorp",         -- author / attribution (optional)
+  dependencies = {
+    -- "weather",                         -- any version
+    -- { id = "weather", version = "0.2.0" },  -- weather >= 0.2.0
+  },
+}
+```
+
+The display `name`, `description`, and `author` are carried onto the `Mod`
+component (alongside `version` and `load_order`) for the future
+mod-history/about debug screen; only `id` (the directory name) and
+`dependencies` participate in resolution.
+
+Dependencies declare a **minimum version** only (a compatibility floor), not a full constraint
+grammar — the actual need today is deterministic load ordering, and a floor is sufficient for that.
+
+### Resolution
+
+The engine reads every `mod.lua` up front into a manifest list, then resolves a deterministic load
+order via **topological sort** (Kahn's algorithm; ties broken by id so the order is stable):
+dependencies load before their dependents. The resolved index is stored as `Mod::load_order`
+alongside `Mod::version`, and `run_on_every_mod` iterates mods in that order so every per-mod pass
+(component/enum registration, the eventual registry merge) runs dependencies-first.
+
+The manifest reader is built on a reusable `LuaDataFile` primitive ("open a Lua file that returns a
+table, read typed fields") so the same path will serve building metadata (§1's `buildings.lua`),
+ADR 012 tileset metadata, and configs.
+
+### Failure policy — hard fail
+
+Unlike the post-merge *content* validation in §5 (which logs and skips individual broken entries),
+problems with the **mod graph itself** are unrecoverable: the game would otherwise start in an
+undefined content state. A missing dependency, a dependency whose version is below the required
+minimum, a dependency cycle, or a duplicate id is logged at `critical` (the cycle message names the
+cycle, e.g. `a -> b -> a`) and the process exits non-zero. There is no partial-load fallback for a
+broken dependency graph.
 
 ## Consequences
 
