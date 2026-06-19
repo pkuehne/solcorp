@@ -66,12 +66,58 @@ local function on_start()
 	local site = solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
 
 	-- Add a road connector
-	for i = 0, 8 do
-		solcorp.helpers.create_connector("Road 1," .. i, ConnectorVariant.Straight, 90, 3, i, site, "roads_asphalt",
-			"roads_markings")
+	for i = 0, 9 do
+		solcorp.helpers.create_connector(
+			"Road 3," .. i,
+			ConnectorVariant.Straight,
+			0,
+			3,
+			i,
+			site,
+			"roads_asphalt",
+			"roads_markings"
+		)
 	end
-	solcorp.helpers.create_connector("Road 1, 9", ConnectorVariant.DeadEnd, 270, 3, 9, site, "roads_asphalt",
-		"roads_markings")
+	solcorp.helpers.create_connector(
+		"Road A",
+		ConnectorVariant.DeadEnd,
+		270,
+		5,
+		4,
+		site,
+		"roads_asphalt",
+		"roads_markings"
+	)
+	solcorp.helpers.create_connector(
+		"Road B",
+		ConnectorVariant.DeadEnd,
+		270,
+		6,
+		4,
+		site,
+		"roads_asphalt",
+		"roads_markings"
+	)
+	solcorp.helpers.create_connector(
+		"Road C",
+		ConnectorVariant.DeadEnd,
+		270,
+		5,
+		5,
+		site,
+		"roads_asphalt",
+		"roads_markings"
+	)
+	solcorp.helpers.create_connector(
+		"Road D",
+		ConnectorVariant.DeadEnd,
+		270,
+		6,
+		5,
+		site,
+		"roads_asphalt",
+		"roads_markings"
+	)
 
 	-- Add some buildings to the site
 	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
