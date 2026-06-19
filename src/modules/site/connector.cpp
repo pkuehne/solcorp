@@ -3,6 +3,7 @@
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
 #include "modules/site/site.h"
+#include <bit>
 #include <cstdint>
 #include <flecs.h>
 #include <unordered_map>
@@ -43,7 +44,7 @@ double rotationToMatch(uint8_t base, uint8_t target) {
 
 std::optional<ConnectorTiling> computeConnectorTiling(uint8_t neighbourMask) {
   const uint8_t mask = neighbourMask & 0xF;
-  switch (__builtin_popcount(mask)) {
+  switch (std::popcount(mask)) {
   case 0:
     // Isolated tile: keep whatever the author placed.
     return std::nullopt;
