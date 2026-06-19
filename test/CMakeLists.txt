@@ -42,6 +42,9 @@ add_executable(unit_test
   lua/logging/logging_levels.test.cpp
   lua/registry/world.test.cpp
   lua/registry/mod_name.test.cpp
+  lua/manifest/version_at_least.test.cpp
+  lua/manifest/resolve_load_order.test.cpp
+  lua/data/lua_data.test.cpp
   rocket/systems.test.cpp
   rocket/actions/cancel_launch_action.test.cpp
   rocket/actions/launch_initiate_rollout_action.test.cpp

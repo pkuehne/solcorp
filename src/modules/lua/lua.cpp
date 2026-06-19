@@ -4,20 +4,38 @@
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
 #include "modules/lua/lua_registry.h"
+#include "modules/lua/mod_manifest.h"
 #include "modules/lua/systems.h"
 #include "spdlog/spdlog.h"
+#include <cstdlib>
 #include <filesystem>
 #include <flecs.h>
 #include <flecs/addons/cpp/world.hpp>
+#include <unordered_map>
+#include <vector>
 
 void load_mod_state(lua_State *L);
 void load_script_namespace(lua_State *L);
 void load_all_mods(flecs::world &world);
-void load_mod(flecs::world &world, const std::filesystem::path &path);
+flecs::entity load_mod(flecs::world &world, const std::filesystem::path &path,
+                       const ModManifest &manifest, int load_order);
+
+// The resolved mod load order, captured once at load time. run_on_every_mod
+// iterates this rather than re-deriving the order (flecs child iteration order
+// is not the load order) on every call.
+struct ModLoadOrder {
+  std::vector<flecs::entity> mods; // dependencies-first
+};
 
 LuaModule::LuaModule(flecs::world &world) {
   // Register components
-  world.component<Mod>().member("name", &Mod::name); //
+  world.component<Mod>()
+      .member("id", &Mod::id)
+      .member("name", &Mod::name)
+      .member("version", &Mod::version)
+      .member("description", &Mod::description)
+      .member("author", &Mod::author)
+      .member("load_order", &Mod::load_order); //
   //.member("state", &Mod::state); //
 
   // Load mods
@@ -39,6 +57,15 @@ LuaModule::LuaModule(flecs::world &world) {
       .each(mod_on_update);
 }
 
+// Logs a fatal mod-loading error and aborts: an unresolvable mod graph leaves
+// the game in an undefined content state, so we fail loudly rather than limp
+// on.
+[[noreturn]] static void fatal_mod_error(const std::string &message) {
+  spdlog::critical("{}", message);
+  spdlog::default_logger()->flush();
+  std::exit(EXIT_FAILURE);
+}
+
 void load_all_mods(flecs::world &world) {
   auto scope = world.set_scope(0);
   world.entity("Mods");
@@ -49,27 +76,65 @@ void load_all_mods(flecs::world &world) {
     std::filesystem::create_directory(mod_path);
   }
 
+  // A directory is a mod iff it contains a mod.lua manifest. init.lua is
+  // optional (e.g. a graphics-only mod has no event handlers to register).
+  std::vector<ModManifest> manifests;
   for (const auto &entry : std::filesystem::directory_iterator(mod_path)) {
     if (!entry.is_directory()) {
       continue;
     }
-    auto init_file = entry.path() / "init.lua";
-    if (!std::filesystem::exists(init_file)) {
-      spdlog::error("Mod in mods/{}/ does not have an init.lua file",
-                    entry.path().filename().string());
+    if (!std::filesystem::exists(entry.path() / "mod.lua")) {
       continue;
     }
-    load_mod(world, entry.path());
+    try {
+      manifests.push_back(readModManifest(entry.path()));
+    } catch (const ModDependencyError &e) {
+      fatal_mod_error(std::string("Mod manifest error: ") + e.what());
+    }
   }
+
+  std::vector<std::string> order;
+  try {
+    order = resolveLoadOrder(manifests);
+  } catch (const ModDependencyError &e) {
+    fatal_mod_error(std::string("Mod dependency resolution failed: ") +
+                    e.what());
+  }
+
+  std::unordered_map<std::string, const ModManifest *> by_id;
+  for (const auto &manifest : manifests) {
+    by_id[manifest.id] = &manifest;
+  }
+
+  // Register before set<>: flecs is built with FLECS_CPP_NO_AUTO_REGISTRATION,
+  // so storing an unregistered component asserts.
+  world.component<ModLoadOrder>();
+
+  ModLoadOrder load_order;
+  int index = 0;
+  for (const auto &id : order) {
+    flecs::entity mod = load_mod(world, mod_path / id, *by_id[id], index++);
+    if (mod.is_valid()) {
+      load_order.mods.push_back(mod);
+    }
+  }
+  world.set<ModLoadOrder>(std::move(load_order));
 }
 
-void load_mod(flecs::world &world, const std::filesystem::path &path) {
-  auto mod_name = path.filename().string();
-  spdlog::info("Loading mod {}", mod_name);
+flecs::entity load_mod(flecs::world &world, const std::filesystem::path &path,
+                       const ModManifest &manifest, int load_order) {
+  const std::string &mod_name = manifest.id;
+  spdlog::info("Loading mod {} (v{}, order {})", mod_name, manifest.version,
+               load_order);
   auto mods = world.lookup("Mods");
   auto entity = world.entity(mod_name.c_str()).child_of(mods);
   auto &mod = entity.ensure<Mod>();
-  mod.name = mod_name;
+  mod.id = mod_name;
+  mod.name = manifest.name;
+  mod.version = manifest.version;
+  mod.description = manifest.description;
+  mod.author = manifest.author;
+  mod.load_order = load_order;
   mod.state = luaL_newstate();
   lua_set_mod_name(mod.state, mod_name);
 
@@ -79,6 +144,11 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
   load_mod_state(mod.state);
 
   auto init_file = path / "init.lua";
+  if (!std::filesystem::exists(init_file)) {
+    // Graphics-only mod: no init.lua to run, but the mod is still loaded.
+    return entity;
+  }
+
   if (luaL_loadfile(mod.state, init_file.string().c_str()) != LUA_OK ||
       lua_pcall(mod.state, 0, LUA_MULTRET, 0) != LUA_OK) {
     const char *err = lua_tostring(mod.state, -1);
@@ -86,10 +156,11 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
                   err ? err : "(unknown error)");
     lua_pop(mod.state, 1);
     entity.destruct();
-    return;
+    return {};
   }
 
   run_mod_handler(mod, world, "on_init");
+  return entity;
 }
 
 /**
@@ -99,20 +170,29 @@ void load_mod(flecs::world &world, const std::filesystem::path &path) {
  * @param func The function to call
  */
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
-  auto mods = world.lookup("Mods");
-  if (!mods.is_valid()) {
-    // spdlog::error("Mods entity does not exist!");
+  // Mods are loaded by LuaModule; modules imported before it (or test worlds
+  // that never load mods) have no Mods entity, in which case there is nothing
+  // to run and ModLoadOrder is not yet registered.
+  if (!world.lookup("Mods").is_valid()) {
     return;
   }
-  mods.children([&](flecs::entity modE) {
+  // Visit mods in resolved dependency order so per-mod passes (component/enum
+  // registration, etc.) run dependencies-first, matching the documented merge
+  // order. The order is computed once at load time (ModLoadOrder); we never
+  // re-derive it here, since it cannot change after loading.
+  const auto *order = world.try_get<ModLoadOrder>();
+  if (order == nullptr) {
+    return;
+  }
+  for (const flecs::entity &modE : order->mods) {
     Mod *mod = modE.try_get_mut<Mod>();
-    if (!mod) {
+    if (mod == nullptr) {
       spdlog::error("Mod {} does not have a Mod component!",
                     modE.name().c_str());
-      return;
+      continue;
     }
     func(mod->state);
-  });
+  }
 }
 
 bool run_mod_handler(Mod &mod, flecs::world &world,
@@ -133,8 +213,7 @@ bool run_mod_handler(Mod &mod, flecs::world &world,
   if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
     std::string err = lua_tostring(L, -1);
     lua_pop(L, 4); // errmsg, handlers, script, solcorp
-    spdlog::error("{} - Could not run '{}' function: {}", mod.name, handler,
-                  err);
+    spdlog::error("{} - Could not run '{}' function: {}", mod.id, handler, err);
     return false;
   }
 

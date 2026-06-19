@@ -49,7 +49,12 @@
  * @brief Loaded Lua mod state attached to an ECS entity under Mods.
  */
 struct Mod {
-  std::string name;
+  std::string id;   // canonical id (directory name)
+  std::string name; // manifest display name
+  std::string version;
+  std::string description;
+  std::string author;
+  int load_order = 0;
   lua_State *state;
 };
 

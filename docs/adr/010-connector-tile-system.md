@@ -38,11 +38,17 @@ enum class ConnectorVariant : uint8_t {
 };
 ```
 
-The enum value maps directly to a position in a 3×3 spritesheet atlas
-(`col = value % 3`, `row = value / 3`), so adding a new variant only requires adding an entry here
-and a corresponding column in the atlas. A single `rotation_deg` field on the component handles
+The enum value maps directly to a position in a horizontal **strip** spritesheet
+(`col = value`, single row), so adding a new variant only requires adding an entry here and a
+corresponding column at the end of the strip. A single `rotation_deg` field on the component handles
 all orientations of each topology; the engine applies it to every layer uniformly via
 `SDL_RenderCopyExF`.
+
+> Amendment (2026-06): the original tilesets were exported as a 3×3 atlas grid (`col = value % 3`,
+> `row = value / 3`), which was an artefact of the first road tileset export rather than a deliberate
+> layout. A flat horizontal strip is simpler and has no performance or correctness cost, so the
+> spritesheet layout and the `col`/`row` derivation are switched to a strip. (Implemented as part of
+> the connector tiling cleanup.)
 
 ### Autotiling — variant and rotation are derived, not authored
 
@@ -109,11 +115,19 @@ destination mapping, and rotation. `connector.cpp` has no direct SDL dependency.
 
 ### Game asset textures
 
-Textures shipped with the game (as opposed to mod textures) live in `assets/textures/` and are
-loaded automatically at engine startup in `registerRender`. Every `.png` in that directory becomes
-a child of the `Textures` world entity, addressable as `Textures::<stem>`. Mods load their own
-textures via `create_texture`, which reads from `mods/<modname>/`; mods have no API to reach
-`assets/textures/`.
+Game-shipped textures (roads, fences, building tilesets) are owned by the **core mod** and loaded
+through the same `create_texture` path mods already use, reading from the core mod's own directory
+(`mods/core/`). They become children of the `Textures` world entity, addressable as `Textures::<stem>`.
+There is no separate engine-level `assets/textures/` loader and no special path for "game" vs "mod"
+textures — the core mod is just the first mod, with no privileged access.
+
+If the art source tree is kept outside `mods/core/` for authoring convenience, CMake copies it into
+the core mod directory at build time so the runtime load path stays uniform.
+
+> Amendment (2026-06): the original decision was a dedicated `assets/textures/` directory loaded by
+> the engine at startup in `registerRender`, distinct from mod textures. That privileged path is
+> dropped in favour of the core mod loading its textures like any other mod (optionally CMake-copied),
+> which keeps a single texture-loading mechanism and avoids a "game assets vs mod assets" split.
 
 ### Lua exposure
 
