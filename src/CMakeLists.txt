@@ -226,6 +226,10 @@ add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    # USES_TERMINAL connects the game directly to the terminal (ninja's console
+    # pool) so its stdout/stderr stream live. Without it ninja buffers the output
+    # and a crash/abort can lose the error message before it is flushed.
+    USES_TERMINAL
     COMMENT Running SolCorp
 )
 

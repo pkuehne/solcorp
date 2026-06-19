@@ -106,6 +106,10 @@ void load_all_mods(flecs::world &world) {
     by_id[manifest.id] = &manifest;
   }
 
+  // Register before set<>: flecs is built with FLECS_CPP_NO_AUTO_REGISTRATION,
+  // so storing an unregistered component asserts.
+  world.component<ModLoadOrder>();
+
   ModLoadOrder load_order;
   int index = 0;
   for (const auto &id : order) {

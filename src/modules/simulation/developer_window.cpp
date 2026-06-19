@@ -1,11 +1,15 @@
 #include "developer_window.h"
 #include "imgui.h"
 #include "modules/engine/gui.h"
+#include "modules/lua/lua.h"
 #include "modules/simulation/simulation.h"
+#include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 void drawCheatsTab(flecs::world &);
+void drawModsTab(flecs::world &);
 
 void showDeveloperWindow(flecs::world &world) {
   showWindow(world, "Developer Window");
@@ -34,6 +38,10 @@ void drawDeveloperWindow(flecs::entity winE) {
       world.children([](flecs::entity e) { child_tree(e); });
       ImGui::EndTabItem();
     }
+    if (ImGui::BeginTabItem("Mods")) {
+      drawModsTab(world);
+      ImGui::EndTabItem();
+    }
     ImGui::EndTabBar();
   }
 
@@ -45,5 +53,85 @@ void drawDeveloperWindow(flecs::entity winE) {
 void drawCheatsTab(flecs::world &world) {
   if (ImGui::Button("Add $10M to balance")) {
     world.get_mut<Company>().balance += 10'000'000;
+  }
+}
+
+void drawModsTab(flecs::world &world) {
+  struct ModRow {
+    int load_order;
+    std::string id;
+    std::string name;
+    std::string version;
+    std::string author;
+    std::string description;
+  };
+
+  std::vector<ModRow> mods;
+  world.query_builder<const Mod>().build().each(
+      [&](flecs::entity, const Mod &mod) {
+        mods.push_back({.load_order = mod.load_order,
+                        .id = mod.id,
+                        .name = mod.name,
+                        .version = mod.version,
+                        .author = mod.author,
+                        .description = mod.description});
+      });
+
+  std::ranges::sort(mods, [](const ModRow &lhs, const ModRow &rhs) {
+    if (lhs.load_order != rhs.load_order) {
+      return lhs.load_order < rhs.load_order;
+    }
+    return lhs.id < rhs.id;
+  });
+
+  ImGui::Text("Loaded mods: %zu", mods.size());
+  ImGui::Separator();
+
+  constexpr ImGuiTableFlags tableFlags =
+      ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+      ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY |
+      ImGuiTableFlags_Resizable;
+
+  if (ImGui::BeginTable("loadedMods", 6, tableFlags)) {
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupColumn("Order", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+    ImGui::TableSetupColumn("ID");
+    ImGui::TableSetupColumn("Name");
+    ImGui::TableSetupColumn("Version", ImGuiTableColumnFlags_WidthFixed, 90.0f);
+    ImGui::TableSetupColumn("Author", ImGuiTableColumnFlags_WidthFixed, 110.0f);
+    ImGui::TableSetupColumn("Description");
+    ImGui::TableHeadersRow();
+
+    for (const auto &mod : mods) {
+      ImGui::TableNextRow();
+
+      ImGui::TableSetColumnIndex(0);
+      ImGui::Text("%d", mod.load_order);
+
+      ImGui::TableSetColumnIndex(1);
+      ImGui::TextUnformatted(mod.id.c_str());
+
+      ImGui::TableSetColumnIndex(2);
+      ImGui::TextUnformatted(mod.name.c_str());
+
+      ImGui::TableSetColumnIndex(3);
+      ImGui::TextUnformatted(mod.version.c_str());
+
+      ImGui::TableSetColumnIndex(4);
+      if (mod.author.empty()) {
+        ImGui::TextDisabled("-");
+      } else {
+        ImGui::TextUnformatted(mod.author.c_str());
+      }
+
+      ImGui::TableSetColumnIndex(5);
+      if (mod.description.empty()) {
+        ImGui::TextDisabled("-");
+      } else {
+        ImGui::TextWrapped("%s", mod.description.c_str());
+      }
+    }
+
+    ImGui::EndTable();
   }
 }
