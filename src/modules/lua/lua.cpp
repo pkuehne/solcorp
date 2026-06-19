@@ -4,6 +4,7 @@
 #include "modules/lua/helpers.h"
 #include "modules/lua/logging.h"
 #include "modules/lua/lua_registry.h"
+#include "modules/lua/mod_content.h"
 #include "modules/lua/mod_manifest.h"
 #include "modules/lua/systems.h"
 #include "spdlog/spdlog.h"
@@ -40,6 +41,17 @@ LuaModule::LuaModule(flecs::world &world) {
 
   // Load mods
   load_all_mods(world);
+
+  // Apply each mod's data-driven content (textures, building prefabs) once the
+  // ECS prefab nodes exist. Runs before mod on_start so handlers can rely on
+  // building prefabs being registered.
+  world.system("Load Mod Content")
+      .kind(PostStartPhase)
+      .immediate()
+      .run([](flecs::iter &it) {
+        flecs::world world = it.world();
+        loadModContent(world);
+      });
 
   world.system<Mod>("Mod on_start Event")
       .kind(PostStartPhase)

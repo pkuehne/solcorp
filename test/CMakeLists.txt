@@ -47,6 +47,7 @@ add_executable(unit_test
   lua/data/lua_data.test.cpp
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
+  lua/mod_content/apply_building_data.test.cpp
   rocket/systems.test.cpp
   rocket/actions/cancel_launch_action.test.cpp
   rocket/actions/launch_initiate_rollout_action.test.cpp

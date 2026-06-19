@@ -123,6 +123,30 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     }
   }
 
+  GIVEN("a building entry without a sprite") {
+    TempLuaFile file(R"(
+      return {
+        plaza = { name = "Plaza" },
+      }
+    )");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.root());
+
+      THEN("the texture is empty and the clip rect is zeroed") {
+        const BuildingDef *plaza = findBuilding(buildings, "plaza");
+        REQUIRE(plaza != nullptr);
+        REQUIRE(plaza->texture.empty());
+        REQUIRE(plaza->rect.x == 0);
+        REQUIRE(plaza->rect.y == 0);
+        REQUIRE(plaza->rect.width == 0);
+        REQUIRE(plaza->rect.height == 0);
+      }
+    }
+  }
+
   GIVEN("an empty table") {
     TempLuaFile file("return {}");
     LuaDataFile lua(file.path());
