@@ -116,7 +116,7 @@ void renderTileLayer(flecs::entity e, int src_col, int src_row, int tile_size,
   if (!tileset.is_valid()) {
     return;
   }
-  const Texture &texture = tileset.template get<Texture>();
+  const auto &texture = tileset.template get<Texture>();
   if (texture.ptr == nullptr) {
     spdlog::error("Tileset relationship target has null texture");
     return;
