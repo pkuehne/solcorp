@@ -26,7 +26,7 @@ void registerGui(flecs::world &world) {
   world.system("New GUI Frame").kind(PreFramePhase).run(systemGuiNewFrame);
   world.system("End GUI Frame").kind(PreRenderPhase).run(systemGuiEndFrame);
   world.system<const Renderer>("Render GUI")
-      .kind(RenderPhase)
+      .kind(PostRenderPhase)
       .each(systemRenderGUI);
   world.system<Window>("Render Window").kind(GuiPhase).each(systemRenderWindow);
 }

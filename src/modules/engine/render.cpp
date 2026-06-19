@@ -117,7 +117,7 @@ void registerRender(flecs::world &world) {
       .each(systemRenderText);
 
   world.system<const Renderer>("Render End")
-      .kind(PostRenderPhase)
+      .kind(PostFramePhase)
       .each(systemRenderPresent);
 }
 
