@@ -5,7 +5,6 @@
 #include "modules/site/site.h"
 #include <cstdint>
 #include <flecs.h>
-#include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -23,11 +22,11 @@ namespace {
 // Connections each variant makes at rotation_deg == 0. These must match the
 // tilesheet artwork; Straight/DeadEnd are pinned by the existing Lua content,
 // Corner/TJunction by the art's authored orientation. See ADR 010.
-constexpr uint8_t kStraightBase = NeighbourEast | NeighbourWest; // horizontal
-constexpr uint8_t kCornerBase = NeighbourEast | NeighbourSouth;  // opens E+S
-constexpr uint8_t kTJunctionBase =
+constexpr uint8_t STRAIGHT_BASE = NeighbourEast | NeighbourWest; // horizontal
+constexpr uint8_t CORNER_BASE = NeighbourEast | NeighbourSouth;  // opens E+S
+constexpr uint8_t TJUNCTION_BASE =
     NeighbourNorth | NeighbourEast | NeighbourSouth; // closed side faces West
-constexpr uint8_t kDeadEndBase = NeighbourEast;      // stub opens East
+constexpr uint8_t DEAD_END_BASE = NeighbourEast;     // stub opens East
 
 // Smallest clockwise rotation (in degrees) that turns the base connection mask
 // into the target mask. Both masks always have the same number of bits set.
@@ -50,22 +49,23 @@ std::optional<ConnectorTiling> computeConnectorTiling(uint8_t neighbourMask) {
     return std::nullopt;
   case 1:
     return ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
-                           .rotation_deg = rotationToMatch(kDeadEndBase, mask)};
+                           .rotation_deg =
+                               rotationToMatch(DEAD_END_BASE, mask)};
   case 2: {
     const bool opposite = (mask == (NeighbourNorth | NeighbourSouth)) ||
                           (mask == (NeighbourEast | NeighbourWest));
     if (opposite) {
       return ConnectorTiling{.variant = ConnectorVariant::Straight,
                              .rotation_deg =
-                                 rotationToMatch(kStraightBase, mask)};
+                                 rotationToMatch(STRAIGHT_BASE, mask)};
     }
     return ConnectorTiling{.variant = ConnectorVariant::Corner,
-                           .rotation_deg = rotationToMatch(kCornerBase, mask)};
+                           .rotation_deg = rotationToMatch(CORNER_BASE, mask)};
   }
   case 3:
     return ConnectorTiling{.variant = ConnectorVariant::TJunction,
                            .rotation_deg =
-                               rotationToMatch(kTJunctionBase, mask)};
+                               rotationToMatch(TJUNCTION_BASE, mask)};
   default: // 4 neighbours
     return ConnectorTiling{.variant = ConnectorVariant::Crossing,
                            .rotation_deg = 0.0};
@@ -118,33 +118,20 @@ void systemRetileSiteConnectors(flecs::entity site) {
   }
 }
 
-static void renderLayer(const Renderer &renderer, flecs::entity tileset_e,
-                        int src_col, int src_row, const Transform &transform,
-                        double rotation) {
-  if (!tileset_e.is_valid()) {
-    return;
-  }
-  auto tex = tileset_e.get<Texture>();
-  if (tex.ptr == nullptr) {
-    spdlog::error("Connector tileset has null texture pointer");
-    return;
-  }
-  renderTile(renderer, tex, src_col, src_row, TILE_SIZE, transform, rotation);
-}
-
 static void systemRenderConnector(flecs::entity e, const ConnectorTile &tile,
-                                  const Transform &transform,
-                                  const Renderer &renderer) {
+                                  const Transform &transform) {
   auto variant_idx = static_cast<int>(tile.variant);
   int src_col = variant_idx % TILESET_COLS;
   int src_row = variant_idx / TILESET_COLS;
 
-  renderLayer(renderer, e.target<TilesetBase>(), src_col, src_row, transform,
-              tile.rotation_deg);
-  renderLayer(renderer, e.target<TilesetMarkings>(), src_col, src_row,
-              transform, tile.rotation_deg);
-  renderLayer(renderer, e.target<TilesetEmbellishments>(), src_col, src_row,
-              transform, tile.rotation_deg);
+  // Layers are drawn in order: base asphalt, then markings, then
+  // embellishments.
+  renderTileLayer<TilesetBase>(e, src_col, src_row, TILE_SIZE, transform,
+                               tile.rotation_deg);
+  renderTileLayer<TilesetMarkings>(e, src_col, src_row, TILE_SIZE, transform,
+                                   tile.rotation_deg);
+  renderTileLayer<TilesetEmbellishments>(e, src_col, src_row, TILE_SIZE,
+                                         transform, tile.rotation_deg);
 }
 
 void registerConnectors(flecs::world &world) {
@@ -180,9 +167,7 @@ void registerConnectors(flecs::world &world) {
       .each(
           [](flecs::entity site, Site &) { systemRetileSiteConnectors(site); });
 
-  world
-      .system<const ConnectorTile, const Transform, const Renderer>(
-          "Render Connectors")
+  world.system<const ConnectorTile, const Transform>("Render Connectors")
       .kind(RenderPhase)
       .each(systemRenderConnector);
 }
