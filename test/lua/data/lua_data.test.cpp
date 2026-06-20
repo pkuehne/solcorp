@@ -1,37 +1,14 @@
 #include "modules/lua/lua_data.h"
+#include "lua/data/temp_lua_file.h"
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
-#include <filesystem>
-#include <fstream>
 #include <string>
 #include <vector>
 
 namespace {
 
-// Writes Lua source to a uniquely-named temp file and removes it on scope exit,
-// so each test exercises the real on-disk load path of LuaDataFile.
-class TempLuaFile {
-public:
-  explicit TempLuaFile(const std::string &contents) {
-    static int counter = 0;
-    path_ = std::filesystem::temp_directory_path() /
-            ("lua_data_test_" + std::to_string(counter++) + ".lua");
-    std::ofstream(path_) << contents;
-  }
-  ~TempLuaFile() {
-    std::error_code ec;
-    std::filesystem::remove(path_, ec);
-  }
-
-  TempLuaFile(const TempLuaFile &) = delete;
-  TempLuaFile &operator=(const TempLuaFile &) = delete;
-
-  [[nodiscard]] std::string path() const { return path_.string(); }
-
-private:
-  std::filesystem::path path_;
-};
+using solcorp::test::TempLuaFile;
 
 } // namespace
 

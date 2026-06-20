@@ -85,6 +85,7 @@ add_executable(unit_test
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)
+target_include_directories(unit_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 if(MSVC)
   target_compile_options(unit_test PUBLIC /W4)
 else()
