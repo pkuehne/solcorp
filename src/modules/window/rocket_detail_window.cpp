@@ -93,7 +93,7 @@ void drawRocketDetailWindow(flecs::entity winE) {
 
     auto prefabE = state.rocket.target(flecs::IsA);
     ImGui::TextDisabled("Model");
-    ImGui::TextUnformatted(prefabE.is_valid() ? prefabE.name().c_str() : "-");
+    ImGui::TextUnformatted(prefabE.get<Label>().label.c_str());
     ImGui::Spacing();
 
     auto facilityE = state.rocket.parent();
