@@ -26,40 +26,8 @@ local function on_start()
 	local comp = solcorp.entities.Game()
 	comp.day = 1
 
-	-- Create Texture
-	solcorp.helpers.create_texture("Buildings", "buildings.png")
-
-	-- Create Prefabs
-
-	local sprite
-	local building
-	local facility
-
-	building = solcorp.helpers.create_building_prefab("Launch Complex")
-	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 96, 32, 32)
-	building:setSprite(sprite)
-	facility = solcorp.helpers.add_facility_to_building(building, "Launchpad A")
-	facility:getLaunchpad()
-
-	building = solcorp.helpers.create_building_prefab("Office Building")
-	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 32, 32, 32)
-	building:setSprite(sprite)
-	facility = solcorp.helpers.add_facility_to_building(building, "Floor 1")
-	facility:getOffice()
-
-	building = solcorp.helpers.create_building_prefab("Storage Hall")
-	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
-	building:setSprite(sprite)
-	facility = solcorp.helpers.add_facility_to_building(building, "Hall 1")
-	facility:getStorage()
-
-	building = solcorp.helpers.create_building_prefab("Factory")
-	sprite = solcorp.helpers.clip_sprite_from_texture("Buildings", 0, 64, 32, 32)
-	building:setSprite(sprite)
-	facility = solcorp.helpers.add_facility_to_building(building, "Line 1")
-	facility:getManufacturing()
-	facility = solcorp.helpers.add_facility_to_building(building, "Line 2")
-	facility:getManufacturing()
+	-- Textures and building prefabs are now declared as data in textures.lua and
+	-- buildings.lua, loaded and applied by the engine before on_start runs.
 
 	-- Create a new site
 	solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)

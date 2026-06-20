@@ -23,16 +23,9 @@ add_executable(unit_test
   lua/entity/entity_lookup.test.cpp
   lua/entity/entity_is_a.test.cpp
   lua/helpers/create_site.test.cpp
-  lua/helpers/create_building_prefab.test.cpp
-  lua/helpers/create_rocket_prefab.test.cpp
-  lua/helpers/add_facility_to_building.test.cpp
   lua/helpers/create_rocket.test.cpp
   lua/helpers/create_building.test.cpp
-  lua/helpers/add_target_orbit_to_rocket.test.cpp
-  lua/helpers/create_texture.test.cpp
-  lua/helpers/create_effect.test.cpp
-  lua/helpers/add_modifier.test.cpp
-  lua/helpers/clip_sprite_from_texture.test.cpp
+  lua/helpers/add_effect.test.cpp
   lua/helpers/create_contract.test.cpp
   lua/helpers/create_contract_payload.test.cpp
   lua/helpers/get_all_contracts.test.cpp
@@ -45,6 +38,18 @@ add_executable(unit_test
   lua/manifest/version_at_least.test.cpp
   lua/manifest/resolve_load_order.test.cpp
   lua/data/lua_data.test.cpp
+  lua/data/building_data.test.cpp
+  lua/data/texture_data.test.cpp
+  lua/data/rocket_data.test.cpp
+  lua/data/effect_data.test.cpp
+  lua/mod_content/apply_building_data.test.cpp
+  lua/mod_content/apply_rocket_data.test.cpp
+  lua/mod_content/apply_effect_data.test.cpp
+  lua/mod_content/create_texture.test.cpp
+  lua/mod_content/create_building_prefab.test.cpp
+  lua/mod_content/create_rocket_prefab.test.cpp
+  lua/mod_content/add_facility_to_building.test.cpp
+  lua/mod_content/clip_sprite_from_texture.test.cpp
   rocket/systems.test.cpp
   rocket/actions/cancel_launch_action.test.cpp
   rocket/actions/launch_initiate_rollout_action.test.cpp
@@ -80,6 +85,7 @@ add_executable(unit_test
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)
+target_include_directories(unit_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 if(MSVC)
   target_compile_options(unit_test PUBLIC /W4)
 else()

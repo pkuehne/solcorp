@@ -157,12 +157,20 @@ void applyModifiers(flecs::entity e, std::vector<Stat *> &stats) {
   for (auto *stat : stats) {
     stat->reset();
   }
+  // Ensure Label is registered before the traversal below: reading it lazily
+  // inside each()/children() would be a structural change while the world is
+  // mid-iteration, which flecs aborts on. A no-op once Label is registered.
+  e.world().component<Label>();
   for (auto ancestor = e; ancestor.is_valid(); ancestor = ancestor.parent()) {
     ancestor.each<HasEffect>([&](flecs::entity second) {
+      // Effects are entities named by their stable id; the player-visible name
+      // lives in a Label. Prefer it, falling back to the entity name.
+      const auto *label = second.try_get<Label>();
+      const std::string effectName =
+          label ? label->label : second.name().c_str();
       second.children([&](flecs::entity modE) {
         const auto *mod = modE.try_get<Modifier>();
         if (mod) {
-          const char *effectName = second.name().c_str();
           for (auto *stat : stats) {
             stat->addModifier(*mod, effectName);
           }

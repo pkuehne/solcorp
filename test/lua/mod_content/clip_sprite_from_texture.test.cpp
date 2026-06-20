@@ -1,6 +1,6 @@
 #include "modules/base/base.h"
 #include "modules/engine/engine.h"
-#include "modules/lua/helpers.h"
+#include "modules/lua/mod_content.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
 

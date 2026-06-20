@@ -1,6 +1,7 @@
 #include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/assert.h"
+#include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/render.h"
 #include "modules/site/site.h"
@@ -28,13 +29,20 @@ void showConstructionSiteWindow(const flecs::entity &entity) {
   state->buildingE = entity;
 }
 
+/// @brief The player-visible name of a prefab: its Label if present, otherwise
+/// its (id-based) entity name as a fallback.
+const char *prefabDisplayName(const flecs::entity &prefabE) {
+  return prefabE.has<Label>() ? prefabE.get<Label>().label.c_str()
+                              : prefabE.name().c_str();
+}
+
 void buildPrefab(flecs::entity &constructionE, flecs::entity &prefabE) {
   auto world = constructionE.world();
 
   std::string name;
   int ii = 1;
   do {
-    name = fmt::format("{} {}", prefabE.name().c_str(), ii++);
+    name = fmt::format("{} {}", prefabDisplayName(prefabE), ii++);
   } while (constructionE.parent().lookup(name.c_str()).is_valid());
 
   auto location = constructionE.get<SiteLocation>();
@@ -79,7 +87,7 @@ void drawConstructionSiteWindow(flecs::entity winE) {
   buildingPrefabs.children([&](flecs::entity prefabE) {
     ImGui::PushID(std::to_string(prefabE.id()).c_str());
 
-    if (ImGui::Button(fmt::format("{}", prefabE.name().c_str()).c_str(),
+    if (ImGui::Button(fmt::format("{}", prefabDisplayName(prefabE)).c_str(),
                       buttonSize)) {
       buildPrefab(buildingE, prefabE);
       hideWindow(world, "Construction Site Window");

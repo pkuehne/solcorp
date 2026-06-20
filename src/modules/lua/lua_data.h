@@ -40,6 +40,25 @@ public:
       const char *key,
       const std::function<void(const class LuaValue &)> &fn) const;
 
+  /**
+   * @brief Iterate this table's own string-keyed entries, invoking
+   * `fn(entryKey, entryValue)` for each. Non-string keys (e.g. array indices)
+   * are skipped. Used to walk an id-keyed map such as a buildings/textures
+   * file.
+   */
+  void forEachEntry(
+      const std::function<void(const std::string &, const class LuaValue &)>
+          &fn) const;
+
+  /**
+   * @brief Invoke `fn` with a view over the table-valued field `key`. No-op if
+   * the field is absent or not a table. The view is valid only for the duration
+   * of the call (the field is pushed before and popped after), keeping the
+   * underlying Lua stack balanced for any enclosing iteration.
+   */
+  void withTable(const char *key,
+                 const std::function<void(const LuaTableView &)> &fn) const;
+
 private:
   lua_State *L_;
   int idx_;

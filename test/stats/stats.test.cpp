@@ -1,4 +1,5 @@
 #include "modules/stats/stats.h"
+#include "modules/base/base.h"
 #include "widgets/stat_widget.h"
 #include <catch2/catch_test_macros.hpp>
 
@@ -66,7 +67,9 @@ SCENARIO("Reflected stat registry", "[stats]") {
 
   GIVEN("an entity with a reflected stats component and matching effects") {
     auto source = world.entity("Source");
-    auto effect = world.entity("Engine Upgrade").add<Effect>();
+    auto effect = world.entity("engine_upgrade")
+                      .add<Effect>()
+                      .set<Label>({"Engine Upgrade"});
     world.entity().child_of(effect).set<Modifier>(
         {.target_stat = "thrust", .additive = 25.0, .multiplicative = 1.0});
     world.entity().child_of(effect).set<Modifier>(
@@ -83,6 +86,14 @@ SCENARIO("Reflected stat registry", "[stats]") {
         const auto &stats = entity.get<ReflectedStats>();
         CHECK(stats.thrust.value() == 125.0);
         CHECK(stats.cost.value() == 1250.0);
+      }
+
+      THEN(
+          "modifiers are labelled with the effect's display name, not its id") {
+        auto *stat = findStat(entity, "thrust");
+        REQUIRE(stat != nullptr);
+        REQUIRE(stat->modifiers().size() == 1);
+        CHECK(stat->modifiers()[0].effectName == "Engine Upgrade");
       }
 
       THEN("unregistered stat members are not discovered") {

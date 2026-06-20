@@ -6,5 +6,7 @@ return {
 	version = "0.1.0",
 	description = "Developer Mod",
 	author = "pkuehne",
-	dependencies = {},
+	dependencies = {
+		{ id = "core", version = "0.1.0" },
+	},
 }

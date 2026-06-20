@@ -1,36 +1,14 @@
 #include "modules/lua/lua_data.h"
+#include "lua/data/temp_lua_file.h"
 #include <catch2/catch_test_macros.hpp>
 
-#include <filesystem>
-#include <fstream>
+#include <algorithm>
 #include <string>
 #include <vector>
 
 namespace {
 
-// Writes Lua source to a uniquely-named temp file and removes it on scope exit,
-// so each test exercises the real on-disk load path of LuaDataFile.
-class TempLuaFile {
-public:
-  explicit TempLuaFile(const std::string &contents) {
-    static int counter = 0;
-    path_ = std::filesystem::temp_directory_path() /
-            ("lua_data_test_" + std::to_string(counter++) + ".lua");
-    std::ofstream(path_) << contents;
-  }
-  ~TempLuaFile() {
-    std::error_code ec;
-    std::filesystem::remove(path_, ec);
-  }
-
-  TempLuaFile(const TempLuaFile &) = delete;
-  TempLuaFile &operator=(const TempLuaFile &) = delete;
-
-  [[nodiscard]] std::string path() const { return path_.string(); }
-
-private:
-  std::filesystem::path path_;
-};
+using solcorp::test::TempLuaFile;
 
 } // namespace
 
@@ -162,6 +140,110 @@ SCENARIO("LuaTableView iterates array elements") {
                                       [&](const LuaValue &) { ++calls; });
       data.root().forEachArrayElement("absent",
                                       [&](const LuaValue &) { ++calls; });
+
+      THEN("the callback is never invoked") { REQUIRE(calls == 0); }
+    }
+  }
+}
+
+SCENARIO("LuaTableView iterates its own string-keyed entries") {
+  GIVEN("a table mixing string keys, an array part, and nested tables") {
+    TempLuaFile file(R"(return {
+      alpha = { file = 'a.png' },
+      beta = 'plain',
+      'array_one',
+      'array_two',
+    })");
+    LuaDataFile data(file.path());
+    REQUIRE(data.ok());
+
+    WHEN("forEachEntry walks the table") {
+      std::vector<std::string> keys;
+      std::vector<std::string> nested_files;
+      data.root().forEachEntry(
+          [&](const std::string &key, const LuaValue &value) {
+            keys.push_back(key);
+            if (auto t = value.asTable()) {
+              nested_files.push_back(t->getString("file").value_or(""));
+            }
+          });
+
+      THEN("only string keys are visited; array indices are skipped") {
+        std::ranges::sort(keys);
+        REQUIRE(keys == std::vector<std::string>{"alpha", "beta"});
+      }
+      THEN("entry values are accessible as tables") {
+        REQUIRE(nested_files == std::vector<std::string>{"a.png"});
+      }
+    }
+  }
+
+  GIVEN("a table with no string keys") {
+    TempLuaFile file("return { 'only', 'array', 'parts' }");
+    LuaDataFile data(file.path());
+    REQUIRE(data.ok());
+
+    WHEN("forEachEntry is called") {
+      int calls = 0;
+      data.root().forEachEntry(
+          [&](const std::string &, const LuaValue &) { ++calls; });
+
+      THEN("the callback is never invoked") { REQUIRE(calls == 0); }
+    }
+  }
+}
+
+SCENARIO("LuaTableView reads a nested table field with withTable") {
+  GIVEN("a field that is a table") {
+    TempLuaFile file(R"(return {
+      sprite = { texture = 'Buildings', x = 3 },
+    })");
+    LuaDataFile data(file.path());
+    REQUIRE(data.ok());
+
+    WHEN("withTable is invoked for that field") {
+      bool called = false;
+      std::string texture;
+      long long x = 0;
+      data.root().withTable("sprite", [&](const LuaTableView &sprite) {
+        called = true;
+        texture = sprite.getString("texture").value_or("");
+        x = sprite.getInt("x").value_or(0);
+      });
+
+      THEN("the callback runs with a readable view of the nested table") {
+        REQUIRE(called);
+        REQUIRE(texture == "Buildings");
+        REQUIRE(x == 3);
+      }
+    }
+
+    WHEN("withTable is used inside forEachArrayElement / forEachEntry") {
+      // Regression: withTable must leave the Lua stack balanced so an enclosing
+      // iteration is not corrupted.
+      int entries = 0;
+      data.root().forEachEntry([&](const std::string &, const LuaValue &v) {
+        ++entries;
+        if (auto t = v.asTable()) {
+          t->withTable("missing", [](const LuaTableView &) {});
+        }
+      });
+
+      THEN("the enclosing iteration completes normally") {
+        REQUIRE(entries == 1);
+      }
+    }
+  }
+
+  GIVEN("a field that is absent or not a table") {
+    TempLuaFile file("return { sprite = 5 }");
+    LuaDataFile data(file.path());
+    REQUIRE(data.ok());
+
+    WHEN("withTable is called") {
+      int calls = 0;
+      data.root().withTable("sprite", [&](const LuaTableView &) { ++calls; });
+      data.root().withTable("absent", [&](const LuaTableView &) { ++calls; });
 
       THEN("the callback is never invoked") { REQUIRE(calls == 0); }
     }

@@ -24,39 +24,21 @@ local function on_start()
 	end
 
 	-- Add some buildings to the site
-	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
-	local storage = solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 1, 0, site)
-	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "Launch Complex", 8, 5, site)
-	solcorp.helpers.create_building("North Building", "Office Building", 0, 6, site)
+	solcorp.helpers.create_building("Manufacturing A", "factory", 1, 1, site)
+	local storage = solcorp.helpers.create_building("Storage Hall 1", "storage_hall", 1, 0, site)
+	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 8, 5, site)
+	solcorp.helpers.create_building("North Building", "office_building", 0, 6, site)
 
-	-- Add some modifiers to the launchpad
-	local mod = solcorp.components.Modifier:new()
-	mod.target_stat = "max-weight"
-
-	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
-	mod.multiplicative = 1.2
-	solcorp.helpers.add_modifier(concrete, mod)
-
-	local cracks = solcorp.helpers.create_effect("Cracks detected", main_launchpad)
-	mod.multiplicative = 0.4
-	solcorp.helpers.add_modifier(cracks, mod)
-
-	local struts = solcorp.helpers.create_effect("Reinforcing Struts", site)
-	mod.multiplicative = 1.0
-	mod.additive = 500
-	solcorp.helpers.add_modifier(struts, mod)
-
-	-- Create a rocket prefab
-	local rocket = solcorp.helpers.create_rocket_prefab("Falcon 1")
-	rocket:getRocket().cost.base = 5 * 1000 * 1000
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Low Orbit", 6300)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Polar Orbit", 5600)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Transfer Orbit", 3300)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Synchronous Orbit", 1300)
+	-- Attach effects to the site and launchpad via HasEffect. The effects (and
+	-- their modifiers) are defined as data in effects.lua and created once by the
+	-- engine under the Effects node.
+	solcorp.helpers.add_effect(site, "better_concrete")
+	solcorp.helpers.add_effect(site, "reinforcing_struts")
+	solcorp.helpers.add_effect(main_launchpad, "cracks_detected")
 
 	-- Create a rocket
 	local hall = storage:lookup("Hall 1")
-	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "Falcon 1", hall)
+	solcorp.helpers.create_rocket("Falcon 1", "falcon", hall)
 
 	-- Create a contract
 	local contract = solcorp.helpers.create_contract(

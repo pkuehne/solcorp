@@ -10,6 +10,8 @@ list(APPEND SolCorpSources
     modules/engine/input.cpp
     modules/engine/movement.cpp
     modules/engine/render.cpp
+    modules/lua/building_data.cpp
+    modules/lua/effect_data.cpp
     modules/lua/config.cpp
     modules/lua/entity.cpp
     modules/lua/helpers.cpp
@@ -17,7 +19,10 @@ list(APPEND SolCorpSources
     modules/lua/lua_data.cpp
     modules/lua/logging.cpp
     modules/lua/lua_registry.cpp
+    modules/lua/mod_content.cpp
     modules/lua/mod_manifest.cpp
+    modules/lua/rocket_data.cpp
+    modules/lua/texture_data.cpp
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
@@ -62,6 +67,8 @@ list(APPEND SolCorpHeaders
     modules/engine/input.h
     modules/engine/movement.h
     modules/engine/render.h
+    modules/lua/building_data.h
+    modules/lua/effect_data.h
     modules/lua/config.h
     modules/lua/entity.h
     modules/lua/helpers.h
@@ -69,7 +76,10 @@ list(APPEND SolCorpHeaders
     modules/lua/lua_data.h
     modules/lua/logging.h
     modules/lua/lua_registry.h
+    modules/lua/mod_content.h
     modules/lua/mod_manifest.h
+    modules/lua/rocket_data.h
+    modules/lua/texture_data.h
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h
