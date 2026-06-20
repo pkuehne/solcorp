@@ -48,7 +48,7 @@ local function on_start()
 
 	-- Create a rocket
 	local hall = storage:lookup("Hall 1")
-	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "Falcon 1", hall)
+	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "falcon_1", hall)
 
 	-- Create a contract
 	local contract = solcorp.helpers.create_contract(

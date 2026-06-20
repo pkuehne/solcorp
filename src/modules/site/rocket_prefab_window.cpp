@@ -1,6 +1,7 @@
 #include "rocket_prefab_window.h"
 #include "imgui.h"
 #include "modules/base/assert.h"
+#include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
@@ -109,7 +110,11 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     statsApplyModifiers(prefabE, &cost);
     const auto rocketCost = computeRocketPrefabBuildCost(prefabE);
 
-    ImGui::Text("%s", prefabE.name().c_str());
+    const char *displayName = prefabE.has<Label>()
+                                  ? prefabE.get<Label>().label.c_str()
+                                  : prefabE.name().c_str();
+
+    ImGui::Text("%s", displayName);
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
     Widgets::StatTooltip(world, &cost);
 
@@ -118,8 +123,7 @@ void drawRocketPrefabWindow(flecs::entity winE) {
     auto result = action.validate(world);
 
     if (Widgets::ActionButton(
-            ButtonLabel{
-                std::format("Build '{}'", prefabE.name().c_str()).c_str()},
+            ButtonLabel{std::format("Build '{}'", displayName).c_str()},
             ButtonTooltip{"Build this rocket"}, result.message)) {
       action.execute(world);
       manufacturingE.add<ManufacturingLineTemplate>(prefabE);

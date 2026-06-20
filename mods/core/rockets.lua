@@ -1,13 +1,16 @@
 -- Data-driven rocket prefab definitions for the core mod.
 --
--- Returns a name-keyed map the engine loads (via LuaDataFile) and applies to
--- the ECS. Each entry describes a rocket prefab: its build cost and the orbits
--- it can lift to (with the maximum payload mass, in kg, for each). The key is
--- the prefab name referenced by solcorp.helpers.create_rocket.
+-- Returns an id-keyed map the engine loads (via LuaDataFile) and applies to
+-- the ECS. Each entry describes a rocket prefab: its display name, build cost
+-- and the orbits it can lift to (with the maximum payload mass, in kg, for
+-- each). The key is the stable prefab id referenced by
+-- solcorp.helpers.create_rocket; the optional `name` is the player-visible
+-- label (defaults to the id).
 --
 -- See ADR 011 (Lua mod registry).
 return {
-	["Falcon 1"] = {
+	falcon_1 = {
+		name = "Falcon 1",
 		cost = 5 * 1000 * 1000,
 		orbits = {
 			{ target = "Sun::Earth::Low Orbit", mass = 6300 },

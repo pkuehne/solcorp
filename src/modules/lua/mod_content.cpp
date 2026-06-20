@@ -1,5 +1,6 @@
 #include "modules/lua/mod_content.h"
 #include "modules/base/assert.h"
+#include "modules/base/base.h"
 #include "modules/engine/render.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/lua.h"
@@ -47,6 +48,8 @@ flecs::entity create_texture(flecs::world world, const TextureName &name,
   world.scope(texture_node,
               [&] { texture = world.entity(name.value.c_str()); });
   return texture.set<Texture>(loadTexture(location, world));
+  // TODO: Split this into Texture/TileSet/Sprite components so that neither
+  // Texture nor Sprite needs to know about tile-sizes or columns
 }
 
 flecs::entity create_building_prefab(const flecs::world &world,
@@ -126,7 +129,8 @@ void applyBuildingData(flecs::world &world,
 void applyRocketData(flecs::world &world,
                      const std::vector<RocketDef> &rockets) {
   for (const auto &rocket : rockets) {
-    auto rocket_prefab = create_rocket_prefab(world, rocket.name);
+    auto rocket_prefab = create_rocket_prefab(world, rocket.id);
+    rocket_prefab.set<Label>({rocket.name});
 
     // Override the cost stat inherited from Prefabs::Core::Rocket with the
     // data-driven value. The other Rocket stats are not data-driven yet, so

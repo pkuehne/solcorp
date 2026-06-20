@@ -46,7 +46,9 @@ enum SpriteFlip : uint8_t {
 };
 
 struct Sprite {
-  flecs::entity texture;
+  flecs::entity texture; // TODO: Replace this with a renderLayer relationship
+                         // to a texture entity, so that the sprite doesn't need
+                         // to know about the texture component
   uint32_t tile = 0;
   int x = 0;
   int y = 0;
