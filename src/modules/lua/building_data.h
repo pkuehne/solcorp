@@ -12,10 +12,18 @@
  */
 #pragma once
 
-#include "modules/lua/helpers.h" // SpriteClipRect
 #include "modules/lua/lua_data.h"
+#include <cstdint>
 #include <string>
 #include <vector>
+
+/// @brief A sprite clip rectangle into a texture atlas (pixels).
+struct SpriteClipRect {
+  int x;
+  int y;
+  uint32_t width;
+  uint32_t height;
+};
 
 /// @brief A facility within a building definition (name + facility type tag).
 struct FacilityDef {

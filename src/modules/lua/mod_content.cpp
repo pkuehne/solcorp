@@ -1,4 +1,6 @@
 #include "modules/lua/mod_content.h"
+#include "modules/base/assert.h"
+#include "modules/engine/render.h"
 #include "modules/lua/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/lua/lua_data.h"
@@ -24,6 +26,64 @@ bool addFacilityComponent(flecs::entity facility, const std::string &type) {
     return false;
   }
   return true;
+}
+
+flecs::entity create_texture(flecs::world world, const TextureName &name,
+                             const TextureFilename &filename,
+                             const TextureModName &mod_name) {
+  if (filename.value.find("..") != std::string::npos) {
+    spdlog::error("Invalid filename {}", filename.value);
+    return {};
+  }
+  auto location =
+      (std::filesystem::path("mods") / mod_name.value / filename.value)
+          .string();
+  // Scope the lookup under Textures so a repeat call (e.g. reloading prefabs)
+  // reuses the existing texture entity and overwrites its Texture, rather than
+  // creating a conflicting root entity named the same.
+  auto texture_node = world.entity("Textures");
+  flecs::entity texture;
+  world.scope(texture_node,
+              [&] { texture = world.entity(name.value.c_str()); });
+  return texture.set<Texture>(loadTexture(location, world));
+}
+
+flecs::entity create_building_prefab(const flecs::world &world,
+                                     const std::string &name) {
+  auto buildings_node = world.lookup("Prefabs::Buildings");
+  SC_ASSERT(buildings_node.is_valid(), "Prefabs::Buildings node not found");
+  auto building_prefab = world.lookup("Prefabs::Core::Building");
+  SC_ASSERT(building_prefab.is_valid(),
+            "Prefabs::Core::Building prefab not found");
+  return create_prefab_under(world, buildings_node, building_prefab, name);
+}
+
+flecs::entity add_facility_to_building(const flecs::world &world,
+                                       flecs::entity building,
+                                       const std::string &name) {
+  auto facility_prefab = world.lookup("Prefabs::Core::Facility");
+  SC_ASSERT(facility_prefab.is_valid(),
+            "Prefabs::Core::Facility prefab not found");
+  return create_prefab_under(world, building, facility_prefab, name);
+}
+
+Sprite clip_sprite_from_texture(const flecs::world &world,
+                                const std::string &texture,
+                                SpriteClipRect rect) {
+  std::string texture_name("Textures::");
+  texture_name.append(texture);
+  auto textureE = world.lookup(texture_name.c_str());
+  if (!textureE.is_valid()) {
+    spdlog::error("Texture {} does not exist", texture);
+    return {};
+  }
+  Sprite sprite;
+  sprite.texture = textureE;
+  sprite.x = rect.x;
+  sprite.y = rect.y;
+  sprite.width = rect.width;
+  sprite.height = rect.height;
+  return sprite;
 }
 
 void applyTextureData(flecs::world &world, const std::string &mod_name,
