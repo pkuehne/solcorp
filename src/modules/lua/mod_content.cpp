@@ -110,7 +110,8 @@ void applyTextureData(flecs::world &world, const std::string &mod_name,
 void applyBuildingData(flecs::world &world,
                        const std::vector<BuildingDef> &buildings) {
   for (const auto &building : buildings) {
-    auto prefab = create_building_prefab(world, building.name);
+    auto prefab = create_building_prefab(world, building.id);
+    prefab.set<Label>({building.name});
 
     if (!building.texture.empty()) {
       Sprite sprite =

@@ -24,10 +24,10 @@ local function on_start()
 	end
 
 	-- Add some buildings to the site
-	solcorp.helpers.create_building("Manufacturing A", "Factory", 1, 1, site)
-	local storage = solcorp.helpers.create_building("Storage Hall 1", "Storage Hall", 1, 0, site)
-	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "Launch Complex", 8, 5, site)
-	solcorp.helpers.create_building("North Building", "Office Building", 0, 6, site)
+	solcorp.helpers.create_building("Manufacturing A", "factory", 1, 1, site)
+	local storage = solcorp.helpers.create_building("Storage Hall 1", "storage_hall", 1, 0, site)
+	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 8, 5, site)
+	solcorp.helpers.create_building("North Building", "office_building", 0, 6, site)
 
 	-- Add some modifiers to the launchpad
 	local mod = solcorp.components.Modifier:new()

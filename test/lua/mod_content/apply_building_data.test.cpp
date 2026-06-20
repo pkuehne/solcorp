@@ -1,4 +1,5 @@
 #include "../helpers/setup_helpers.h"
+#include "modules/base/base.h"
 #include "modules/lua/mod_content.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
@@ -21,19 +22,27 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
     WHEN("the definition is applied") {
       applyBuildingData(world, {factory});
 
-      THEN("a building prefab is created under Prefabs::Buildings") {
-        auto prefab = world.lookup("Prefabs::Buildings::Factory");
+      THEN(
+          "a building prefab is created under Prefabs::Buildings keyed by id") {
+        auto prefab = world.lookup("Prefabs::Buildings::factory");
         REQUIRE(prefab.is_valid());
         CHECK(prefab.has<Building>());
       }
 
+      THEN("the prefab carries the display name as a Label") {
+        auto prefab = world.lookup("Prefabs::Buildings::factory");
+        REQUIRE(prefab.is_valid());
+        REQUIRE(prefab.has<Label>());
+        CHECK(prefab.get<Label>().label == "Factory");
+      }
+
       THEN("each facility is created as a child with its type component") {
         auto manufacturing =
-            world.lookup("Prefabs::Buildings::Factory::Line 1");
+            world.lookup("Prefabs::Buildings::factory::Line 1");
         REQUIRE(manufacturing.is_valid());
         CHECK(manufacturing.has<Manufacturing>());
 
-        auto office = world.lookup("Prefabs::Buildings::Factory::Office 1");
+        auto office = world.lookup("Prefabs::Buildings::factory::Office 1");
         REQUIRE(office.is_valid());
         CHECK(office.has<Office>());
       }
@@ -53,12 +62,12 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
       applyBuildingData(world, {factory});
 
       THEN("the prefab and its facility are reused, not duplicated") {
-        auto prefab = world.lookup("Prefabs::Buildings::Factory");
+        auto prefab = world.lookup("Prefabs::Buildings::factory");
         REQUIRE(prefab.is_valid());
 
         int building_count = 0;
         world.lookup("Prefabs::Buildings").children([&](flecs::entity child) {
-          if (child.name() == "Factory") {
+          if (child.name() == "factory") {
             ++building_count;
           }
         });
@@ -71,7 +80,7 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
           }
         });
         CHECK(line_count == 1);
-        CHECK(world.lookup("Prefabs::Buildings::Factory::Line 1")
+        CHECK(world.lookup("Prefabs::Buildings::factory::Line 1")
                   .has<Manufacturing>());
       }
     }
@@ -92,7 +101,7 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
       applyBuildingData(world, {hall});
 
       THEN("the prefab's sprite carries the clip rect and texture reference") {
-        auto prefab = world.lookup("Prefabs::Buildings::Storage Hall");
+        auto prefab = world.lookup("Prefabs::Buildings::storage_hall");
         REQUIRE(prefab.is_valid());
         REQUIRE(prefab.has<Sprite>());
         const auto &sprite = prefab.get<Sprite>();
