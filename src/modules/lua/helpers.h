@@ -31,18 +31,12 @@ flecs::entity create_prefab_under(const flecs::world &world,
 flecs::entity create_site(const flecs::world &world, const std::string &name,
                           uint8_t width, uint8_t height,
                           bool make_current = false);
-flecs::entity create_rocket_prefab(const flecs::world &world,
-                                   const std::string &name);
 flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
                             const RocketPrefabType &prefab,
                             flecs::entity parent = flecs::entity());
 flecs::entity create_building(flecs::world world, const std::string &name,
                               const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site);
-flecs::entity add_target_orbit_to_rocket(const flecs::world &world,
-                                         flecs::entity rocket,
-                                         const std::string &orbit_name,
-                                         uint32_t max_mass);
 flecs::entity create_effect(const flecs::world &world, const std::string &name,
                             flecs::entity source);
 flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,

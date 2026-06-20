@@ -1,0 +1,124 @@
+#include "modules/lua/rocket_data.h"
+#include "modules/lua/lua_data.h"
+#include <catch2/catch_test_macros.hpp>
+
+#include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <string>
+
+namespace {
+
+// Writes Lua source to a uniquely-named temp file and removes it on scope exit,
+// so each test exercises the real on-disk load path of LuaDataFile.
+class TempLuaFile {
+public:
+  explicit TempLuaFile(const std::string &contents) {
+    static int counter = 0;
+    path_ = std::filesystem::temp_directory_path() /
+            ("rocket_data_test_" + std::to_string(counter++) + ".lua");
+    std::ofstream(path_) << contents;
+  }
+  ~TempLuaFile() {
+    std::error_code ec;
+    std::filesystem::remove(path_, ec);
+  }
+
+  TempLuaFile(const TempLuaFile &) = delete;
+  TempLuaFile &operator=(const TempLuaFile &) = delete;
+
+  [[nodiscard]] std::string path() const { return path_.string(); }
+
+private:
+  std::filesystem::path path_;
+};
+
+const RocketDef *findRocket(const std::vector<RocketDef> &rockets,
+                            const std::string &name) {
+  auto it = std::ranges::find_if(
+      rockets, [&](const RocketDef &r) { return r.name == name; });
+  return it == rockets.end() ? nullptr : &*it;
+}
+
+} // namespace
+
+SCENARIO("parseRocketData reads rocket prefab definitions") {
+  GIVEN("a rockets.lua with a name-keyed map of rockets") {
+    TempLuaFile file(R"(
+      return {
+        ["Falcon 1"] = {
+          cost = 5000000,
+          orbits = {
+            { target = "Sun::Earth::Low Orbit",   mass = 6300 },
+            { target = "Sun::Earth::Polar Orbit", mass = 5600 },
+          },
+        },
+        ["Heavy"] = {
+          cost = 90000000,
+          orbits = {
+            { target = "Sun::Earth::Low Orbit", mass = 63000 },
+          },
+        },
+      }
+    )");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+
+      THEN("every rocket entry is captured keyed by its name") {
+        REQUIRE(rockets.size() == 2);
+        REQUIRE(findRocket(rockets, "Falcon 1") != nullptr);
+        REQUIRE(findRocket(rockets, "Heavy") != nullptr);
+      }
+
+      THEN("a rocket's cost is parsed") {
+        const RocketDef *falcon = findRocket(rockets, "Falcon 1");
+        REQUIRE(falcon != nullptr);
+        CHECK(falcon->cost == 5000000);
+      }
+
+      THEN("a rocket's target orbits are parsed with their max mass") {
+        const RocketDef *falcon = findRocket(rockets, "Falcon 1");
+        REQUIRE(falcon != nullptr);
+        REQUIRE(falcon->target_orbits.size() == 2);
+        CHECK(falcon->target_orbits.at("Sun::Earth::Low Orbit") == 6300);
+        CHECK(falcon->target_orbits.at("Sun::Earth::Polar Orbit") == 5600);
+      }
+    }
+  }
+
+  GIVEN("a rocket entry without a cost or orbits") {
+    TempLuaFile file(R"(
+      return {
+        ["Pathfinder"] = {},
+      }
+    )");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+
+      THEN("the cost defaults to zero and no orbits are produced") {
+        const RocketDef *rocket = findRocket(rockets, "Pathfinder");
+        REQUIRE(rocket != nullptr);
+        CHECK(rocket->cost == 0);
+        CHECK(rocket->target_orbits.empty());
+      }
+    }
+  }
+
+  GIVEN("an empty table") {
+    TempLuaFile file("return {}");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+
+      THEN("no rockets are produced") { REQUIRE(rockets.empty()); }
+    }
+  }
+}

@@ -23,10 +23,8 @@ add_executable(unit_test
   lua/entity/entity_lookup.test.cpp
   lua/entity/entity_is_a.test.cpp
   lua/helpers/create_site.test.cpp
-  lua/helpers/create_rocket_prefab.test.cpp
   lua/helpers/create_rocket.test.cpp
   lua/helpers/create_building.test.cpp
-  lua/helpers/add_target_orbit_to_rocket.test.cpp
   lua/helpers/create_effect.test.cpp
   lua/helpers/add_modifier.test.cpp
   lua/helpers/create_contract.test.cpp
@@ -43,9 +41,12 @@ add_executable(unit_test
   lua/data/lua_data.test.cpp
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
+  lua/data/rocket_data.test.cpp
   lua/mod_content/apply_building_data.test.cpp
+  lua/mod_content/apply_rocket_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp
+  lua/mod_content/create_rocket_prefab.test.cpp
   lua/mod_content/add_facility_to_building.test.cpp
   lua/mod_content/clip_sprite_from_texture.test.cpp
   rocket/systems.test.cpp

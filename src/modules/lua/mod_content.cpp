@@ -5,6 +5,7 @@
 #include "modules/lua/lua.h"
 #include "modules/lua/lua_data.h"
 #include "modules/lua/lua_registry.h"
+#include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 
@@ -67,6 +68,15 @@ flecs::entity add_facility_to_building(const flecs::world &world,
   return create_prefab_under(world, building, facility_prefab, name);
 }
 
+flecs::entity create_rocket_prefab(const flecs::world &world,
+                                   const std::string &name) {
+  auto rockets_node = world.lookup("Prefabs::Rockets");
+  SC_ASSERT(rockets_node.is_valid(), "Prefabs::Rockets node not found");
+  auto rocket_prefab = world.lookup("Prefabs::Core::Rocket");
+  SC_ASSERT(rocket_prefab.is_valid(), "Prefabs::Core::Rocket prefab not found");
+  return create_prefab_under(world, rockets_node, rocket_prefab, name);
+}
+
 Sprite clip_sprite_from_texture(const flecs::world &world,
                                 const std::string &texture,
                                 SpriteClipRect rect) {
@@ -113,6 +123,27 @@ void applyBuildingData(flecs::world &world,
   }
 }
 
+void applyRocketData(flecs::world &world,
+                     const std::vector<RocketDef> &rockets) {
+  for (const auto &rocket : rockets) {
+    auto rocket_prefab = create_rocket_prefab(world, rocket.name);
+
+    // Override the cost stat inherited from Prefabs::Core::Rocket with the
+    // data-driven value. The other Rocket stats are not data-driven yet, so
+    // they keep their Core defaults.
+    Rocket stats;
+    stats.cost.setBase(static_cast<double>(rocket.cost));
+    rocket_prefab.set<Rocket>(stats);
+
+    for (const auto &[orbit_name, max_mass] : rocket.target_orbits) {
+      auto orbit = world.lookup(orbit_name.c_str());
+      SC_ASSERT(orbit.is_valid(),
+                fmt::format("Orbit {} not found", orbit_name));
+      rocket_prefab.set<CanLiftTo>(orbit, {max_mass});
+    }
+  }
+}
+
 namespace {
 
 /// @brief Read `mods/<mod_name>/<filename>` (if present) and hand its root
@@ -138,19 +169,20 @@ void loadModContent(flecs::world &world) {
   // Suspend flecs command deferral for the duration of the load. We create a
   // texture and then immediately look it up by name when clipping building
   // sprites; while deferred, the entity's name/child_of edges are queued and
-  // not yet visible to lookups within the same system run, so the lookup would
-  // fail. Applying structurally and immediately keeps create-then-lookup
-  // consistent. Resumed (and any queued commands restored) afterwards.
+  // not yet visible to lookups within the same system run, so the lookup
+  // would fail. Applying structurally and immediately keeps
+  // create-then-lookup consistent. Resumed (and any queued commands restored)
+  // afterwards.
   bool was_deferred = world.is_deferred();
   if (was_deferred) {
     world.defer_suspend();
   }
 
-  // Two passes, each visiting mods in resolved dependency order (later mods win
-  // on name conflicts). Pass 1 loads every mod's textures before pass 2 clips
-  // any building sprite, so a building resolves any texture regardless of which
-  // mod owns it and a later mod can override a texture another mod's building
-  // uses.
+  // Two passes, each visiting mods in resolved dependency order (later mods
+  // win on name conflicts). Pass 1 loads every mod's textures before pass 2
+  // clips any building sprite, so a building resolves any texture regardless
+  // of which mod owns it and a later mod can override a texture another mod's
+  // building uses.
   run_on_every_mod(world, [&world](lua_State *L) {
     std::string mod_name = lua_get_mod_name(L);
     readModDataFile(mod_name, "textures.lua", [&](const LuaTableView &root) {
@@ -162,6 +194,13 @@ void loadModContent(flecs::world &world) {
     std::string mod_name = lua_get_mod_name(L);
     readModDataFile(mod_name, "buildings.lua", [&](const LuaTableView &root) {
       applyBuildingData(world, parseBuildingData(root));
+    });
+  });
+
+  run_on_every_mod(world, [&world](lua_State *L) {
+    std::string mod_name = lua_get_mod_name(L);
+    readModDataFile(mod_name, "rockets.lua", [&](const LuaTableView &root) {
+      applyRocketData(world, parseRocketData(root));
     });
   });
 

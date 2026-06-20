@@ -46,14 +46,6 @@ local function on_start()
 	mod.additive = 500
 	solcorp.helpers.add_modifier(struts, mod)
 
-	-- Create a rocket prefab
-	local rocket = solcorp.helpers.create_rocket_prefab("Falcon 1")
-	rocket:getRocket().cost.base = 5 * 1000 * 1000
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Low Orbit", 6300)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Polar Orbit", 5600)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Transfer Orbit", 3300)
-	solcorp.helpers.add_target_orbit_to_rocket(rocket, "Sun::Earth::Synchronous Orbit", 1300)
-
 	-- Create a rocket
 	local hall = storage:lookup("Hall 1")
 	solcorp.helpers.create_rocket("Falcon 1 - Unit 001", "Falcon 1", hall)

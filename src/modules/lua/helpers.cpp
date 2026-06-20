@@ -35,15 +35,6 @@ flecs::entity create_prefab_under(const flecs::world &world,
   return prefab;
 }
 
-flecs::entity create_rocket_prefab(const flecs::world &world,
-                                   const std::string &name) {
-  auto rockets_node = world.lookup("Prefabs::Rockets");
-  SC_ASSERT(rockets_node.is_valid(), "Prefabs::Rockets node not found");
-  auto rocket_prefab = world.lookup("Prefabs::Core::Rocket");
-  SC_ASSERT(rocket_prefab.is_valid(), "Prefabs::Core::Rocket prefab not found");
-  return create_prefab_under(world, rockets_node, rocket_prefab, name);
-}
-
 flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
                             const RocketPrefabType &prefab,
                             flecs::entity parent) {
@@ -66,16 +57,6 @@ flecs::entity create_building(flecs::world world, const std::string &name,
                               flecs::entity site) {
   return instantiateBuilding(world, BuildingName{name}, BuildingPrefab{prefab},
                              SiteLocation{.x = x, .y = y}, site);
-}
-
-flecs::entity add_target_orbit_to_rocket(const flecs::world &world,
-                                         flecs::entity rocket,
-                                         const std::string &orbit_name,
-                                         uint32_t max_mass) {
-  auto orbit = world.lookup(orbit_name.c_str());
-  SC_ASSERT(orbit.is_valid(), fmt::format("Orbit {} not found", orbit_name));
-  rocket.set<CanLiftTo>(orbit, {max_mass});
-  return rocket;
 }
 
 flecs::entity create_effect(const flecs::world &world, const std::string &name,
@@ -223,12 +204,6 @@ static int create_site_wrapper(lua_State *L) {
   return 1;
 }
 
-static int create_rocket_prefab_wrapper(lua_State *L) {
-  const char *name = luaL_checkstring(L, 1);
-  lua_push_entity(L, create_rocket_prefab(*lua_get_world(L), name));
-  return 1;
-}
-
 static int create_rocket_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   const char *prefab = luaL_checkstring(L, 2);
@@ -249,15 +224,6 @@ static int create_building_wrapper(lua_State *L) {
   flecs::entity site = lua_check_entity(L, 5);
   lua_push_entity(L,
                   create_building(*lua_get_world(L), name, prefab, x, y, site));
-  return 1;
-}
-
-static int add_target_orbit_to_rocket_wrapper(lua_State *L) {
-  flecs::entity rocket = lua_check_entity(L, 1);
-  const char *orbit_name = luaL_checkstring(L, 2);
-  auto max_mass = (uint32_t)luaL_checkinteger(L, 3);
-  lua_push_entity(L, add_target_orbit_to_rocket(*lua_get_world(L), rocket,
-                                                orbit_name, max_mass));
   return 1;
 }
 
@@ -342,11 +308,7 @@ void load_helpers_namespace(lua_State *L) {
   lua_register_function(L, "create_site", create_site_wrapper);
   lua_register_function(L, "create_building", create_building_wrapper);
   lua_register_function(L, "create_effect", create_effect_wrapper);
-  lua_register_function(L, "create_rocket_prefab",
-                        create_rocket_prefab_wrapper);
   lua_register_function(L, "create_rocket", create_rocket_wrapper);
-  lua_register_function(L, "add_target_orbit_to_rocket",
-                        add_target_orbit_to_rocket_wrapper);
   lua_register_function(L, "create_contract", create_contract_wrapper);
   lua_register_function(L, "create_contract_payload",
                         create_contract_payload_wrapper);
