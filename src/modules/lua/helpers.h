@@ -1,7 +1,6 @@
 #pragma once
 
 #include "modules/site/connector.h"
-#include "modules/stats/stats.h"
 #include <flecs.h>
 #include <lua.hpp>
 #include <string>
@@ -37,10 +36,11 @@ flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
 flecs::entity create_building(flecs::world world, const std::string &name,
                               const std::string &prefab, uint8_t x, uint8_t y,
                               flecs::entity site);
-flecs::entity create_effect(const flecs::world &world, const std::string &name,
-                            flecs::entity source);
-flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,
-                           const Modifier &mod);
+/// @brief Attach the singleton effect `effect_id` (created under Effects from
+/// effects.lua) to `source` via the HasEffect relationship. Returns the effect
+/// entity, or an invalid entity if no such effect exists.
+flecs::entity add_effect(const flecs::world &world, flecs::entity source,
+                         const std::string &effect_id);
 flecs::entity create_contract(flecs::world &world, const std::string &name,
                               const std::string &client,
                               const std::string &description,

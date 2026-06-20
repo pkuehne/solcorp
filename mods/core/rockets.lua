@@ -13,9 +13,9 @@ return {
 		name = "Falcon",
 		cost = 5 * 1000 * 1000,
 		orbits = {
-			{ target = "Sun::Earth::Low Orbit",         mass = 6300 },
-			{ target = "Sun::Earth::Polar Orbit",       mass = 5600 },
-			{ target = "Sun::Earth::Transfer Orbit",    mass = 3300 },
+			{ target = "Sun::Earth::Low Orbit", mass = 6300 },
+			{ target = "Sun::Earth::Polar Orbit", mass = 5600 },
+			{ target = "Sun::Earth::Transfer Orbit", mass = 3300 },
 			{ target = "Sun::Earth::Synchronous Orbit", mass = 1300 },
 		},
 	},

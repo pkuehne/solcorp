@@ -29,22 +29,12 @@ local function on_start()
 	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 8, 5, site)
 	solcorp.helpers.create_building("North Building", "office_building", 0, 6, site)
 
-	-- Add some modifiers to the launchpad
-	local mod = solcorp.components.Modifier:new()
-	mod.target_stat = "max-weight"
-
-	local concrete = solcorp.helpers.create_effect("Better Concrete", site)
-	mod.multiplicative = 1.2
-	solcorp.helpers.add_modifier(concrete, mod)
-
-	local cracks = solcorp.helpers.create_effect("Cracks detected", main_launchpad)
-	mod.multiplicative = 0.4
-	solcorp.helpers.add_modifier(cracks, mod)
-
-	local struts = solcorp.helpers.create_effect("Reinforcing Struts", site)
-	mod.multiplicative = 1.0
-	mod.additive = 500
-	solcorp.helpers.add_modifier(struts, mod)
+	-- Attach effects to the site and launchpad via HasEffect. The effects (and
+	-- their modifiers) are defined as data in effects.lua and created once by the
+	-- engine under the Effects node.
+	solcorp.helpers.add_effect(site, "better_concrete")
+	solcorp.helpers.add_effect(site, "reinforcing_struts")
+	solcorp.helpers.add_effect(main_launchpad, "cracks_detected")
 
 	-- Create a rocket
 	local hall = storage:lookup("Hall 1")

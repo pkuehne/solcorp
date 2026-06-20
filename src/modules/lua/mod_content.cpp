@@ -149,6 +149,34 @@ void applyRocketData(flecs::world &world,
   }
 }
 
+void applyEffectData(flecs::world &world,
+                     const std::vector<EffectDef> &effects) {
+  auto effects_node = world.lookup("Effects");
+  SC_ASSERT(effects_node.is_valid(), "Effects node not found");
+
+  for (const auto &effect : effects) {
+    // An effect exists exactly once: create (or reuse, on reload) a single
+    // entity under Effects keyed by id. Sources reference it via HasEffect.
+    flecs::entity effect_entity;
+    world.scope(effects_node,
+                [&] { effect_entity = world.entity(effect.id.c_str()); });
+    effect_entity.add<Effect>().set<Label>({effect.name});
+
+    // The modifiers are children of the effect entity (applyModifiers walks an
+    // effect's children for Modifier). Name them by index so a reload reuses
+    // the same children rather than appending duplicates.
+    int index = 0;
+    for (const auto &modifier : effect.modifiers) {
+      auto modifier_name = fmt::format("Modifier {}", index++);
+      flecs::entity modifier_entity;
+      world.scope(effect_entity, [&] {
+        modifier_entity = world.entity(modifier_name.c_str());
+      });
+      modifier_entity.set<Modifier>(modifier);
+    }
+  }
+}
+
 namespace {
 
 /// @brief Read `mods/<mod_name>/<filename>` (if present) and hand its root
@@ -206,6 +234,13 @@ void loadModContent(flecs::world &world) {
     std::string mod_name = lua_get_mod_name(L);
     readModDataFile(mod_name, "rockets.lua", [&](const LuaTableView &root) {
       applyRocketData(world, parseRocketData(root));
+    });
+  });
+
+  run_on_every_mod(world, [&world](lua_State *L) {
+    std::string mod_name = lua_get_mod_name(L);
+    readModDataFile(mod_name, "effects.lua", [&](const LuaTableView &root) {
+      applyEffectData(world, parseEffectData(root));
     });
   });
 

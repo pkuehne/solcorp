@@ -25,8 +25,7 @@ add_executable(unit_test
   lua/helpers/create_site.test.cpp
   lua/helpers/create_rocket.test.cpp
   lua/helpers/create_building.test.cpp
-  lua/helpers/create_effect.test.cpp
-  lua/helpers/add_modifier.test.cpp
+  lua/helpers/add_effect.test.cpp
   lua/helpers/create_contract.test.cpp
   lua/helpers/create_contract_payload.test.cpp
   lua/helpers/get_all_contracts.test.cpp
@@ -42,8 +41,10 @@ add_executable(unit_test
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
   lua/data/rocket_data.test.cpp
+  lua/data/effect_data.test.cpp
   lua/mod_content/apply_building_data.test.cpp
   lua/mod_content/apply_rocket_data.test.cpp
+  lua/mod_content/apply_effect_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp
   lua/mod_content/create_rocket_prefab.test.cpp

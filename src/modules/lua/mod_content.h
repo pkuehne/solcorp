@@ -1,20 +1,22 @@
 /**
  * @file mod_content.h
- * @brief Loads each mod's data-driven content (textures, buildings, rockets)
- *        into the ECS.
+ * @brief Loads each mod's data-driven content (textures, buildings, rockets,
+ *        effects) into the ECS.
  *
  * @details
- * Mods describe their textures, building prefabs and rocket prefabs as plain
- * data in `textures.lua` / `buildings.lua` / `rockets.lua` (parsed by
- * texture_data.h / building_data.h / rocket_data.h). loadModContent walks every
- * loaded mod in dependency order, reads those files, and applies them to the
- * flecs world using the existing prefab/texture helpers. Textures are applied
- * before buildings so building sprites resolve against already-loaded textures.
+ * Mods describe their textures, building prefabs, rocket prefabs and effect
+ * templates as plain data in `textures.lua` / `buildings.lua` / `rockets.lua` /
+ * `effects.lua` (parsed by texture_data.h / building_data.h / rocket_data.h /
+ * effect_data.h). loadModContent walks every loaded mod in dependency order,
+ * reads those files, and applies them to the flecs world using the existing
+ * prefab/texture helpers. Textures are applied before buildings so building
+ * sprites resolve against already-loaded textures.
  */
 #pragma once
 
 #include "modules/engine/render.h" // Sprite
 #include "modules/lua/building_data.h"
+#include "modules/lua/effect_data.h"
 #include "modules/lua/rocket_data.h"
 #include "modules/lua/texture_data.h"
 #include <flecs.h>
@@ -98,6 +100,11 @@ void applyBuildingData(flecs::world &world,
 /// @brief Create a rocket prefab for each definition.
 void applyRocketData(flecs::world &world,
                      const std::vector<RocketDef> &rockets);
+
+/// @brief Create each effect once as a singleton entity under Effects (label +
+/// modifier children). Sources attach to it later via HasEffect.
+void applyEffectData(flecs::world &world,
+                     const std::vector<EffectDef> &effects);
 
 /**
  * @brief Read and apply every mod's textures.lua, buildings.lua then

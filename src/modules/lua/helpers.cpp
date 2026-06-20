@@ -59,23 +59,19 @@ flecs::entity create_building(flecs::world world, const std::string &name,
                              SiteLocation{.x = x, .y = y}, site);
 }
 
-flecs::entity create_effect(const flecs::world &world, const std::string &name,
-                            flecs::entity source) {
-  auto effect = world.entity(name.c_str())
-                    .add<Effect>()
-                    .child_of(world.lookup("Effects"));
+flecs::entity add_effect(const flecs::world &world, flecs::entity source,
+                         const std::string &effect_id) {
+  std::string effect_name = "Effects::";
+  effect_name.append(effect_id);
+  auto effect = world.lookup(effect_name.c_str());
+  if (!effect.is_valid()) {
+    spdlog::error("Effect {} does not exist", effect_name);
+    return {};
+  }
   if (source.is_valid()) {
     source.add<HasEffect>(effect);
   }
   return effect;
-}
-
-flecs::entity add_modifier(const flecs::world &world, flecs::entity effect,
-                           const Modifier &mod) {
-  if (!effect.is_valid()) {
-    return {};
-  }
-  return world.entity().child_of(effect).set<Modifier>(mod);
 }
 
 flecs::entity create_contract(flecs::world &world, const std::string &name,
@@ -227,13 +223,10 @@ static int create_building_wrapper(lua_State *L) {
   return 1;
 }
 
-static int create_effect_wrapper(lua_State *L) {
-  const char *name = luaL_checkstring(L, 1);
-  flecs::entity source;
-  if (!lua_isnoneornil(L, 2)) {
-    source = lua_check_entity(L, 2);
-  }
-  lua_push_entity(L, create_effect(*lua_get_world(L), name, source));
+static int add_effect_wrapper(lua_State *L) {
+  flecs::entity source = lua_check_entity(L, 1);
+  const char *effect_id = luaL_checkstring(L, 2);
+  lua_push_entity(L, add_effect(*lua_get_world(L), source, effect_id));
   return 1;
 }
 
@@ -278,14 +271,6 @@ static int get_all_active_contracts_wrapper(lua_State *L) {
   return 1;
 }
 
-static int add_modifier_wrapper(lua_State *L) {
-  flecs::entity effect = lua_check_entity(L, 1);
-  auto *ud =
-      static_cast<ComponentUD *>(luaL_checkudata(L, 2, "solcorp.Modifier"));
-  add_modifier(*lua_get_world(L), effect, *static_cast<Modifier *>(ud->ptr));
-  return 0;
-}
-
 static int create_connector_wrapper(lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   auto variant = static_cast<ConnectorVariant>(luaL_checkinteger(L, 2));
@@ -307,7 +292,7 @@ void load_helpers_namespace(lua_State *L) {
 
   lua_register_function(L, "create_site", create_site_wrapper);
   lua_register_function(L, "create_building", create_building_wrapper);
-  lua_register_function(L, "create_effect", create_effect_wrapper);
+  lua_register_function(L, "add_effect", add_effect_wrapper);
   lua_register_function(L, "create_rocket", create_rocket_wrapper);
   lua_register_function(L, "create_contract", create_contract_wrapper);
   lua_register_function(L, "create_contract_payload",
@@ -315,7 +300,6 @@ void load_helpers_namespace(lua_State *L) {
   lua_register_function(L, "get_all_contracts", get_all_contracts_wrapper);
   lua_register_function(L, "get_all_active_contracts",
                         get_all_active_contracts_wrapper);
-  lua_register_function(L, "add_modifier", add_modifier_wrapper);
   lua_register_function(L, "create_connector", create_connector_wrapper);
 
   lua_pop(L, 2); // helpers, solcorp
