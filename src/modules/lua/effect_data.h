@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "modules/lua/lua_data.h"
+#include "modules/lua/mod_value.h"
 #include "modules/stats/stats.h" // Modifier
 #include <string>
 #include <vector>
@@ -33,4 +33,4 @@ struct EffectDef {
  * `modifiers` entry is skipped leniently. A modifier defaults its additive to 0
  * and multiplicative to 1 when absent.
  */
-std::vector<EffectDef> parseEffectData(const LuaTableView &root);
+std::vector<EffectDef> parseEffectData(const ModValue &root);

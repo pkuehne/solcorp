@@ -241,6 +241,22 @@ std::vector<BuildingDef> selectBuildingPrefabs(const ModRegistry &registry) {
   return prefabs;
 }
 
+/// @brief Turn the merged effects table into the effects to instantiate: an
+/// effect with no modifiers does nothing, so it is logged (with provenance) and
+/// skipped (ADR 011 §5).
+std::vector<EffectDef> selectEffects(const ModRegistry &registry) {
+  std::vector<EffectDef> effects;
+  for (const EffectDef &def : parseEffectData(registry.merged("effects"))) {
+    if (def.modifiers.empty()) {
+      spdlog::error("Skipping effect '{}': it has no modifiers (defined by {})",
+                    def.id, registry.historyString("effects", def.id));
+      continue;
+    }
+    effects.push_back(def);
+  }
+  return effects;
+}
+
 } // namespace
 
 void loadModContent(flecs::world &world) {
@@ -276,16 +292,11 @@ void loadModContent(flecs::world &world) {
   for_each_mod(world, [&](const Mod &mod) {
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
     mergeModDataFile(registry, "rockets", mod, "rockets.lua");
+    mergeModDataFile(registry, "effects", mod, "effects.lua");
   });
   applyBuildingData(world, selectBuildingPrefabs(registry));
   applyRocketData(world, parseRocketData(registry.merged("rockets")));
-
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "effects.lua", [&](const LuaTableView &root) {
-      applyEffectData(world, parseEffectData(root));
-    });
-  });
+  applyEffectData(world, selectEffects(registry));
 
   if (was_deferred) {
     world.defer_resume();
