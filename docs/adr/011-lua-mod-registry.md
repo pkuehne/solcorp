@@ -242,6 +242,42 @@ minimum, a dependency cycle, or a duplicate id is logged at `critical` (the cycl
 cycle, e.g. `a -> b -> a`) and the process exits non-zero. There is no partial-load fallback for a
 broken dependency graph.
 
+## Implementation (2026-07 amendment)
+
+The merge/override system (§1–§6) is now implemented. It follows the design above with one
+substantive refinement: **the deep merge runs in C++ over a materialised value tree, not in Lua.**
+
+- **Why not Lua.** Each mod's data file is read in its own throwaway Lua state (`LuaDataFile`), so
+  tables from different mods cannot be deep-merged while they live in separate states. Rather than
+  introduce a long-lived shared Lua state plus embedded merge code, each returned table is
+  materialised into a detached C++ value tree (`ModValue`, via `LuaDataFile::materialize()`) that
+  outlives its Lua state. The whole merge is then pure C++ and unit-testable in the existing Catch2
+  suite. The `register`/`deep_merge`/`_history` semantics of §1–§2 are preserved; only the host
+  language changed.
+- **`ModRegistry`** folds each mod's tree for a category (`buildings`, `rockets`, `effects`,
+  `textures`) in resolved load order (`for_each_mod`). It keeps the `_data`/`_history` model of §2:
+  provenance is appended only when a merge writes a differing value (`deep_merge_changed`).
+- **Merge semantics.** Maps deep-merge (patch `sprite.x` or `animations.idle.fps` without touching
+  siblings). **Lists replace wholesale** (`facilities`, animation `frames`) — a deliberate
+  simplification of §1's pairs-based index merge, which is clearer for list-shaped fields. The
+  `DELETE` sentinel (`"__DELETE__"`) removes a field, or removes a whole entry when it is the entire
+  override value.
+- **Post-merge validation (§5)** is a per-category pass over the merged table (`selectBuildingPrefabs`
+  / `selectEffects` / `selectTextures`, and the orbit check in `applyRocketData`). Broken entries are
+  logged with their provenance (`ModRegistry::historyString`) and skipped, never fatal — a rocket
+  with an unknown orbit drops that lift capability, an effect with no modifiers is skipped, a texture
+  with no file is skipped. `hidden` entries create no prefab. A texture's `file` is resolved against
+  the mod that last supplied it (`ModRegistry::lastSource`), since a merged entry no longer knows its
+  origin.
+- **Flags (§3) and animations (§4)** deep-merge and are carried in the merged tree, but only `hidden`
+  is mapped to the ECS so far. `spawnable`, `buildable`, and `animations` have no consumer yet (the
+  player build UI is [ADR 009](/adr/009-build-mode-and-site-window.md); animation rendering and the
+  tile registry are [ADR 012](/adr/012-building-tileset-metadata.md)), so they are intentionally left
+  unapplied rather than mapped to unused components.
+- **Dev overrides (§6).** A `dev_only = true` manifest field marks a mod (e.g. `mods/dev_overrides`)
+  that is filtered out of the load order in release builds (`NDEBUG`) and loads normally in debug
+  builds. The developer window's Mods tab warns when a `dev_only` mod is active.
+
 ## Consequences
 
 - Registry is the single source of truth for all entity definitions up to ECS mapping time.
