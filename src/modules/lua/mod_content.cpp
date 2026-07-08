@@ -143,8 +143,13 @@ void applyRocketData(flecs::world &world,
 
     for (const auto &[orbit_name, max_mass] : rocket.target_orbits) {
       auto orbit = world.lookup(orbit_name.c_str());
-      SC_ASSERT(orbit.is_valid(),
-                fmt::format("Orbit {} not found", orbit_name));
+      if (!orbit.is_valid()) {
+        // A broken orbit reference is recoverable (ADR 011 §5): drop this
+        // lift capability and keep the rocket, rather than aborting the load.
+        spdlog::error("Rocket '{}' references unknown orbit '{}'; skipping it",
+                      rocket.id, orbit_name);
+        continue;
+      }
       rocket_prefab.set<CanLiftTo>(orbit, {max_mass});
     }
   }
@@ -263,21 +268,17 @@ void loadModContent(flecs::world &world) {
     });
   });
 
-  // Buildings are deep-merged across mods (ADR 011): fold every mod's
-  // buildings.lua into the registry in load order, then validate and apply the
-  // merged result once, so a later mod can patch or suppress an earlier entry.
+  // Buildings and rockets are deep-merged across mods (ADR 011): fold every
+  // mod's data file into the registry in load order, then validate and apply
+  // the merged result once, so a later mod can patch or suppress an earlier
+  // entry rather than blindly overwriting a same-named prefab.
   ModRegistry registry;
   for_each_mod(world, [&](const Mod &mod) {
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
+    mergeModDataFile(registry, "rockets", mod, "rockets.lua");
   });
   applyBuildingData(world, selectBuildingPrefabs(registry));
-
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "rockets.lua", [&](const LuaTableView &root) {
-      applyRocketData(world, parseRocketData(root));
-    });
-  });
+  applyRocketData(world, parseRocketData(registry.merged("rockets")));
 
   run_on_every_mod(world, [&world](lua_State *L) {
     std::string mod_name = lua_get_mod_name(L);

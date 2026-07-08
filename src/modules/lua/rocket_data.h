@@ -12,7 +12,7 @@
  */
 #pragma once
 
-#include "modules/lua/lua_data.h"
+#include "modules/lua/mod_value.h"
 #include <cstdint>
 #include <map>
 #include <string>
@@ -35,4 +35,4 @@ struct RocketDef {
  * defaults to 0 and a malformed `orbits` entry is skipped leniently. Content
  * validation (e.g. that an orbit exists) happens at apply time.
  */
-std::vector<RocketDef> parseRocketData(const LuaTableView &root);
+std::vector<RocketDef> parseRocketData(const ModValue &root);

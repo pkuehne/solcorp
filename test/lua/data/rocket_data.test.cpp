@@ -44,7 +44,7 @@ SCENARIO("parseRocketData reads rocket prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+      std::vector<RocketDef> rockets = parseRocketData(lua.materialize());
 
       THEN("every rocket entry is captured keyed by its id") {
         REQUIRE(rockets.size() == 2);
@@ -84,7 +84,7 @@ SCENARIO("parseRocketData reads rocket prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+      std::vector<RocketDef> rockets = parseRocketData(lua.materialize());
 
       THEN("the name defaults to the id, cost to zero and no orbits produced") {
         const RocketDef *rocket = findRocket(rockets, "pathfinder");
@@ -102,7 +102,7 @@ SCENARIO("parseRocketData reads rocket prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<RocketDef> rockets = parseRocketData(lua.root());
+      std::vector<RocketDef> rockets = parseRocketData(lua.materialize());
 
       THEN("no rockets are produced") { REQUIRE(rockets.empty()); }
     }

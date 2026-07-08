@@ -54,6 +54,26 @@ SCENARIO("applyRocketData creates rocket prefabs", "[mod_content][lua]") {
     }
   }
 
+  GIVEN("a rocket definition referencing an orbit that does not exist") {
+    RocketDef stray;
+    stray.id = "stray";
+    stray.name = "Stray";
+    stray.cost = 100;
+    stray.target_orbits = {{"Low Orbit", 6300}, {"Nonexistent Orbit", 999}};
+
+    WHEN("the definition is applied") {
+      applyRocketData(world, {stray});
+
+      THEN(
+          "the load does not crash; the prefab exists with only valid orbits") {
+        auto prefab = world.lookup("Prefabs::Rockets::stray");
+        REQUIRE(prefab.is_valid());
+        REQUIRE(prefab.has<CanLiftTo>(leo));
+        CHECK(prefab.get<CanLiftTo>(leo).max_mass == 6300);
+      }
+    }
+  }
+
   GIVEN("the same rocket definition applied twice (a reload)") {
     RocketDef falcon;
     falcon.id = "falcon_1";
