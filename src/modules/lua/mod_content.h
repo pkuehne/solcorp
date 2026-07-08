@@ -89,8 +89,9 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
                                 const std::string &texture,
                                 SpriteClipRect rect);
 
-/// @brief Load each parsed texture for `mod_name` into the world.
-void applyTextureData(flecs::world &world, const std::string &mod_name,
+/// @brief Load each parsed texture into the world. Each TextureDef carries the
+/// owning `mod` its `file` is relative to (see loadModContent).
+void applyTextureData(flecs::world &world,
                       const std::vector<TextureDef> &textures);
 
 /// @brief Create a building prefab (sprite + facilities) for each definition.

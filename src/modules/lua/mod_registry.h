@@ -61,6 +61,14 @@ public:
   [[nodiscard]] std::string historyString(const std::string &category,
                                           const std::string &id) const;
 
+  /**
+   * @brief The id of the last mod that changed an entry (the owner of its
+   * current field values), or "" if unknown. Used to resolve a texture's file
+   * path against the mod directory that supplied it.
+   */
+  [[nodiscard]] std::string lastSource(const std::string &category,
+                                       const std::string &id) const;
+
 private:
   struct Category {
     ModValue data = ModValue::Table(); ///< Merged fields: id -> definition.

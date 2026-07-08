@@ -5,7 +5,6 @@
 #include "modules/lua/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/lua/lua_data.h"
-#include "modules/lua/lua_registry.h"
 #include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
@@ -100,11 +99,11 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
   return sprite;
 }
 
-void applyTextureData(flecs::world &world, const std::string &mod_name,
+void applyTextureData(flecs::world &world,
                       const std::vector<TextureDef> &textures) {
   for (const auto &texture : textures) {
     create_texture(world, TextureName{texture.name},
-                   TextureFilename{texture.file}, TextureModName{mod_name});
+                   TextureFilename{texture.file}, TextureModName{texture.mod});
   }
 }
 
@@ -185,23 +184,6 @@ void applyEffectData(flecs::world &world,
 
 namespace {
 
-/// @brief Read `mods/<mod_name>/<filename>` (if present) and hand its root
-/// table to `apply`. Logs and skips a file that fails to load.
-void readModDataFile(const std::string &mod_name, const char *filename,
-                     const std::function<void(const LuaTableView &)> &apply) {
-  std::filesystem::path path =
-      std::filesystem::path("mods") / mod_name / filename;
-  if (!std::filesystem::exists(path)) {
-    return;
-  }
-  LuaDataFile data(path.string());
-  if (!data.ok()) {
-    spdlog::error("Failed to load {}: {}", path.string(), data.error());
-    return;
-  }
-  apply(data.root());
-}
-
 /// @brief Fold `mods/<mod.id>/<filename>` (if present) into the registry under
 /// `category`, materialising it so it can be deep-merged across mods.
 void mergeModDataFile(ModRegistry &registry, const std::string &category,
@@ -241,6 +223,23 @@ std::vector<BuildingDef> selectBuildingPrefabs(const ModRegistry &registry) {
   return prefabs;
 }
 
+/// @brief Turn the merged textures table into the textures to load: each
+/// texture's file is resolved against the mod that last supplied it (merge
+/// provenance), and an entry with no file is logged and skipped (ADR 011 §5).
+std::vector<TextureDef> selectTextures(const ModRegistry &registry) {
+  std::vector<TextureDef> textures;
+  for (TextureDef def : parseTextureData(registry.merged("textures"))) {
+    if (def.file.empty()) {
+      spdlog::error("Skipping texture '{}': it has no file (defined by {})",
+                    def.name, registry.historyString("textures", def.name));
+      continue;
+    }
+    def.mod = registry.lastSource("textures", def.name);
+    textures.push_back(def);
+  }
+  return textures;
+}
+
 /// @brief Turn the merged effects table into the effects to instantiate: an
 /// effect with no modifiers does nothing, so it is logged (with provenance) and
 /// skipped (ADR 011 §5).
@@ -272,28 +271,21 @@ void loadModContent(flecs::world &world) {
     world.defer_suspend();
   }
 
-  // Two passes, each visiting mods in resolved dependency order (later mods
-  // win on name conflicts). Pass 1 loads every mod's textures before pass 2
-  // clips any building sprite, so a building resolves any texture regardless
-  // of which mod owns it and a later mod can override a texture another mod's
-  // building uses.
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "textures.lua", [&](const LuaTableView &root) {
-      applyTextureData(world, mod_name, parseTextureData(root));
-    });
-  });
-
-  // Buildings and rockets are deep-merged across mods (ADR 011): fold every
-  // mod's data file into the registry in load order, then validate and apply
-  // the merged result once, so a later mod can patch or suppress an earlier
-  // entry rather than blindly overwriting a same-named prefab.
+  // Every mod's data files are deep-merged across mods (ADR 011): fold each
+  // file into the registry in resolved load order, then validate and apply the
+  // merged result once per category, so a later mod can patch or suppress an
+  // earlier entry rather than blindly overwriting a same-named prefab.
   ModRegistry registry;
   for_each_mod(world, [&](const Mod &mod) {
+    mergeModDataFile(registry, "textures", mod, "textures.lua");
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
     mergeModDataFile(registry, "rockets", mod, "rockets.lua");
     mergeModDataFile(registry, "effects", mod, "effects.lua");
   });
+
+  // Textures load before buildings so a building sprite resolves against any
+  // mod's texture (and a later mod can override a texture another mod uses).
+  applyTextureData(world, selectTextures(registry));
   applyBuildingData(world, selectBuildingPrefabs(registry));
   applyRocketData(world, parseRocketData(registry.merged("rockets")));
   applyEffectData(world, selectEffects(registry));

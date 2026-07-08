@@ -103,3 +103,16 @@ std::string ModRegistry::historyString(const std::string &category,
   }
   return result;
 }
+
+std::string ModRegistry::lastSource(const std::string &category,
+                                    const std::string &id) const {
+  auto cat_it = categories_.find(category);
+  if (cat_it == categories_.end()) {
+    return "";
+  }
+  auto hist_it = cat_it->second.history.find(id);
+  if (hist_it == cat_it->second.history.end() || hist_it->second.empty()) {
+    return "";
+  }
+  return hist_it->second.back().source;
+}
