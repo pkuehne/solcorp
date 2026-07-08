@@ -1,0 +1,105 @@
+#include "modules/lua/mod_registry.h"
+
+#include <utility>
+
+namespace {
+
+/**
+ * @brief Deep-merge `overrides` (a map-like table) onto `base` (a map-like
+ * table), returning whether any value was written and differed. Maps recurse;
+ * lists and scalars replace wholesale; a DELETE override removes the field.
+ */
+bool deep_merge_changed(ModValue &base, const ModValue &overrides) {
+  bool changed = false;
+
+  overrides.forEachEntry([&](const std::string &key, const ModValue &ov) {
+    auto it = base.fields().find(key);
+    const bool exists = it != base.fields().end();
+
+    if (ov.isDelete()) {
+      if (exists) {
+        base.fields().erase(it);
+        changed = true;
+      }
+      return;
+    }
+
+    const bool merge_maps = ov.isTable() && !ov.isArrayLike() && exists &&
+                            it->second.isTable() && !it->second.isArrayLike();
+    if (merge_maps) {
+      if (deep_merge_changed(it->second, ov)) {
+        changed = true;
+      }
+      return;
+    }
+
+    // Scalars, lists, new keys, or a type change: replace wholesale.
+    if (!exists || it->second != ov) {
+      base.fields()[key] = ov;
+      changed = true;
+    }
+  });
+
+  return changed;
+}
+
+} // namespace
+
+void ModRegistry::merge(const std::string &category, const ModValue &mod_table,
+                        const std::string &mod_name, int load_order) {
+  if (!mod_table.isTable()) {
+    return;
+  }
+
+  Category &cat = categories_[category];
+
+  mod_table.forEachEntry([&](const std::string &id, const ModValue &def) {
+    if (def.isDelete()) {
+      // A whole-entry DELETE removes it (and its provenance) from the registry.
+      if (cat.data.fields().erase(id) > 0) {
+        cat.history.erase(id);
+      }
+      return;
+    }
+    if (!def.isTable()) {
+      // A definition must be a table; ignore anything else leniently.
+      return;
+    }
+
+    ModValue &base = cat.data.fields()[id];
+    if (!base.isTable()) {
+      base = ModValue::Table(); // brand-new entry
+    }
+    if (deep_merge_changed(base, def)) {
+      cat.history[id].push_back(
+          ModProvenance{.source = mod_name, .load_order = load_order});
+    }
+  });
+}
+
+const ModValue &ModRegistry::merged(const std::string &category) const {
+  static const ModValue kEmpty = ModValue::Table();
+  auto it = categories_.find(category);
+  return it == categories_.end() ? kEmpty : it->second.data;
+}
+
+std::string ModRegistry::historyString(const std::string &category,
+                                       const std::string &id) const {
+  auto cat_it = categories_.find(category);
+  if (cat_it == categories_.end()) {
+    return "";
+  }
+  auto hist_it = cat_it->second.history.find(id);
+  if (hist_it == cat_it->second.history.end()) {
+    return "";
+  }
+
+  std::string result;
+  for (const ModProvenance &touch : hist_it->second) {
+    if (!result.empty()) {
+      result += " -> ";
+    }
+    result += touch.source + "(" + std::to_string(touch.load_order) + ")";
+  }
+  return result;
+}

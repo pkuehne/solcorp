@@ -120,6 +120,67 @@ LuaDataFile::LuaDataFile(const std::string &path) {
   ok_ = true;
 }
 
+namespace {
+
+ModValue materializeTable(lua_State *L, int idx);
+
+/// Materialise the Lua value at `idx` into a detached ModValue.
+ModValue materializeValue(lua_State *L, int idx) {
+  switch (lua_type(L, idx)) {
+  case LUA_TBOOLEAN:
+    return ModValue::Bool(lua_toboolean(L, idx) != 0);
+  case LUA_TNUMBER:
+    if (lua_isinteger(L, idx) != 0) {
+      return ModValue::Int(static_cast<long long>(lua_tointeger(L, idx)));
+    }
+    return ModValue::Double(static_cast<double>(lua_tonumber(L, idx)));
+  case LUA_TSTRING:
+    return ModValue::Str(std::string(lua_tostring(L, idx)));
+  case LUA_TTABLE:
+    return materializeTable(L, idx);
+  default:
+    // nil, function, userdata, thread: not representable as data.
+    return ModValue{};
+  }
+}
+
+/// Materialise the Lua table at `idx`: contiguous keys 1..n become the array
+/// part, string keys become the map part (matching the LuaTableView readers).
+ModValue materializeTable(lua_State *L, int idx) {
+  int table = lua_absindex(L, idx);
+  ModValue result = ModValue::Table();
+
+  lua_Integer n = luaL_len(L, table);
+  for (lua_Integer i = 1; i <= n; ++i) {
+    lua_geti(L, table, i);
+    result.array().push_back(materializeValue(L, lua_gettop(L)));
+    lua_pop(L, 1);
+  }
+
+  lua_pushnil(L);
+  while (lua_next(L, table) != 0) {
+    // key at -2, value at -1. Only handle string keys; calling lua_tostring on
+    // a non-string key would mutate it in place and corrupt lua_next.
+    if (lua_type(L, -2) == LUA_TSTRING) {
+      std::string key = lua_tostring(L, -2);
+      result.fields().emplace(std::move(key),
+                              materializeValue(L, lua_gettop(L)));
+    }
+    lua_pop(L, 1); // pop value, keep key for the next iteration
+  }
+
+  return result;
+}
+
+} // namespace
+
+ModValue LuaDataFile::materialize() const {
+  if (!ok_) {
+    return {};
+  }
+  return materializeTable(L_, root_idx_);
+}
+
 LuaDataFile::~LuaDataFile() {
   if (L_ != nullptr) {
     lua_close(L_);

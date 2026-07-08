@@ -21,6 +21,8 @@ list(APPEND SolCorpSources
     modules/lua/lua_registry.cpp
     modules/lua/mod_content.cpp
     modules/lua/mod_manifest.cpp
+    modules/lua/mod_registry.cpp
+    modules/lua/mod_value.cpp
     modules/lua/rocket_data.cpp
     modules/lua/texture_data.cpp
     modules/lua/systems.cpp
@@ -78,6 +80,8 @@ list(APPEND SolCorpHeaders
     modules/lua/lua_registry.h
     modules/lua/mod_content.h
     modules/lua/mod_manifest.h
+    modules/lua/mod_registry.h
+    modules/lua/mod_value.h
     modules/lua/rocket_data.h
     modules/lua/texture_data.h
     modules/lua/systems.h
