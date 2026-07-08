@@ -37,7 +37,8 @@ LuaModule::LuaModule(flecs::world &world) {
       .member("version", &Mod::version)
       .member("description", &Mod::description)
       .member("author", &Mod::author)
-      .member("load_order", &Mod::load_order); //
+      .member("load_order", &Mod::load_order)
+      .member("dev_only", &Mod::dev_only); //
   //.member("state", &Mod::state); //
   world.component<ReloadPrefabsRequest>();
 
@@ -120,7 +121,18 @@ void load_all_mods(flecs::world &world) {
       continue;
     }
     try {
-      manifests.push_back(readModManifest(entry.path()));
+      ModManifest manifest = readModManifest(entry.path());
+#ifdef NDEBUG
+      // ADR 011 §6: dev-only override mods (e.g. dev_overrides) are excluded
+      // from the release load order so they cannot ship balance tweaks. In
+      // debug builds they load normally and are flagged in the debug UI.
+      if (manifest.dev_only) {
+        spdlog::info("Skipping dev-only mod '{}' in release build",
+                     manifest.id);
+        continue;
+      }
+#endif
+      manifests.push_back(std::move(manifest));
     } catch (const ModDependencyError &e) {
       fatal_mod_error(std::string("Mod manifest error: ") + e.what());
     }
@@ -168,6 +180,7 @@ flecs::entity load_mod(flecs::world &world, const std::filesystem::path &path,
   mod.description = manifest.description;
   mod.author = manifest.author;
   mod.load_order = load_order;
+  mod.dev_only = manifest.dev_only;
   mod.state = luaL_newstate();
   lua_set_mod_name(mod.state, mod_name);
 

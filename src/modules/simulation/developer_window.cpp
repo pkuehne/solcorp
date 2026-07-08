@@ -65,6 +65,7 @@ void drawModsTab(flecs::world &world) {
     std::string version;
     std::string author;
     std::string description;
+    bool dev_only;
   };
 
   std::vector<ModRow> mods;
@@ -75,7 +76,8 @@ void drawModsTab(flecs::world &world) {
                         .name = mod.name,
                         .version = mod.version,
                         .author = mod.author,
-                        .description = mod.description});
+                        .description = mod.description,
+                        .dev_only = mod.dev_only});
       });
 
   std::ranges::sort(mods, [](const ModRow &lhs, const ModRow &rhs) {
@@ -106,6 +108,15 @@ void drawModsTab(flecs::world &world) {
         "sprites. Entries removed from a data file are not pruned.");
   }
 
+  // ADR 011 §6: warn if a dev-only override mod is active. It is excluded from
+  // release builds, so seeing this in a shipped build means one leaked in.
+  if (std::ranges::any_of(mods,
+                          [](const ModRow &mod) { return mod.dev_only; })) {
+    ImGui::TextColored(ImColor(255, 180, 0),
+                       "Dev-only override mod active - excluded from release "
+                       "builds; not for shipping.");
+  }
+
   ImGui::Separator();
 
   constexpr ImGuiTableFlags tableFlags =
@@ -130,7 +141,11 @@ void drawModsTab(flecs::world &world) {
       ImGui::Text("%d", mod.load_order);
 
       ImGui::TableSetColumnIndex(1);
-      ImGui::TextUnformatted(mod.id.c_str());
+      if (mod.dev_only) {
+        ImGui::TextColored(ImColor(255, 180, 0), "%s (dev)", mod.id.c_str());
+      } else {
+        ImGui::TextUnformatted(mod.id.c_str());
+      }
 
       ImGui::TableSetColumnIndex(2);
       ImGui::TextUnformatted(mod.name.c_str());

@@ -55,6 +55,7 @@ struct Mod {
   std::string description;
   std::string author;
   int load_order = 0;
+  bool dev_only = false; // dev-only mod (ADR 011 §6); flagged in the debug UI
   lua_State *state;
 };
 
