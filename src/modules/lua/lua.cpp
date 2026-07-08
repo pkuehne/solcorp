@@ -228,6 +228,26 @@ void run_on_every_mod(flecs::world &world, const ModStateCallback &func) {
   }
 }
 
+void for_each_mod(flecs::world &world,
+                  const std::function<void(const Mod &)> &func) {
+  if (!world.lookup("Mods").is_valid()) {
+    return;
+  }
+  const auto *order = world.try_get<ModLoadOrder>();
+  if (order == nullptr) {
+    return;
+  }
+  for (const flecs::entity &modE : order->mods) {
+    const Mod *mod = modE.try_get<Mod>();
+    if (mod == nullptr) {
+      spdlog::error("Mod {} does not have a Mod component!",
+                    modE.name().c_str());
+      continue;
+    }
+    func(*mod);
+  }
+}
+
 bool run_mod_handler(Mod &mod, flecs::world &world,
                      const std::string &handler) {
   lua_State *L = mod.state;

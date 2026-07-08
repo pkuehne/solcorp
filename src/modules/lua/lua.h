@@ -71,6 +71,16 @@ bool run_mod_handler(Mod &mod, flecs::world &world, const std::string &handler);
  */
 void run_on_every_mod(flecs::world &world, const ModStateCallback &func);
 
+/**
+ * @brief Run a callback for each loaded mod, in resolved load order.
+ *
+ * Like run_on_every_mod, but exposes the whole Mod (id, load_order, ...) rather
+ * than just its lua_State - used to fold each mod's data files into the mod
+ * registry with the right provenance and merge order.
+ */
+void for_each_mod(flecs::world &world,
+                  const std::function<void(const Mod &)> &func);
+
 /** @brief Extract class/field types from a member pointer type. */
 template <typename T> struct member_ptr_info;
 template <typename C, typename F> struct member_ptr_info<F C::*> {

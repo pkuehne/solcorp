@@ -44,7 +44,7 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<BuildingDef> buildings = parseBuildingData(lua.root());
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
 
       THEN("every building entry is captured keyed by its id") {
         REQUIRE(buildings.size() == 2);
@@ -84,7 +84,7 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<BuildingDef> buildings = parseBuildingData(lua.root());
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
 
       THEN("the name defaults to the entry id") {
         const BuildingDef *silo = findBuilding(buildings, "silo");
@@ -110,7 +110,7 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<BuildingDef> buildings = parseBuildingData(lua.root());
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
 
       THEN("the texture is empty and the clip rect is zeroed") {
         const BuildingDef *plaza = findBuilding(buildings, "plaza");
@@ -130,9 +130,64 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<BuildingDef> buildings = parseBuildingData(lua.root());
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
 
       THEN("no buildings are produced") { REQUIRE(buildings.empty()); }
+    }
+  }
+
+  GIVEN("a hidden building entry") {
+    TempLuaFile file(R"(
+      return {
+        suppressed = { name = "Suppressed", hidden = true },
+        normal = { name = "Normal" },
+      }
+    )");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
+
+      THEN("the hidden flag is captured; it defaults to false otherwise") {
+        REQUIRE(findBuilding(buildings, "suppressed")->hidden);
+        REQUIRE_FALSE(findBuilding(buildings, "normal")->hidden);
+      }
+    }
+  }
+}
+
+SCENARIO("validateBuildingDef rejects definitions that cannot become prefabs") {
+  GIVEN("a definition whose facilities all have known types") {
+    BuildingDef def;
+    def.id = "factory";
+    def.facilities = {{.name = "Line 1", .type = "Manufacturing"},
+                      {.name = "Desk", .type = "Office"}};
+
+    THEN("it validates") {
+      REQUIRE_FALSE(validateBuildingDef(def).has_value());
+    }
+  }
+
+  GIVEN("a definition with a facility of unknown type") {
+    BuildingDef def;
+    def.id = "weird";
+    def.facilities = {{.name = "Portal", .type = "Teleporter"}};
+
+    THEN("it is rejected with a reason naming the facility") {
+      auto reason = validateBuildingDef(def);
+      REQUIRE(reason.has_value());
+      REQUIRE(reason->find("Portal") != std::string::npos);
+      REQUIRE(reason->find("Teleporter") != std::string::npos);
+    }
+  }
+
+  GIVEN("a definition with no facilities") {
+    BuildingDef def;
+    def.id = "plaza";
+
+    THEN("it validates (facilities are optional)") {
+      REQUIRE_FALSE(validateBuildingDef(def).has_value());
     }
   }
 }

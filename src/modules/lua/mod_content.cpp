@@ -6,6 +6,7 @@
 #include "modules/lua/lua.h"
 #include "modules/lua/lua_data.h"
 #include "modules/lua/lua_registry.h"
+#include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -196,6 +197,45 @@ void readModDataFile(const std::string &mod_name, const char *filename,
   apply(data.root());
 }
 
+/// @brief Fold `mods/<mod.id>/<filename>` (if present) into the registry under
+/// `category`, materialising it so it can be deep-merged across mods.
+void mergeModDataFile(ModRegistry &registry, const std::string &category,
+                      const Mod &mod, const char *filename) {
+  std::filesystem::path path =
+      std::filesystem::path("mods") / mod.id / filename;
+  if (!std::filesystem::exists(path)) {
+    return;
+  }
+  LuaDataFile data(path.string());
+  if (!data.ok()) {
+    spdlog::error("Failed to load {}: {}", path.string(), data.error());
+    return;
+  }
+  registry.merge(category, data.materialize(), mod.id, mod.load_order);
+}
+
+/// @brief Turn the merged buildings table into the definitions that should
+/// become prefabs: hidden entries are suppressed, broken entries are logged
+/// (with provenance) and skipped (ADR 011 §3/§5).
+std::vector<BuildingDef> selectBuildingPrefabs(const ModRegistry &registry) {
+  std::vector<BuildingDef> prefabs;
+  for (const BuildingDef &def :
+       parseBuildingData(registry.merged("buildings"))) {
+    if (def.hidden) {
+      spdlog::debug("Building '{}' is hidden; no prefab created", def.id);
+      continue;
+    }
+    if (auto reason = validateBuildingDef(def)) {
+      spdlog::error("Skipping invalid building '{}': {} (defined by {})",
+                    def.id, *reason,
+                    registry.historyString("buildings", def.id));
+      continue;
+    }
+    prefabs.push_back(def);
+  }
+  return prefabs;
+}
+
 } // namespace
 
 void loadModContent(flecs::world &world) {
@@ -223,12 +263,14 @@ void loadModContent(flecs::world &world) {
     });
   });
 
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "buildings.lua", [&](const LuaTableView &root) {
-      applyBuildingData(world, parseBuildingData(root));
-    });
+  // Buildings are deep-merged across mods (ADR 011): fold every mod's
+  // buildings.lua into the registry in load order, then validate and apply the
+  // merged result once, so a later mod can patch or suppress an earlier entry.
+  ModRegistry registry;
+  for_each_mod(world, [&](const Mod &mod) {
+    mergeModDataFile(registry, "buildings", mod, "buildings.lua");
   });
+  applyBuildingData(world, selectBuildingPrefabs(registry));
 
   run_on_every_mod(world, [&world](lua_State *L) {
     std::string mod_name = lua_get_mod_name(L);
