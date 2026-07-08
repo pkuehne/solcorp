@@ -274,9 +274,10 @@ substantive refinement: **the deep merge runs in C++ over a materialised value t
   player build UI is [ADR 009](/adr/009-build-mode-and-site-window.md); animation rendering and the
   tile registry are [ADR 012](/adr/012-building-tileset-metadata.md)), so they are intentionally left
   unapplied rather than mapped to unused components.
-- **Dev overrides (§6).** A `dev_only = true` manifest field marks a mod (e.g. `mods/dev_overrides`)
-  that is filtered out of the load order in release builds (`NDEBUG`) and loads normally in debug
-  builds. The developer window's Mods tab warns when a `dev_only` mod is active.
+- **Dev overrides (§6).** A `dev_only = true` manifest field marks a mod (the existing `mods/dev`
+  mod carries the flag and a `buildings.lua` override example) that is filtered out of the load order
+  in release builds (`NDEBUG`) and loads normally in debug builds. The developer window's Mods tab
+  warns when a `dev_only` mod is active.
 
 ## Consequences
 
@@ -288,8 +289,8 @@ substantive refinement: **the deep merge runs in C++ over a materialised value t
   implement.
 - Flag semantics are unambiguous; each flag answers one question and has no overlap with the others.
 - Validation is deferred to post-load; individual `register` calls are dumb and fast.
-- A `dev_overrides` mod provides a clean development escape hatch with no risk of touching core mod
-  files.
+- A `dev_only` mod provides a clean development escape hatch with no risk of touching core mod
+  files or shipping in a release build.
 
 ## Related
 

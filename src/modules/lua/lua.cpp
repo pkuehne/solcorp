@@ -123,7 +123,7 @@ void load_all_mods(flecs::world &world) {
     try {
       ModManifest manifest = readModManifest(entry.path());
 #ifdef NDEBUG
-      // ADR 011 §6: dev-only override mods (e.g. dev_overrides) are excluded
+      // ADR 011 §6: dev-only mods (e.g. the `dev` mod) are excluded
       // from the release load order so they cannot ship balance tweaks. In
       // debug builds they load normally and are flagged in the debug UI.
       if (manifest.dev_only) {
