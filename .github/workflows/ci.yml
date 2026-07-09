@@ -37,6 +37,9 @@ jobs:
   build-linux:
     name: "Build (Linux)"
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: "500M"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -58,6 +61,13 @@ jobs:
           path: build/_deps
           key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-linux-build-${{ github.sha }}
+          restore-keys: ccache-linux-build-
 
       - name: Configure
         run: nix develop --command just configure-release-no-tests
@@ -68,6 +78,9 @@ jobs:
   test-linux:
     name: "Test (Linux)"
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: "500M"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -89,6 +102,13 @@ jobs:
           path: build/_deps
           key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-linux-test-${{ github.sha }}
+          restore-keys: ccache-linux-test-
 
       - name: Configure
         run: nix develop --command just configure-debug
@@ -99,6 +119,9 @@ jobs:
   sanitize-linux:
     name: "Sanitize (Linux)"
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: "500M"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -120,6 +143,13 @@ jobs:
           path: build/_deps
           key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-linux-sanitize-${{ github.sha }}
+          restore-keys: ccache-linux-sanitize-
 
       - name: Configure
         run: nix develop --command just configure-sanitize

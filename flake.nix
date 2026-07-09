@@ -67,6 +67,7 @@
           just
           clang-tools # clangd/clang-tidy (must precede clang so wrapped binaries win PATH)
           clang
+          ccache # compiler cache; wired in via CMAKE_CXX_COMPILER_LAUNCHER in the Linux presets
           gdb
           pkg-config
           git

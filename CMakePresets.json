@@ -32,24 +32,32 @@
       }
     },
     {
+      "name": "linux-ccache",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+      }
+    },
+    {
       "name": "linux-debug",
       "displayName": "Linux Debug",
-      "inherits": "base-debug"
+      "inherits": ["linux-ccache", "base-debug"]
     },
     {
       "name": "linux-release",
       "displayName": "Linux Release",
-      "inherits": "base-release"
+      "inherits": ["linux-ccache", "base-release"]
     },
     {
       "name": "linux-release-no-tests",
       "displayName": "Linux Release (no tests)",
-      "inherits": "base-release-no-tests"
+      "inherits": ["linux-ccache", "base-release-no-tests"]
     },
     {
       "name": "linux-sanitize",
       "displayName": "Linux Debug with sanitizers",
-      "inherits": "base-debug",
+      "inherits": ["linux-ccache", "base-debug"],
       "cacheVariables": {
         "SC_RUN_SANITIZERS": "ON"
       }
