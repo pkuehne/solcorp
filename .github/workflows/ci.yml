@@ -276,3 +276,6 @@ jobs:
 
       - name: Lint Lua
         run: nix develop --command just lint-lua
+
+      - name: Lint Shell
+        run: nix develop --command just lint-shell

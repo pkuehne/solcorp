@@ -74,11 +74,11 @@ check-format-cpp:
 check-format-lua:
     stylua --check config.lua mods/
 
-# Lint changed C++ (uncommitted) and all Lua source files (fast local default)
-lint: lint-cpp-changed lint-lua
+# Lint changed C++ (uncommitted), all Lua, and all shell sources (fast local default)
+lint: lint-cpp-changed lint-lua lint-shell
 
-# Lint every C++ and Lua source file (full sweep; run by the merge/main CI)
-lint-all: lint-cpp lint-lua
+# Lint every C++, Lua, and shell source file (full sweep; run by the merge/main CI)
+lint-all: lint-cpp lint-lua lint-shell
 
 # Lint all C++ source files with clang-tidy (full sweep)
 lint-cpp:
@@ -95,6 +95,10 @@ lint-cpp-since base:
 # Lint Lua source files with luacheck
 lint-lua:
     luacheck config.lua mods/
+
+# Lint shell scripts with shellcheck
+lint-shell:
+    find scripts -name "*.sh" -print0 | xargs -0 -r shellcheck
 
 # Lint C++ source files with clang-tidy and fix any auto-fixable issues
 lint-fix-cpp:

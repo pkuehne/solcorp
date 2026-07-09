@@ -77,6 +77,7 @@
           mesa-demos
           stylua
           lua54Packages.luacheck
+          shellcheck # lints scripts/*.sh (see the lint-shell recipe)
         ];
 
         platformLibs = if pkgs.stdenv.isLinux then
