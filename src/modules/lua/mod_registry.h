@@ -34,7 +34,7 @@
 /// One mod's touch on a registry entry.
 struct ModProvenance {
   std::string source; ///< Mod id.
-  int load_order;     ///< Resolved load-order index.
+  int load_order = 0; ///< Resolved load-order index.
 };
 
 class ModRegistry {

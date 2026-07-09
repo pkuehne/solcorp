@@ -83,6 +83,9 @@ const ModValue &ModRegistry::merged(const std::string &category) const {
   return it == categories_.end() ? kEmpty : it->second.data;
 }
 
+// (category, id) are both strings and intentionally ordered category-first to
+// match the merge()/merged() surface; NOLINT the swappable-params check.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::string ModRegistry::historyString(const std::string &category,
                                        const std::string &id) const {
   auto cat_it = categories_.find(category);
@@ -104,6 +107,7 @@ std::string ModRegistry::historyString(const std::string &category,
   return result;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::string ModRegistry::historyChain(const std::string &category,
                                       const std::string &id) const {
   auto cat_it = categories_.find(category);
@@ -125,6 +129,7 @@ std::string ModRegistry::historyChain(const std::string &category,
   return result;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::string ModRegistry::lastSource(const std::string &category,
                                     const std::string &id) const {
   auto cat_it = categories_.find(category);

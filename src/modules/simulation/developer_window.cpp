@@ -133,10 +133,10 @@ void drawModsTab(flecs::world &world) {
   }
   if (ImGui::IsItemHovered()) {
     ImGui::SetTooltip(
-        "Re-reads every mod's textures.lua and buildings.lua from "
-        "disk and re-applies them in place. Existing entities keep "
-        "their identity, so placed buildings pick up updated "
-        "sprites. Entries removed from a data file are not pruned.");
+        "Re-reads every mod's data files (textures.lua, buildings.lua, "
+        "rockets.lua, effects.lua) from disk and re-applies them in place. "
+        "Existing entities keep their identity, so placed buildings pick up "
+        "updated sprites. Entries removed from a data file are not pruned.");
   }
 
   // ADR 011 §6: warn if a dev-only override mod is active. It is excluded from

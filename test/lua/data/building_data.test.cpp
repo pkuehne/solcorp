@@ -177,8 +177,9 @@ SCENARIO("validateBuildingDef rejects definitions that cannot become prefabs") {
     THEN("it is rejected with a reason naming the facility") {
       auto reason = validateBuildingDef(def);
       REQUIRE(reason.has_value());
-      REQUIRE(reason->find("Portal") != std::string::npos);
-      REQUIRE(reason->find("Teleporter") != std::string::npos);
+      const std::string message = reason.value_or("");
+      REQUIRE(message.find("Portal") != std::string::npos);
+      REQUIRE(message.find("Teleporter") != std::string::npos);
     }
   }
 
