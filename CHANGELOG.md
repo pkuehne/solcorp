@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0](https://github.com/pkuehne/solcorp/compare/v0.2.0...v0.3.0) (2026-07-09)
+
+
+### Features
+
+* **mod:** Data-driven prefabs ([#230](https://github.com/pkuehne/solcorp/issues/230)) ([2758886](https://github.com/pkuehne/solcorp/commit/27588864cf5918c4dbdd84830953901afcc650fe))
+* **mod:** Lua mod registry with deep-merge overrides (ADR 011) ([#236](https://github.com/pkuehne/solcorp/issues/236)) ([3128864](https://github.com/pkuehne/solcorp/commit/3128864ce70265d8ffd6d16ccc92dd89af8335bf))
+* **mod:** Mod Dependencies ([#229](https://github.com/pkuehne/solcorp/issues/229)) ([c6b190a](https://github.com/pkuehne/solcorp/commit/c6b190a865ef6e4e4bf633c45a46f35b913aa469))
+* **site:** Add roads ([#217](https://github.com/pkuehne/solcorp/issues/217)) ([fa46fb6](https://github.com/pkuehne/solcorp/commit/fa46fb67059081e00b075b6c4a4d357e9330e4e8))
+
+
+### Refactoring
+
+* **release:** Ensure 'just' is installed in windows release workflow ([#215](https://github.com/pkuehne/solcorp/issues/215)) ([f2ccc84](https://github.com/pkuehne/solcorp/commit/f2ccc8487c78363f3f4bd56dafefb44368110416))
+
+
+### Chores
+
+* bump actions/cache from 5 to 6 ([#234](https://github.com/pkuehne/solcorp/issues/234)) ([92595c4](https://github.com/pkuehne/solcorp/commit/92595c44a2d23bc92bcacc46c0e23402b9d28866))
+* bump actions/checkout from 6 to 7 ([#233](https://github.com/pkuehne/solcorp/issues/233)) ([0ac4c08](https://github.com/pkuehne/solcorp/commit/0ac4c082134322883b4f44ea15c32b536f5021f2))
+* bump nixbuild/nix-quick-install-action from 34 to 35 ([#235](https://github.com/pkuehne/solcorp/issues/235)) ([12d8b61](https://github.com/pkuehne/solcorp/commit/12d8b61e19de0d43dca372751fa18b3736fb26db))
+
 ## [0.2.0](https://github.com/pkuehne/solcorp/compare/v0.1.0...v0.2.0) (2026-06-16)
 
 
