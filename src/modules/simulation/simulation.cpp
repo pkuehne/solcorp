@@ -38,6 +38,9 @@ SimulationModule::SimulationModule(flecs::world &world) {
   world.component<Developer>().add(flecs::Singleton);
   world.component<DeveloperWindow>().member(
       "show_metrics_window", &DeveloperWindow::show_metrics_window);
+  world.component<DebugFlags>()
+      .member("prefab_provenance", &DebugFlags::prefab_provenance)
+      .add(flecs::Singleton);
   world.component<TargetOrbit>()
       .member("altitude", &TargetOrbit::altitude)
       .member("inclination", &TargetOrbit::inclination);
@@ -50,6 +53,7 @@ SimulationModule::SimulationModule(flecs::world &world) {
   // Create Singletons
   world.add<Developer>();
   world.add<Company>();
+  world.add<DebugFlags>();
 
   register_component_lua<Game>(world, "Game", [](LuaFieldBuilder<Game> &b) {
     b.field<&Game::day>("day");

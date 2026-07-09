@@ -34,6 +34,18 @@
 struct ReloadPrefabsRequest {};
 
 /**
+ * @brief The mod load-order chain that produced a prefab's current definition,
+ * e.g. "core > dev" (ADR 011 §6 provenance).
+ *
+ * Set on each building and rocket prefab by loadModContent from the merge
+ * registry's provenance, so the developer UI can show where a prefab (and any
+ * overrides applied on top of it) came from. Empty chain means unknown.
+ */
+struct PrefabProvenance {
+  std::string chain;
+};
+
+/**
  * @brief Add the facility-type component named by `type` to `facility`.
  *
  * Maps a buildings.lua facility `type` string onto its ECS component

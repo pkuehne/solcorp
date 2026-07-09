@@ -11,9 +11,26 @@
 
 void drawCheatsTab(flecs::world &);
 void drawModsTab(flecs::world &);
+void drawFlagsTab(flecs::world &);
 
 void showDeveloperWindow(flecs::world &world) {
   showWindow(world, "Developer Window");
+}
+
+void drawPrefabProvenanceTooltip(const flecs::entity &prefabE) {
+  auto world = prefabE.world();
+  if (!world.has<DebugFlags>() || !world.get<DebugFlags>().prefab_provenance) {
+    return;
+  }
+  if (!prefabE.has<PrefabProvenance>() || !ImGui::IsItemHovered()) {
+    return;
+  }
+  const auto &chain = prefabE.get<PrefabProvenance>().chain;
+  ImGui::BeginTooltip();
+  // Same amber as the dev-only mod warning below, to read as a dev-tool hint.
+  ImGui::TextColored(ImColor(255, 180, 0), "Mods: %s",
+                     chain.empty() ? "(unknown)" : chain.c_str());
+  ImGui::EndTooltip();
 }
 
 void child_tree(flecs::entity e) {
@@ -43,6 +60,10 @@ void drawDeveloperWindow(flecs::entity winE) {
       drawModsTab(world);
       ImGui::EndTabItem();
     }
+    if (ImGui::BeginTabItem("Flags")) {
+      drawFlagsTab(world);
+      ImGui::EndTabItem();
+    }
     ImGui::EndTabBar();
   }
 
@@ -54,6 +75,16 @@ void drawDeveloperWindow(flecs::entity winE) {
 void drawCheatsTab(flecs::world &world) {
   if (ImGui::Button("Add $10M to balance")) {
     world.get_mut<Company>().balance += 10'000'000;
+  }
+}
+
+void drawFlagsTab(flecs::world &world) {
+  auto &flags = world.get_mut<DebugFlags>();
+  ImGui::Checkbox("Prefab Provenance", &flags.prefab_provenance);
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip(
+        "Show each building/rocket prefab's mod-origin chain\n"
+        "(e.g. \"core > dev\") as a tooltip on its build button.");
   }
 }
 

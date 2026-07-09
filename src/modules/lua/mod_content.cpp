@@ -256,9 +256,40 @@ std::vector<EffectDef> selectEffects(const ModRegistry &registry) {
   return effects;
 }
 
+/// @brief Tag each created prefab under `node` with the mod chain that produced
+/// its definition (ADR 011 §6), so the developer UI can show provenance. `ids`
+/// are the definitions that survived selection (their prefab entity names).
+void recordProvenance(const flecs::world &world, const ModRegistry &registry,
+                      const std::string &category, const char *node,
+                      const std::vector<std::string> &ids) {
+  auto parent = world.lookup(node);
+  if (!parent.is_valid()) {
+    return;
+  }
+  for (const std::string &id : ids) {
+    auto prefab = parent.lookup(id.c_str());
+    if (prefab.is_valid()) {
+      prefab.set<PrefabProvenance>({registry.historyChain(category, id)});
+    }
+  }
+}
+
+/// @brief The `.id` of every definition in `defs`, preserving order.
+template <typename Def>
+std::vector<std::string> defIds(const std::vector<Def> &defs) {
+  std::vector<std::string> ids;
+  ids.reserve(defs.size());
+  for (const Def &def : defs) {
+    ids.push_back(def.id);
+  }
+  return ids;
+}
+
 } // namespace
 
 void loadModContent(flecs::world &world) {
+  world.component<PrefabProvenance>();
+
   // Suspend flecs command deferral for the duration of the load. We create a
   // texture and then immediately look it up by name when clipping building
   // sprites; while deferred, the entity's name/child_of edges are queued and
@@ -285,10 +316,19 @@ void loadModContent(flecs::world &world) {
 
   // Textures load before buildings so a building sprite resolves against any
   // mod's texture (and a later mod can override a texture another mod uses).
+  auto buildings = selectBuildingPrefabs(registry);
+  auto rockets = parseRocketData(registry.merged("rockets"));
   applyTextureData(world, selectTextures(registry));
-  applyBuildingData(world, selectBuildingPrefabs(registry));
-  applyRocketData(world, parseRocketData(registry.merged("rockets")));
+  applyBuildingData(world, buildings);
+  applyRocketData(world, rockets);
   applyEffectData(world, selectEffects(registry));
+
+  // Record each prefab's mod-origin chain for the developer window (ADR 011
+  // §6).
+  recordProvenance(world, registry, "buildings", "Prefabs::Buildings",
+                   defIds(buildings));
+  recordProvenance(world, registry, "rockets", "Prefabs::Rockets",
+                   defIds(rockets));
 
   if (was_deferred) {
     world.defer_resume();

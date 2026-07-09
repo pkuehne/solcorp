@@ -62,6 +62,14 @@ public:
                                           const std::string &id) const;
 
   /**
+   * @brief Provenance as a Factorio-style display chain "core > dev" (the mods
+   * that changed an entry, in load order), or "" if unknown. Unlike
+   * historyString this omits the load-order indices, for player-facing UI.
+   */
+  [[nodiscard]] std::string historyChain(const std::string &category,
+                                         const std::string &id) const;
+
+  /**
    * @brief The id of the last mod that changed an entry (the owner of its
    * current field values), or "" if unknown. Used to resolve a texture's file
    * path against the mod directory that supplied it.

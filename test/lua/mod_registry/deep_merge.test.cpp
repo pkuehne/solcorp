@@ -65,6 +65,11 @@ SCENARIO("ModRegistry deep-merges mod data tables in load order") {
         REQUIRE(registry.historyString("buildings", "launch_complex") ==
                 "core(0) -> scenario(1)");
       }
+
+      THEN("historyChain renders the same order without load indices") {
+        REQUIRE(registry.historyChain("buildings", "launch_complex") ==
+                "core > scenario");
+      }
     }
   }
 
@@ -179,9 +184,10 @@ SCENARIO("ModRegistry deep-merges mod data tables in load order") {
   }
 
   GIVEN("an unknown category or entry") {
-    THEN("merged() is an empty table and historyString() is empty") {
+    THEN("merged() is an empty table and history queries are empty") {
       REQUIRE(registry.merged("missing").fields().empty());
       REQUIRE(registry.historyString("missing", "x").empty());
+      REQUIRE(registry.historyChain("missing", "x").empty());
     }
   }
 }
