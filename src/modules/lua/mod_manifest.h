@@ -43,6 +43,7 @@ struct ModManifest {
   std::string version;     // e.g. "0.1.0"
   std::string description; // optional human-readable summary
   std::string author;      // optional author / attribution
+  bool dev_only = false;   // excluded from the release load order (ADR 011 §6)
   std::vector<ModDependency> dependencies;
 };
 

@@ -11,9 +11,26 @@
 
 void drawCheatsTab(flecs::world &);
 void drawModsTab(flecs::world &);
+void drawFlagsTab(flecs::world &);
 
 void showDeveloperWindow(flecs::world &world) {
   showWindow(world, "Developer Window");
+}
+
+void drawPrefabProvenanceTooltip(const flecs::entity &prefabE) {
+  auto world = prefabE.world();
+  if (!world.has<DebugFlags>() || !world.get<DebugFlags>().prefab_provenance) {
+    return;
+  }
+  if (!prefabE.has<PrefabProvenance>() || !ImGui::IsItemHovered()) {
+    return;
+  }
+  const auto &chain = prefabE.get<PrefabProvenance>().chain;
+  ImGui::BeginTooltip();
+  // Same amber as the dev-only mod warning below, to read as a dev-tool hint.
+  ImGui::TextColored(ImColor(255, 180, 0), "Mods: %s",
+                     chain.empty() ? "(unknown)" : chain.c_str());
+  ImGui::EndTooltip();
 }
 
 void child_tree(flecs::entity e) {
@@ -43,6 +60,10 @@ void drawDeveloperWindow(flecs::entity winE) {
       drawModsTab(world);
       ImGui::EndTabItem();
     }
+    if (ImGui::BeginTabItem("Flags")) {
+      drawFlagsTab(world);
+      ImGui::EndTabItem();
+    }
     ImGui::EndTabBar();
   }
 
@@ -57,6 +78,16 @@ void drawCheatsTab(flecs::world &world) {
   }
 }
 
+void drawFlagsTab(flecs::world &world) {
+  auto &flags = world.get_mut<DebugFlags>();
+  ImGui::Checkbox("Prefab Provenance", &flags.prefab_provenance);
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip(
+        "Show each building/rocket prefab's mod-origin chain\n"
+        "(e.g. \"core > dev\") as a tooltip on its build button.");
+  }
+}
+
 void drawModsTab(flecs::world &world) {
   struct ModRow {
     int load_order;
@@ -65,6 +96,7 @@ void drawModsTab(flecs::world &world) {
     std::string version;
     std::string author;
     std::string description;
+    bool dev_only;
   };
 
   std::vector<ModRow> mods;
@@ -75,7 +107,8 @@ void drawModsTab(flecs::world &world) {
                         .name = mod.name,
                         .version = mod.version,
                         .author = mod.author,
-                        .description = mod.description});
+                        .description = mod.description,
+                        .dev_only = mod.dev_only});
       });
 
   std::ranges::sort(mods, [](const ModRow &lhs, const ModRow &rhs) {
@@ -100,10 +133,19 @@ void drawModsTab(flecs::world &world) {
   }
   if (ImGui::IsItemHovered()) {
     ImGui::SetTooltip(
-        "Re-reads every mod's textures.lua and buildings.lua from "
-        "disk and re-applies them in place. Existing entities keep "
-        "their identity, so placed buildings pick up updated "
-        "sprites. Entries removed from a data file are not pruned.");
+        "Re-reads every mod's data files (textures.lua, buildings.lua, "
+        "rockets.lua, effects.lua) from disk and re-applies them in place. "
+        "Existing entities keep their identity, so placed buildings pick up "
+        "updated sprites. Entries removed from a data file are not pruned.");
+  }
+
+  // ADR 011 §6: warn if a dev-only override mod is active. It is excluded from
+  // release builds, so seeing this in a shipped build means one leaked in.
+  if (std::ranges::any_of(mods,
+                          [](const ModRow &mod) { return mod.dev_only; })) {
+    ImGui::TextColored(ImColor(255, 180, 0),
+                       "Dev-only override mod active - excluded from release "
+                       "builds; not for shipping.");
   }
 
   ImGui::Separator();
@@ -130,7 +172,11 @@ void drawModsTab(flecs::world &world) {
       ImGui::Text("%d", mod.load_order);
 
       ImGui::TableSetColumnIndex(1);
-      ImGui::TextUnformatted(mod.id.c_str());
+      if (mod.dev_only) {
+        ImGui::TextColored(ImColor(255, 180, 0), "%s (dev)", mod.id.c_str());
+      } else {
+        ImGui::TextUnformatted(mod.id.c_str());
+      }
 
       ImGui::TableSetColumnIndex(2);
       ImGui::TextUnformatted(mod.name.c_str());

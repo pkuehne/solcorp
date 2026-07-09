@@ -74,16 +74,31 @@ check-format-cpp:
 check-format-lua:
     stylua --check config.lua mods/
 
-# Lint all C++ and Lua source files
-lint: lint-cpp lint-lua
+# Lint changed C++ (uncommitted), all Lua, and all shell sources (fast local default)
+lint: lint-cpp-changed lint-lua lint-shell
 
-# Lint C++ source files with clang-tidy
+# Lint every C++, Lua, and shell source file (full sweep; run by the merge/main CI)
+lint-all: lint-cpp lint-lua lint-shell
+
+# Lint all C++ source files with clang-tidy (full sweep)
 lint-cpp:
-    find src test -name "*.cpp" -print0 | xargs -0 -r -n 1 -P "$(nproc)" clang-tidy --quiet -p {{ build_dir }}
+    BUILD_DIR={{ build_dir }} scripts/lint-cpp.sh --all
+
+# Lint C++ translation units with uncommitted changes (staged, unstaged, or untracked)
+lint-cpp-changed:
+    BUILD_DIR={{ build_dir }} scripts/lint-cpp.sh
+
+# Lint C++ translation units this branch changed vs a base git ref (used by the PR CI)
+lint-cpp-since base:
+    BUILD_DIR={{ build_dir }} scripts/lint-cpp.sh --since {{ base }}
 
 # Lint Lua source files with luacheck
 lint-lua:
     luacheck config.lua mods/
+
+# Lint shell scripts with shellcheck
+lint-shell:
+    find scripts -name "*.sh" -print0 | xargs -0 -r shellcheck
 
 # Lint C++ source files with clang-tidy and fix any auto-fixable issues
 lint-fix-cpp:

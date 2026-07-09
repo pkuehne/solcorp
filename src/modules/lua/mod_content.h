@@ -34,6 +34,18 @@
 struct ReloadPrefabsRequest {};
 
 /**
+ * @brief The mod load-order chain that produced a prefab's current definition,
+ * e.g. "core > dev" (ADR 011 §6 provenance).
+ *
+ * Set on each building and rocket prefab by loadModContent from the merge
+ * registry's provenance, so the developer UI can show where a prefab (and any
+ * overrides applied on top of it) came from. Empty chain means unknown.
+ */
+struct PrefabProvenance {
+  std::string chain;
+};
+
+/**
  * @brief Add the facility-type component named by `type` to `facility`.
  *
  * Maps a buildings.lua facility `type` string onto its ECS component
@@ -89,8 +101,9 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
                                 const std::string &texture,
                                 SpriteClipRect rect);
 
-/// @brief Load each parsed texture for `mod_name` into the world.
-void applyTextureData(flecs::world &world, const std::string &mod_name,
+/// @brief Load each parsed texture into the world. Each TextureDef carries the
+/// owning `mod` its `file` is relative to (see loadModContent).
+void applyTextureData(flecs::world &world,
                       const std::vector<TextureDef> &textures);
 
 /// @brief Create a building prefab (sprite + facilities) for each definition.

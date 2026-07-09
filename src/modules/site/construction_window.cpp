@@ -4,6 +4,7 @@
 #include "modules/base/base.h"
 #include "modules/engine/gui.h"
 #include "modules/engine/render.h"
+#include "modules/simulation/developer_window.h"
 #include "modules/site/site.h"
 #include "spdlog/fmt/bundled/core.h"
 #include <flecs.h>
@@ -92,6 +93,7 @@ void drawConstructionSiteWindow(flecs::entity winE) {
       buildPrefab(buildingE, prefabE);
       hideWindow(world, "Construction Site Window");
     }
+    drawPrefabProvenanceTooltip(prefabE);
     ImGui::PopID();
   });
 }

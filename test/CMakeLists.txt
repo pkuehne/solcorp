@@ -38,6 +38,8 @@ add_executable(unit_test
   lua/manifest/version_at_least.test.cpp
   lua/manifest/resolve_load_order.test.cpp
   lua/data/lua_data.test.cpp
+  lua/data/materialize.test.cpp
+  lua/mod_registry/deep_merge.test.cpp
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
   lua/data/rocket_data.test.cpp

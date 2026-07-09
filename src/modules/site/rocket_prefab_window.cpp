@@ -5,6 +5,7 @@
 #include "modules/engine/gui.h"
 #include "modules/rocket/rocket_actions.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/simulation/developer_window.h"
 #include "modules/simulation/simulation.h"
 #include "modules/site/site.h"
 #include "modules/stats/stats.h"
@@ -115,6 +116,9 @@ void drawRocketPrefabWindow(flecs::entity winE) {
                                   : prefabE.name().c_str();
 
     ImGui::Text("%s", displayName);
+    // The build button below owns its own tooltip, so anchor the provenance
+    // hint on the rocket's name instead.
+    drawPrefabProvenanceTooltip(prefabE);
     ImGui::TextDisabled("Low Earth Orbit: %s kg", maxMassText.c_str());
     Widgets::StatTooltip(world, &cost);
 

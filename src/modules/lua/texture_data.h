@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include "modules/lua/lua_data.h"
+#include "modules/lua/mod_value.h"
 #include <string>
 #include <vector>
 
@@ -19,13 +19,15 @@
 struct TextureDef {
   std::string name; ///< Registry name (Textures::<name>), the map key.
   std::string file; ///< Filename relative to the mod directory.
+  std::string mod;  ///< Owning mod id (dir the `file` is relative to). Filled
+                    ///< from provenance at apply time, not by the parser.
 };
 
 /**
- * @brief Parse a textures.lua root table into typed definitions.
+ * @brief Parse a merged textures table into typed definitions.
  *
- * Pure: reads the table only, performs no ECS work. Entries are keyed by
+ * Pure: reads the value tree only, performs no ECS work. Entries are keyed by
  * texture name; a missing `file` field defaults to empty (caught at apply
- * time).
+ * time). `mod` is left empty here; the caller fills it from merge provenance.
  */
-std::vector<TextureDef> parseTextureData(const LuaTableView &root);
+std::vector<TextureDef> parseTextureData(const ModValue &root);

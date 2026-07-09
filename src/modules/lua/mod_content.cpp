@@ -5,7 +5,7 @@
 #include "modules/lua/helpers.h"
 #include "modules/lua/lua.h"
 #include "modules/lua/lua_data.h"
-#include "modules/lua/lua_registry.h"
+#include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -99,11 +99,11 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
   return sprite;
 }
 
-void applyTextureData(flecs::world &world, const std::string &mod_name,
+void applyTextureData(flecs::world &world,
                       const std::vector<TextureDef> &textures) {
   for (const auto &texture : textures) {
     create_texture(world, TextureName{texture.name},
-                   TextureFilename{texture.file}, TextureModName{mod_name});
+                   TextureFilename{texture.file}, TextureModName{texture.mod});
   }
 }
 
@@ -142,8 +142,13 @@ void applyRocketData(flecs::world &world,
 
     for (const auto &[orbit_name, max_mass] : rocket.target_orbits) {
       auto orbit = world.lookup(orbit_name.c_str());
-      SC_ASSERT(orbit.is_valid(),
-                fmt::format("Orbit {} not found", orbit_name));
+      if (!orbit.is_valid()) {
+        // A broken orbit reference is recoverable (ADR 011 §5): drop this
+        // lift capability and keep the rocket, rather than aborting the load.
+        spdlog::error("Rocket '{}' references unknown orbit '{}'; skipping it",
+                      rocket.id, orbit_name);
+        continue;
+      }
       rocket_prefab.set<CanLiftTo>(orbit, {max_mass});
     }
   }
@@ -179,12 +184,12 @@ void applyEffectData(flecs::world &world,
 
 namespace {
 
-/// @brief Read `mods/<mod_name>/<filename>` (if present) and hand its root
-/// table to `apply`. Logs and skips a file that fails to load.
-void readModDataFile(const std::string &mod_name, const char *filename,
-                     const std::function<void(const LuaTableView &)> &apply) {
+/// @brief Fold `mods/<mod.id>/<filename>` (if present) into the registry under
+/// `category`, materialising it so it can be deep-merged across mods.
+void mergeModDataFile(ModRegistry &registry, const std::string &category,
+                      const Mod &mod, const char *filename) {
   std::filesystem::path path =
-      std::filesystem::path("mods") / mod_name / filename;
+      std::filesystem::path("mods") / mod.id / filename;
   if (!std::filesystem::exists(path)) {
     return;
   }
@@ -193,12 +198,98 @@ void readModDataFile(const std::string &mod_name, const char *filename,
     spdlog::error("Failed to load {}: {}", path.string(), data.error());
     return;
   }
-  apply(data.root());
+  registry.merge(category, data.materialize(), mod.id, mod.load_order);
+}
+
+/// @brief Turn the merged buildings table into the definitions that should
+/// become prefabs: hidden entries are suppressed, broken entries are logged
+/// (with provenance) and skipped (ADR 011 §3/§5).
+std::vector<BuildingDef> selectBuildingPrefabs(const ModRegistry &registry) {
+  std::vector<BuildingDef> prefabs;
+  for (const BuildingDef &def :
+       parseBuildingData(registry.merged("buildings"))) {
+    if (def.hidden) {
+      spdlog::debug("Building '{}' is hidden; no prefab created", def.id);
+      continue;
+    }
+    if (auto reason = validateBuildingDef(def)) {
+      spdlog::error("Skipping invalid building '{}': {} (defined by {})",
+                    def.id, *reason,
+                    registry.historyString("buildings", def.id));
+      continue;
+    }
+    prefabs.push_back(def);
+  }
+  return prefabs;
+}
+
+/// @brief Turn the merged textures table into the textures to load: each
+/// texture's file is resolved against the mod that last supplied it (merge
+/// provenance), and an entry with no file is logged and skipped (ADR 011 §5).
+std::vector<TextureDef> selectTextures(const ModRegistry &registry) {
+  std::vector<TextureDef> textures;
+  for (TextureDef def : parseTextureData(registry.merged("textures"))) {
+    if (def.file.empty()) {
+      spdlog::error("Skipping texture '{}': it has no file (defined by {})",
+                    def.name, registry.historyString("textures", def.name));
+      continue;
+    }
+    def.mod = registry.lastSource("textures", def.name);
+    textures.push_back(def);
+  }
+  return textures;
+}
+
+/// @brief Turn the merged effects table into the effects to instantiate: an
+/// effect with no modifiers does nothing, so it is logged (with provenance) and
+/// skipped (ADR 011 §5).
+std::vector<EffectDef> selectEffects(const ModRegistry &registry) {
+  std::vector<EffectDef> effects;
+  for (const EffectDef &def : parseEffectData(registry.merged("effects"))) {
+    if (def.modifiers.empty()) {
+      spdlog::error("Skipping effect '{}': it has no modifiers (defined by {})",
+                    def.id, registry.historyString("effects", def.id));
+      continue;
+    }
+    effects.push_back(def);
+  }
+  return effects;
+}
+
+/// @brief Tag each created prefab under `node` with the mod chain that produced
+/// its definition (ADR 011 §6), so the developer UI can show provenance. `ids`
+/// are the definitions that survived selection (their prefab entity names).
+void recordProvenance(const flecs::world &world, const ModRegistry &registry,
+                      const std::string &category, const char *node,
+                      const std::vector<std::string> &ids) {
+  auto parent = world.lookup(node);
+  if (!parent.is_valid()) {
+    return;
+  }
+  for (const std::string &id : ids) {
+    auto prefab = parent.lookup(id.c_str());
+    if (prefab.is_valid()) {
+      prefab.set<PrefabProvenance>({registry.historyChain(category, id)});
+    }
+  }
+}
+
+/// @brief The `.id` of every definition in `defs`, preserving order.
+template <typename Def>
+std::vector<std::string> defIds(const std::vector<Def> &defs) {
+  std::vector<std::string> ids;
+  ids.reserve(defs.size());
+  for (const Def &def : defs) {
+    ids.push_back(def.id);
+  }
+  return ids;
 }
 
 } // namespace
 
 void loadModContent(flecs::world &world) {
+  world.component<PrefabProvenance>();
+
   // Suspend flecs command deferral for the duration of the load. We create a
   // texture and then immediately look it up by name when clipping building
   // sprites; while deferred, the entity's name/child_of edges are queued and
@@ -211,38 +302,33 @@ void loadModContent(flecs::world &world) {
     world.defer_suspend();
   }
 
-  // Two passes, each visiting mods in resolved dependency order (later mods
-  // win on name conflicts). Pass 1 loads every mod's textures before pass 2
-  // clips any building sprite, so a building resolves any texture regardless
-  // of which mod owns it and a later mod can override a texture another mod's
-  // building uses.
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "textures.lua", [&](const LuaTableView &root) {
-      applyTextureData(world, mod_name, parseTextureData(root));
-    });
+  // Every mod's data files are deep-merged across mods (ADR 011): fold each
+  // file into the registry in resolved load order, then validate and apply the
+  // merged result once per category, so a later mod can patch or suppress an
+  // earlier entry rather than blindly overwriting a same-named prefab.
+  ModRegistry registry;
+  for_each_mod(world, [&](const Mod &mod) {
+    mergeModDataFile(registry, "textures", mod, "textures.lua");
+    mergeModDataFile(registry, "buildings", mod, "buildings.lua");
+    mergeModDataFile(registry, "rockets", mod, "rockets.lua");
+    mergeModDataFile(registry, "effects", mod, "effects.lua");
   });
 
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "buildings.lua", [&](const LuaTableView &root) {
-      applyBuildingData(world, parseBuildingData(root));
-    });
-  });
+  // Textures load before buildings so a building sprite resolves against any
+  // mod's texture (and a later mod can override a texture another mod uses).
+  auto buildings = selectBuildingPrefabs(registry);
+  auto rockets = parseRocketData(registry.merged("rockets"));
+  applyTextureData(world, selectTextures(registry));
+  applyBuildingData(world, buildings);
+  applyRocketData(world, rockets);
+  applyEffectData(world, selectEffects(registry));
 
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "rockets.lua", [&](const LuaTableView &root) {
-      applyRocketData(world, parseRocketData(root));
-    });
-  });
-
-  run_on_every_mod(world, [&world](lua_State *L) {
-    std::string mod_name = lua_get_mod_name(L);
-    readModDataFile(mod_name, "effects.lua", [&](const LuaTableView &root) {
-      applyEffectData(world, parseEffectData(root));
-    });
-  });
+  // Record each prefab's mod-origin chain for the developer window (ADR 011
+  // §6).
+  recordProvenance(world, registry, "buildings", "Prefabs::Buildings",
+                   defIds(buildings));
+  recordProvenance(world, registry, "rockets", "Prefabs::Rockets",
+                   defIds(rockets));
 
   if (was_deferred) {
     world.defer_resume();

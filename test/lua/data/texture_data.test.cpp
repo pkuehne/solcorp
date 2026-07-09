@@ -31,7 +31,7 @@ SCENARIO("parseTextureData reads an id-keyed map of texture definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<TextureDef> textures = parseTextureData(lua.root());
+      std::vector<TextureDef> textures = parseTextureData(lua.materialize());
 
       THEN("each entry is captured keyed by its name with its file") {
         REQUIRE(textures.size() == 2);
@@ -51,7 +51,7 @@ SCENARIO("parseTextureData reads an id-keyed map of texture definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<TextureDef> textures = parseTextureData(lua.root());
+      std::vector<TextureDef> textures = parseTextureData(lua.materialize());
 
       THEN("no textures are produced") { REQUIRE(textures.empty()); }
     }

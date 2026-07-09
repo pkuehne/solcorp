@@ -42,7 +42,7 @@ SCENARIO("parseEffectData reads effect template definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<EffectDef> effects = parseEffectData(lua.root());
+      std::vector<EffectDef> effects = parseEffectData(lua.materialize());
 
       THEN("every effect entry is captured keyed by its id") {
         REQUIRE(effects.size() == 2);
@@ -88,7 +88,7 @@ SCENARIO("parseEffectData reads effect template definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<EffectDef> effects = parseEffectData(lua.root());
+      std::vector<EffectDef> effects = parseEffectData(lua.materialize());
 
       THEN("the name defaults to the id and no modifiers are produced") {
         const EffectDef *effect = findEffect(effects, "placeholder");
@@ -105,7 +105,7 @@ SCENARIO("parseEffectData reads effect template definitions") {
     REQUIRE(lua.ok());
 
     WHEN("the data is parsed") {
-      std::vector<EffectDef> effects = parseEffectData(lua.root());
+      std::vector<EffectDef> effects = parseEffectData(lua.materialize());
 
       THEN("no effects are produced") { REQUIRE(effects.empty()); }
     }

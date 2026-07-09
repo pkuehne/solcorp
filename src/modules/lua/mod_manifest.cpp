@@ -188,6 +188,7 @@ ModManifest readModManifest(const std::filesystem::path &dir) {
   manifest.version = root.getString("version").value_or("0.0.0");
   manifest.description = root.getString("description").value_or("");
   manifest.author = root.getString("author").value_or("");
+  manifest.dev_only = root.getBool("dev_only").value_or(false);
 
   root.forEachArrayElement("dependencies", [&](const LuaValue &value) {
     ModDependency dep;

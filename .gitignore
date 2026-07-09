@@ -8,3 +8,4 @@ public/
 *.ini
 .direnv
 .claude/settings.local.json
+.ccache/

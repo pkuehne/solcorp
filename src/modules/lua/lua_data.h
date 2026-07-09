@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#include "modules/lua/mod_value.h"
+
 #include <functional>
 #include <lua.hpp>
 #include <optional>
@@ -95,6 +97,14 @@ public:
 
   /** @brief View over the returned root table (valid only when ok()). */
   [[nodiscard]] LuaTableView root() const { return {L_, root_idx_}; }
+
+  /**
+   * @brief Materialise the returned root table into a detached ModValue tree.
+   *
+   * Unlike root(), the result outlives this LuaDataFile (and its Lua state), so
+   * it can be deep-merged across mods. Returns a Nil ModValue when !ok().
+   */
+  [[nodiscard]] ModValue materialize() const;
 
 private:
   lua_State *L_ = nullptr;
