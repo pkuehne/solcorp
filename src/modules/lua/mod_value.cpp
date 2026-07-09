@@ -1,5 +1,7 @@
 #include "modules/lua/mod_value.h"
 
+#include <cmath>
+
 ModValue ModValue::Bool(bool value) {
   ModValue v;
   v.type_ = Type::Bool;
@@ -49,9 +51,10 @@ std::optional<long long> ModValue::asInt() const {
   if (type_ == Type::Int) {
     return int_;
   }
-  // A whole-valued double still reads as an int, matching Lua's numeric
-  // leniency.
-  if (type_ == Type::Double) {
+  // A double with an exact integral value still reads as an int (Lua-style
+  // leniency, mirroring lua_tointeger); a fractional double does not, so we
+  // do not silently truncate it.
+  if (type_ == Type::Double && std::floor(double_) == double_) {
     return static_cast<long long>(double_);
   }
   return std::nullopt;

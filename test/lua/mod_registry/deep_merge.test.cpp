@@ -183,6 +183,31 @@ SCENARIO("ModRegistry deep-merges mod data tables in load order") {
     }
   }
 
+  GIVEN("a mixed table (map keys and array elements) patched by a later mod") {
+    // `tags` here is one table carrying both string-keyed fields and a list
+    // part, so the merge must deep-merge the map side while replacing the list.
+    registry.merge("buildings", table(R"(
+      return { widget = { tags = { "a", "b", label = "First" } } }
+    )"),
+                   "core", 0);
+    registry.merge("buildings", table(R"(
+      return { widget = { tags = { "x", label = "Second" } } }
+    )"),
+                   "cosmetic", 1);
+
+    THEN("map keys deep-merge but the list part is replaced wholesale") {
+      const ModValue &def = registry.merged("buildings").fields().at("widget");
+      def.withTable("tags", [&](const ModValue &tags) {
+        REQUIRE(tags.getString("label") == "Second");
+        std::vector<std::string> items;
+        for (const ModValue &item : tags.array()) {
+          items.push_back(item.asString().value_or(""));
+        }
+        REQUIRE(items == std::vector<std::string>{"x"});
+      });
+    }
+  }
+
   GIVEN("an unknown category or entry") {
     THEN("merged() is an empty table and history queries are empty") {
       REQUIRE(registry.merged("missing").fields().empty());

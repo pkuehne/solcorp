@@ -40,6 +40,18 @@ bool deep_merge_changed(ModValue &base, const ModValue &overrides) {
     }
   });
 
+  // A mixed table (map keys *and* array elements) also carries a list part,
+  // which the map-key walk above never visits. Lists replace wholesale
+  // (ADR 011), so an override that supplies array elements replaces the base's;
+  // an override with no array part leaves the base list untouched (use DELETE
+  // to clear it). Pure lists never reach here - they are replaced as a whole
+  // value by the caller - so this only reconciles the array side of a mixed
+  // table.
+  if (!overrides.array().empty() && base.array() != overrides.array()) {
+    base.array() = overrides.array();
+    changed = true;
+  }
+
   return changed;
 }
 
