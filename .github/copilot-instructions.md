@@ -101,7 +101,7 @@ entity:removePosition()
 - **Base Phases**: [src/modules/base/base.cpp](src/modules/base/base.cpp) – phase registration
 - **ECS Concepts**: Flecs documentation (v4.1.2); systems run per-phase in world lifecycle
 - **Lua Binding**: [src/modules/lua/lua.cpp](src/modules/lua/lua.cpp) – sol2 state setup, component binding
-- **Render Pipeline**: [src/modules/engine/render.cpp](src/modules/engine/render.cpp) – SDL2 rendering, ImGui integration
+- **Render Pipeline**: [src/modules/engine/render.cpp](src/modules/engine/render.cpp) – OpenGL rendering, ImGui integration
 - **Test Build Setup**: [test/CMakeLists.txt](test/CMakeLists.txt) – Catch2 discovery, environment vars
 
 ## Debugging Tips

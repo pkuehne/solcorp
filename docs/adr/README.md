@@ -24,3 +24,4 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 | [010](/adr/010-connector-tile-system.md) | Connector Tile System | Accepted |
 | [011](/adr/011-lua-mod-registry.md) | Lua Mod Registry and Prefab Override System | Accepted |
 | [012](/adr/012-building-tileset-metadata.md) | Data-Driven Building Tileset Metadata | Accepted |
+| [013](/adr/013-opengl-renderer.md) | OpenGL Renderer | Accepted |

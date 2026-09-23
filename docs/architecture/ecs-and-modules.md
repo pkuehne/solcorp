@@ -16,7 +16,7 @@ The game is structured as 9 independent modules. Each module is a C++ struct who
 |--------|---------------|
 | `BaseModule` | Shared phases and global entities — **must be imported first** |
 | `LuaModule` | sol2 state, component bindings, mod loading |
-| `EngineModule` | SDL2 rendering, input, camera, movement |
+| `EngineModule` | OpenGL rendering, input, camera, movement |
 | `StatsModule` | Statistics tracking |
 | `SimulationModule` | Celestial mechanics, orbital calculations |
 | `MainMenuModule` | Main menu UI |

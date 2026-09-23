@@ -45,7 +45,7 @@ This provides SDL2, lua5.4, imgui, catch2, gcc, gdb, and clangd.
 
 The game is structured as **9 independent modules** in [src/modules/](src/modules/):
 - **base**: Defines shared phases and global entities
-- **engine**: Rendering (SDL2), input, movement, camera
+- **engine**: Rendering (OpenGL via SDL2), input, movement, camera
 - **lua**: Lua/C++ integration, component exposure, mod loading
 - **simulation**: Celestial mechanics, orbital calculations
 - **site**: Construction sites and facilities
@@ -64,7 +64,7 @@ Systems execute in **11 defined phases** during the game loop:
 3. UpdatePhase (game logic)
 4. PhysicsPhase
 5. GuiPhase (ImGui rendering)
-6. RenderPhase (SDL2 rendering)
+6. RenderPhase (OpenGL rendering)
 7. PostFramePhase
 ... and more
 
@@ -265,6 +265,6 @@ System dependencies (via Nix or package manager):
 - [src/main.cpp](src/main.cpp) - Entry point, world setup, module import order
 - [src/modules/base/base.cpp](src/modules/base/base.cpp) - Phase definitions
 - [src/modules/lua/lua.cpp](src/modules/lua/lua.cpp) - Sol2 state, component bindings
-- [src/modules/engine/render.cpp](src/modules/engine/render.cpp) - SDL2/ImGui render pipeline
+- [src/modules/engine/render.cpp](src/modules/engine/render.cpp) - OpenGL render pipeline (see [ADR 013](docs/adr/013-opengl-renderer.md))
 - [src/modules/engine/gui.cpp](src/modules/engine/gui.cpp) - Main GUI system
 - [mods/core/init.lua](mods/core/init.lua) - Core game content and examples
