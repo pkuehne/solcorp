@@ -5,6 +5,7 @@ list(APPEND imgui_sources
     imgui/imgui_tables.cpp
     imgui/imgui_widgets.cpp
     imgui/backends/imgui_impl_sdl2.cpp
+    imgui/backends/imgui_impl_opengl3.cpp
     imgui/backends/imgui_impl_sdlrenderer2.cpp
     imgui/misc/cpp/imgui_stdlib.cpp
 )
@@ -16,6 +17,7 @@ list(APPEND imgui_headers
     imgui/imgui_textedit.h
     imgui/imgui_truetype.h
     imgui/backends/imgui_impl_sdl2.h
+    imgui/backends/imgui_impl_opengl3.h
     imgui/backends/imgui_impl_sdlrenderer2.h
     imgui/misc/cpp/imgui_stdlib.cpp
 )
@@ -45,5 +47,7 @@ endif()
 
 target_link_libraries(imgui ${SDL2_LINK_LIBRARIES})
 target_link_libraries(imgui ${SDL2IMAGE_LINK_LIBRARIES})
+# The OpenGL3 backend's bundled loader dlopen()s libGL at runtime
+target_link_libraries(imgui ${CMAKE_DL_LIBS})
 
 # set_target_properties(imgui PROPERTIES PUBLIC_HEADER "${imgui_headers}")
