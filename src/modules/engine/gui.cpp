@@ -1,7 +1,7 @@
 #include "gui.h"
 #include "SDL_video.h"
+#include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
@@ -108,16 +108,16 @@ void systemInitialiseGui(flecs::iter &iter) {
   io.Fonts->Build();
 
   auto r = world.get_mut<Renderer>();
-  ImGui_ImplSDL2_InitForSDLRenderer(r.window, r.renderer);
-  ImGui_ImplSDLRenderer2_Init(r.renderer);
-  ImGui_ImplSDLRenderer2_CreateFontsTexture();
+  ImGui_ImplSDL2_InitForOpenGL(r.window, r.context);
+  ImGui_ImplOpenGL3_Init("#version 330");
+  ImGui_ImplOpenGL3_CreateFontsTexture();
 
   world.entity("Windows");
 }
 
 /// @brief Task that creates a new ImGui Frame
 void systemGuiNewFrame(flecs::iter &) {
-  ImGui_ImplSDLRenderer2_NewFrame();
+  ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
   // ImGui::ShowMetricsWindow();
@@ -132,8 +132,8 @@ void systemGuiEndFrame(flecs::iter &) {
 /// @brief System to send render instructions for the UI
 /// @param it
 /// @param renderer The Render Component Singleton
-void systemRenderGUI(const Renderer &r) {
-  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), r.renderer);
+void systemRenderGUI(const Renderer &) {
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 flecs::entity showWindow(flecs::world &world, const std::string &name) {

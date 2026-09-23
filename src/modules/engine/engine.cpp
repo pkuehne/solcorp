@@ -17,10 +17,10 @@ void registerEngineComponents(flecs::world &world) {
       .member("worldPosition", &Transform::worldPosition);
   world.component<Renderer>()
       .member<uintptr_t>("window", 1, offsetof(Renderer, window))
-      .member<uintptr_t>("renderer", 1, offsetof(Renderer, renderer))
+      .member<uintptr_t>("context", 1, offsetof(Renderer, context))
       .add(flecs::Singleton);
   world.component<Texture>()
-      .member<size_t>("ptr")
+      .member("id", &Texture::id)
       .member("width", &Texture::width)
       .member("height", &Texture::height);
   world.component<SpriteFlip>();
@@ -41,7 +41,7 @@ void registerEngineComponents(flecs::world &world) {
   world.component<Font>()
       .member("name", &Font::name)
       .member("point_size", &Font::point_size)
-      .member<size_t>("ptr");
+      .member("id", &Texture::id);
   world.component<Window>().member("open", &Window::open);
   world.component<KeyDown>().member("key", &KeyDown::key).add(flecs::Singleton);
   world.component<KeyUp>().member("key", &KeyUp::key).add(flecs::Singleton);

@@ -6,8 +6,6 @@
 #include <string>
 
 struct SDL_Window;
-struct SDL_Renderer;
-struct SDL_Texture;
 
 struct Color {
   uint8_t r = 0;
@@ -26,16 +24,21 @@ struct Transform {
   Point worldPosition;
 };
 
-/// @brief Component to store SDL2 renderer information
+/// @brief Component to store the window, OpenGL context and the GL objects
+/// used to draw textured quads
 struct Renderer {
   SDL_Window *window = nullptr;
-  SDL_Renderer *renderer = nullptr;
+  SDL_GLContext context = nullptr;
+  uint32_t quad_program = 0; ///< Shader program used for sprites and text
+  uint32_t quad_vao = 0;
+  uint32_t quad_vbo = 0;
+  int screen_size_uniform = -1; ///< Location of the program's u_screen_size
 };
 
-/// @brief Stores an SDL2 texture and its size information
+/// @brief Stores an OpenGL texture and its size information
 struct Texture {
-  SDL_Texture *ptr = nullptr;
-  int width = 0; // signed int, because that's what SDL uses for texture sizes
+  uint32_t id = 0; ///< OpenGL texture name; 0 means no texture
+  int width = 0;   // signed int, because that's what SDL uses for surface sizes
   int height = 0;
 };
 
@@ -119,7 +122,7 @@ void renderTileLayer(flecs::entity e, int src_col, int src_row, int tile_size,
     return;
   }
   const auto &texture = tileset.template get<Texture>();
-  if (texture.ptr == nullptr) {
+  if (texture.id == 0) {
     spdlog::error("Tileset relationship target has null texture");
     return;
   }
