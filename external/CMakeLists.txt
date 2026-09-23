@@ -6,7 +6,6 @@ list(APPEND imgui_sources
     imgui/imgui_widgets.cpp
     imgui/backends/imgui_impl_sdl2.cpp
     imgui/backends/imgui_impl_opengl3.cpp
-    imgui/backends/imgui_impl_sdlrenderer2.cpp
     imgui/misc/cpp/imgui_stdlib.cpp
 )
 
@@ -18,7 +17,6 @@ list(APPEND imgui_headers
     imgui/imgui_truetype.h
     imgui/backends/imgui_impl_sdl2.h
     imgui/backends/imgui_impl_opengl3.h
-    imgui/backends/imgui_impl_sdlrenderer2.h
     imgui/misc/cpp/imgui_stdlib.cpp
 )
 
