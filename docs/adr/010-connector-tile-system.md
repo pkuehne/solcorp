@@ -39,10 +39,11 @@ enum class ConnectorVariant : uint8_t {
 ```
 
 The enum value maps directly to a position in a horizontal **strip** spritesheet
-(`col = value`, single row), so adding a new variant only requires adding an entry here and a
+(`col = value + 1`, single row), so adding a new variant only requires adding an entry here and a
 corresponding column at the end of the strip. A single `rotation_deg` field on the component handles
 all orientations of each topology; the engine applies it to every layer uniformly via
-`SDL_RenderCopyExF`.
+`SDL_RenderCopyExF`. Column 0 is the empty tile that Aseprite's tileset export always reserves
+at index 0; it is kept rather than trimmed so a re-export can be used as-is.
 
 > Amendment (2026-06): the original tilesets were exported as a 3×3 atlas grid (`col = value % 3`,
 > `row = value / 3`), which was an artefact of the first road tileset export rather than a deliberate
@@ -117,16 +118,17 @@ destination mapping, and rotation. `connector.cpp` has no direct SDL dependency.
 
 Game-shipped textures (roads, fences, building tilesets) are owned by the **core mod** and loaded
 through the same `create_texture` path mods already use, reading from the core mod's own directory
-(`mods/core/`). They become children of the `Textures` world entity, addressable as `Textures::<stem>`.
+(`mods/core/`) and listed in `mods/core/textures.lua`. They become children of the `Textures` world
+entity, addressable as `Textures::<id>` where `<id>` is the key in `textures.lua`.
 There is no separate engine-level `assets/textures/` loader and no special path for "game" vs "mod"
 textures — the core mod is just the first mod, with no privileged access.
 
-If the art source tree is kept outside `mods/core/` for authoring convenience, CMake copies it into
-the core mod directory at build time so the runtime load path stays uniform.
+Art sources (`.aseprite` files) stay in `assets/aseprite/`; only the exported PNGs live in
+`mods/core/`, so no build-time copy is needed.
 
 > Amendment (2026-06): the original decision was a dedicated `assets/textures/` directory loaded by
 > the engine at startup in `registerRender`, distinct from mod textures. That privileged path is
-> dropped in favour of the core mod loading its textures like any other mod (optionally CMake-copied),
+> dropped in favour of the core mod loading its textures like any other mod,
 > which keeps a single texture-loading mechanism and avoids a "game assets vs mod assets" split.
 
 ### Lua exposure
@@ -142,7 +144,7 @@ for get/set/has/remove access. Relationship setup (tileset binding) is handled i
 ## Consequences
 
 - Adding a new connector type (truss, tunnel) requires: a site-type label, an appropriately
-  structured spritesheet in `assets/textures/`, and a `Buildable` relationship on the site
+  structured spritesheet in the owning mod's directory (listed in its `textures.lua`), and a `Buildable` relationship on the site
   (ADR 009). No changes to `ConnectorTile`, the render system, or the autotiler.
 - The layer slots are fixed at three. A connector that needs four layers would require a new
   relationship tag and a render-system change.
