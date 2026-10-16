@@ -229,10 +229,6 @@ if(NOT WIN32)
     set_target_properties(solcorp PROPERTIES INSTALL_RPATH "$ORIGIN")
 endif()
 
-file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
-file(COPY ${TEXTURES}
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
-
 add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp
