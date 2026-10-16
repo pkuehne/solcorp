@@ -233,9 +233,6 @@ file(GLOB TEXTURES "${CMAKE_SOURCE_DIR}/textures/*.png")
 file(COPY ${TEXTURES}
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
 
-file(COPY "${CMAKE_SOURCE_DIR}/assets"
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 add_custom_target(run
     COMMAND solcorp
     DEPENDS solcorp

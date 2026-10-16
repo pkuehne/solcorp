@@ -56,26 +56,9 @@ void registerRender(flecs::world &world) {
   });
 
   auto scope = world.set_scope(0);
-  auto textures = world.entity("Textures");
+  world.entity("Textures");
   auto fonts = world.entity("Fonts");
   world.set_scope(scope);
-
-  static const std::filesystem::path asset_texture_dir("assets/textures");
-  if (std::filesystem::is_directory(asset_texture_dir)) {
-    for (const auto &entry :
-         std::filesystem::directory_iterator(asset_texture_dir)) {
-      if (entry.path().extension() == ".png") {
-        auto name = entry.path().stem().string();
-        world.entity(name.c_str())
-            .child_of(textures)
-            .set<Texture>(loadTexture(entry.path().string(), world));
-        spdlog::debug("Loaded asset texture: {}", name);
-      }
-    }
-  } else {
-    spdlog::warn("Asset texture directory '{}' not found",
-                 asset_texture_dir.string());
-  }
 
   const auto &config = world.get<Config>();
 

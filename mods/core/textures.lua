@@ -8,4 +8,6 @@
 -- `file` is relative to this mod's directory.
 return {
 	Buildings = { file = "buildings.png" },
+	roads_asphalt = { file = "roads_asphalt.png" },
+	roads_markings = { file = "roads_markings.png" },
 }
