@@ -11,7 +11,7 @@
 #include <vector>
 
 static constexpr int TILE_SIZE = 32;
-static constexpr int TILESET_COLS = 3;
+static constexpr int EMPTY_TILE_COUNT = 1;
 
 uint8_t rotateConnectorMaskCW(uint8_t mask) {
   // N(bit0)->E(bit1)->S(bit2)->W(bit3)->N: a left shift, with the top bit
@@ -121,9 +121,8 @@ void systemRetileSiteConnectors(flecs::entity site) {
 
 static void systemRenderConnector(flecs::entity e, const ConnectorTile &tile,
                                   const Transform &transform) {
-  auto variant_idx = static_cast<int>(tile.variant);
-  int src_col = variant_idx % TILESET_COLS;
-  int src_row = variant_idx / TILESET_COLS;
+  const int src_col = EMPTY_TILE_COUNT + static_cast<int>(tile.variant);
+  const int src_row = 0;
 
   // Layers are drawn in order: base asphalt, then markings, then
   // embellishments.
