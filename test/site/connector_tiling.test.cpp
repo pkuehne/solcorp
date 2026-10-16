@@ -1,9 +1,11 @@
 #include "modules/site/connector.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 #include <cstdint>
 #include <flecs.h>
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -30,95 +32,45 @@ SCENARIO("rotateConnectorMaskCW", "[connector]") {
 }
 
 SCENARIO("computeConnectorTiling", "[connector]") {
-  GIVEN("A tile with no neighbours") {
-    auto tiling = computeConnectorTiling(0);
-    THEN("It is left as authored (no tiling)") {
-      CHECK_FALSE(tiling.has_value());
-    }
-  }
+  constexpr uint8_t N = NeighbourNorth;
+  constexpr uint8_t E = NeighbourEast;
+  constexpr uint8_t S = NeighbourSouth;
+  constexpr uint8_t W = NeighbourWest;
 
-  GIVEN("A tile with a single neighbour") {
-    WHEN("The neighbour is to the north") {
-      auto tiling = computeConnectorTiling(NeighbourNorth);
-      THEN("It is a dead-end facing north (rotation 270)") {
-        // Matches the Lua-authored north-facing dead-end orientation.
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
-                                        .rotation_deg = 270.0});
+  struct Case {
+    uint8_t mask;
+    std::optional<ConnectorTiling> expected;
+  };
+
+  GIVEN("Every combination of neighbours") {
+    auto [mask, expected] = GENERATE_COPY(values<Case>({
+        {0, std::nullopt},
+        {N, ConnectorTiling{ConnectorVariant::DeadEnd, 270.0}},
+        {E, ConnectorTiling{ConnectorVariant::DeadEnd, 0.0}},
+        {S, ConnectorTiling{ConnectorVariant::DeadEnd, 90.0}},
+        {W, ConnectorTiling{ConnectorVariant::DeadEnd, 180.0}},
+        {E | W, ConnectorTiling{ConnectorVariant::Straight, 0.0}},
+        {N | S, ConnectorTiling{ConnectorVariant::Straight, 90.0}},
+        {E | S, ConnectorTiling{ConnectorVariant::Corner, 0.0}},
+        {S | W, ConnectorTiling{ConnectorVariant::Corner, 90.0}},
+        {N | W, ConnectorTiling{ConnectorVariant::Corner, 180.0}},
+        {N | E, ConnectorTiling{ConnectorVariant::Corner, 270.0}},
+        {N | E | S, ConnectorTiling{ConnectorVariant::TJunction, 0.0}},
+        {E | S | W, ConnectorTiling{ConnectorVariant::TJunction, 90.0}},
+        {N | S | W, ConnectorTiling{ConnectorVariant::TJunction, 180.0}},
+        {N | E | W, ConnectorTiling{ConnectorVariant::TJunction, 270.0}},
+        {N | E | S | W, ConnectorTiling{ConnectorVariant::Crossing, 0.0}},
+    }));
+    CAPTURE(static_cast<int>(mask));
+
+    THEN("It picks the matching variant and rotation") {
+      CHECK(computeConnectorTiling(mask) == expected);
+    }
+
+    WHEN("Bits above the four directions are also set") {
+      THEN("They are ignored") {
+        CHECK(computeConnectorTiling(0xF0 | mask) == expected);
       }
-    }
-
-    WHEN("The neighbour is to the east") {
-      auto tiling = computeConnectorTiling(NeighbourEast);
-      THEN("It is a dead-end at the base rotation (0)") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::DeadEnd,
-                                        .rotation_deg = 0.0});
-      }
-    }
-  }
-
-  GIVEN("A tile with two opposite neighbours") {
-    WHEN("They run east-west") {
-      auto tiling = computeConnectorTiling(NeighbourEast | NeighbourWest);
-      THEN("It is a horizontal straight (rotation 0)") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Straight,
-                                        .rotation_deg = 0.0});
-      }
-    }
-
-    WHEN("They run north-south") {
-      auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourSouth);
-      THEN("It is a vertical straight (rotation 90)") {
-        // Matches the Lua-authored vertical road orientation.
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Straight,
-                                        .rotation_deg = 90.0});
-      }
-    }
-  }
-
-  GIVEN("A tile with two adjacent neighbours") {
-    WHEN("They are east and south (the base corner)") {
-      auto tiling = computeConnectorTiling(NeighbourEast | NeighbourSouth);
-      THEN("It is a corner at rotation 0") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Corner,
-                                        .rotation_deg = 0.0});
-      }
-    }
-
-    WHEN("They are north and east") {
-      auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast);
-      THEN("It is a corner rotated to face north-east (270)") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Corner,
-                                        .rotation_deg = 270.0});
-      }
-    }
-  }
-
-  GIVEN("A tile with three neighbours") {
-    WHEN("The missing side is west (the base T-junction)") {
-      auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast |
-                                           NeighbourSouth);
-      THEN("It is a T-junction at rotation 0") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::TJunction,
-                                        .rotation_deg = 0.0});
-      }
-    }
-
-    WHEN("The missing side is north") {
-      auto tiling = computeConnectorTiling(NeighbourEast | NeighbourSouth |
-                                           NeighbourWest);
-      THEN("It is a T-junction rotated once clockwise (90)") {
-        CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::TJunction,
-                                        .rotation_deg = 90.0});
-      }
-    }
-  }
-
-  GIVEN("A tile with four neighbours") {
-    auto tiling = computeConnectorTiling(NeighbourNorth | NeighbourEast |
-                                         NeighbourSouth | NeighbourWest);
-    THEN("It is a crossing at rotation 0") {
-      CHECK(tiling == ConnectorTiling{.variant = ConnectorVariant::Crossing,
-                                      .rotation_deg = 0.0});
     }
   }
 }
