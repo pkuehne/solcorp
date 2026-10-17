@@ -25,6 +25,7 @@ list(APPEND SolCorpSources
     modules/lua/mod_value.cpp
     modules/lua/rocket_data.cpp
     modules/lua/texture_data.cpp
+    modules/lua/tileset_data.cpp
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
@@ -84,6 +85,7 @@ list(APPEND SolCorpHeaders
     modules/lua/mod_value.h
     modules/lua/rocket_data.h
     modules/lua/texture_data.h
+    modules/lua/tileset_data.h
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h

@@ -43,11 +43,13 @@ add_executable(unit_test
   lua/mod_registry/deep_merge.test.cpp
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
+  lua/data/tileset_data.test.cpp
   lua/data/rocket_data.test.cpp
   lua/data/effect_data.test.cpp
   lua/mod_content/apply_building_data.test.cpp
   lua/mod_content/apply_rocket_data.test.cpp
   lua/mod_content/apply_effect_data.test.cpp
+  lua/mod_content/apply_tileset_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp
   lua/mod_content/create_rocket_prefab.test.cpp

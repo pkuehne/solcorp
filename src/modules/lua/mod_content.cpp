@@ -12,6 +12,7 @@
 
 #include <filesystem>
 #include <functional>
+#include <stdexcept>
 
 bool addFacilityComponent(flecs::entity facility, const std::string &type) {
   if (type == "Launchpad") {
@@ -104,6 +105,35 @@ void applyTextureData(flecs::world &world,
   for (const auto &texture : textures) {
     create_texture(world, TextureName{texture.name},
                    TextureFilename{texture.file}, TextureModName{texture.mod});
+  }
+}
+
+void applyTilesetData(flecs::world &world,
+                      const std::vector<TilesetDef> &tilesets) {
+  auto tilesets_node = world.entity("Tilesets");
+  for (const auto &def : tilesets) {
+    auto texture = world.lookup(("Textures::" + def.texture).c_str());
+    if (!texture.is_valid() || !texture.has<Texture>()) {
+      spdlog::error(
+          "Skipping tileset '{}': texture '{}' not found (defined by {})",
+          def.name, def.texture, def.defined_by);
+      continue;
+    }
+
+    Tileset tileset;
+    try {
+      tileset =
+          makeTileset(texture.get<Texture>(), def.tile_width, def.tile_height);
+    } catch (const std::invalid_argument &e) {
+      spdlog::error("Skipping tileset '{}': {} (defined by {})", def.name,
+                    e.what(), def.defined_by);
+      continue;
+    }
+
+    flecs::entity entity;
+    world.scope(tilesets_node,
+                [&] { entity = world.entity(def.name.c_str()); });
+    entity.set<Tileset>(tileset).add<TilesetTexture>(texture);
   }
 }
 
@@ -240,6 +270,23 @@ std::vector<TextureDef> selectTextures(const ModRegistry &registry) {
   return textures;
 }
 
+/// @brief Turn the merged tilesets table into the tilesets to create: an entry
+/// with no texture is logged and skipped (ADR 011 §5); the rest carry their
+/// provenance so apply-time failures can name the mods that defined them.
+std::vector<TilesetDef> selectTilesets(const ModRegistry &registry) {
+  std::vector<TilesetDef> tilesets;
+  for (TilesetDef def : parseTilesetData(registry.merged("tilesets"))) {
+    def.defined_by = registry.historyString("tilesets", def.name);
+    if (def.texture.empty()) {
+      spdlog::error("Skipping tileset '{}': it has no texture (defined by {})",
+                    def.name, def.defined_by);
+      continue;
+    }
+    tilesets.push_back(def);
+  }
+  return tilesets;
+}
+
 /// @brief Turn the merged effects table into the effects to instantiate: an
 /// effect with no modifiers does nothing, so it is logged (with provenance) and
 /// skipped (ADR 011 §5).
@@ -309,6 +356,7 @@ void loadModContent(flecs::world &world) {
   ModRegistry registry;
   for_each_mod(world, [&](const Mod &mod) {
     mergeModDataFile(registry, "textures", mod, "textures.lua");
+    mergeModDataFile(registry, "tilesets", mod, "tilesets.lua");
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
     mergeModDataFile(registry, "rockets", mod, "rockets.lua");
     mergeModDataFile(registry, "effects", mod, "effects.lua");
@@ -319,6 +367,7 @@ void loadModContent(flecs::world &world) {
   auto buildings = selectBuildingPrefabs(registry);
   auto rockets = parseRocketData(registry.merged("rockets"));
   applyTextureData(world, selectTextures(registry));
+  applyTilesetData(world, selectTilesets(registry));
   applyBuildingData(world, buildings);
   applyRocketData(world, rockets);
   applyEffectData(world, selectEffects(registry));

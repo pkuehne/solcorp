@@ -19,6 +19,7 @@
 #include "modules/lua/effect_data.h"
 #include "modules/lua/rocket_data.h"
 #include "modules/lua/texture_data.h"
+#include "modules/lua/tileset_data.h"
 #include <flecs.h>
 #include <string>
 #include <vector>
@@ -106,6 +107,12 @@ Sprite clip_sprite_from_texture(const flecs::world &world,
 void applyTextureData(flecs::world &world,
                       const std::vector<TextureDef> &textures);
 
+/// @brief Create Tilesets::<name> for each definition, cutting up its
+/// Textures::<texture>. A definition whose texture is missing or whose tile
+/// size does not fit the texture is logged and skipped (ADR 011 §5, ADR 013).
+void applyTilesetData(flecs::world &world,
+                      const std::vector<TilesetDef> &tilesets);
+
 /// @brief Create a building prefab (sprite + facilities) for each definition.
 void applyBuildingData(flecs::world &world,
                        const std::vector<BuildingDef> &buildings);
@@ -120,7 +127,8 @@ void applyEffectData(flecs::world &world,
                      const std::vector<EffectDef> &effects);
 
 /**
- * @brief Read and apply every mod's textures.lua, buildings.lua then
- *        rockets.lua, in dependency load order. Each file is optional per mod.
+ * @brief Read and apply every mod's textures.lua, tilesets.lua,
+ *        buildings.lua, rockets.lua and effects.lua, in dependency load order.
+ * Each file is optional per mod.
  */
 void loadModContent(flecs::world &world);
