@@ -102,6 +102,10 @@ struct BuildMode {
 };
 ```
 
+> Note: per [ADR 014](/adr/014-entity-references-via-relationships.md), `prefab` will be an exclusive
+> relationship on the `BuildMode` singleton rather than a `flecs::entity` field; the sketch above shows
+> the data, not the final shape.
+
 Both kinds are placed by dragging, but the **geometry differs fundamentally**, which is why they are
 two distinct Actions (§4): a building rubber-bands a 2D **rectangle** (2×2 up to site bounds) and
 commits as **one multi-tile entity**; a connector traces a 1-wide **run** — always 1×N or N×1, never a

@@ -25,3 +25,4 @@ Minimum required sections: **Context**, **Decision**, **Consequences**
 | [011](/adr/011-lua-mod-registry.md) | Lua Mod Registry and Prefab Override System | Accepted |
 | [012](/adr/012-building-tileset-metadata.md) | Data-Driven Building Tileset Metadata | Accepted |
 | [013](/adr/013-tilesets.md) | Tilesets | Accepted |
+| [014](/adr/014-entity-references-via-relationships.md) | Entity References via Relationships | Accepted |
