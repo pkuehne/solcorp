@@ -75,9 +75,14 @@ struct Footprint {
 ```
 
 A gate carries `FixedSize`; a generic hangar does not and is dragged out from 2×2 up to the site
-bounds. The minimum (2×2) is a build-mode constant, not per-prefab data; the maximum is always the
-site. Connectors (roads) are their own 1×1 placement path (see §7) and don't need the tag. Occupancy
+bounds. 2×2 is a global build-mode floor and the site is the ceiling; a building definition may
+narrow that range with its own minimum and maximum (e.g. an office from 2×4 up to 6×8), but never
+widen it. Connectors (roads) are their own 1×1 placement path (see §7) and don't need the tag. Occupancy
 and validation are written against `Footprint` regions from the start.
+
+> Amendment (2026-10): originally the 2×2 minimum was the only size constraint and explicitly not
+> per-prefab data. Building definitions can now set their own min/max within the 2×2 … site range,
+> matching the per-building constraints of [ADR 012](/adr/012-building-tileset-metadata.md).
 
 > Terminology: the network-tile concept is **connector** in code (ADR 010); "road" is the
 > Earth-site label. Code identifiers below use `Connector`; prose says "road (connector)".
@@ -105,7 +110,7 @@ autotile (§6). A single click on a `FixedSize` prefab places it at one cell.
 
 Selecting a palette entry sets `BuildMode`. A ghost cursor entity (reusing the existing
 `ConstructionSite` sprite) follows the mouse cell and renders valid/invalid (green/red). Right-click
-or Esc clears `BuildMode`. When `BuildMode` is absent, clicks behave as today (open building / site
+or Esc clears `BuildMode`. When `BuildMode` is absent, clicks behave as today (open building
 windows).
 
 ### 4. Placement commits through an Action; the spatial rules are a pure kernel underneath
@@ -176,8 +181,8 @@ per frame. The Action is constructed and run only on commit (mouse-up). Both pat
 the preview can never disagree with what the commit will accept.
 
 Connectivity and size rules (in `canPlace`):
-- **Building** — a draggable building's footprint must be at least 2×2 (`TooSmall` otherwise) and fit
-  the site; a `FixedSize` building is 1×1. Every cell must be in-bounds and empty, and at least one
+- **Building** — a draggable building's footprint must be at least 2×2, or the definition's own
+  minimum if larger (`TooSmall` otherwise), and fit the site; a `FixedSize` building is 1×1. Every cell must be in-bounds and empty, and at least one
   cell of the footprint perimeter must be orthogonally adjacent to a connector.
 - **Connector** — the cell must be in-bounds and empty, and orthogonally adjacent to another connector
   or a building edge. The first tile on an empty site is allowed unconditionally (bootstrap),
@@ -206,8 +211,8 @@ while in build mode, whenever needed for the ghost.
 
 ### 6. Connector autotiling — the engine derives variant and rotation
 
-The connector tile model — the `ConnectorVariant` enum, the single `rotation_deg` field, the 3×3
-atlas mapping, and the three-layer tileset relationships — is defined by **ADR 010**, which also
+The connector tile model — the `ConnectorVariant` enum, the single `rotation_deg` field, the strip
+spritesheet mapping, and the three-layer tileset relationships — is defined by **ADR 010**, which also
 specifies the derivation **kernel** (the neighbour-mask → variant mapping and the base orientations
 from which rotation is computed). This section covers how that kernel is *triggered* and *applied*.
 
@@ -245,7 +250,7 @@ cell; `MouseUp` commits. The preview shape depends on `PlacementKind`:
 - **Connector** — a 1-wide run of cells (straight or L-shaped) from anchor to cursor; each cell
   validated by `canPlace`, only the valid ones placed, then the autotiler (§6) fixes variants.
 - **Variable building** — a **rectangle** spanning anchor→cursor, clamped to a 2×2 minimum and the
-  site bounds; placed as a single multi-tile instance if the whole region validates. Below the
+  site bounds, and to the definition's own min/max if it sets one; placed as a single multi-tile instance if the whole region validates. Below the
   minimum it shows the `TooSmall` invalid state.
 - **`FixedSize` prefab** — a single click places one 1×1 instance; no drag.
 
@@ -320,12 +325,12 @@ Per the project rule that all UI windows live in `modules/window/`:
 | Phase | Scope |
 |---|---|
 | 1 | `Footprint` component + `FixedSize` tag; `Buildable` relationship on sites; `OccupancyGrid` + `buildOccupancyGrid` extracted from the scatter system; `canPlace` (region + connectivity + min-size) with full unit tests. No UI change yet. |
-| 2 | Site Window (`modules/window/site_window`) with site info + palette; clicking a site opens it. `BuildMode` singleton; selecting a palette entry enters build mode. |
+| 2 | Site Window (`modules/window/site_window`) with site info + palette; a toolbar button opens it (the site fills the view, so it cannot be a click target). `BuildMode` singleton; selecting a palette entry enters build mode. |
 | 3 | Hover-cell input signal; ghost cursor with valid/invalid rendering (reads `canPlace`); `PlaceBuildingAction`/`PlaceConnectorAction` committing fixed-size single-click placement; retire `systemUpdateConstructionSiteLocations` and the scatter ghosts. |
-| 4 | Variable building rectangles: rubber-band drag clamped to a 2×2 minimum and the site bounds, multi-tile region placement, `TooSmall` feedback. |
-| 5 | 9-slice rendering for multi-tile buildings (corner/edge/fill from a tilesheet). |
+| 4 | Variable building rectangles: rubber-band drag clamped to a 2×2 minimum and the site bounds (narrowed by the definition's own min/max), multi-tile region placement, `TooSmall` feedback. |
+| 5 | ~~9-slice rendering for multi-tile buildings~~ — superseded by [ADR 012](/adr/012-building-tileset-metadata.md); multi-tile rendering from the data-driven tile registry is part of Phase 4 (#186). |
 | 6 | Connector click-drag runs (the autotiler from Phase A already fixes variants). |
-| A | **Autotiler (independent):** rename `ConstructionSiteNeedsUpdating` → `SiteNeedsRelayout`; the `SiteNeedsRelayout`-driven retile system in `connector.cpp` + the pure `computeConnectorTiling` kernel (ADR 010) with full unit tests. The autotiler coexists with the still-present scatter system (it runs first and lets scatter clear the tag, §6). Depends only on the relayout tag and connector children, so it does not wait on Phases 1–6. |
+| A | **Done.** **Autotiler (independent):** rename `ConstructionSiteNeedsUpdating` → `SiteNeedsRelayout`; the `SiteNeedsRelayout`-driven retile system in `connector.cpp` + the pure `computeConnectorTiling` kernel (ADR 010) with full unit tests. The autotiler coexists with the still-present scatter system (it runs first and lets scatter clear the tag, §6). Depends only on the relayout tag and connector children, so it does not wait on Phases 1–6. |
 
 Each phase is independently shippable. Phase A is listed out of order deliberately: the connector
 autotiler shares none of build mode's machinery (`BuildMode`, the Site Window, `canPlace`) and is
