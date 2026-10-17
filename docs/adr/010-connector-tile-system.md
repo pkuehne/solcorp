@@ -96,9 +96,9 @@ Rather than storing tileset entity IDs directly in the component struct (which w
 pointer and break serialisation), tilesets are referenced via Flecs relationships:
 
 ```
-entity --TilesetBase--> texture_entity
-entity --TilesetMarkings--> texture_entity
-entity --TilesetEmbellishments--> texture_entity
+entity --TilesetBase--> tileset_entity
+entity --TilesetMarkings--> tileset_entity
+entity --TilesetEmbellishments--> tileset_entity
 ```
 
 The render system calls `e.target<TilesetBase/Markings/Embellishments>()` at runtime. A missing
@@ -108,11 +108,16 @@ Layers are always drawn in the order Base → Markings → Embellishments.
 This pattern follows the same principle as other entity-to-entity references in the project: use
 Flecs relationships, not raw IDs in component fields.
 
+> Amendment (2026-10): the layer relationships originally targeted `Texture` entities directly, and
+> `connector.cpp` derived each source rect from a hard-coded tile size and the strip layout. They now
+> target `Tileset` entities ([ADR 013](/adr/013-tilesets.md)), which own the tile size and the
+> index → source-rect mapping; the connector only supplies the tile index (`variant + 1`).
+
 ### SDL encapsulation
 
 All SDL rendering calls stay inside `modules/engine/`. The connector system calls `renderTile()`
-declared in [render.h](../../src/modules/engine/render.h), which handles source rect calculation,
-destination mapping, and rotation. `connector.cpp` has no direct SDL dependency.
+declared in [render.h](../../src/modules/engine/render.h), which handles destination mapping and
+rotation; the source rect comes from the tileset (ADR 013). `connector.cpp` has no direct SDL dependency.
 
 ### Game asset textures
 
@@ -144,7 +149,8 @@ for get/set/has/remove access. Relationship setup (tileset binding) is handled i
 ## Consequences
 
 - Adding a new connector type (truss, tunnel) requires: a site-type label, an appropriately
-  structured spritesheet in the owning mod's directory (listed in its `textures.lua`), and a `Buildable` relationship on the site
+  structured spritesheet in the owning mod's directory (listed in its `textures.lua`, with a
+  matching `tilesets.lua` entry), and a `Buildable` relationship on the site
   (ADR 009). No changes to `ConnectorTile`, the render system, or the autotiler.
 - The layer slots are fixed at three. A connector that needs four layers would require a new
   relationship tag and a render-system change.

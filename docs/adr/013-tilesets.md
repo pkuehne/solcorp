@@ -1,6 +1,6 @@
 # 013 — Tilesets
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 
