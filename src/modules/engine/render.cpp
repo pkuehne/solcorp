@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <flecs.h>
+#include <stdexcept>
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 void systemRenderClear(const Renderer &);
@@ -255,6 +256,36 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &destination,
                     text.rotation, nullptr,
                     static_cast<SDL_RendererFlip>(text.flip));
+}
+
+Tileset makeTileset(const Texture &texture, int tile_width, int tile_height) {
+  if (tile_width <= 0 || tile_height <= 0) {
+    throw std::invalid_argument(fmt::format("tile size {}x{} is not positive",
+                                            tile_width, tile_height));
+  }
+  if (texture.width < tile_width || texture.height < tile_height) {
+    throw std::invalid_argument(
+        fmt::format("tile size {}x{} is larger than the {}x{} texture",
+                    tile_width, tile_height, texture.width, texture.height));
+  }
+  if (texture.width % tile_width != 0 || texture.height % tile_height != 0) {
+    throw std::invalid_argument(
+        fmt::format("tile size {}x{} does not evenly divide the {}x{} texture",
+                    tile_width, tile_height, texture.width, texture.height));
+  }
+  return Tileset{.tile_width = tile_width,
+                 .tile_height = tile_height,
+                 .columns = texture.width / tile_width};
+}
+
+SDL_Rect tileRect(const Tileset &tileset, uint32_t index) {
+  const auto columns = static_cast<uint32_t>(tileset.columns);
+  return SDL_Rect{
+      .x = static_cast<int>(index % columns) * tileset.tile_width,
+      .y = static_cast<int>(index / columns) * tileset.tile_height,
+      .w = tileset.tile_width,
+      .h = tileset.tile_height,
+  };
 }
 
 void renderTile(const Renderer &renderer, const Texture &texture, int src_col,

@@ -39,6 +39,27 @@ struct Texture {
   int height = 0;
 };
 
+/// @brief Relationship from a Tileset to the texture it cuts into tiles.
+/// Tileset --TilesetTexture--> texture entity (ADR 013)
+struct TilesetTexture {};
+
+/// @brief How a texture is cut into equal-sized tiles, numbered row-major
+/// from 0 (ADR 013)
+struct Tileset {
+  int tile_width = 0;
+  int tile_height = 0;
+  int columns = 0;
+};
+
+/// @brief Creates a Tileset for @p texture, deriving the column count from its
+/// width
+/// @throws std::invalid_argument if the tile size is not positive, is larger
+/// than the texture, or does not evenly divide it
+Tileset makeTileset(const Texture &texture, int tile_width, int tile_height);
+
+/// @brief Source rect of tile @p index within its tileset's texture
+SDL_Rect tileRect(const Tileset &tileset, uint32_t index);
+
 enum SpriteFlip : uint8_t {
   None = 0,
   Horizontal = 1,
