@@ -11,6 +11,8 @@ add_executable(unit_test
   base/notification.test.cpp
   engine/apply_parent_transform.test.cpp
   engine/format_locale.test.cpp
+  engine/tileset.test.cpp
+  engine/tile.test.cpp
   lua/entity/lua_push_entity.test.cpp
   lua/entity/lua_check_entity.test.cpp
   lua/entity/entity_id.test.cpp
@@ -25,6 +27,7 @@ add_executable(unit_test
   lua/helpers/create_site.test.cpp
   lua/helpers/create_rocket.test.cpp
   lua/helpers/create_building.test.cpp
+  lua/helpers/create_connector.test.cpp
   lua/helpers/add_effect.test.cpp
   lua/helpers/create_contract.test.cpp
   lua/helpers/create_contract_payload.test.cpp
@@ -42,11 +45,13 @@ add_executable(unit_test
   lua/mod_registry/deep_merge.test.cpp
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
+  lua/data/tileset_data.test.cpp
   lua/data/rocket_data.test.cpp
   lua/data/effect_data.test.cpp
   lua/mod_content/apply_building_data.test.cpp
   lua/mod_content/apply_rocket_data.test.cpp
   lua/mod_content/apply_effect_data.test.cpp
+  lua/mod_content/apply_tileset_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp
   lua/mod_content/create_rocket_prefab.test.cpp
@@ -70,6 +75,7 @@ add_executable(unit_test
   simulation/update_sim_date.test.cpp
   simulation/generate_sol_system.test.cpp
   site/connector_tiling.test.cpp
+  site/contains_point.test.cpp
   site/create_site_prefabs.test.cpp
   site/auto_start_next_build.test.cpp
   site/auto_store_built_rocket.test.cpp

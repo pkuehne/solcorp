@@ -23,6 +23,15 @@ void registerEngineComponents(flecs::world &world) {
       .member<size_t>("ptr")
       .member("width", &Texture::width)
       .member("height", &Texture::height);
+  world.component<TilesetTexture>().add(flecs::Exclusive);
+  world.component<Tileset>()
+      .member("tile_width", &Tileset::tile_width)
+      .member("tile_height", &Tileset::tile_height)
+      .member("columns", &Tileset::columns);
+  world.component<Tile>()
+      .member("index", &Tile::index)
+      .add(flecs::Exclusive)
+      .add(flecs::OnInstantiate, flecs::Inherit);
   world.component<SpriteFlip>();
   world.component<Sprite>()
       .member("texture", &Sprite::texture)

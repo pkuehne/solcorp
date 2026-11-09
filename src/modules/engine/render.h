@@ -39,6 +39,33 @@ struct Texture {
   int height = 0;
 };
 
+/// @brief Relationship from a Tileset to the texture it cuts into tiles.
+/// Tileset --TilesetTexture--> texture entity (ADR 013)
+struct TilesetTexture {};
+
+/// @brief How a texture is cut into equal-sized tiles, numbered row-major
+/// from 0 (ADR 013)
+struct Tileset {
+  int tile_width = 0;
+  int tile_height = 0;
+  int columns = 0;
+};
+
+/// @brief A single tile drawn from a Tileset, as a pair with data.
+/// entity --Tile{index}--> tileset entity (ADR 013)
+struct Tile {
+  uint32_t index = 0;
+};
+
+/// @brief Creates a Tileset for @p texture, deriving the column count from its
+/// width
+/// @throws std::invalid_argument if the tile size is not positive, is larger
+/// than the texture, or does not evenly divide it
+Tileset makeTileset(const Texture &texture, int tile_width, int tile_height);
+
+/// @brief Source rect of tile @p index within its tileset's texture
+SDL_Rect tileRect(const Tileset &tileset, uint32_t index);
+
 enum SpriteFlip : uint8_t {
   None = 0,
   Horizontal = 1,
@@ -76,59 +103,50 @@ Texture loadTexture(const std::string &, flecs::world &);
 Texture loadTexture(const unsigned char *data, unsigned int len,
                     const flecs::world &world);
 
-/// @brief Draws a single tile from a texture atlas at a world transform.
+/// @brief Draws a single tile from a texture at a world transform.
 /// @param renderer The renderer used to draw on the screen
-/// @param texture The source texture atlas
-/// @param src_col Column of the tile within the atlas
-/// @param src_row Row of the tile within the atlas
-/// @param tile_size Edge length of one (square) tile, in pixels
+/// @param texture The texture the tile is cut from
+/// @param source The tile's rect within @p texture; also its drawn size
 /// @param transform World transform whose worldPosition is the draw destination
 /// @param rotation Clockwise rotation applied to the tile, in degrees
-void renderTile(const Renderer &renderer, const Texture &texture, int src_col,
-                int src_row, int tile_size, const Transform &transform,
+void renderTile(const Renderer &renderer, const Texture &texture,
+                const SDL_Rect &source, const Transform &transform,
                 double rotation);
 
-/// @brief Draws one layer of a tiled entity by following a tileset relationship
-/// to the texture that layer lives on.
+/// @brief Draws tile @p index of @p tileset_e at @p transform, logging if the
+/// tileset has no loaded texture
+void renderTilesetTile(flecs::entity tileset_e, uint32_t index,
+                       const Transform &transform, double rotation);
+
+/// @brief Draws one layer of a tiled entity by following a relationship to the
+/// Tileset that layer is drawn from (ADR 013).
 ///
-/// Resolves the @p TilesetRel relationship target on @p e. If that target is
-/// valid and holds a non-null Texture, the tile at (@p src_col, @p src_row) in
-/// its atlas is drawn at @p transform. A missing relationship or a null texture
-/// is a silent no-op, so a tile's layers (e.g. base, markings, embellishments)
-/// can each be present or absent independently. Templated on the relationship
-/// tag so any module can define its own layers (connector tilesets, multi-tile
-/// building tilesets, ...) without the engine knowing about them.
+/// Resolves the @p TilesetRel relationship target on @p e. If that target is a
+/// Tileset whose texture is loaded, tile @p index is drawn at @p transform. A
+/// missing relationship is a silent no-op, so a tile's layers (e.g. base,
+/// markings, embellishments) can each be present or absent independently.
+/// Templated on the relationship tag so any module can define its own layers
+/// (connector tilesets, multi-tile building tilesets, ...) without the engine
+/// knowing about them.
 ///
 /// The Renderer is fetched from @p e's world (it is a singleton), so callers
 /// need not query it themselves.
 ///
-/// @tparam TilesetRel Relationship tag whose target entity carries the layer's
-///                    Texture (e.g. TilesetBase, TilesetMarkings)
-/// @param e The entity being drawn; supplies the layer's texture (via its
+/// @tparam TilesetRel Relationship tag whose target entity is the layer's
+///                    Tileset (e.g. TilesetBase, TilesetMarkings)
+/// @param e The entity being drawn; supplies the layer's tileset (via its
 ///          @p TilesetRel target) and the world the Renderer is read from
-/// @param src_col Column of the tile within the tileset atlas
-/// @param src_row Row of the tile within the tileset atlas
-/// @param tile_size Edge length of one (square) tile, in pixels
+/// @param index Tile index within the tileset
 /// @param transform World transform whose worldPosition is the draw destination
 /// @param rotation Clockwise rotation applied to the tile, in degrees
 template <typename TilesetRel>
-void renderTileLayer(flecs::entity e, int src_col, int src_row, int tile_size,
+void renderTileLayer(flecs::entity e, uint32_t index,
                      const Transform &transform, double rotation) {
-  auto tileset = e.target<TilesetRel>();
-  if (!tileset.is_valid()) {
+  auto tileset_e = e.target<TilesetRel>();
+  if (!tileset_e.is_valid()) {
     return;
   }
-  const auto &texture = tileset.template get<Texture>();
-  if (texture.ptr == nullptr) {
-    spdlog::error("Tileset relationship target has null texture");
-    return;
-  }
-  const auto *renderer = e.world().try_get<Renderer>();
-  if (renderer == nullptr) {
-    return;
-  }
-  renderTile(*renderer, texture, src_col, src_row, tile_size, transform,
-             rotation);
+  renderTilesetTile(tileset_e, index, transform, rotation);
 }
 
 void initialiseGraphics(flecs::world &);

@@ -10,8 +10,7 @@
 #include <utility>
 #include <vector>
 
-static constexpr int TILE_SIZE = 32;
-static constexpr int EMPTY_TILE_COUNT = 1;
+static constexpr uint32_t EMPTY_TILE_COUNT = 1;
 
 uint8_t rotateConnectorMaskCW(uint8_t mask) {
   // N(bit0)->E(bit1)->S(bit2)->W(bit3)->N: a left shift, with the top bit
@@ -121,17 +120,14 @@ void systemRetileSiteConnectors(flecs::entity site) {
 
 static void systemRenderConnector(flecs::entity e, const ConnectorTile &tile,
                                   const Transform &transform) {
-  const int src_col = EMPTY_TILE_COUNT + static_cast<int>(tile.variant);
-  const int src_row = 0;
+  const uint32_t index = EMPTY_TILE_COUNT + static_cast<uint32_t>(tile.variant);
 
   // Layers are drawn in order: base asphalt, then markings, then
   // embellishments.
-  renderTileLayer<TilesetBase>(e, src_col, src_row, TILE_SIZE, transform,
-                               tile.rotation_deg);
-  renderTileLayer<TilesetMarkings>(e, src_col, src_row, TILE_SIZE, transform,
-                                   tile.rotation_deg);
-  renderTileLayer<TilesetEmbellishments>(e, src_col, src_row, TILE_SIZE,
-                                         transform, tile.rotation_deg);
+  renderTileLayer<TilesetBase>(e, index, transform, tile.rotation_deg);
+  renderTileLayer<TilesetMarkings>(e, index, transform, tile.rotation_deg);
+  renderTileLayer<TilesetEmbellishments>(e, index, transform,
+                                         tile.rotation_deg);
 }
 
 void registerConnectors(flecs::world &world) {
@@ -139,9 +135,9 @@ void registerConnectors(flecs::world &world) {
   world.component<ConnectorTile>()
       .member("variant", &ConnectorTile::variant)
       .member("rotation_deg", &ConnectorTile::rotation_deg);
-  world.component<TilesetBase>();
-  world.component<TilesetMarkings>();
-  world.component<TilesetEmbellishments>();
+  world.component<TilesetBase>().add(flecs::Exclusive);
+  world.component<TilesetMarkings>().add(flecs::Exclusive);
+  world.component<TilesetEmbellishments>().add(flecs::Exclusive);
 
   register_enum_table_lua(world, "ConnectorVariant", [](LuaEnumBuilder &b) {
     b.value("Straight", ConnectorVariant::Straight)

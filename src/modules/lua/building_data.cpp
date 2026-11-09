@@ -17,13 +17,9 @@ BuildingDef parseBuilding(const std::string &id, const ModValue &building) {
   def.name = building.getString("name").value_or(id);
   def.hidden = building.getBool("hidden").value_or(false);
 
-  building.withTable("sprite", [&](const ModValue &sprite) {
-    def.texture = sprite.getString("texture").value_or("");
-    def.rect.x = static_cast<int>(sprite.getInt("x").value_or(0));
-    def.rect.y = static_cast<int>(sprite.getInt("y").value_or(0));
-    def.rect.width = static_cast<uint32_t>(sprite.getInt("width").value_or(0));
-    def.rect.height =
-        static_cast<uint32_t>(sprite.getInt("height").value_or(0));
+  building.withTable("tile", [&](const ModValue &tile) {
+    def.tileset = tile.getString("tileset").value_or("");
+    def.tile_index = static_cast<uint32_t>(tile.getInt("index").value_or(0));
   });
 
   building.forEachArrayElement("facilities", [&](const ModValue &value) {

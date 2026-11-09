@@ -26,6 +26,10 @@ extern unsigned int construction_png_len;
 
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
+namespace {
+void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
+                           float height, const MouseUp &mouse);
+} // namespace
 
 SiteModule::SiteModule(flecs::world &world) {
 
@@ -151,6 +155,24 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
 
+  world
+      .system<const Transform, const Tile, const MouseUp>(
+          "Match click to Building Tile")
+      .term_at(1)
+      .second(flecs::Wildcard)
+      .with<SiteLocation>()
+      .kind(ValidatePhase)
+      .each([](flecs::iter &it, size_t row, const Transform &t, const Tile &,
+               const MouseUp &mouse) {
+        const auto *tileset = it.pair(1).second().try_get<Tileset>();
+        if (tileset == nullptr) {
+          return;
+        }
+        openClickedSiteEntity(it.entity(row), t,
+                              static_cast<float>(tileset->tile_width),
+                              static_cast<float>(tileset->tile_height), mouse);
+      });
+
   world.system<Site>("Update Construction Sites")
       .with<SiteNeedsRelayout>()
       .kind(ValidatePhase)
@@ -241,8 +263,7 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .child_of(core_node)
       .add<Building>()
       .set<SiteLocation>({})
-      .set<Transform>({})
-      .set<Sprite>(sprite);
+      .set<Transform>({});
 
   // Create ConstructionSite prefab with adjusted sprite position
   sprite.y = 128;
@@ -266,23 +287,35 @@ void systemCreateSiteWindows(flecs::iter &it) {
       .set<RocketPrefabWindow>({});
 }
 
+bool containsPoint(const Point &origin, float width, float height,
+                   const Point &point) {
+  return point.x > origin.x && point.x < origin.x + width &&
+         point.y > origin.y && point.y < origin.y + height;
+}
+
+namespace {
+void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
+                           float height, const MouseUp &mouse) {
+  const Point click{.x = static_cast<float>(mouse.x),
+                    .y = static_cast<float>(mouse.y)};
+  if (!containsPoint(t.worldPosition, width, height, click)) {
+    return;
+  }
+  spdlog::debug("Clicked on building {}", e.name().c_str());
+  if (e.has<Building>()) {
+    spdlog::debug("Showing Building Window for {}", e.name().c_str());
+    showBuildingDetailWindow(e);
+  } else if (e.has<ConstructionSite>()) {
+    showConstructionSiteWindow(e);
+  }
+}
+} // namespace
+
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse) {
   // We know from the query that this has a SiteLocation i.e. is part of a Site
-  auto world = e.world();
-  auto tileSize = static_cast<float>(s.width);
-  auto mouse_x = static_cast<float>(mouse.x);
-  auto mouse_y = static_cast<float>(mouse.y);
-  if ((mouse_x > t.worldPosition.x && mouse_x < t.worldPosition.x + tileSize) &&
-      (mouse_y > t.worldPosition.y && mouse_y < t.worldPosition.y + tileSize)) {
-    spdlog::debug("Clicked on building {}", e.name().c_str());
-    if (e.has<Building>()) {
-      spdlog::debug("Showing Building Window for {}", e.name().c_str());
-      showBuildingDetailWindow(e);
-    } else if (e.has<ConstructionSite>()) {
-      showConstructionSiteWindow(e);
-    }
-  }
+  const auto tileSize = static_cast<float>(s.width);
+  openClickedSiteEntity(e, t, tileSize, tileSize, mouse);
 }
 
 void systemBuildingUpdateManufacuringProgress(

@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <flecs.h>
+#include <stdexcept>
 
 void systemApplyParentTransform(Transform &t, const Transform *parent);
 void systemRenderClear(const Renderer &);
@@ -92,6 +93,15 @@ void registerRender(flecs::world &world) {
   world.system<const Sprite, const Transform, const Renderer>("Render Sprites")
       .kind(RenderPhase)
       .each(systemRenderSprite);
+
+  world.system<const Tile, const Transform>("Render Tiles")
+      .term_at(0)
+      .second(flecs::Wildcard)
+      .kind(RenderPhase)
+      .each([](flecs::iter &it, size_t, const Tile &tile,
+               const Transform &transform) {
+        renderTilesetTile(it.pair(0).second(), tile.index, transform, 0.0);
+      });
 
   world
       .system<const Text, const Texture, const Transform, const Renderer>(
@@ -257,14 +267,60 @@ void systemRenderText(flecs::entity e, const Text &text, const Texture &texture,
                     static_cast<SDL_RendererFlip>(text.flip));
 }
 
-void renderTile(const Renderer &renderer, const Texture &texture, int src_col,
-                int src_row, int tile_size, const Transform &transform,
+Tileset makeTileset(const Texture &texture, int tile_width, int tile_height) {
+  if (tile_width <= 0 || tile_height <= 0) {
+    throw std::invalid_argument(fmt::format("tile size {}x{} is not positive",
+                                            tile_width, tile_height));
+  }
+  if (texture.width < tile_width || texture.height < tile_height) {
+    throw std::invalid_argument(
+        fmt::format("tile size {}x{} is larger than the {}x{} texture",
+                    tile_width, tile_height, texture.width, texture.height));
+  }
+  if (texture.width % tile_width != 0 || texture.height % tile_height != 0) {
+    throw std::invalid_argument(
+        fmt::format("tile size {}x{} does not evenly divide the {}x{} texture",
+                    tile_width, tile_height, texture.width, texture.height));
+  }
+  return Tileset{.tile_width = tile_width,
+                 .tile_height = tile_height,
+                 .columns = texture.width / tile_width};
+}
+
+SDL_Rect tileRect(const Tileset &tileset, uint32_t index) {
+  const auto columns = static_cast<uint32_t>(tileset.columns);
+  return SDL_Rect{
+      .x = static_cast<int>(index % columns) * tileset.tile_width,
+      .y = static_cast<int>(index / columns) * tileset.tile_height,
+      .w = tileset.tile_width,
+      .h = tileset.tile_height,
+  };
+}
+
+void renderTilesetTile(flecs::entity tileset_e, uint32_t index,
+                       const Transform &transform, double rotation) {
+  const auto *tileset = tileset_e.try_get<Tileset>();
+  auto texture_e = tileset_e.target<TilesetTexture>();
+  const auto *texture =
+      texture_e.is_valid() ? texture_e.try_get<Texture>() : nullptr;
+  if (tileset == nullptr || texture == nullptr || texture->ptr == nullptr) {
+    spdlog::error("Tileset '{}' has no loaded texture",
+                  tileset_e.name().c_str());
+    return;
+  }
+  const auto *renderer = tileset_e.world().try_get<Renderer>();
+  if (renderer == nullptr) {
+    return;
+  }
+  renderTile(*renderer, *texture, tileRect(*tileset, index), transform,
+             rotation);
+}
+
+void renderTile(const Renderer &renderer, const Texture &texture,
+                const SDL_Rect &source, const Transform &transform,
                 double rotation) {
-  SDL_Rect source = {src_col * tile_size, src_row * tile_size, tile_size,
-                     tile_size};
   SDL_FRect dest = {transform.worldPosition.x, transform.worldPosition.y,
-                    static_cast<float>(tile_size),
-                    static_cast<float>(tile_size)};
+                    static_cast<float>(source.w), static_cast<float>(source.h)};
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &dest, rotation,
                     nullptr, SDL_FLIP_NONE);
 }

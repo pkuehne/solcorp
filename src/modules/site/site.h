@@ -6,6 +6,7 @@
 #include <flecs.h>
 
 struct Rocket;
+struct Point;
 
 /// @brief Tag which the currently displayed Site we're looking at
 struct CurrentSite {};
@@ -66,6 +67,11 @@ struct ConstructionSite {};
 /// @brief Tag on a Site meaning its layout changed and derived state (e.g.
 /// connector autotiling) must be recomputed. Consumed in ValidatePhase.
 struct SiteNeedsRelayout {};
+
+/// @brief Whether @p point lies strictly inside the @p width x @p height
+/// rect whose top-left corner is @p origin
+bool containsPoint(const Point &origin, float width, float height,
+                   const Point &point);
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);

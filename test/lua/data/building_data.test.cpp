@@ -25,14 +25,14 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
       return {
         launch_complex = {
           name = "Launch Complex",
-          sprite = { texture = "Buildings", x = 0, y = 96, width = 32, height = 32 },
+          tile = { tileset = "buildings", index = 3 },
           facilities = {
             { name = "Launchpad A", type = "Launchpad" },
           },
         },
         factory = {
           name = "Factory",
-          sprite = { texture = "Buildings", x = 0, y = 64, width = 32, height = 32 },
+          tile = { tileset = "buildings", index = 2 },
           facilities = {
             { name = "Line 1", type = "Manufacturing" },
             { name = "Line 2", type = "Manufacturing" },
@@ -52,15 +52,12 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
         REQUIRE(findBuilding(buildings, "factory") != nullptr);
       }
 
-      THEN("a building's name and sprite clip rect are parsed") {
+      THEN("a building's name and tile are parsed") {
         const BuildingDef *launch = findBuilding(buildings, "launch_complex");
         REQUIRE(launch != nullptr);
         REQUIRE(launch->name == "Launch Complex");
-        REQUIRE(launch->texture == "Buildings");
-        REQUIRE(launch->rect.x == 0);
-        REQUIRE(launch->rect.y == 96);
-        REQUIRE(launch->rect.width == 32);
-        REQUIRE(launch->rect.height == 32);
+        REQUIRE(launch->tileset == "buildings");
+        REQUIRE(launch->tile_index == 3);
       }
 
       THEN("a building's facilities are parsed in order with their types") {
@@ -77,7 +74,7 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
   GIVEN("a building entry without a name") {
     TempLuaFile file(R"(
       return {
-        silo = { sprite = { texture = "T", x = 1, y = 2, width = 3, height = 4 } },
+        silo = { tile = { tileset = "T", index = 1 } },
       }
     )");
     LuaDataFile lua(file.path());
@@ -100,7 +97,7 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     }
   }
 
-  GIVEN("a building entry without a sprite") {
+  GIVEN("a building entry without a tile") {
     TempLuaFile file(R"(
       return {
         plaza = { name = "Plaza" },
@@ -112,14 +109,11 @@ SCENARIO("parseBuildingData reads building prefab definitions") {
     WHEN("the data is parsed") {
       std::vector<BuildingDef> buildings = parseBuildingData(lua.materialize());
 
-      THEN("the texture is empty and the clip rect is zeroed") {
+      THEN("the tileset is empty and the tile index is zero") {
         const BuildingDef *plaza = findBuilding(buildings, "plaza");
         REQUIRE(plaza != nullptr);
-        REQUIRE(plaza->texture.empty());
-        REQUIRE(plaza->rect.x == 0);
-        REQUIRE(plaza->rect.y == 0);
-        REQUIRE(plaza->rect.width == 0);
-        REQUIRE(plaza->rect.height == 0);
+        REQUIRE(plaza->tileset.empty());
+        REQUIRE(plaza->tile_index == 0);
       }
     }
   }
