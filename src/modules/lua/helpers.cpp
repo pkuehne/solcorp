@@ -151,7 +151,7 @@ flecs::entity create_connector(flecs::world &world, const std::string &name,
           .set<Transform>(t)
           .child_of(site);
 
-  auto base_e = world.lookup(("Textures::" + base_tileset).c_str());
+  auto base_e = world.lookup(("Tilesets::" + base_tileset).c_str());
   if (!base_e.is_valid()) {
     spdlog::error("Connector base tileset '{}' not found", base_tileset);
   } else {
@@ -159,7 +159,7 @@ flecs::entity create_connector(flecs::world &world, const std::string &name,
   }
 
   if (!markings_tileset.empty()) {
-    auto markings_e = world.lookup(("Textures::" + markings_tileset).c_str());
+    auto markings_e = world.lookup(("Tilesets::" + markings_tileset).c_str());
     if (!markings_e.is_valid()) {
       spdlog::error("Connector markings tileset '{}' not found",
                     markings_tileset);

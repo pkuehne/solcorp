@@ -288,14 +288,11 @@ SDL_Rect tileRect(const Tileset &tileset, uint32_t index) {
   };
 }
 
-void renderTile(const Renderer &renderer, const Texture &texture, int src_col,
-                int src_row, int tile_size, const Transform &transform,
+void renderTile(const Renderer &renderer, const Texture &texture,
+                const SDL_Rect &source, const Transform &transform,
                 double rotation) {
-  SDL_Rect source = {src_col * tile_size, src_row * tile_size, tile_size,
-                     tile_size};
   SDL_FRect dest = {transform.worldPosition.x, transform.worldPosition.y,
-                    static_cast<float>(tile_size),
-                    static_cast<float>(tile_size)};
+                    static_cast<float>(source.w), static_cast<float>(source.h)};
   SDL_RenderCopyExF(renderer.renderer, texture.ptr, &source, &dest, rotation,
                     nullptr, SDL_FLIP_NONE);
 }

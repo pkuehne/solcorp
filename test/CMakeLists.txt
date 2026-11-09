@@ -26,6 +26,7 @@ add_executable(unit_test
   lua/helpers/create_site.test.cpp
   lua/helpers/create_rocket.test.cpp
   lua/helpers/create_building.test.cpp
+  lua/helpers/create_connector.test.cpp
   lua/helpers/add_effect.test.cpp
   lua/helpers/create_contract.test.cpp
   lua/helpers/create_contract_payload.test.cpp
