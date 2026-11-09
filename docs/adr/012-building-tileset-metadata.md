@@ -4,8 +4,8 @@
 
 ## Context
 
-Buildings in SolCorp today render from a single `Sprite` — a clipped rect into a shared texture, set
-imperatively via `building:setSprite(...)` ([helpers.cpp](../../src/modules/lua/helpers.cpp)). The
+Buildings in SolCorp today render from a single `Sprite` — a clipped rect into a shared texture,
+declared per building in the mod's `buildings.lua` (ADR 011). The
 move to a tileable sprite set is not yet built. The first design for it — sketched in
 [ADR 009 §8](/adr/009-build-mode-and-site-window.md) — used a fixed 9-slice convention: a building
 occupies at minimum nine tiles (four corners, four edges, one centre), and a tile's integer index
@@ -56,9 +56,12 @@ values cross the boundary through `register_component_lua`. The same mechanism c
 also keeps the registry trivially moddable: mods append new definitions or override by id, consistent
 with the last-writer-wins registry pattern established in [ADR 011](/adr/011-lua-mod-registry.md).
 
-The `sprite` field of a `TileDef` follows the existing reference model — a clipped rect into a named
-texture entity (`Textures::<name>`, as `clip_sprite_from_texture` and the connector tilesets already
-do), not a raw pixel handle.
+The `sprite` field of a `TileDef` is a **tile index** into the building type's tileset
+([ADR 013](/adr/013-tilesets.md)), not a raw pixel handle or rect.
+
+> Amendment (2026-10): `sprite` was originally a clipped rect into a named texture
+> (`Textures::<name>`), as `clip_sprite_from_texture` does. With tilesets owning the tile size and
+> index → rect mapping, a tile definition only names which tile it uses.
 
 ### Tile definition
 
@@ -67,7 +70,7 @@ Each entry in a building's tileset:
 | Field | Meaning |
 |---|---|
 | `id` | Stable string id (`hall_centre_a`, `hall_launchpad`) |
-| `sprite` | Reference into the spritesheet |
+| `sprite` | Tile index into the building type's tileset |
 | `roles` | Set of 9-slice roles this tile may fill (`{Centre}`, `{Bottom,BL}`) |
 | `surface` | `Roof` \| `SouthWall` \| `None` — what may mount here |
 | `weight` | Relative selection weight among candidates for a role |
@@ -169,6 +172,7 @@ of the building. This:
 
 ## Related
 
+- [ADR 013](/adr/013-tilesets.md) — Tilesets (a `TileDef`'s `sprite` is a tile index into a tileset).
 - [ADR 011](/adr/011-lua-mod-registry.md) — Lua Mod Registry and Prefab Override System (registry and
   merge pattern this ADR builds on; tile-registry validation extends ADR 011 §5).
 - [ADR 010](/adr/010-connector-tile-system.md) — Connector Tile System (layered tile rendering and the
