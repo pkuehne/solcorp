@@ -28,6 +28,10 @@ void registerEngineComponents(flecs::world &world) {
       .member("tile_width", &Tileset::tile_width)
       .member("tile_height", &Tileset::tile_height)
       .member("columns", &Tileset::columns);
+  world.component<Tile>()
+      .member("index", &Tile::index)
+      .add(flecs::Exclusive)
+      .add(flecs::OnInstantiate, flecs::Inherit);
   world.component<SpriteFlip>();
   world.component<Sprite>()
       .member("texture", &Sprite::texture)

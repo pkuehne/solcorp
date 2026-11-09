@@ -51,6 +51,12 @@ struct Tileset {
   int columns = 0;
 };
 
+/// @brief A single tile drawn from a Tileset, as a pair with data.
+/// entity --Tile{index}--> tileset entity (ADR 013)
+struct Tile {
+  uint32_t index = 0;
+};
+
 /// @brief Creates a Tileset for @p texture, deriving the column count from its
 /// width
 /// @throws std::invalid_argument if the tile size is not positive, is larger
@@ -107,6 +113,11 @@ void renderTile(const Renderer &renderer, const Texture &texture,
                 const SDL_Rect &source, const Transform &transform,
                 double rotation);
 
+/// @brief Draws tile @p index of @p tileset_e at @p transform, logging if the
+/// tileset has no loaded texture
+void renderTilesetTile(flecs::entity tileset_e, uint32_t index,
+                       const Transform &transform, double rotation);
+
 /// @brief Draws one layer of a tiled entity by following a relationship to the
 /// Tileset that layer is drawn from (ADR 013).
 ///
@@ -135,21 +146,7 @@ void renderTileLayer(flecs::entity e, uint32_t index,
   if (!tileset_e.is_valid()) {
     return;
   }
-  const auto *tileset = tileset_e.template try_get<Tileset>();
-  auto texture_e = tileset_e.template target<TilesetTexture>();
-  const auto *texture =
-      texture_e.is_valid() ? texture_e.template try_get<Texture>() : nullptr;
-  if (tileset == nullptr || texture == nullptr || texture->ptr == nullptr) {
-    spdlog::error("Tileset '{}' has no loaded texture",
-                  tileset_e.name().c_str());
-    return;
-  }
-  const auto *renderer = e.world().try_get<Renderer>();
-  if (renderer == nullptr) {
-    return;
-  }
-  renderTile(*renderer, *texture, tileRect(*tileset, index), transform,
-             rotation);
+  renderTilesetTile(tileset_e, index, transform, rotation);
 }
 
 void initialiseGraphics(flecs::world &);

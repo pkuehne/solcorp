@@ -94,6 +94,15 @@ void registerRender(flecs::world &world) {
       .kind(RenderPhase)
       .each(systemRenderSprite);
 
+  world.system<const Tile, const Transform>("Render Tiles")
+      .term_at(0)
+      .second(flecs::Wildcard)
+      .kind(RenderPhase)
+      .each([](flecs::iter &it, size_t, const Tile &tile,
+               const Transform &transform) {
+        renderTilesetTile(it.pair(0).second(), tile.index, transform, 0.0);
+      });
+
   world
       .system<const Text, const Texture, const Transform, const Renderer>(
           "Render Text")
@@ -286,6 +295,25 @@ SDL_Rect tileRect(const Tileset &tileset, uint32_t index) {
       .w = tileset.tile_width,
       .h = tileset.tile_height,
   };
+}
+
+void renderTilesetTile(flecs::entity tileset_e, uint32_t index,
+                       const Transform &transform, double rotation) {
+  const auto *tileset = tileset_e.try_get<Tileset>();
+  auto texture_e = tileset_e.target<TilesetTexture>();
+  const auto *texture =
+      texture_e.is_valid() ? texture_e.try_get<Texture>() : nullptr;
+  if (tileset == nullptr || texture == nullptr || texture->ptr == nullptr) {
+    spdlog::error("Tileset '{}' has no loaded texture",
+                  tileset_e.name().c_str());
+    return;
+  }
+  const auto *renderer = tileset_e.world().try_get<Renderer>();
+  if (renderer == nullptr) {
+    return;
+  }
+  renderTile(*renderer, *texture, tileRect(*tileset, index), transform,
+             rotation);
 }
 
 void renderTile(const Renderer &renderer, const Texture &texture,
