@@ -37,8 +37,8 @@ struct FacilityDef {
 struct BuildingDef {
   std::string id;        ///< Stable registry id (the map key).
   std::string name;      ///< Display name / prefab entity name.
-  std::string texture;   ///< Named texture the sprite clips from.
-  SpriteClipRect rect{}; ///< Sprite clip rectangle into that texture.
+  std::string tileset;   ///< Tileset the building is drawn from.
+  uint32_t tile_index{}; ///< Tile within that tileset.
   std::vector<FacilityDef> facilities;
   bool hidden = false; ///< ADR 011 §3: registry-only, no prefab created.
   // Deferred (ADR 009/012): `spawnable`, `buildable`, and `animations` are

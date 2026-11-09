@@ -143,10 +143,14 @@ void applyBuildingData(flecs::world &world,
     auto prefab = create_building_prefab(world, building.id);
     prefab.set<Label>({building.name});
 
-    if (!building.texture.empty()) {
-      Sprite sprite =
-          clip_sprite_from_texture(world, building.texture, building.rect);
-      prefab.set<Sprite>(sprite);
+    if (!building.tileset.empty()) {
+      auto tileset = world.lookup(("Tilesets::" + building.tileset).c_str());
+      if (tileset.is_valid()) {
+        prefab.set<Tile>(tileset, {.index = building.tile_index});
+      } else {
+        spdlog::error("Building '{}': tileset '{}' not found", building.id,
+                      building.tileset);
+      }
     }
 
     for (const auto &facility : building.facilities) {

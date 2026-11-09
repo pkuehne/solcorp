@@ -86,30 +86,48 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
     }
   }
 
-  GIVEN("a building definition whose sprite clips a known texture") {
-    // clip_sprite_from_texture looks the texture up by name under Textures::.
-    auto textures = world.entity("Textures");
-    auto texture = world.entity("Buildings").child_of(textures);
+  GIVEN("a building definition whose tile is in a known tileset") {
+    auto tilesets = world.entity("Tilesets");
+    auto tileset = world.entity("buildings").child_of(tilesets);
 
     BuildingDef hall;
     hall.id = "storage_hall";
     hall.name = "Storage Hall";
-    hall.texture = "Buildings";
-    hall.rect = {.x = 0, .y = 64, .width = 32, .height = 32};
+    hall.tileset = "buildings";
+    hall.tile_index = 2;
 
     WHEN("the definition is applied") {
       applyBuildingData(world, {hall});
 
-      THEN("the prefab's sprite carries the clip rect and texture reference") {
+      THEN("the prefab is drawn with that tile from that tileset") {
         auto prefab = world.lookup("Prefabs::Buildings::storage_hall");
         REQUIRE(prefab.is_valid());
-        REQUIRE(prefab.has<Sprite>());
-        const auto &sprite = prefab.get<Sprite>();
-        CHECK(sprite.x == 0);
-        CHECK(sprite.y == 64);
-        CHECK(sprite.width == 32);
-        CHECK(sprite.height == 32);
-        CHECK(sprite.texture == texture);
+        REQUIRE(prefab.has<Tile>(tileset));
+        CHECK(prefab.get<Tile>(tileset).index == 2);
+      }
+
+      THEN("the prefab has no sprite to draw underneath the tile") {
+        auto prefab = world.lookup("Prefabs::Buildings::storage_hall");
+        REQUIRE(prefab.is_valid());
+        CHECK_FALSE(prefab.has<Sprite>());
+      }
+    }
+  }
+
+  GIVEN("a building definition whose tileset does not exist") {
+    BuildingDef hall;
+    hall.id = "storage_hall";
+    hall.name = "Storage Hall";
+    hall.tileset = "no_such_tileset";
+    hall.tile_index = 2;
+
+    WHEN("the definition is applied") {
+      applyBuildingData(world, {hall});
+
+      THEN("the prefab is still created, without a tile") {
+        auto prefab = world.lookup("Prefabs::Buildings::storage_hall");
+        REQUIRE(prefab.is_valid());
+        CHECK_FALSE(prefab.target<Tile>().is_valid());
       }
     }
   }

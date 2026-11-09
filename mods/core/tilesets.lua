@@ -6,4 +6,5 @@
 return {
 	roads_asphalt = { texture = "roads_asphalt", tile_size = 32 },
 	roads_markings = { texture = "roads_markings", tile_size = 32 },
+	buildings = { texture = "Buildings", tile_size = 32 },
 }

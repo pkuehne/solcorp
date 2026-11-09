@@ -1,5 +1,5 @@
 -- Dev-only building overrides (ADR 011 §6), deep-merged on top of core's
--- buildings.lua. Only the changed fields are declared; everything else (sprite,
+-- buildings.lua. Only the changed fields are declared; everything else (tile,
 -- facilities, ...) is inherited from the entry this patches.
 
 return {
