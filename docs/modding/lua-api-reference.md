@@ -52,8 +52,9 @@ For each component `Foo` exposed to Lua:
 ### Sites & Buildings
 
 ```lua
--- Create a launch site
-local site = solcorp.helpers.create_site(name, width, height, active)
+-- Create a launch site; buildable lists the prefab categories the player can
+-- build there (names under Prefabs::, e.g. { "Buildings" })
+local site = solcorp.helpers.create_site(name, width, height, active, buildable)
 
 -- Create a building prefab definition
 local prefab = solcorp.helpers.create_building_prefab(name)

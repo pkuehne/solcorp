@@ -41,13 +41,18 @@ A site exposes its buildable set so the palette can query it:
 ```cpp
 /// @brief A category of thing that may be built on a site (relationship target).
 /// Site --Buildable--> Prefabs::Buildings
-/// Site --Buildable--> Prefabs::Roads
 struct Buildable {};
 ```
 
-An Earth site is `Buildable` of `Prefabs::Buildings` and `Prefabs::Roads`; a future station is
-`Buildable` of `Prefabs::Modules`. The Site Window renders one palette section per buildable
-target. This relationship is the seam that lets stations and moons reuse the whole system.
+An Earth site is `Buildable` of `Prefabs::Buildings`; a future station is `Buildable` of
+`Prefabs::Modules`. The Site Window renders one palette section per buildable target. This
+relationship is the seam that lets stations and moons reuse the whole system. A mod declares a site's
+categories when creating it: `create_site(name, width, height, active, { "Buildings" })`.
+
+> Amendment (2026-11): roads were originally a `Buildable` category (`Prefabs::Roads`). They are
+> connectors placed by drawing, not prefabs placed from a palette category, so they are not a
+> `Buildable` target. For now every site allows roads; a per-site rule can be added when another site
+> type needs one.
 
 > Note: ADR 011 also defines a per-prefab `buildable` *boolean* (does this specific prefab appear in
 > the player build UI). That is a finer axis than this relationship and composes with it: the
@@ -165,6 +170,7 @@ enum class PlacementResult : uint8_t {
   OutOfBounds,
   Occupied,
   TooSmall,                  // dragged rectangle below the 2×2 minimum
+  TooLarge,                  // dragged rectangle above the definition's maximum
   NotConnectedToRoad,        // building has no adjacent connector
   ConnectorNotConnected,     // connector has no adjacent connector or building
 };
@@ -194,6 +200,11 @@ Connectivity and size rules (in `canPlace`):
 
 `canPlace` takes the realised `Footprint`; the min-size check is a small guard layered on top by the
 caller so the core region/connectivity logic stays size-agnostic and easy to test.
+
+> Amendment (2026-11): `TooLarge` was added once building definitions could set a maximum size. The
+> drag is clamped to that maximum, so the player should not normally see it; it exists so the
+> placement Action's defensive re-validation (ADR 004) can reject an oversized footprint. The size
+> guard is `checkFootprintSize(footprint, limits)`, returning `TooSmall`, `TooLarge` or `Ok`.
 
 ### 5. Occupancy grid is lifted out of the scatter system
 

@@ -51,6 +51,7 @@ list(APPEND SolCorpSources
     modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
     modules/site/helpers.cpp
+    modules/site/placement.cpp
     modules/site/site.cpp
     modules/site/site_construction.cpp
     modules/site/weather.cpp
@@ -111,6 +112,7 @@ list(APPEND SolCorpHeaders
     modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
     modules/site/helpers.h
+    modules/site/placement.h
     modules/site/site.h
     modules/site/site_construction.h
     modules/site/weather.h

@@ -33,12 +33,22 @@ struct FacilityDef {
   std::string type;
 };
 
+/// @brief A building size as written in buildings.lua; range-checked by
+/// validateBuildingDef before it becomes a Footprint.
+struct SizeDef {
+  long long w = 0;
+  long long h = 0;
+};
+
 /// @brief A building prefab definition parsed from a mod's buildings.lua.
 struct BuildingDef {
-  std::string id;        ///< Stable registry id (the map key).
-  std::string name;      ///< Display name / prefab entity name.
-  std::string tileset;   ///< Tileset the building is drawn from.
-  uint32_t tile_index{}; ///< Tile within that tileset.
+  std::string id;                  ///< Stable registry id (the map key).
+  std::string name;                ///< Display name / prefab entity name.
+  std::string tileset;             ///< Tileset the building is drawn from.
+  uint32_t tile_index{};           ///< Tile within that tileset.
+  bool fixed_size = false;         ///< 1x1, click-placed (ADR 009 §2).
+  std::optional<SizeDef> min_size; ///< Draggable size range (ADR 009 §2).
+  std::optional<SizeDef> max_size;
   std::vector<FacilityDef> facilities;
   bool hidden = false; ///< ADR 011 §3: registry-only, no prefab created.
   // Deferred (ADR 009/012): `spawnable`, `buildable`, and `animations` are

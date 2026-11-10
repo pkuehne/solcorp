@@ -1,6 +1,7 @@
 #include "../helpers/setup_helpers.h"
 #include "modules/base/base.h"
 #include "modules/lua/mod_content.h"
+#include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
@@ -128,6 +129,72 @@ SCENARIO("applyBuildingData creates building prefabs with facilities",
         auto prefab = world.lookup("Prefabs::Buildings::storage_hall");
         REQUIRE(prefab.is_valid());
         CHECK_FALSE(prefab.target<Tile>().is_valid());
+      }
+    }
+  }
+}
+
+SCENARIO("applyBuildingData sets a building's size rules",
+         "[mod_content][lua]") {
+  flecs::world world;
+  run_site_prefab_setup(world);
+
+  GIVEN("a fixed-size building definition") {
+    BuildingDef gate;
+    gate.id = "gate";
+    gate.fixed_size = true;
+
+    WHEN("the definition is applied") {
+      applyBuildingData(world, {gate});
+
+      THEN("the prefab is fixed-size and has no size limits") {
+        auto prefab = world.lookup("Prefabs::Buildings::gate");
+        REQUIRE(prefab.is_valid());
+        CHECK(prefab.has<FixedSize>());
+        CHECK_FALSE(prefab.has<FootprintLimits>());
+      }
+    }
+  }
+
+  GIVEN("a draggable building definition with a size range") {
+    BuildingDef office;
+    office.id = "office";
+    office.min_size = SizeDef{.w = 2, .h = 4};
+    office.max_size = SizeDef{.w = 6, .h = 8};
+
+    WHEN("the definition is applied") {
+      applyBuildingData(world, {office});
+
+      THEN("the prefab carries those limits") {
+        auto prefab = world.lookup("Prefabs::Buildings::office");
+        REQUIRE(prefab.is_valid());
+        CHECK_FALSE(prefab.has<FixedSize>());
+        REQUIRE(prefab.has<FootprintLimits>());
+        const auto &limits = prefab.get<FootprintLimits>();
+        CHECK(limits.min.w == 2);
+        CHECK(limits.min.h == 4);
+        CHECK(limits.max.w == 6);
+        CHECK(limits.max.h == 8);
+      }
+    }
+  }
+
+  GIVEN("a draggable building definition without a size range") {
+    BuildingDef hall;
+    hall.id = "hall";
+
+    WHEN("the definition is applied") {
+      applyBuildingData(world, {hall});
+
+      THEN("the prefab gets the default limits: 2x2 up to the site") {
+        auto prefab = world.lookup("Prefabs::Buildings::hall");
+        REQUIRE(prefab.is_valid());
+        REQUIRE(prefab.has<FootprintLimits>());
+        const auto &limits = prefab.get<FootprintLimits>();
+        CHECK(limits.min.w == 2);
+        CHECK(limits.min.h == 2);
+        CHECK(limits.max.w == UINT8_MAX);
+        CHECK(limits.max.h == UINT8_MAX);
       }
     }
   }

@@ -2,9 +2,12 @@
 #include "lua/data/temp_lua_file.h"
 #include "modules/lua/lua_data.h"
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
+#include <optional>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -183,6 +186,85 @@ SCENARIO("validateBuildingDef rejects definitions that cannot become prefabs") {
 
     THEN("it validates (facilities are optional)") {
       REQUIRE_FALSE(validateBuildingDef(def).has_value());
+    }
+  }
+}
+
+SCENARIO("parseBuildingData reads building size limits") {
+  struct Case {
+    std::string entry;
+    bool expected_fixed;
+    std::optional<SizeDef> expected_min;
+    std::optional<SizeDef> expected_max;
+  };
+
+  GIVEN("a building entry with or without size fields") {
+    auto [entry, expected_fixed, expected_min,
+          expected_max] = GENERATE(values<Case>({
+        {"{}", false, std::nullopt, std::nullopt},
+        {"{ fixed_size = true }", true, std::nullopt, std::nullopt},
+        {"{ min_size = { w = 2, h = 4 } }", false, SizeDef{2, 4}, std::nullopt},
+        {"{ min_size = { w = 2, h = 4 }, max_size = { w = 6, h = 8 } }", false,
+         SizeDef{2, 4}, SizeDef{6, 8}},
+        {"{ max_size = { w = 6 } }", false, std::nullopt, SizeDef{6, 0}},
+    }));
+    CAPTURE(entry);
+    TempLuaFile file("return { hall = " + entry + " }");
+    LuaDataFile lua(file.path());
+    REQUIRE(lua.ok());
+
+    WHEN("the data is parsed") {
+      auto buildings = parseBuildingData(lua.materialize());
+
+      THEN("the size fields are read as written") {
+        REQUIRE(buildings.size() == 1);
+        const BuildingDef &hall = buildings[0];
+        CHECK(hall.fixed_size == expected_fixed);
+        auto pair_of = [](const std::optional<SizeDef> &size) {
+          return size ? std::optional{std::pair{size->w, size->h}}
+                      : std::nullopt;
+        };
+        CHECK(pair_of(hall.min_size) == pair_of(expected_min));
+        CHECK(pair_of(hall.max_size) == pair_of(expected_max));
+      }
+    }
+  }
+}
+
+SCENARIO("validateBuildingDef checks building size limits") {
+  struct Case {
+    bool fixed_size;
+    std::optional<SizeDef> min_size;
+    std::optional<SizeDef> max_size;
+    std::optional<std::string> expected_reason;
+  };
+
+  GIVEN("a definition with size fields") {
+    auto [fixed_size, min_size, max_size, expected_reason] =
+        GENERATE(values<Case>({
+            {false, std::nullopt, std::nullopt, std::nullopt},
+            {true, std::nullopt, std::nullopt, std::nullopt},
+            {false, SizeDef{2, 4}, SizeDef{6, 8}, std::nullopt},
+            {false, SizeDef{3, 3}, SizeDef{3, 3}, std::nullopt},
+            {true, SizeDef{2, 2}, std::nullopt,
+             "fixed_size cannot be combined with min_size or max_size"},
+            {false, SizeDef{0, 4}, std::nullopt,
+             "min_size must be between 1 and 255 in each dimension"},
+            {false, std::nullopt, SizeDef{6, 256},
+             "max_size must be between 1 and 255 in each dimension"},
+            {false, SizeDef{6, 4}, SizeDef{4, 8},
+             "min_size is larger than max_size"},
+            {false, SizeDef{2, 9}, SizeDef{4, 8},
+             "min_size is larger than max_size"},
+        }));
+    BuildingDef def;
+    def.id = "hall";
+    def.fixed_size = fixed_size;
+    def.min_size = min_size;
+    def.max_size = max_size;
+
+    THEN("it is accepted, or rejected with the reason") {
+      CHECK(validateBuildingDef(def) == expected_reason);
     }
   }
 }

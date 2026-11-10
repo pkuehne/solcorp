@@ -27,9 +27,12 @@ flecs::entity create_prefab_under(const flecs::world &world,
                                   flecs::entity parent, flecs::entity base,
                                   const std::string &name);
 
+/// @param buildable Prefab categories (names under Prefabs::) the player may
+/// build on the site; unknown names are logged and skipped
 flecs::entity create_site(const flecs::world &world, const std::string &name,
                           uint8_t width, uint8_t height,
-                          bool make_current = false);
+                          bool make_current = false,
+                          const std::vector<std::string> &buildable = {});
 flecs::entity create_rocket(const flecs::world &world, const RocketName &name,
                             const RocketPrefabType &prefab,
                             flecs::entity parent = flecs::entity());
