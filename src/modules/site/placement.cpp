@@ -1,6 +1,8 @@
 #include "placement.h"
 #include "connector.h"
 #include "site.h"
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <utility>
 
@@ -51,4 +53,61 @@ OccupancyGrid buildOccupancyGrid(flecs::entity site) {
   });
 
   return grid;
+}
+
+namespace {
+
+constexpr std::array<std::pair<int, int>, 4> ORTHOGONAL_STEPS = {
+    {{0, -1}, {1, 0}, {0, 1}, {-1, 0}}};
+
+bool hasNeighbour(const OccupancyGrid &grid, int x, int y,
+                  CellContent content) {
+  return std::ranges::any_of(ORTHOGONAL_STEPS, [&](auto step) {
+    return grid.at(x + step.first, y + step.second) == content;
+  });
+}
+
+PlacementResult canPlaceBuilding(const OccupancyGrid &grid, int origin_x,
+                                 int origin_y, Footprint footprint) {
+  bool next_to_road = false;
+  for (int y = origin_y; y < origin_y + footprint.h; ++y) {
+    for (int x = origin_x; x < origin_x + footprint.w; ++x) {
+      if (!grid.inBounds(x, y)) {
+        return PlacementResult::OutOfBounds;
+      }
+      if (grid.at(x, y) != CellContent::Empty) {
+        return PlacementResult::Occupied;
+      }
+      next_to_road =
+          next_to_road || hasNeighbour(grid, x, y, CellContent::Connector);
+    }
+  }
+  return next_to_road ? PlacementResult::Ok
+                      : PlacementResult::NotConnectedToRoad;
+}
+
+PlacementResult canPlaceConnector(const OccupancyGrid &grid, int x, int y) {
+  if (!grid.inBounds(x, y)) {
+    return PlacementResult::OutOfBounds;
+  }
+  if (grid.at(x, y) != CellContent::Empty) {
+    return PlacementResult::Occupied;
+  }
+  const bool empty_site = std::ranges::all_of(
+      grid.cells, [](CellContent c) { return c == CellContent::Empty; });
+  if (empty_site || hasNeighbour(grid, x, y, CellContent::Connector) ||
+      hasNeighbour(grid, x, y, CellContent::Building)) {
+    return PlacementResult::Ok;
+  }
+  return PlacementResult::ConnectorNotConnected;
+}
+
+} // namespace
+
+PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
+                         SiteLocation origin, Footprint footprint) {
+  if (kind == PlacementKind::Connector) {
+    return canPlaceConnector(grid, origin.x, origin.y);
+  }
+  return canPlaceBuilding(grid, origin.x, origin.y, footprint);
 }
