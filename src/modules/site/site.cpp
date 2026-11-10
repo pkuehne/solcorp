@@ -48,6 +48,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("width", &Site::width)
       .member("height", &Site::height);
   world.component<Building>();
+  world.component<Buildable>();
   world.component<FixedSize>();
   world.component<Footprint>()
       .member("w", &Footprint::w)

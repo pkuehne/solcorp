@@ -30,7 +30,7 @@ local function on_start()
 	-- buildings.lua, loaded and applied by the engine before on_start runs.
 
 	-- Create a new site
-	solcorp.helpers.create_site("Cape Canaveral", 10, 10, true)
+	solcorp.helpers.create_site("Cape Canaveral", 10, 10, true, { "Buildings" })
 end
 
 get_random_contract_name = function()

@@ -5,6 +5,10 @@
 #include <flecs.h>
 #include <vector>
 
+/// @brief A category of prefab the player may build on a site.
+/// site --Buildable--> Prefabs::<category> (ADR 009 §1)
+struct Buildable {};
+
 /// @brief Marks a prefab as a single 1x1 object placed by one click, rather
 /// than a drag-sized multi-tile building (ADR 009 §2)
 struct FixedSize {};

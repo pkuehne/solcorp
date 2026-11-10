@@ -41,13 +41,18 @@ A site exposes its buildable set so the palette can query it:
 ```cpp
 /// @brief A category of thing that may be built on a site (relationship target).
 /// Site --Buildable--> Prefabs::Buildings
-/// Site --Buildable--> Prefabs::Roads
 struct Buildable {};
 ```
 
-An Earth site is `Buildable` of `Prefabs::Buildings` and `Prefabs::Roads`; a future station is
-`Buildable` of `Prefabs::Modules`. The Site Window renders one palette section per buildable
-target. This relationship is the seam that lets stations and moons reuse the whole system.
+An Earth site is `Buildable` of `Prefabs::Buildings`; a future station is `Buildable` of
+`Prefabs::Modules`. The Site Window renders one palette section per buildable target. This
+relationship is the seam that lets stations and moons reuse the whole system. A mod declares a site's
+categories when creating it: `create_site(name, width, height, active, { "Buildings" })`.
+
+> Amendment (2026-11): roads were originally a `Buildable` category (`Prefabs::Roads`). They are
+> connectors placed by drawing, not prefabs placed from a palette category, so they are not a
+> `Buildable` target. For now every site allows roads; a per-site rule can be added when another site
+> type needs one.
 
 > Note: ADR 011 also defines a per-prefab `buildable` *boolean* (does this specific prefab appear in
 > the player build UI). That is a finer axis than this relationship and composes with it: the

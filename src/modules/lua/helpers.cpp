@@ -6,13 +6,15 @@
 #include "modules/lua/lua_registry.h"
 #include "modules/site/connector.h"
 #include "modules/site/helpers.h"
+#include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 #include <flecs.h>
 #include <modules/rocket/rocket_module.h>
 
 flecs::entity create_site(const flecs::world &world, const std::string &name,
-                          uint8_t width, uint8_t height, bool make_current) {
+                          uint8_t width, uint8_t height, bool make_current,
+                          const std::vector<std::string> &buildable) {
   auto site = world.entity(name.c_str())
                   .set<Site>({.width = width, .height = height})
                   .set<Transform>({.relativePosition = {.x = 340, .y = 240},
@@ -24,6 +26,16 @@ flecs::entity create_site(const flecs::world &world, const std::string &name,
   auto earth = world.lookup("Sun::Earth");
   SC_ASSERT(earth.is_valid(), "Sun::Earth entity not found");
   site.child_of(earth);
+
+  for (const auto &category : buildable) {
+    auto target = world.lookup(("Prefabs::" + category).c_str());
+    if (target.is_valid()) {
+      site.add<Buildable>(target);
+    } else {
+      spdlog::error("Site '{}': buildable category 'Prefabs::{}' not found",
+                    name, category);
+    }
+  }
   return site;
 }
 
@@ -195,8 +207,18 @@ static int create_site_wrapper(lua_State *L) {
   auto width = (uint32_t)luaL_checkinteger(L, 2);
   auto height = (uint32_t)luaL_checkinteger(L, 3);
   bool make_current = lua_toboolean(L, 4) != 0;
-  lua_push_entity(
-      L, create_site(*lua_get_world(L), name, width, height, make_current));
+  std::vector<std::string> buildable;
+  if (!lua_isnoneornil(L, 5)) {
+    luaL_checktype(L, 5, LUA_TTABLE);
+    const auto count = static_cast<lua_Integer>(lua_rawlen(L, 5));
+    for (lua_Integer i = 1; i <= count; ++i) {
+      lua_rawgeti(L, 5, i);
+      buildable.emplace_back(luaL_checkstring(L, -1));
+      lua_pop(L, 1);
+    }
+  }
+  lua_push_entity(L, create_site(*lua_get_world(L), name, width, height,
+                                 make_current, buildable));
   return 1;
 }
 
