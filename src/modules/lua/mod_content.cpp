@@ -7,6 +7,7 @@
 #include "modules/lua/lua_data.h"
 #include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
 
@@ -151,6 +152,21 @@ void applyBuildingData(flecs::world &world,
         spdlog::error("Building '{}': tileset '{}' not found", building.id,
                       building.tileset);
       }
+    }
+
+    if (building.fixed_size) {
+      prefab.add<FixedSize>();
+    } else {
+      FootprintLimits limits;
+      if (building.min_size) {
+        limits.min = {.w = static_cast<uint8_t>(building.min_size->w),
+                      .h = static_cast<uint8_t>(building.min_size->h)};
+      }
+      if (building.max_size) {
+        limits.max = {.w = static_cast<uint8_t>(building.max_size->w),
+                      .h = static_cast<uint8_t>(building.max_size->h)};
+      }
+      prefab.set<FootprintLimits>(limits);
     }
 
     for (const auto &facility : building.facilities) {

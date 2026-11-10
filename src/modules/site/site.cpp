@@ -52,6 +52,9 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Footprint>()
       .member("w", &Footprint::w)
       .member("h", &Footprint::h);
+  world.component<FootprintLimits>()
+      .member("min", &FootprintLimits::min)
+      .member("max", &FootprintLimits::max);
   world.component<SiteLocation>()
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);

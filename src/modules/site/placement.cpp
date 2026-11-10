@@ -111,3 +111,16 @@ PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
   }
   return canPlaceBuilding(grid, origin.x, origin.y, footprint);
 }
+
+PlacementResult checkFootprintSize(Footprint footprint,
+                                   const FootprintLimits &limits) {
+  const auto min_w = std::max(limits.min.w, MIN_BUILDING_FOOTPRINT.w);
+  const auto min_h = std::max(limits.min.h, MIN_BUILDING_FOOTPRINT.h);
+  if (footprint.w < min_w || footprint.h < min_h) {
+    return PlacementResult::TooSmall;
+  }
+  if (footprint.w > limits.max.w || footprint.h > limits.max.h) {
+    return PlacementResult::TooLarge;
+  }
+  return PlacementResult::Ok;
+}

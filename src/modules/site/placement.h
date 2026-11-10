@@ -36,6 +36,7 @@ enum class PlacementResult : uint8_t {
   OutOfBounds,
   Occupied,
   TooSmall,
+  TooLarge,
   NotConnectedToRoad,
   ConnectorNotConnected,
 };
@@ -48,6 +49,22 @@ enum class PlacementResult : uint8_t {
 /// a connector or building, unless the site is empty.
 PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
                          SiteLocation origin, Footprint footprint);
+
+/// @brief Smallest footprint of a draggable building (ADR 009 §2)
+constexpr Footprint MIN_BUILDING_FOOTPRINT{.w = 2, .h = 2};
+
+/// @brief Size range a building definition allows, per dimension. A minimum
+/// below MIN_BUILDING_FOOTPRINT is raised to it; the site bounds the maximum
+/// separately (canPlace reports OutOfBounds).
+struct FootprintLimits {
+  Footprint min = MIN_BUILDING_FOOTPRINT;
+  Footprint max{.w = UINT8_MAX, .h = UINT8_MAX};
+};
+
+/// @brief Whether a draggable building of @p footprint fits @p limits
+/// (FixedSize buildings are always 1x1 and are not size-checked)
+PlacementResult checkFootprintSize(Footprint footprint,
+                                   const FootprintLimits &limits);
 
 /// @brief Builds the occupancy grid of @p site from its children: buildings
 /// fill their Footprint (1x1 if they have none), connectors fill one cell

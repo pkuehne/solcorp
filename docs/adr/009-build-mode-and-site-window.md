@@ -165,6 +165,7 @@ enum class PlacementResult : uint8_t {
   OutOfBounds,
   Occupied,
   TooSmall,                  // dragged rectangle below the 2×2 minimum
+  TooLarge,                  // dragged rectangle above the definition's maximum
   NotConnectedToRoad,        // building has no adjacent connector
   ConnectorNotConnected,     // connector has no adjacent connector or building
 };
@@ -194,6 +195,11 @@ Connectivity and size rules (in `canPlace`):
 
 `canPlace` takes the realised `Footprint`; the min-size check is a small guard layered on top by the
 caller so the core region/connectivity logic stays size-agnostic and easy to test.
+
+> Amendment (2026-11): `TooLarge` was added once building definitions could set a maximum size. The
+> drag is clamped to that maximum, so the player should not normally see it; it exists so the
+> placement Action's defensive re-validation (ADR 004) can reject an oversized footprint. The size
+> guard is `checkFootprintSize(footprint, limits)`, returning `TooSmall`, `TooLarge` or `Ok`.
 
 ### 5. Occupancy grid is lifted out of the scatter system
 
