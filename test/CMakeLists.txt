@@ -76,6 +76,8 @@ add_executable(unit_test
   simulation/generate_sol_system.test.cpp
   site/connector_tiling.test.cpp
   site/contains_point.test.cpp
+  site/occupancy_grid.test.cpp
+  site/update_construction_sites.test.cpp
   site/create_site_prefabs.test.cpp
   site/auto_start_next_build.test.cpp
   site/auto_store_built_rocket.test.cpp

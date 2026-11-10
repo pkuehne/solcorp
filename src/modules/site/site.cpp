@@ -14,6 +14,7 @@
 #include "modules/site/helpers.h"
 #include "modules/stats/stats.h"
 #include "modules/window/building_detail_window.h"
+#include "placement.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include "weather.h"
@@ -47,6 +48,10 @@ SiteModule::SiteModule(flecs::world &world) {
       .member("width", &Site::width)
       .member("height", &Site::height);
   world.component<Building>();
+  world.component<FixedSize>();
+  world.component<Footprint>()
+      .member("w", &Footprint::w)
+      .member("h", &Footprint::h);
   world.component<SiteLocation>()
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);
