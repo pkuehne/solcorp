@@ -2,6 +2,7 @@
 #include "SDL_render.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
+#include "modules/engine/input.h"
 #include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
 #include <SDL.h>
@@ -170,6 +171,7 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   world.set<Renderer>(r);
+  world.set<WindowSize>({.width = m_width, .height = m_height});
 }
 
 /// @brief Applies the parent's transform to the relative co-ordinates

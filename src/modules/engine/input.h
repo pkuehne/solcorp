@@ -28,4 +28,11 @@ struct MouseUp {
   int button = 0;
 };
 
+/// @brief Size of the window's drawable area in renderer pixels; set at
+/// startup and whenever the window is resized
+struct WindowSize {
+  int width = 0;
+  int height = 0;
+};
+
 void registerInput(flecs::world &);
