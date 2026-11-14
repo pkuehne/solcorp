@@ -159,6 +159,26 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(UpdatePhase)
       .each(systemAutoStoreBuiltRocket);
 
+  world.observer<const WindowSize>("Centre Sites on Resize")
+      .event(flecs::OnSet)
+      .each([](flecs::iter &it, size_t, const WindowSize &size) {
+        it.world().each([&](const Site &site, Transform &transform) {
+          transform.relativePosition =
+              centredSiteOrigin(size.width, size.height, site);
+        });
+      });
+
+  world.observer<const Site, Transform>("Centre New Site")
+      .event(flecs::OnSet)
+      .each(
+          [](flecs::iter &it, size_t, const Site &site, Transform &transform) {
+            const auto *size = it.world().try_get<WindowSize>();
+            if (size != nullptr) {
+              transform.relativePosition =
+                  centredSiteOrigin(size->width, size->height, site);
+            }
+          });
+
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
       .kind(ValidatePhase)
@@ -294,6 +314,13 @@ void systemCreateSiteWindows(flecs::iter &it) {
       .set<ConstructionSiteWindow>({});
   registerWindow("Rocket Prefab Window", drawRocketPrefabWindow, world)
       .set<RocketPrefabWindow>({});
+}
+
+Point centredSiteOrigin(int window_width, int window_height, const Site &site) {
+  const int site_width = site.width * SITE_CELL_SIZE;
+  const int site_height = site.height * SITE_CELL_SIZE;
+  return Point{.x = static_cast<float>(window_width - site_width) / 2.0F,
+               .y = static_cast<float>(window_height - site_height) / 2.0F};
 }
 
 bool containsPoint(const Point &origin, float width, float height,

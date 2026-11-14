@@ -57,6 +57,10 @@ void registerEngineComponents(flecs::world &world) {
   world.component<KeyPressed>().add(flecs::Singleton);
   world.component<MouseDown>().add(flecs::Singleton);
   world.component<MouseUp>().add(flecs::Singleton);
+  world.component<WindowSize>()
+      .member("width", &WindowSize::width)
+      .member("height", &WindowSize::height)
+      .add(flecs::Singleton);
   world.component<Velocity>()
       .member("x", &Velocity::x)
       .member("y", &Velocity::y);

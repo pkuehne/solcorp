@@ -17,8 +17,7 @@ flecs::entity create_site(const flecs::world &world, const std::string &name,
                           const std::vector<std::string> &buildable) {
   auto site = world.entity(name.c_str())
                   .set<Site>({.width = width, .height = height})
-                  .set<Transform>({.relativePosition = {.x = 340, .y = 240},
-                                   .worldPosition = {}})
+                  .set<Transform>({})
                   .add<SiteNeedsRelayout>();
   if (make_current) {
     site.add<CurrentSite>();

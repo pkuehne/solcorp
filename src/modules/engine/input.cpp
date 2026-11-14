@@ -2,6 +2,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "modules/base/base.h"
+#include "modules/engine/render.h"
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 
@@ -62,6 +63,14 @@ void systemEventHandling(flecs::iter &it) {
       world.set<MouseUp>({.x = event.button.x,
                           .y = event.button.y,
                           .button = event.button.button});
+      break;
+    case SDL_WINDOWEVENT:
+      if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+        WindowSize size;
+        SDL_GetRendererOutputSize(world.get<Renderer>().renderer, &size.width,
+                                  &size.height);
+        world.set<WindowSize>(size);
+      }
       break;
     default:
       break;
