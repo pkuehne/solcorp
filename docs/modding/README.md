@@ -20,6 +20,40 @@ mods/
     init.lua
 ```
 
+## Building Tiles
+
+A draggable building is drawn as a 9-slice from tiles declared in the mod's
+`tiles.lua`, keyed by building id (see
+[ADR 012](adr/012-building-tileset-metadata.md)):
+
+```lua
+return {
+  factory = {
+    tileset = "factory", -- from tilesets.lua; every index refers to it
+    roof_a = { index = 4, roles = { "Centre" }, weight = 3, surface = "Roof" },
+    roof_b = { index = 5, roles = { "Centre" } },
+    corner = { index = 0, roles = { "TopLeft" } },
+    -- ...
+  },
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `index` | Tile index into the tileset (required) |
+| `roles` | Where the tile may go: `TopLeft`, `Top`, `TopRight`, `Left`, `Centre`, `Right`, `BottomLeft`, `Bottom`, `BottomRight` (required) |
+| `weight` | Relative chance among tiles for the same role (default `1`) |
+| `surface` | `Roof` or `SouthWall`; omit for none |
+| `predicate` | A flag the building must have for the tile to show; omit for always |
+| `tags` | List of gameplay tags |
+
+Every other table in a building's entry is a tile, named by its key. Later mods
+can override or `"__DELETE__"` a single tile by that name.
+
+Invalid tiles are logged and skipped. Unless the building is `fixed_size`, every
+role needs at least one tile without a `predicate`, or the building gets no
+tiles at all.
+
 ## Lifecycle Handlers
 
 Register handlers on the `solcorp.script.handlers` table:

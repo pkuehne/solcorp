@@ -1,4 +1,5 @@
 #include "site.h"
+#include "building_tiles.h"
 #include "connector.h"
 #include "construction_window.h"
 #include "imgui.h"
@@ -53,6 +54,7 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<Footprint>()
       .member("w", &Footprint::w)
       .member("h", &Footprint::h);
+  world.component<BuildingTiles>();
   world.component<FootprintLimits>()
       .member("min", &FootprintLimits::min)
       .member("max", &FootprintLimits::max);

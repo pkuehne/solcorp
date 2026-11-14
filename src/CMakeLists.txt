@@ -26,6 +26,7 @@ list(APPEND SolCorpSources
     modules/lua/rocket_data.cpp
     modules/lua/texture_data.cpp
     modules/lua/tileset_data.cpp
+    modules/lua/tile_data.cpp
     modules/lua/systems.cpp
     modules/window/window_module.cpp
     modules/window/main_menu.cpp
@@ -47,6 +48,7 @@ list(APPEND SolCorpSources
     modules/rocket/rocket_actions.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
+    modules/site/building_tiles.cpp
     modules/site/connector.cpp
     modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
@@ -87,6 +89,7 @@ list(APPEND SolCorpHeaders
     modules/lua/rocket_data.h
     modules/lua/texture_data.h
     modules/lua/tileset_data.h
+    modules/lua/tile_data.h
     modules/lua/systems.h
     modules/window/window_module.h
     modules/window/main_menu.h
@@ -108,6 +111,7 @@ list(APPEND SolCorpHeaders
     modules/rocket/rocket_actions.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/building_tiles.h
     modules/site/connector.h
     modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
