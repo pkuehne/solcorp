@@ -12,8 +12,27 @@
 #pragma once
 
 #include "modules/lua/mod_value.h"
+#include <cstdint>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
+
+/// @brief A position within a building's 9-slice footprint.
+enum class TileRole : uint8_t {
+  TopLeft,
+  Top,
+  TopRight,
+  Left,
+  Centre,
+  Right,
+  BottomLeft,
+  Bottom,
+  BottomRight,
+};
+
+/// @brief What may be mounted on a tile (ADR 012).
+enum class TileSurface : uint8_t { None, Roof, SouthWall };
 
 /// @brief One tile a building may be drawn with (ADR 012).
 struct TileDef {
@@ -40,3 +59,28 @@ struct BuildingTilesDef {
  * a building entry are its tiles; missing tile fields take their defaults.
  */
 std::vector<BuildingTilesDef> parseTileData(const ModValue &root);
+
+/// @brief The role named `name` in tiles.lua, or nullopt if unknown.
+std::optional<TileRole> parseTileRole(const std::string &name);
+
+/// @brief The name tiles.lua uses for `role`.
+std::string_view tileRoleName(TileRole role);
+
+/// @brief The surface named `name` in tiles.lua (empty is None), or nullopt
+/// if unknown.
+std::optional<TileSurface> parseTileSurface(const std::string &name);
+
+/**
+ * @brief Content check for a single tile definition.
+ * @return nullopt if the tile is usable; otherwise a human-readable reason
+ * (logged and the tile skipped by the caller).
+ */
+std::optional<std::string> validateTileDef(const TileDef &tile);
+
+/**
+ * @brief The roles no tile in `tiles` can always fill.
+ *
+ * A role is covered by a tile that declares it and has no predicate, so a
+ * building can be drawn whatever its flags. Unknown role names are ignored.
+ */
+std::vector<TileRole> missingRoles(const std::vector<TileDef> &tiles);
