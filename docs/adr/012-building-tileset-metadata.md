@@ -65,6 +65,11 @@ The `sprite` field of a `TileDef` is a **tile index** into the building type's t
 
 ### Tile definition
 
+> Amendment (2026-11): tile definitions live in a mod's `tiles.lua`, keyed by building id, rather
+> than in `buildings.lua`. Each entry names its `tileset` and declares its tiles as sibling,
+> id-keyed tables, so the ADR 011 deep merge can patch or delete a single tile. `mounts` are
+> defined in #224.
+
 Each entry in a building's tileset:
 
 | Field | Meaning |
