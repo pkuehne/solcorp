@@ -2,6 +2,7 @@
 #include "SDL_render.h"
 #include "modules/base/assert.h"
 #include "modules/base/base.h"
+#include "modules/engine/input.h"
 #include "modules/lua/lua.h"
 #include "spdlog/spdlog.h"
 #include <SDL.h>
@@ -133,8 +134,10 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   Renderer r;
-  flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
-  r.window = SDL_CreateWindow("Sol, Corp", 0, 0, m_width, m_height, flags);
+  flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE |
+           SDL_WINDOW_MAXIMIZED;
+  r.window = SDL_CreateWindow("Sol, Corp", SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED, m_width, m_height, flags);
   if (r.window == nullptr) {
     spdlog::error("Failed to create SDL Window: {}", SDL_GetError());
     throw std::runtime_error("Failed to create SDL Window");
@@ -168,6 +171,7 @@ void initialiseGraphics(flecs::world &world) {
   }
 
   world.set<Renderer>(r);
+  world.set<WindowSize>({.width = m_width, .height = m_height});
 }
 
 /// @brief Applies the parent's transform to the relative co-ordinates

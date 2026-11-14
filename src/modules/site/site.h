@@ -68,6 +68,12 @@ struct ConstructionSite {};
 /// connector autotiling) must be recomputed. Consumed in ValidatePhase.
 struct SiteNeedsRelayout {};
 
+/// @brief Edge length of one site cell, in pixels
+constexpr int SITE_CELL_SIZE = 32;
+
+/// @brief Top-left corner that centres @p site in a window of the given size
+Point centredSiteOrigin(int window_width, int window_height, const Site &site);
+
 /// @brief Whether @p point lies strictly inside the @p width x @p height
 /// rect whose top-left corner is @p origin
 bool containsPoint(const Point &origin, float width, float height,
