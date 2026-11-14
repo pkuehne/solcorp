@@ -12,27 +12,11 @@
 #pragma once
 
 #include "modules/lua/mod_value.h"
-#include <cstdint>
+#include "modules/site/building_tiles.h"
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-
-/// @brief A position within a building's 9-slice footprint.
-enum class TileRole : uint8_t {
-  TopLeft,
-  Top,
-  TopRight,
-  Left,
-  Centre,
-  Right,
-  BottomLeft,
-  Bottom,
-  BottomRight,
-};
-
-/// @brief What may be mounted on a tile (ADR 012).
-enum class TileSurface : uint8_t { None, Roof, SouthWall };
 
 /// @brief One tile a building may be drawn with (ADR 012).
 struct TileDef {

@@ -7,6 +7,7 @@
 #include "modules/lua/lua_data.h"
 #include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
+#include "modules/site/building_tiles.h"
 #include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -14,6 +15,7 @@
 #include <filesystem>
 #include <functional>
 #include <stdexcept>
+#include <utility>
 
 bool addFacilityComponent(flecs::entity facility, const std::string &type) {
   if (type == "Launchpad") {
@@ -177,6 +179,94 @@ void applyBuildingData(flecs::world &world,
   }
 }
 
+namespace {
+
+uint32_t tileCount(flecs::entity tileset) {
+  auto texture = tileset.target<TilesetTexture>();
+  const auto &layout = tileset.get<Tileset>();
+  if (!texture.is_valid() || !texture.has<Texture>() ||
+      layout.tile_height <= 0) {
+    return 0;
+  }
+  const int rows = texture.get<Texture>().height / layout.tile_height;
+  return static_cast<uint32_t>(rows * layout.columns);
+}
+
+BuildingTile toBuildingTile(const TileDef &def) {
+  BuildingTile tile{
+      .id = def.id,
+      .index = static_cast<uint32_t>(def.index),
+      .roles = {},
+      .surface = parseTileSurface(def.surface).value_or(TileSurface::None),
+      .weight = def.weight,
+      .predicate = def.predicate,
+      .tags = def.tags};
+  for (const std::string &role : def.roles) {
+    if (auto parsed = parseTileRole(role)) {
+      tile.roles.push_back(*parsed);
+    }
+  }
+  return tile;
+}
+
+std::string roleNames(const std::vector<TileRole> &roles) {
+  std::string names;
+  for (TileRole role : roles) {
+    if (!names.empty()) {
+      names += ", ";
+    }
+    names += tileRoleName(role);
+  }
+  return names;
+}
+
+} // namespace
+
+void applyTileData(flecs::world &world,
+                   const std::vector<BuildingTilesDef> &buildings) {
+  for (const auto &def : buildings) {
+    auto prefab = world.lookup(("Prefabs::Buildings::" + def.building).c_str());
+    if (!prefab.is_valid()) {
+      spdlog::error("Skipping tiles for '{}': no such building", def.building);
+      continue;
+    }
+    prefab.remove<BuildingTiles>(flecs::Wildcard);
+
+    auto tileset = world.lookup(("Tilesets::" + def.tileset).c_str());
+    if (!tileset.is_valid() || !tileset.has<Tileset>()) {
+      spdlog::error("Skipping tiles for '{}': tileset '{}' not found",
+                    def.building, def.tileset);
+      continue;
+    }
+
+    const uint32_t count = tileCount(tileset);
+    std::vector<TileDef> kept;
+    for (const TileDef &tile : def.tiles) {
+      if (std::cmp_greater_equal(tile.index, count)) {
+        spdlog::error("Skipping tile '{}' of '{}': index {} is outside "
+                      "tileset '{}' ({} tiles)",
+                      tile.id, def.building, tile.index, def.tileset, count);
+        continue;
+      }
+      kept.push_back(tile);
+    }
+
+    if (!prefab.has<FixedSize>()) {
+      if (auto missing = missingRoles(kept); !missing.empty()) {
+        spdlog::error("Skipping tiles for '{}': no unconditional tile for {}",
+                      def.building, roleNames(missing));
+        continue;
+      }
+    }
+
+    BuildingTiles tiles;
+    for (const TileDef &tile : kept) {
+      tiles.tiles.push_back(toBuildingTile(tile));
+    }
+    prefab.set<BuildingTiles>(tileset, tiles);
+  }
+}
+
 void applyRocketData(flecs::world &world,
                      const std::vector<RocketDef> &rockets) {
   for (const auto &rocket : rockets) {
@@ -307,6 +397,26 @@ std::vector<TilesetDef> selectTilesets(const ModRegistry &registry) {
   return tilesets;
 }
 
+/// @brief Turn the merged tiles table into the tiles to attach: each invalid
+/// tile is logged (with provenance) and dropped, keeping the rest of its
+/// building's tiles (ADR 011 §5).
+std::vector<BuildingTilesDef> selectBuildingTiles(const ModRegistry &registry) {
+  std::vector<BuildingTilesDef> buildings;
+  for (BuildingTilesDef def : parseTileData(registry.merged("tiles"))) {
+    std::erase_if(def.tiles, [&](const TileDef &tile) {
+      auto reason = validateTileDef(tile);
+      if (reason) {
+        spdlog::error("Skipping tile '{}' of '{}': {} (defined by {})", tile.id,
+                      def.building, *reason,
+                      registry.historyString("tiles", def.building));
+      }
+      return reason.has_value();
+    });
+    buildings.push_back(def);
+  }
+  return buildings;
+}
+
 /// @brief Turn the merged effects table into the effects to instantiate: an
 /// effect with no modifiers does nothing, so it is logged (with provenance) and
 /// skipped (ADR 011 §5).
@@ -378,6 +488,7 @@ void loadModContent(flecs::world &world) {
     mergeModDataFile(registry, "textures", mod, "textures.lua");
     mergeModDataFile(registry, "tilesets", mod, "tilesets.lua");
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
+    mergeModDataFile(registry, "tiles", mod, "tiles.lua");
     mergeModDataFile(registry, "rockets", mod, "rockets.lua");
     mergeModDataFile(registry, "effects", mod, "effects.lua");
   });
@@ -389,6 +500,7 @@ void loadModContent(flecs::world &world) {
   applyTextureData(world, selectTextures(registry));
   applyTilesetData(world, selectTilesets(registry));
   applyBuildingData(world, buildings);
+  applyTileData(world, selectBuildingTiles(registry));
   applyRocketData(world, rockets);
   applyEffectData(world, selectEffects(registry));
 

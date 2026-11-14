@@ -19,6 +19,7 @@
 #include "modules/lua/effect_data.h"
 #include "modules/lua/rocket_data.h"
 #include "modules/lua/texture_data.h"
+#include "modules/lua/tile_data.h"
 #include "modules/lua/tileset_data.h"
 #include <flecs.h>
 #include <string>
@@ -117,6 +118,14 @@ void applyTilesetData(flecs::world &world,
 void applyBuildingData(flecs::world &world,
                        const std::vector<BuildingDef> &buildings);
 
+/// @brief Attach each definition's tiles to its building prefab as a
+/// BuildingTiles pair targeting the tileset. Tiles outside the tileset are
+/// dropped; a building that is missing, names a missing tileset, or (unless
+/// FixedSize) cannot always fill every 9-slice role is logged and left without
+/// tiles (ADR 011 §5, ADR 012).
+void applyTileData(flecs::world &world,
+                   const std::vector<BuildingTilesDef> &buildings);
+
 /// @brief Create a rocket prefab for each definition.
 void applyRocketData(flecs::world &world,
                      const std::vector<RocketDef> &rockets);
@@ -128,7 +137,8 @@ void applyEffectData(flecs::world &world,
 
 /**
  * @brief Read and apply every mod's textures.lua, tilesets.lua,
- *        buildings.lua, rockets.lua and effects.lua, in dependency load order.
+ *        buildings.lua, tiles.lua, rockets.lua and effects.lua, in dependency
+ *        load order.
  * Each file is optional per mod.
  */
 void loadModContent(flecs::world &world);

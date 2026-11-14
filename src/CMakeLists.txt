@@ -110,6 +110,7 @@ list(APPEND SolCorpHeaders
     modules/rocket/rocket_actions.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/building_tiles.h
     modules/site/connector.h
     modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
