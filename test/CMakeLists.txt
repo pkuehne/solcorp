@@ -77,6 +77,7 @@ add_executable(unit_test
   simulation/update_sim_date.test.cpp
   simulation/generate_sol_system.test.cpp
   site/connector_tiling.test.cpp
+  site/building_tiles.test.cpp
   site/can_place.test.cpp
   site/centred_site_origin.test.cpp
   site/check_footprint_size.test.cpp

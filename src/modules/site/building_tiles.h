@@ -36,3 +36,14 @@ struct BuildingTile {
 struct BuildingTiles {
   std::vector<BuildingTile> tiles;
 };
+
+/// @brief The tiles in @p tiles that may fill @p role: those declaring it whose
+/// predicate is unset or named in @p active_flags, in registry order
+std::vector<const BuildingTile *>
+eligibleTiles(const BuildingTiles &tiles, TileRole role,
+              const std::vector<std::string> &active_flags);
+
+/// @brief Weighted pick among @p candidates, where @p roll in [0, 1) selects
+/// the tile whose share of the total weight it falls in; nullptr if empty
+const BuildingTile *
+pickTile(const std::vector<const BuildingTile *> &candidates, double roll);
