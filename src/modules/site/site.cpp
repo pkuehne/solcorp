@@ -1,4 +1,5 @@
 #include "site.h"
+#include "build_mode.h"
 #include "building_tiles.h"
 #include "connector.h"
 #include "construction_window.h"
@@ -61,6 +62,12 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<SiteLocation>()
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);
+  world.component<PlacementKind>();
+  world.component<BuildMode>()
+      .member("kind", &BuildMode::kind)
+      .member("drag_start", &BuildMode::drag_start)
+      .member("dragging", &BuildMode::dragging);
+  world.component<BuildModePrefab>().add(flecs::Exclusive);
   world.component<Facility>();
   world.component<Manufacturing>()
       .member("max_weight", &Manufacturing::max_weight)

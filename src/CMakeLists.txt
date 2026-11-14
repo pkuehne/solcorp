@@ -48,6 +48,7 @@ list(APPEND SolCorpSources
     modules/rocket/rocket_actions.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
+    modules/site/build_mode.cpp
     modules/site/building_tiles.cpp
     modules/site/connector.cpp
     modules/site/construction_window.cpp
@@ -111,6 +112,7 @@ list(APPEND SolCorpHeaders
     modules/rocket/rocket_actions.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/build_mode.h
     modules/site/building_tiles.h
     modules/site/connector.h
     modules/site/construction_window.h
