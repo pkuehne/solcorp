@@ -8,6 +8,7 @@
 #include "modules/base/notification.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
@@ -30,6 +31,7 @@ extern unsigned int construction_png_len;
 void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
                                 const MouseUp &mouse);
 namespace {
+void placeBuildingTiles(flecs::entity building, const Footprint &footprint);
 void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
                            float height, const MouseUp &mouse);
 } // namespace
@@ -211,6 +213,12 @@ SiteModule::SiteModule(flecs::world &world) {
                               static_cast<float>(tileset->tile_height), mouse);
       });
 
+  world.system<const Footprint>("Place Building Tiles")
+      .with<BuildingTiles>(flecs::Wildcard)
+      .without<HiddenTile>()
+      .kind(ValidatePhase)
+      .each(placeBuildingTiles);
+
   world.system<Site>("Update Construction Sites")
       .with<SiteNeedsRelayout>()
       .kind(ValidatePhase)
@@ -353,6 +361,38 @@ void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
   } else if (e.has<ConstructionSite>()) {
     showConstructionSiteWindow(e);
   }
+}
+
+void placeBuildingTiles(flecs::entity building, const Footprint &footprint) {
+  auto tileset = building.target<BuildingTiles>();
+  const auto *layout = tileset.try_get<Tileset>();
+  const auto *tiles = building.try_get<BuildingTiles>(tileset);
+  if (layout == nullptr || tiles == nullptr) {
+    return;
+  }
+
+  const int width = footprint.w;
+  const int height = footprint.h;
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const auto role = tileRoleAt(x, y, width, height);
+      const auto *tile =
+          pickTile(eligibleTiles(*tiles, role, {}), random_double());
+      if (tile == nullptr) {
+        continue;
+      }
+      Transform transform;
+      transform.relativePosition = {
+          .x = static_cast<float>(x * layout->tile_width),
+          .y = static_cast<float>(y * layout->tile_height)};
+      building.world()
+          .entity()
+          .child_of(building)
+          .set<Tile>(tileset, {.index = tile->index})
+          .set<Transform>(transform);
+    }
+  }
+  building.add<HiddenTile>();
 }
 } // namespace
 

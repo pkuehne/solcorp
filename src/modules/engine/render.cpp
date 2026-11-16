@@ -98,6 +98,7 @@ void registerRender(flecs::world &world) {
   world.system<const Tile, const Transform>("Render Tiles")
       .term_at(0)
       .second(flecs::Wildcard)
+      .without<HiddenTile>()
       .kind(RenderPhase)
       .each([](flecs::iter &it, size_t, const Tile &tile,
                const Transform &transform) {

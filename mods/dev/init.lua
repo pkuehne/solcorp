@@ -24,7 +24,7 @@ local function on_start()
 	end
 
 	-- Add some buildings to the site
-	solcorp.helpers.create_building("Manufacturing A", "factory", 1, 1, site)
+	solcorp.helpers.create_building("Manufacturing A", "factory", 1, 1, site, 2, 2)
 	local storage = solcorp.helpers.create_building("Storage Hall 1", "storage_hall", 1, 0, site)
 	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 8, 5, site)
 	solcorp.helpers.create_building("North Building", "office_building", 0, 6, site)

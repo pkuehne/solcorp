@@ -1,6 +1,22 @@
 #include "building_tiles.h"
 
 #include <algorithm>
+#include <array>
+
+TileRole tileRoleAt(int x, int y, int w, int h) {
+  constexpr std::array ROLES{
+      std::array{TileRole::TopLeft, TileRole::Top, TileRole::TopRight},
+      std::array{TileRole::Left, TileRole::Centre, TileRole::Right},
+      std::array{TileRole::BottomLeft, TileRole::Bottom, TileRole::BottomRight},
+  };
+  auto band = [](int i, int size) {
+    if (i == 0) {
+      return 0;
+    }
+    return i == size - 1 ? 2 : 1;
+  };
+  return ROLES.at(band(y, h)).at(band(x, w));
+}
 
 std::vector<const BuildingTile *>
 eligibleTiles(const BuildingTiles &tiles, TileRole role,

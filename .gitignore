@@ -10,3 +10,4 @@ public/
 .direnv
 .claude/settings.local.json
 .ccache/
+/assets/textures

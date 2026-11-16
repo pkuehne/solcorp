@@ -9,6 +9,7 @@ return {
 	launch_complex = {
 		name = "Launch Complex",
 		tile = { tileset = "buildings", index = 3 },
+		fixed_size = true,
 		facilities = {
 			{ name = "Launchpad A", type = "Launchpad" },
 		},
@@ -17,6 +18,7 @@ return {
 	office_building = {
 		name = "Office Building",
 		tile = { tileset = "buildings", index = 1 },
+		fixed_size = true,
 		facilities = {
 			{ name = "Floor 1", type = "Office" },
 		},
@@ -25,6 +27,7 @@ return {
 	storage_hall = {
 		name = "Storage Hall",
 		tile = { tileset = "buildings", index = 2 },
+		fixed_size = true,
 		facilities = {
 			{ name = "Hall 1", type = "Storage" },
 		},

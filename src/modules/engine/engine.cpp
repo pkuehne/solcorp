@@ -28,6 +28,7 @@ void registerEngineComponents(flecs::world &world) {
       .member("tile_width", &Tileset::tile_width)
       .member("tile_height", &Tileset::tile_height)
       .member("columns", &Tileset::columns);
+  world.component<HiddenTile>();
   world.component<Tile>()
       .member("index", &Tile::index)
       .add(flecs::Exclusive)

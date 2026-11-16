@@ -114,3 +114,36 @@ SCENARIO("pickTile chooses among candidates by weight", "[tile][site]") {
     }
   }
 }
+
+SCENARIO("tileRoleAt maps a footprint cell to its 9-slice role",
+         "[tile][site]") {
+  struct Case {
+    int x;
+    int y;
+    int w;
+    int h;
+    TileRole expected;
+  };
+
+  GIVEN("a cell in a footprint") {
+    auto [x, y, w, h, expected] = GENERATE(values<Case>({
+        {0, 0, 4, 3, TileRole::TopLeft},
+        {1, 0, 4, 3, TileRole::Top},
+        {2, 0, 4, 3, TileRole::Top},
+        {3, 0, 4, 3, TileRole::TopRight},
+        {0, 1, 4, 3, TileRole::Left},
+        {1, 1, 4, 3, TileRole::Centre},
+        {3, 1, 4, 3, TileRole::Right},
+        {0, 2, 4, 3, TileRole::BottomLeft},
+        {2, 2, 4, 3, TileRole::Bottom},
+        {3, 2, 4, 3, TileRole::BottomRight},
+        {1, 1, 2, 2, TileRole::BottomRight},
+        {0, 1, 2, 2, TileRole::BottomLeft},
+    }));
+    CAPTURE(x, y, w, h);
+
+    THEN("its role follows from its row and column band") {
+      CHECK(tileRoleAt(x, y, w, h) == expected);
+    }
+  }
+}
