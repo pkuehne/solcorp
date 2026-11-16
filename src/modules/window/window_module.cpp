@@ -13,6 +13,7 @@
 #include "notification_window.h"
 #include "rocket_detail_window.h"
 #include "rocket_list_window.h"
+#include "site_window.h"
 #include "toolbar.h"
 #include <flecs.h>
 #include <modules/simulation/simulation.h>
@@ -41,6 +42,7 @@ WindowModule::WindowModule(flecs::world &world) {
   // RocketModule, which is imported after WindowModule.
   world.component<LaunchWindow>();
   world.component<LaunchDetailWindow>();
+  world.component<SiteWindow>();
   world.component<NotificationWindow>()
       .member("severity_filter", &NotificationWindow::severity_filter)
       .member("category_filter", &NotificationWindow::category_filter)
@@ -74,6 +76,7 @@ WindowModule::WindowModule(flecs::world &world) {
             .set<ActiveLaunchesWindow>({});
         registerWindow("Celestial Browser", drawCelestialBrowser, w)
             .set<CelestialBrowser>({});
+        registerWindow("Site Window", drawSiteWindow, w).add<SiteWindow>();
       });
 
   // Register Systems
