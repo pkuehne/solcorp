@@ -4,6 +4,7 @@
 #include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>
+#include <optional>
 
 struct Rocket;
 struct Point;
@@ -73,6 +74,17 @@ constexpr int SITE_CELL_SIZE = 32;
 
 /// @brief Top-left corner that centres @p site in a window of the given size
 Point centredSiteOrigin(int window_width, int window_height, const Site &site);
+
+/// @brief The cell of the current site under the mouse, as a singleton;
+/// absent when the mouse is off the site or over the UI
+struct HoverCell {
+  SiteLocation location;
+};
+
+/// @brief The cell of @p site, drawn with its top-left corner at
+/// @p site_origin, that contains @p point; nullopt if @p point is off the site
+std::optional<SiteLocation> cellAt(const Point &site_origin, const Site &site,
+                                   const Point &point);
 
 /// @brief Whether @p point lies strictly inside the @p width x @p height
 /// rect whose top-left corner is @p origin

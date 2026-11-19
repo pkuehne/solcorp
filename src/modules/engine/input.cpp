@@ -22,6 +22,7 @@ void systemEventHandling(flecs::iter &it) {
   world.remove<KeyUp>();
   world.remove<MouseDown>();
   world.remove<MouseUp>();
+  world.remove<MouseMove>();
 
   SDL_Event event;
   auto io = ImGui::GetIO();
@@ -63,6 +64,11 @@ void systemEventHandling(flecs::iter &it) {
       world.set<MouseUp>({.x = event.button.x,
                           .y = event.button.y,
                           .button = event.button.button});
+      break;
+    case SDL_MOUSEMOTION:
+      world.set<MouseMove>({.x = event.motion.x,
+                            .y = event.motion.y,
+                            .over_ui = io.WantCaptureMouse});
       break;
     case SDL_WINDOWEVENT:
       if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {

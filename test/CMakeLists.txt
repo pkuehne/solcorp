@@ -79,6 +79,8 @@ add_executable(unit_test
   site/connector_tiling.test.cpp
   site/build_mode.test.cpp
   site/building_tiles.test.cpp
+  site/hover_cell.test.cpp
+  site/placement_footprint.test.cpp
   site/can_place.test.cpp
   site/centred_site_origin.test.cpp
   site/check_footprint_size.test.cpp

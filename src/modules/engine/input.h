@@ -28,6 +28,14 @@ struct MouseUp {
   int button = 0;
 };
 
+/// @brief The mouse moved this frame; @p over_ui is set when ImGui has the
+/// mouse, so world-space hover state should clear
+struct MouseMove {
+  int32_t x = 0;
+  int32_t y = 0;
+  bool over_ui = false;
+};
+
 /// @brief Size of the window's drawable area in renderer pixels; set at
 /// startup and whenever the window is resized
 struct WindowSize {

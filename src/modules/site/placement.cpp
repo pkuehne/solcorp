@@ -18,6 +18,17 @@ CellContent OccupancyGrid::at(int x, int y) const {
   return cells[(static_cast<size_t>(y) * width) + static_cast<size_t>(x)];
 }
 
+Footprint placementFootprint(flecs::entity prefab) {
+  if (prefab.has<FixedSize>()) {
+    return {};
+  }
+  const auto *limits = prefab.try_get<FootprintLimits>();
+  const Footprint min =
+      limits != nullptr ? limits->min : MIN_BUILDING_FOOTPRINT;
+  return {.w = std::max(min.w, MIN_BUILDING_FOOTPRINT.w),
+          .h = std::max(min.h, MIN_BUILDING_FOOTPRINT.h)};
+}
+
 OccupancyGrid buildOccupancyGrid(flecs::entity site) {
   const auto &dimensions = site.get<Site>();
   OccupancyGrid grid{
