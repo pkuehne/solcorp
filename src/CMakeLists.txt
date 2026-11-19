@@ -11,6 +11,7 @@ list(APPEND SolCorpSources
     modules/engine/movement.cpp
     modules/engine/render.cpp
     modules/lua/building_data.cpp
+    modules/lua/connector_data.cpp
     modules/lua/effect_data.cpp
     modules/lua/config.cpp
     modules/lua/entity.cpp
@@ -77,6 +78,7 @@ list(APPEND SolCorpHeaders
     modules/engine/movement.h
     modules/engine/render.h
     modules/lua/building_data.h
+    modules/lua/connector_data.h
     modules/lua/effect_data.h
     modules/lua/config.h
     modules/lua/entity.h

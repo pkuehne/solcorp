@@ -54,6 +54,20 @@ Invalid tiles are logged and skipped. Unless the building is `fixed_size`, every
 role needs at least one tile without a `predicate`, or the building gets no
 tiles at all.
 
+## Connectors
+
+Roads and other connectors are declared in a mod's `connectors.lua`, keyed by
+id. Each becomes a prefab under `Prefabs::Connectors`:
+
+```lua
+return {
+  road = { name = "Road", base = "roads_asphalt", markings = "roads_markings" },
+}
+```
+
+`base` and `markings` name tilesets from `tilesets.lua`; `markings` is optional.
+A connector whose `base` tileset is missing is logged and skipped.
+
 ## Lifecycle Handlers
 
 Register handlers on the `solcorp.script.handlers` table:

@@ -46,6 +46,7 @@ add_executable(unit_test
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
   lua/data/tileset_data.test.cpp
+  lua/data/connector_data.test.cpp
   lua/data/tile_data.test.cpp
   lua/data/rocket_data.test.cpp
   lua/data/effect_data.test.cpp
@@ -53,6 +54,7 @@ add_executable(unit_test
   lua/mod_content/apply_rocket_data.test.cpp
   lua/mod_content/apply_effect_data.test.cpp
   lua/mod_content/apply_tileset_data.test.cpp
+  lua/mod_content/apply_connector_data.test.cpp
   lua/mod_content/apply_tile_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp

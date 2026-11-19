@@ -12,16 +12,15 @@ SCENARIO("ghostTooltip describes what a release would build",
          "[build_mode][site]") {
   flecs::world world;
   world.import <SiteModule>();
-  auto factory = world.prefab("factory")
-                     .set<Label>({"Factory"})
-                     .set<FootprintLimits>(
-                         {.min = {.w = 2, .h = 2}, .max = {.w = 4, .h = 5}});
-  auto yard = world.prefab("yard").set<Label>({"Yard"});
-  auto gate = world.prefab("gate").add<FixedSize>();
+  world.prefab("factory")
+      .set<Label>({"Factory"})
+      .set<FootprintLimits>({.min = {.w = 2, .h = 2}, .max = {.w = 4, .h = 5}});
+  world.prefab("yard").set<Label>({"Yard"});
+  world.prefab("gate").add<FixedSize>();
 
   struct Case {
     std::string description;
-    flecs::entity prefab;
+    std::string prefab;
     bool dragging;
     Footprint footprint;
     std::string problem;
@@ -30,9 +29,9 @@ SCENARIO("ghostTooltip describes what a release would build",
 
   GIVEN("a build ghost") {
     auto [description, prefab, dragging, footprint, problem, expected] =
-        GENERATE_REF(values<Case>({
+        GENERATE(values<Case>({
             {"a draggable building before a drag",
-             factory,
+             "factory",
              false,
              {.w = 2, .h = 2},
              "",
@@ -41,7 +40,7 @@ SCENARIO("ghostTooltip describes what a release would build",
               .problem = "",
               .hint = "Click and drag to size · Right-click to cancel"}},
             {"a draggable building mid-drag",
-             factory,
+             "factory",
              true,
              {.w = 3, .h = 4},
              "",
@@ -50,7 +49,7 @@ SCENARIO("ghostTooltip describes what a release would build",
               .problem = "",
               .hint = "Release to build · Right-click to cancel"}},
             {"an invalid placement",
-             factory,
+             "factory",
              true,
              {.w = 3, .h = 1},
              "It is too small",
@@ -59,7 +58,7 @@ SCENARIO("ghostTooltip describes what a release would build",
               .problem = "It is too small",
               .hint = "Release to build · Right-click to cancel"}},
             {"a building without a maximum",
-             yard,
+             "yard",
              false,
              {.w = 2, .h = 2},
              "",
@@ -68,7 +67,7 @@ SCENARIO("ghostTooltip describes what a release would build",
               .problem = "",
               .hint = "Click and drag to size · Right-click to cancel"}},
             {"a fixed-size building without a label",
-             gate,
+             "gate",
              false,
              {.w = 1, .h = 1},
              "",
@@ -85,7 +84,8 @@ SCENARIO("ghostTooltip describes what a release would build",
     const auto validation = ValidationResult::Issue(problem);
 
     WHEN("its tooltip is built") {
-      const auto tooltip = ghostTooltip(prefab, mode, placement, validation);
+      const auto tooltip = ghostTooltip(world.lookup(prefab.c_str()), mode,
+                                        placement, validation);
 
       THEN("every line is as expected") {
         CHECK(tooltip.title == expected.title);
