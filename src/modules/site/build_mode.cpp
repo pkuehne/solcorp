@@ -1,4 +1,5 @@
 #include "build_mode.h"
+#include "connector.h"
 #include "modules/base/base.h"
 #include <spdlog/spdlog.h>
 
@@ -10,7 +11,11 @@ void enterBuildMode(flecs::world &world, flecs::entity prefab) {
     spdlog::error("Cannot enter build mode for an invalid prefab");
     return;
   }
-  world.set<BuildMode>({});
+  world.set<BuildMode>({.kind = prefab.has<ConnectorTile>()
+                                    ? PlacementKind::Connector
+                                    : PlacementKind::Building,
+                        .drag_start = {},
+                        .dragging = false});
   world.entity<BuildMode>().add<BuildModePrefab>(prefab);
 }
 
@@ -22,7 +27,7 @@ void exitBuildMode(flecs::world &world) {
 PendingPlacement pendingPlacement(flecs::entity prefab, const BuildMode &mode,
                                   SiteLocation hover, const Site &site) {
   const FootprintLimits limits = placementLimits(prefab);
-  if (prefab.has<FixedSize>() || !mode.dragging) {
+  if (!isDraggable(prefab) || !mode.dragging) {
     return {.origin = hover, .footprint = limits.min};
   }
   return dragRectangle(mode.drag_start, hover, limits, site);
@@ -48,7 +53,7 @@ GhostTooltip ghostTooltip(flecs::entity prefab, const BuildMode &mode,
   tooltip.size = "Size " + sizeText(placement.footprint);
   tooltip.problem = validation.message;
 
-  if (prefab.has<FixedSize>()) {
+  if (!isDraggable(prefab)) {
     tooltip.hint = "Click to build \u00b7 Right-click to cancel";
     return tooltip;
   }

@@ -4,12 +4,26 @@
 #include "placement.h"
 #include "site.h"
 #include <flecs.h>
+#include <memory>
 
 struct PlacedPrefab {
   flecs::entity value;
 };
 struct TargetSite {
   flecs::entity value;
+};
+
+struct PlaceConnectorAction : public IAction {
+  flecs::entity prefab;
+  flecs::entity site;
+  SiteLocation location;
+
+  PlaceConnectorAction(PlacedPrefab p, TargetSite s, SiteLocation l)
+      : prefab(p.value), site(s.value), location(l) {}
+
+  [[nodiscard]] ValidationResult
+  validate(const flecs::world &world) const override;
+  void execute(flecs::world &world) override;
 };
 
 struct PlaceBuildingAction : public IAction {
@@ -25,3 +39,9 @@ struct PlaceBuildingAction : public IAction {
   validate(const flecs::world &world) const override;
   void execute(flecs::world &world) override;
 };
+
+/// @brief The action that places @p placement of @p prefab, by its kind
+std::unique_ptr<IAction> makePlacementAction(PlacedPrefab prefab,
+                                             TargetSite site,
+                                             PlacementKind kind,
+                                             const PendingPlacement &placement);

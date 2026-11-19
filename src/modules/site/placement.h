@@ -74,6 +74,10 @@ struct FootprintLimits {
 PlacementResult checkFootprintSize(Footprint footprint,
                                    const FootprintLimits &limits);
 
+/// @brief Whether @p prefab is sized by dragging; fixed-size buildings and
+/// connectors take one cell
+bool isDraggable(flecs::entity prefab);
+
 /// @brief The footprint a click places for @p prefab: 1x1 if FixedSize,
 /// otherwise its definition's minimum, raised to MIN_BUILDING_FOOTPRINT
 Footprint placementFootprint(flecs::entity prefab);

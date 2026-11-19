@@ -39,9 +39,13 @@ std::string placementMessage(PlacementResult result) {
   return "";
 }
 
+bool isDraggable(flecs::entity prefab) {
+  return !prefab.has<FixedSize>() && !prefab.has<ConnectorTile>();
+}
+
 FootprintLimits placementLimits(flecs::entity prefab) {
   const Footprint min = placementFootprint(prefab);
-  if (prefab.has<FixedSize>()) {
+  if (!isDraggable(prefab)) {
     return {.min = min, .max = min};
   }
   const auto *limits = prefab.try_get<FootprintLimits>();
@@ -50,7 +54,7 @@ FootprintLimits placementLimits(flecs::entity prefab) {
 }
 
 Footprint placementFootprint(flecs::entity prefab) {
-  if (prefab.has<FixedSize>()) {
+  if (!isDraggable(prefab)) {
     return {};
   }
   const auto *limits = prefab.try_get<FootprintLimits>();

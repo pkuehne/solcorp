@@ -228,7 +228,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .each([](flecs::iter &it, size_t, const MouseDown &mouse,
                const HoverCell &hover, BuildMode &mode) {
         auto prefab = buildModePrefab(it.world());
-        if (mouse.button == SDL_BUTTON_LEFT && !prefab.has<FixedSize>()) {
+        if (mouse.button == SDL_BUTTON_LEFT && isDraggable(prefab)) {
           mode.drag_start = hover.location;
           mode.dragging = true;
         }
@@ -253,14 +253,14 @@ SiteModule::SiteModule(flecs::world &world) {
         auto prefab = buildModePrefab(world);
         const auto placement = pendingPlacement(
             prefab, released, hover->location, site.get<Site>());
-        PlaceBuildingAction action(PlacedPrefab{prefab}, TargetSite{site},
-                                   placement.origin, placement.footprint);
-        if (auto result = action.validate(world); !result) {
+        auto action = makePlacementAction(
+            PlacedPrefab{prefab}, TargetSite{site}, released.kind, placement);
+        if (auto result = action->validate(world); !result) {
           spdlog::debug("Cannot place {}: {}", prefab.name().c_str(),
                         result.message);
           return;
         }
-        action.execute(world);
+        action->execute(world);
       });
 
   world.system<const MouseUp, BuildMode>("Cancel Build On Right Click")
@@ -513,9 +513,9 @@ void drawBuildGhost(flecs::entity site, const Transform &transform,
   const auto placement =
       pendingPlacement(prefab, mode, hover.location, site.get<Site>());
   const auto validation =
-      PlaceBuildingAction(PlacedPrefab{prefab}, TargetSite{site},
-                          placement.origin, placement.footprint)
-          .validate(site.world());
+      makePlacementAction(PlacedPrefab{prefab}, TargetSite{site}, mode.kind,
+                          placement)
+          ->validate(site.world());
   const bool valid = validation.ok;
   const ImU32 fill =
       valid ? IM_COL32(80, 220, 80, 90) : IM_COL32(230, 60, 60, 90);

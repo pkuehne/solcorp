@@ -1,5 +1,6 @@
 #include "modules/base/base.h"
 #include "modules/site/build_mode.h"
+#include "modules/site/connector.h"
 #include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
@@ -17,6 +18,7 @@ SCENARIO("ghostTooltip describes what a release would build",
       .set<FootprintLimits>({.min = {.w = 2, .h = 2}, .max = {.w = 4, .h = 5}});
   world.prefab("yard").set<Label>({"Yard"});
   world.prefab("gate").add<FixedSize>();
+  world.prefab("road").set<Label>({"Road"}).set<ConnectorTile>({});
 
   struct Case {
     std::string description;
@@ -66,6 +68,15 @@ SCENARIO("ghostTooltip describes what a release would build",
               .size = "Size 2 × 2",
               .problem = "",
               .hint = "Click and drag to size · Right-click to cancel"}},
+            {"a road",
+             "road",
+             false,
+             {.w = 1, .h = 1},
+             "",
+             {.title = "Road",
+              .size = "Size 1 \u00d7 1",
+              .problem = "",
+              .hint = "Click to build \u00b7 Right-click to cancel"}},
             {"a fixed-size building without a label",
              "gate",
              false,

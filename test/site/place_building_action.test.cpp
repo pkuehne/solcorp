@@ -25,6 +25,7 @@ struct SiteFixture {
   flecs::entity site;
   flecs::entity factory;
   flecs::entity gate;
+  flecs::entity road;
 
   SiteFixture() {
     run_site_prefab_setup(world);
@@ -42,6 +43,17 @@ struct SiteFixture {
                   .set<FootprintLimits>(
                       {.min = {.w = 2, .h = 2}, .max = {.w = 3, .h = 3}});
     gate = world.prefab("gate").add<Building>().add<FixedSize>();
+    road = world.prefab("road").set<Label>({"Road"}).set<ConnectorTile>({});
+  }
+
+  [[nodiscard]] std::vector<flecs::entity> placedRoads() const {
+    std::vector<flecs::entity> result;
+    site.children([&](flecs::entity child) {
+      if (child.has(flecs::IsA, road)) {
+        result.push_back(child);
+      }
+    });
+    return result;
   }
 
   [[nodiscard]] std::vector<flecs::entity> buildings() const {
@@ -293,6 +305,24 @@ SCENARIO("Clicking and dragging in build mode", "[build_mode][site][system]") {
     }
   }
 
+  GIVEN("the road is selected") {
+    enterBuildMode(f.world, f.road);
+
+    WHEN("the player presses next to the road and drags away") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      CHECK_FALSE(f.world.get<BuildMode>().dragging);
+      releaseAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+
+      THEN("one road cell is placed where the mouse is released") {
+        auto roads = f.placedRoads();
+        REQUIRE(roads.size() == 1);
+        CHECK(roads[0].get<SiteLocation>().x == 1);
+        CHECK(roads[0].get<SiteLocation>().y == 1);
+        CHECK(f.buildings().empty());
+      }
+    }
+  }
+
   GIVEN("a fixed-size building is selected") {
     enterBuildMode(f.world, f.gate);
 
@@ -402,5 +432,86 @@ SCENARIO("buildingAt finds the building covering a cell", "[site]") {
     auto found = buildingAt(f.site, cell);
     CHECK(std::string{found.is_valid() ? found.name().c_str() : ""} ==
           expected);
+  }
+}
+
+SCENARIO("PlaceConnectorAction validates where a road may go",
+         "[action][site]") {
+  SiteFixture f;
+
+  struct Case {
+    std::string description;
+    SiteLocation location;
+    std::string expected;
+  };
+
+  GIVEN("a road cell to place") {
+    auto [description, location, expected] = GENERATE(values<Case>({
+        {"next to the road", {.x = 1, .y = 2}, ""},
+        {"away from any road or building",
+         {.x = 3, .y = 3},
+         "Roads must join a road or building"},
+        {"on the road", {.x = 0, .y = 2}, "Something is already built there"},
+        {"off the site", {.x = 6, .y = 2}, "It doesn't fit on the site"},
+    }));
+    CAPTURE(description);
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
+                                location);
+
+    THEN("it passes or fails with the expected reason") {
+      auto result = action.validate(f.world);
+      CHECK(result.ok == expected.empty());
+      CHECK(result.message == expected);
+    }
+  }
+
+  GIVEN("an empty site") {
+    auto empty =
+        f.world.entity("Empty Site").set<Site>({.width = 4, .height = 4});
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{empty},
+                                {.x = 2, .y = 2});
+
+    THEN("the first road can go anywhere") {
+      CHECK(action.validate(f.world).ok);
+    }
+  }
+
+  GIVEN("a building prefab instead of a road") {
+    PlaceConnectorAction action(PlacedPrefab{f.factory}, TargetSite{f.site},
+                                {.x = 1, .y = 2});
+
+    THEN("it fails") {
+      CHECK(action.validate(f.world).message == "No road is selected");
+    }
+  }
+}
+
+SCENARIO("PlaceConnectorAction places a road cell", "[action][site]") {
+  SiteFixture f;
+
+  GIVEN("a valid road cell") {
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
+                                {.x = 1, .y = 2});
+
+    WHEN("it is executed") {
+      action.execute(f.world);
+
+      THEN("a numbered road of that prefab is placed there") {
+        auto roads = f.placedRoads();
+        REQUIRE(roads.size() == 1);
+        CHECK(std::string{roads[0].name().c_str()} == "Road 1");
+        CHECK(roads[0].get<SiteLocation>().x == 1);
+        CHECK(roads[0].get<SiteLocation>().y == 2);
+        CHECK(roads[0].has<ConnectorTile>());
+      }
+
+      THEN("it occupies its cell as a connector") {
+        CHECK(buildOccupancyGrid(f.site).at(1, 2) == CellContent::Connector);
+      }
+
+      THEN("the site is flagged for relayout") {
+        CHECK(f.site.has<SiteNeedsRelayout>());
+      }
+    }
   }
 }

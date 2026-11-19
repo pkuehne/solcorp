@@ -1,4 +1,5 @@
 #include "modules/site/build_mode.h"
+#include "modules/site/connector.h"
 #include "modules/site/site.h"
 #include <catch2/catch_test_macros.hpp>
 #include <flecs.h>
@@ -23,6 +24,16 @@ SCENARIO("Build mode tracks the prefab being placed", "[build_mode][site]") {
         CHECK(buildModePrefab(world) == factory);
         CHECK(world.get<BuildMode>().kind == PlacementKind::Building);
         CHECK_FALSE(world.get<BuildMode>().dragging);
+      }
+    }
+
+    WHEN("a connector prefab is selected") {
+      auto road = world.prefab("road").set<ConnectorTile>({});
+      enterBuildMode(world, road);
+
+      THEN("build mode places a connector") {
+        REQUIRE(world.has<BuildMode>());
+        CHECK(world.get<BuildMode>().kind == PlacementKind::Connector);
       }
     }
 
