@@ -283,29 +283,27 @@ SiteModule::SiteModule(flecs::world &world) {
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
 
-  world
-      .system<const Transform, const Tile, const MouseUp>(
-          "Match click to Building Tile")
-      .term_at(1)
-      .second(flecs::Wildcard)
-      .with<SiteLocation>()
+  world.system<const MouseUp>("Open Clicked Building")
       .without<BuildMode>()
       .kind(ValidatePhase)
-      .each([](flecs::iter &it, size_t row, const Transform &t, const Tile &,
-               const MouseUp &mouse) {
-        const auto *tileset = it.pair(1).second().try_get<Tileset>();
-        if (tileset == nullptr) {
-          return;
-        }
-        openClickedSiteEntity(it.entity(row), t,
-                              static_cast<float>(tileset->tile_width),
-                              static_cast<float>(tileset->tile_height), mouse);
+      .each([current_site](const MouseUp &mouse) {
+        current_site.each([&](flecs::entity site, const Site &size,
+                              const Transform &transform) {
+          const auto cell = cellAt(transform.worldPosition, size,
+                                   {.x = static_cast<float>(mouse.x),
+                                    .y = static_cast<float>(mouse.y)});
+          if (!cell) {
+            return;
+          }
+          if (auto building = buildingAt(site, *cell); building.is_valid()) {
+            showBuildingDetailWindow(building);
+          }
+        });
       });
 
-  world.system<const Footprint>("Place Building Tiles")
+  world.observer<const Footprint>("Place Building Tiles")
       .with<BuildingTiles>(flecs::Wildcard)
-      .without<HiddenTile>()
-      .kind(ValidatePhase)
+      .event(flecs::OnSet)
       .each(placeBuildingTiles);
 
   world.system<Site>("Update Construction Sites")
@@ -503,7 +501,6 @@ void placeBuildingTiles(flecs::entity building, const Footprint &footprint) {
           .set<Transform>(transform);
     }
   }
-  building.add<HiddenTile>();
 }
 
 void drawBuildGhost(flecs::entity site, const Transform &transform,

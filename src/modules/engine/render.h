@@ -57,9 +57,6 @@ struct Tile {
   uint32_t index = 0;
 };
 
-/// @brief The entity's own Tile is not drawn; its child tiles draw it instead
-struct HiddenTile {};
-
 /// @brief Creates a Tileset for @p texture, deriving the column count from its
 /// width
 /// @throws std::invalid_argument if the tile size is not positive, is larger

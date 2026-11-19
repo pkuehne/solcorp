@@ -99,6 +99,23 @@ PendingPlacement dragRectangle(SiteLocation anchor, SiteLocation hover,
                         .h = static_cast<uint8_t>(y.length)}};
 }
 
+flecs::entity buildingAt(flecs::entity site, SiteLocation cell) {
+  flecs::entity found;
+  site.children([&](flecs::entity child) {
+    const auto *location = child.try_get<SiteLocation>();
+    if (found.is_valid() || location == nullptr || !child.has<Building>()) {
+      return;
+    }
+    const auto *footprint = child.try_get<Footprint>();
+    const Footprint size = footprint != nullptr ? *footprint : Footprint{};
+    if (cell.x >= location->x && cell.x < location->x + size.w &&
+        cell.y >= location->y && cell.y < location->y + size.h) {
+      found = child;
+    }
+  });
+  return found;
+}
+
 OccupancyGrid buildOccupancyGrid(flecs::entity site) {
   const auto &dimensions = site.get<Site>();
   OccupancyGrid grid{

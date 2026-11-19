@@ -319,49 +319,88 @@ SCENARIO("Clicking and dragging in build mode", "[build_mode][site][system]") {
   }
 }
 
-SCENARIO("Building windows only open outside build mode",
-         "[build_mode][site][system]") {
+SCENARIO("Clicking a building opens its window", "[site][system]") {
   SiteFixture f;
-  auto match = f.world.system(
-      f.world.lookup("SiteModule::Match click to Building Tile"));
-  REQUIRE(match.is_valid());
-  auto tileset = f.world.entity().set<Tileset>({.tile_width = SITE_CELL_SIZE,
-                                                .tile_height = SITE_CELL_SIZE,
-                                                .columns = 1});
-  f.world.entity("Clickable")
+  auto open =
+      f.world.system(f.world.lookup("SiteModule::Open Clicked Building"));
+  REQUIRE(open.is_valid());
+  f.world.entity("Hall")
       .child_of(f.site)
       .add<Building>()
       .set<SiteLocation>({.x = 2, .y = 2})
-      .set<Tile>(tileset, {.index = 0})
-      .set<Transform>(
-          {.relativePosition = {}, .worldPosition = {.x = 64, .y = 64}});
+      .set<Footprint>({.w = 3, .h = 2});
   auto window = registerWindow(
                     "Building Detail", [](flecs::entity) {}, f.world)
                     .set<BuildingDetailWindow>({});
   REQUIRE(window.is_valid());
 
+  auto centreOf = [](int cell) {
+    return (cell * SITE_CELL_SIZE) + (SITE_CELL_SIZE / 2);
+  };
+
   struct Case {
-    bool building;
+    std::string description;
+    bool building_mode;
+    SiteLocation cell;
     bool expected_open;
   };
-  auto [building, expected_open] = GENERATE(values<Case>({
-      {false, true},
-      {true, false},
-  }));
-  CAPTURE(building);
 
-  GIVEN("build mode is on or off") {
-    if (building) {
+  GIVEN("a 3x2 building at (2, 2)") {
+    auto [description, building_mode, cell, expected_open] =
+        GENERATE(values<Case>({
+            {"its top-left cell", false, {.x = 2, .y = 2}, true},
+            {"its far corner", false, {.x = 4, .y = 3}, true},
+            {"just past its right edge", false, {.x = 5, .y = 3}, false},
+            {"just below it", false, {.x = 2, .y = 4}, false},
+            {"its cell while in build mode", true, {.x = 3, .y = 2}, false},
+        }));
+    CAPTURE(description);
+    if (building_mode) {
       enterBuildMode(f.world, f.factory);
     }
 
-    WHEN("the player clicks on a building") {
-      f.world.set<MouseUp>({.x = 80, .y = 80, .button = SDL_BUTTON_LEFT});
-      match.run();
+    WHEN("the player clicks there") {
+      f.world.set<MouseUp>({.x = centreOf(cell.x),
+                            .y = centreOf(cell.y),
+                            .button = SDL_BUTTON_LEFT});
+      open.run();
 
-      THEN("its window opens only outside build mode") {
+      THEN("the building window opens only on the building, outside build "
+           "mode") {
         CHECK(window.get<Window>().open == expected_open);
       }
     }
+  }
+}
+
+SCENARIO("buildingAt finds the building covering a cell", "[site]") {
+  SiteFixture f;
+  f.world.entity("Hall")
+      .child_of(f.site)
+      .add<Building>()
+      .set<SiteLocation>({.x = 2, .y = 1})
+      .set<Footprint>({.w = 2, .h = 3});
+  f.world.entity("Kiosk").child_of(f.site).add<Building>().set<SiteLocation>(
+      {.x = 5, .y = 5});
+
+  struct Case {
+    SiteLocation cell;
+    std::string expected;
+  };
+  auto [cell, expected] = GENERATE(values<Case>({
+      {{.x = 2, .y = 1}, "Hall"},
+      {{.x = 3, .y = 3}, "Hall"},
+      {{.x = 4, .y = 1}, ""},
+      {{.x = 2, .y = 4}, ""},
+      {{.x = 5, .y = 5}, "Kiosk"},
+      {{.x = 5, .y = 4}, ""},
+      {{.x = 0, .y = 2}, ""},
+  }));
+  CAPTURE(cell.x, cell.y);
+
+  THEN("the covering building, or none, is found") {
+    auto found = buildingAt(f.site, cell);
+    CHECK(std::string{found.is_valid() ? found.name().c_str() : ""} ==
+          expected);
   }
 }

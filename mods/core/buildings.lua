@@ -35,7 +35,6 @@ return {
 
 	factory = {
 		name = "Factory",
-		tile = { tileset = "buildings", index = 2 },
 		facilities = {
 			{ name = "Line 1", type = "Manufacturing" },
 			{ name = "Line 2", type = "Manufacturing" },

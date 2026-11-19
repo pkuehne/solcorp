@@ -90,6 +90,10 @@ struct PendingPlacement {
 PendingPlacement dragRectangle(SiteLocation anchor, SiteLocation hover,
                                const FootprintLimits &limits, const Site &site);
 
+/// @brief The building of @p site whose footprint covers @p cell; invalid if
+/// none does. A building without a Footprint covers one cell
+flecs::entity buildingAt(flecs::entity site, SiteLocation cell);
+
 /// @brief Builds the occupancy grid of @p site from its children: buildings
 /// fill their Footprint (1x1 if they have none), connectors fill one cell
 OccupancyGrid buildOccupancyGrid(flecs::entity site);
