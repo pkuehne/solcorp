@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdlib>
 #include <utility>
 
 bool OccupancyGrid::inBounds(int x, int y) const {
@@ -18,6 +19,26 @@ CellContent OccupancyGrid::at(int x, int y) const {
   return cells[(static_cast<size_t>(y) * width) + static_cast<size_t>(x)];
 }
 
+std::string placementMessage(PlacementResult result) {
+  switch (result) {
+  case PlacementResult::Ok:
+    return "";
+  case PlacementResult::OutOfBounds:
+    return "It doesn't fit on the site";
+  case PlacementResult::Occupied:
+    return "Something is already built there";
+  case PlacementResult::TooSmall:
+    return "It is too small";
+  case PlacementResult::TooLarge:
+    return "It is too large";
+  case PlacementResult::NotConnectedToRoad:
+    return "Buildings must be next to a road";
+  case PlacementResult::ConnectorNotConnected:
+    return "Roads must join a road or building";
+  }
+  return "";
+}
+
 Footprint placementFootprint(flecs::entity prefab) {
   if (prefab.has<FixedSize>()) {
     return {};
@@ -27,6 +48,55 @@ Footprint placementFootprint(flecs::entity prefab) {
       limits != nullptr ? limits->min : MIN_BUILDING_FOOTPRINT;
   return {.w = std::max(min.w, MIN_BUILDING_FOOTPRINT.w),
           .h = std::max(min.h, MIN_BUILDING_FOOTPRINT.h)};
+}
+
+namespace {
+
+struct Span {
+  int start;
+  int length;
+};
+
+struct AxisDrag {
+  int anchor;
+  int hover;
+};
+
+struct AxisLimits {
+  int min;
+  int max;
+  int site_size;
+};
+
+Span dragSpan(AxisDrag drag, AxisLimits limits) {
+  int low = std::min(drag.anchor, drag.hover);
+  int high = std::max(drag.anchor + limits.min - 1, drag.hover);
+  if (high - low + 1 > limits.max) {
+    if (drag.hover < drag.anchor) {
+      low = high - limits.max + 1;
+    } else {
+      high = low + limits.max - 1;
+    }
+  }
+  high = std::min(high, limits.site_size - 1);
+  return {.start = low, .length = high - low + 1};
+}
+
+} // namespace
+
+PendingPlacement dragRectangle(SiteLocation anchor, SiteLocation hover,
+                               const FootprintLimits &limits,
+                               const Site &site) {
+  const Span x = dragSpan(
+      {.anchor = anchor.x, .hover = hover.x},
+      {.min = limits.min.w, .max = limits.max.w, .site_size = site.width});
+  const Span y = dragSpan(
+      {.anchor = anchor.y, .hover = hover.y},
+      {.min = limits.min.h, .max = limits.max.h, .site_size = site.height});
+  return {.origin = {.x = static_cast<uint8_t>(x.start),
+                     .y = static_cast<uint8_t>(y.start)},
+          .footprint = {.w = static_cast<uint8_t>(x.length),
+                        .h = static_cast<uint8_t>(y.length)}};
 }
 
 OccupancyGrid buildOccupancyGrid(flecs::entity site) {

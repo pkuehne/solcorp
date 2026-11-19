@@ -18,6 +18,7 @@
 #include "modules/stats/stats.h"
 #include "modules/window/building_detail_window.h"
 #include "placement.h"
+#include "placement_actions.h"
 #include "rocket_prefab_window.h"
 #include "site_construction.h"
 #include "weather.h"
@@ -220,8 +221,65 @@ SiteModule::SiteModule(flecs::world &world) {
         }
       });
 
+  world
+      .system<const MouseDown, const HoverCell, BuildMode>(
+          "Start Building Drag")
+      .kind(ValidatePhase)
+      .each([](flecs::iter &it, size_t, const MouseDown &mouse,
+               const HoverCell &hover, BuildMode &mode) {
+        auto prefab = buildModePrefab(it.world());
+        if (mouse.button == SDL_BUTTON_LEFT && !prefab.has<FixedSize>()) {
+          mode.drag_start = hover.location;
+          mode.dragging = true;
+        }
+      });
+
+  world
+      .system<const MouseUp, BuildMode, const HoverCell *>(
+          "Place Building On Release")
+      .kind(ValidatePhase)
+      .each([current_site](flecs::iter &it, size_t, const MouseUp &mouse,
+                           BuildMode &mode, const HoverCell *hover) {
+        if (mouse.button != SDL_BUTTON_LEFT) {
+          return;
+        }
+        const BuildMode released = mode;
+        mode.dragging = false;
+        if (hover == nullptr) {
+          return;
+        }
+        auto world = it.world();
+        auto site = current_site.first();
+        auto prefab = buildModePrefab(world);
+        const auto placement = pendingPlacement(
+            prefab, released, hover->location, site.get<Site>());
+        PlaceBuildingAction action(PlacedPrefab{prefab}, TargetSite{site},
+                                   placement.origin, placement.footprint);
+        if (auto result = action.validate(world); !result) {
+          spdlog::debug("Cannot place {}: {}", prefab.name().c_str(),
+                        result.message);
+          return;
+        }
+        action.execute(world);
+      });
+
+  world.system<const MouseUp, BuildMode>("Cancel Build On Right Click")
+      .kind(ValidatePhase)
+      .each([](flecs::iter &it, size_t, const MouseUp &mouse, BuildMode &mode) {
+        if (mouse.button != SDL_BUTTON_RIGHT) {
+          return;
+        }
+        if (mode.dragging) {
+          mode.dragging = false;
+        } else {
+          auto world = it.world();
+          exitBuildMode(world);
+        }
+      });
+
   world.system<Transform, Sprite, const MouseUp>("Match click to Building")
       .with<SiteLocation>()
+      .without<BuildMode>()
       .kind(ValidatePhase)
       .each(systemMatchClickToBuilding);
 
@@ -231,6 +289,7 @@ SiteModule::SiteModule(flecs::world &world) {
       .term_at(1)
       .second(flecs::Wildcard)
       .with<SiteLocation>()
+      .without<BuildMode>()
       .kind(ValidatePhase)
       .each([](flecs::iter &it, size_t row, const Transform &t, const Tile &,
                const MouseUp &mouse) {
@@ -454,10 +513,13 @@ void drawBuildGhost(flecs::entity site, const Transform &transform,
     return;
   }
 
-  const Footprint footprint = placementFootprint(prefab);
-  const auto result =
-      canPlace(buildOccupancyGrid(site), mode.kind, hover.location, footprint);
-  const bool valid = result == PlacementResult::Ok;
+  const auto placement =
+      pendingPlacement(prefab, mode, hover.location, site.get<Site>());
+  const auto validation =
+      PlaceBuildingAction(PlacedPrefab{prefab}, TargetSite{site},
+                          placement.origin, placement.footprint)
+          .validate(site.world());
+  const bool valid = validation.ok;
   const ImU32 fill =
       valid ? IM_COL32(80, 220, 80, 90) : IM_COL32(230, 60, 60, 90);
   const ImU32 outline =
@@ -465,15 +527,19 @@ void drawBuildGhost(flecs::entity site, const Transform &transform,
 
   constexpr auto CELL = static_cast<float>(SITE_CELL_SIZE);
   const ImVec2 min{transform.worldPosition.x +
-                       (static_cast<float>(hover.location.x) * CELL),
+                       (static_cast<float>(placement.origin.x) * CELL),
                    transform.worldPosition.y +
-                       (static_cast<float>(hover.location.y) * CELL)};
-  const ImVec2 max{min.x + (static_cast<float>(footprint.w) * CELL),
-                   min.y + (static_cast<float>(footprint.h) * CELL)};
+                       (static_cast<float>(placement.origin.y) * CELL)};
+  const ImVec2 max{min.x + (static_cast<float>(placement.footprint.w) * CELL),
+                   min.y + (static_cast<float>(placement.footprint.h) * CELL)};
 
   auto *draw_list = ImGui::GetBackgroundDrawList();
   draw_list->AddRectFilled(min, max, fill);
   draw_list->AddRect(min, max, outline, 0, 0, 2.0F);
+
+  if (!valid) {
+    ImGui::SetTooltip("%s", validation.message.c_str());
+  }
 }
 } // namespace
 

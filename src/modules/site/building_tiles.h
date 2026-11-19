@@ -37,7 +37,6 @@ struct BuildingTiles {
   std::vector<BuildingTile> tiles;
 };
 
-/// @brief The 9-slice role of cell (@p x, @p y) in a @p w x @p h footprint
 TileRole tileRoleAt(int x, int y, int w, int h);
 
 /// @brief The tiles in @p tiles that may fill @p role: those declaring it whose

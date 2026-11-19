@@ -81,6 +81,8 @@ add_executable(unit_test
   site/building_tiles.test.cpp
   site/hover_cell.test.cpp
   site/placement_footprint.test.cpp
+  site/place_building_action.test.cpp
+  site/drag_rectangle.test.cpp
   site/can_place.test.cpp
   site/centred_site_origin.test.cpp
   site/check_footprint_size.test.cpp

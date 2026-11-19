@@ -3,6 +3,7 @@
 #include "site.h"
 #include <cstdint>
 #include <flecs.h>
+#include <string>
 #include <vector>
 
 /// @brief A category of prefab the player may build on a site.
@@ -54,6 +55,9 @@ enum class PlacementResult : uint8_t {
 PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
                          SiteLocation origin, Footprint footprint);
 
+/// @brief Empty for PlacementResult::Ok
+std::string placementMessage(PlacementResult result);
+
 /// @brief Smallest footprint of a draggable building (ADR 009 §2)
 constexpr Footprint MIN_BUILDING_FOOTPRINT{.w = 2, .h = 2};
 
@@ -73,6 +77,18 @@ PlacementResult checkFootprintSize(Footprint footprint,
 /// @brief The footprint a click places for @p prefab: 1x1 if FixedSize,
 /// otherwise its definition's minimum, raised to MIN_BUILDING_FOOTPRINT
 Footprint placementFootprint(flecs::entity prefab);
+
+struct PendingPlacement {
+  SiteLocation origin;
+  Footprint footprint;
+};
+
+/// @brief The rectangle dragged from @p anchor to @p hover: the minimum-size
+/// rectangle at @p anchor, stretched to include @p hover. Past the maximum the
+/// dragged edge is held back; the result is then cut at the @p site edge,
+/// which can leave it below the minimum
+PendingPlacement dragRectangle(SiteLocation anchor, SiteLocation hover,
+                               const FootprintLimits &limits, const Site &site);
 
 /// @brief Builds the occupancy grid of @p site from its children: buildings
 /// fill their Footprint (1x1 if they have none), connectors fill one cell

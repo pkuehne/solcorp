@@ -15,6 +15,19 @@ void exitBuildMode(flecs::world &world) {
   world.entity<BuildMode>().remove<BuildModePrefab>(flecs::Wildcard);
 }
 
+PendingPlacement pendingPlacement(flecs::entity prefab, const BuildMode &mode,
+                                  SiteLocation hover, const Site &site) {
+  const Footprint min = placementFootprint(prefab);
+  if (prefab.has<FixedSize>() || !mode.dragging) {
+    return {.origin = hover, .footprint = min};
+  }
+  const auto *limits = prefab.try_get<FootprintLimits>();
+  const FootprintLimits effective{
+      .min = min,
+      .max = limits != nullptr ? limits->max : FootprintLimits{}.max};
+  return dragRectangle(mode.drag_start, hover, effective, site);
+}
+
 flecs::entity buildModePrefab(const flecs::world &world) {
   if (!world.has<BuildMode>()) {
     return {};
