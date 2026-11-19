@@ -78,6 +78,10 @@ PlacementResult checkFootprintSize(Footprint footprint,
 /// otherwise its definition's minimum, raised to MIN_BUILDING_FOOTPRINT
 Footprint placementFootprint(flecs::entity prefab);
 
+/// @brief The sizes build mode allows for @p prefab: 1x1 if FixedSize,
+/// otherwise from placementFootprint up to its definition's maximum
+FootprintLimits placementLimits(flecs::entity prefab);
+
 struct PendingPlacement {
   SiteLocation origin;
   Footprint footprint;

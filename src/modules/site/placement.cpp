@@ -39,6 +39,16 @@ std::string placementMessage(PlacementResult result) {
   return "";
 }
 
+FootprintLimits placementLimits(flecs::entity prefab) {
+  const Footprint min = placementFootprint(prefab);
+  if (prefab.has<FixedSize>()) {
+    return {.min = min, .max = min};
+  }
+  const auto *limits = prefab.try_get<FootprintLimits>();
+  return {.min = min,
+          .max = limits != nullptr ? limits->max : FootprintLimits{}.max};
+}
+
 Footprint placementFootprint(flecs::entity prefab) {
   if (prefab.has<FixedSize>()) {
     return {};

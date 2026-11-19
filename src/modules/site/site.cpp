@@ -534,9 +534,15 @@ void drawBuildGhost(flecs::entity site, const Transform &transform,
   draw_list->AddRectFilled(min, max, fill);
   draw_list->AddRect(min, max, outline, 0, 0, 2.0F);
 
-  if (!valid) {
-    ImGui::SetTooltip("%s", validation.message.c_str());
+  const auto tooltip = ghostTooltip(prefab, mode, placement, validation);
+  ImGui::BeginTooltip();
+  ImGui::TextUnformatted(tooltip.title.c_str());
+  ImGui::TextUnformatted(tooltip.size.c_str());
+  if (!tooltip.problem.empty()) {
+    ImGui::TextColored({1.0F, 0.4F, 0.4F, 1.0F}, "%s", tooltip.problem.c_str());
   }
+  ImGui::TextDisabled("%s", tooltip.hint.c_str());
+  ImGui::EndTooltip();
 }
 } // namespace
 
