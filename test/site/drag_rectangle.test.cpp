@@ -135,3 +135,54 @@ SCENARIO("pendingPlacement is what a release would place",
     }
   }
 }
+
+SCENARIO("dragRun lays a straight road from a drag", "[site]") {
+  struct Case {
+    std::string description;
+    SiteLocation anchor;
+    SiteLocation hover;
+    Rect expected;
+  };
+
+  GIVEN("a drag") {
+    auto [description, anchor, hover, expected] = GENERATE(values<Case>({
+        {"no movement is one cell",
+         {.x = 3, .y = 3},
+         {.x = 3, .y = 3},
+         {.x = 3, .y = 3, .w = 1, .h = 1}},
+        {"right",
+         {.x = 3, .y = 3},
+         {.x = 6, .y = 3},
+         {.x = 3, .y = 3, .w = 4, .h = 1}},
+        {"left",
+         {.x = 3, .y = 3},
+         {.x = 1, .y = 3},
+         {.x = 1, .y = 3, .w = 3, .h = 1}},
+        {"down",
+         {.x = 3, .y = 3},
+         {.x = 3, .y = 5},
+         {.x = 3, .y = 3, .w = 1, .h = 3}},
+        {"up",
+         {.x = 3, .y = 3},
+         {.x = 3, .y = 0},
+         {.x = 3, .y = 0, .w = 1, .h = 4}},
+        {"mostly sideways snaps to the press row",
+         {.x = 3, .y = 3},
+         {.x = 7, .y = 5},
+         {.x = 3, .y = 3, .w = 5, .h = 1}},
+        {"mostly vertical snaps to the press column",
+         {.x = 3, .y = 3},
+         {.x = 2, .y = 7},
+         {.x = 3, .y = 3, .w = 1, .h = 5}},
+        {"a diagonal tie runs sideways",
+         {.x = 3, .y = 3},
+         {.x = 5, .y = 5},
+         {.x = 3, .y = 3, .w = 3, .h = 1}},
+    }));
+    CAPTURE(description);
+
+    THEN("the run is as expected") {
+      CHECK(asRect(dragRun(anchor, hover)) == expected);
+    }
+  }
+}

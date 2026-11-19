@@ -46,12 +46,11 @@ enum class PlacementResult : uint8_t {
   ConnectorNotConnected,
 };
 
-/// @brief Whether something of @p kind may be placed at @p origin (ADR 009 §4)
+/// @brief Whether something of @p kind may cover @p footprint from @p origin
 ///
-/// A building covers @p footprint; every cell must be in bounds and empty, and
-/// one of them must be orthogonally next to a connector. A connector covers one
-/// cell (its footprint is ignored), which must be in bounds, empty, and next to
-/// a connector or building, unless the site is empty.
+/// Every cell must be in bounds and empty. A building needs one cell
+/// orthogonally next to a connector; a connector run needs one cell next to a
+/// connector or building, unless the site is empty.
 PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
                          SiteLocation origin, Footprint footprint);
 
@@ -74,9 +73,12 @@ struct FootprintLimits {
 PlacementResult checkFootprintSize(Footprint footprint,
                                    const FootprintLimits &limits);
 
-/// @brief Whether @p prefab is sized by dragging; fixed-size buildings and
-/// connectors take one cell
-bool isDraggable(flecs::entity prefab);
+/// @brief How dragging sizes a placement: not at all, as a rectangle, or as a
+/// one-cell-wide run
+enum class DragShape : uint8_t { None, Rectangle, Run };
+
+/// @brief Run for connectors, None for fixed-size buildings, else Rectangle
+DragShape dragShape(flecs::entity prefab);
 
 /// @brief The footprint a click places for @p prefab: 1x1 if FixedSize,
 /// otherwise its definition's minimum, raised to MIN_BUILDING_FOOTPRINT
@@ -101,6 +103,10 @@ PendingPlacement dragRectangle(SiteLocation anchor, SiteLocation hover,
 /// @brief The building of @p site whose footprint covers @p cell; invalid if
 /// none does. A building without a Footprint covers one cell
 flecs::entity buildingAt(flecs::entity site, SiteLocation cell);
+
+/// @brief The straight run from @p anchor towards @p hover, along whichever
+/// axis the mouse has moved further (horizontal on a tie)
+PendingPlacement dragRun(SiteLocation anchor, SiteLocation hover);
 
 /// @brief Builds the occupancy grid of @p site from its children: buildings
 /// fill their Footprint (1x1 if they have none), connectors fill one cell

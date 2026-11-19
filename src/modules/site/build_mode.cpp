@@ -27,10 +27,18 @@ void exitBuildMode(flecs::world &world) {
 PendingPlacement pendingPlacement(flecs::entity prefab, const BuildMode &mode,
                                   SiteLocation hover, const Site &site) {
   const FootprintLimits limits = placementLimits(prefab);
-  if (!isDraggable(prefab) || !mode.dragging) {
+  if (!mode.dragging) {
     return {.origin = hover, .footprint = limits.min};
   }
-  return dragRectangle(mode.drag_start, hover, limits, site);
+  switch (dragShape(prefab)) {
+  case DragShape::Rectangle:
+    return dragRectangle(mode.drag_start, hover, limits, site);
+  case DragShape::Run:
+    return dragRun(mode.drag_start, hover);
+  case DragShape::None:
+    break;
+  }
+  return {.origin = hover, .footprint = limits.min};
 }
 
 namespace {
@@ -53,18 +61,25 @@ GhostTooltip ghostTooltip(flecs::entity prefab, const BuildMode &mode,
   tooltip.size = "Size " + sizeText(placement.footprint);
   tooltip.problem = validation.message;
 
-  if (!isDraggable(prefab)) {
-    tooltip.hint = "Click to build \u00b7 Right-click to cancel";
-    return tooltip;
+  const DragShape shape = dragShape(prefab);
+  if (shape == DragShape::Rectangle) {
+    const FootprintLimits limits = placementLimits(prefab);
+    if (limits.max.w != UINT8_MAX || limits.max.h != UINT8_MAX) {
+      tooltip.size += " (max " + sizeText(limits.max) + ")";
+    }
   }
 
-  const FootprintLimits limits = placementLimits(prefab);
-  if (limits.max.w != UINT8_MAX || limits.max.h != UINT8_MAX) {
-    tooltip.size += " (max " + sizeText(limits.max) + ")";
+  std::string action;
+  if (mode.dragging && shape != DragShape::None) {
+    action = "Release to build";
+  } else if (shape == DragShape::Rectangle) {
+    action = "Click and drag to size";
+  } else if (shape == DragShape::Run) {
+    action = "Click and drag to lay road";
+  } else {
+    action = "Click to build";
   }
-  tooltip.hint = mode.dragging
-                     ? "Release to build \u00b7 Right-click to cancel"
-                     : "Click and drag to size \u00b7 Right-click to cancel";
+  tooltip.hint = action + " \u00b7 Right-click to cancel";
   return tooltip;
 }
 

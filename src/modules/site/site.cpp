@@ -228,7 +228,8 @@ SiteModule::SiteModule(flecs::world &world) {
       .each([](flecs::iter &it, size_t, const MouseDown &mouse,
                const HoverCell &hover, BuildMode &mode) {
         auto prefab = buildModePrefab(it.world());
-        if (mouse.button == SDL_BUTTON_LEFT && isDraggable(prefab)) {
+        if (mouse.button == SDL_BUTTON_LEFT &&
+            dragShape(prefab) != DragShape::None) {
           mode.drag_start = hover.location;
           mode.dragging = true;
         }

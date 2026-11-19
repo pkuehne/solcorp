@@ -39,13 +39,16 @@ std::string placementMessage(PlacementResult result) {
   return "";
 }
 
-bool isDraggable(flecs::entity prefab) {
-  return !prefab.has<FixedSize>() && !prefab.has<ConnectorTile>();
+DragShape dragShape(flecs::entity prefab) {
+  if (prefab.has<ConnectorTile>()) {
+    return DragShape::Run;
+  }
+  return prefab.has<FixedSize>() ? DragShape::None : DragShape::Rectangle;
 }
 
 FootprintLimits placementLimits(flecs::entity prefab) {
   const Footprint min = placementFootprint(prefab);
-  if (!isDraggable(prefab)) {
+  if (dragShape(prefab) != DragShape::Rectangle) {
     return {.min = min, .max = min};
   }
   const auto *limits = prefab.try_get<FootprintLimits>();
@@ -54,7 +57,7 @@ FootprintLimits placementLimits(flecs::entity prefab) {
 }
 
 Footprint placementFootprint(flecs::entity prefab) {
-  if (!isDraggable(prefab)) {
+  if (dragShape(prefab) != DragShape::Rectangle) {
     return {};
   }
   const auto *limits = prefab.try_get<FootprintLimits>();
@@ -130,6 +133,17 @@ flecs::entity buildingAt(flecs::entity site, SiteLocation cell) {
   return found;
 }
 
+PendingPlacement dragRun(SiteLocation anchor, SiteLocation hover) {
+  const int dx = std::abs(hover.x - anchor.x);
+  const int dy = std::abs(hover.y - anchor.y);
+  if (dx >= dy) {
+    return {.origin = {.x = std::min(anchor.x, hover.x), .y = anchor.y},
+            .footprint = {.w = static_cast<uint8_t>(dx + 1), .h = 1}};
+  }
+  return {.origin = {.x = anchor.x, .y = std::min(anchor.y, hover.y)},
+          .footprint = {.w = 1, .h = static_cast<uint8_t>(dy + 1)}};
+}
+
 OccupancyGrid buildOccupancyGrid(flecs::entity site) {
   const auto &dimensions = site.get<Site>();
   OccupancyGrid grid{
@@ -198,20 +212,26 @@ PlacementResult canPlaceBuilding(const OccupancyGrid &grid, int origin_x,
                       : PlacementResult::NotConnectedToRoad;
 }
 
-PlacementResult canPlaceConnector(const OccupancyGrid &grid, int x, int y) {
-  if (!grid.inBounds(x, y)) {
-    return PlacementResult::OutOfBounds;
-  }
-  if (grid.at(x, y) != CellContent::Empty) {
-    return PlacementResult::Occupied;
+PlacementResult canPlaceConnector(const OccupancyGrid &grid, int origin_x,
+                                  int origin_y, Footprint footprint) {
+  bool connected = false;
+  for (int y = origin_y; y < origin_y + footprint.h; ++y) {
+    for (int x = origin_x; x < origin_x + footprint.w; ++x) {
+      if (!grid.inBounds(x, y)) {
+        return PlacementResult::OutOfBounds;
+      }
+      if (grid.at(x, y) != CellContent::Empty) {
+        return PlacementResult::Occupied;
+      }
+      connected = connected ||
+                  hasNeighbour(grid, x, y, CellContent::Connector) ||
+                  hasNeighbour(grid, x, y, CellContent::Building);
+    }
   }
   const bool empty_site = std::ranges::all_of(
       grid.cells, [](CellContent c) { return c == CellContent::Empty; });
-  if (empty_site || hasNeighbour(grid, x, y, CellContent::Connector) ||
-      hasNeighbour(grid, x, y, CellContent::Building)) {
-    return PlacementResult::Ok;
-  }
-  return PlacementResult::ConnectorNotConnected;
+  return empty_site || connected ? PlacementResult::Ok
+                                 : PlacementResult::ConnectorNotConnected;
 }
 
 } // namespace
@@ -219,7 +239,7 @@ PlacementResult canPlaceConnector(const OccupancyGrid &grid, int x, int y) {
 PlacementResult canPlace(const OccupancyGrid &grid, PlacementKind kind,
                          SiteLocation origin, Footprint footprint) {
   if (kind == PlacementKind::Connector) {
-    return canPlaceConnector(grid, origin.x, origin.y);
+    return canPlaceConnector(grid, origin.x, origin.y, footprint);
   }
   return canPlaceBuilding(grid, origin.x, origin.y, footprint);
 }

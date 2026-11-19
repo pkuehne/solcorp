@@ -308,16 +308,32 @@ SCENARIO("Clicking and dragging in build mode", "[build_mode][site][system]") {
   GIVEN("the road is selected") {
     enterBuildMode(f.world, f.road);
 
-    WHEN("the player presses next to the road and drags away") {
+    WHEN("the player clicks next to the road") {
       pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
-      CHECK_FALSE(f.world.get<BuildMode>().dragging);
       releaseAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
 
-      THEN("one road cell is placed where the mouse is released") {
+      THEN("one road cell is placed") {
         auto roads = f.placedRoads();
         REQUIRE(roads.size() == 1);
         CHECK(roads[0].get<SiteLocation>().x == 1);
         CHECK(roads[0].get<SiteLocation>().y == 1);
+      }
+    }
+
+    WHEN("the player drags mostly sideways from next to the road") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      CHECK(f.world.get<BuildMode>().dragging);
+      releaseAt({.x = 4, .y = 2}, SDL_BUTTON_LEFT);
+
+      THEN("a straight run along the press row is placed") {
+        std::vector<std::pair<int, int>> cells;
+        for (auto road : f.placedRoads()) {
+          cells.emplace_back(road.get<SiteLocation>().x,
+                             road.get<SiteLocation>().y);
+        }
+        std::ranges::sort(cells);
+        CHECK(cells ==
+              std::vector<std::pair<int, int>>{{1, 1}, {2, 1}, {3, 1}, {4, 1}});
         CHECK(f.buildings().empty());
       }
     }
@@ -438,25 +454,54 @@ SCENARIO("buildingAt finds the building covering a cell", "[site]") {
 SCENARIO("PlaceConnectorAction validates where a road may go",
          "[action][site]") {
   SiteFixture f;
+  f.world.entity("Hall")
+      .child_of(f.site)
+      .add<Building>()
+      .set<SiteLocation>({.x = 3, .y = 4})
+      .set<Footprint>({.w = 2, .h = 2});
 
   struct Case {
     std::string description;
-    SiteLocation location;
+    SiteLocation origin;
+    Footprint footprint;
     std::string expected;
   };
 
-  GIVEN("a road cell to place") {
-    auto [description, location, expected] = GENERATE(values<Case>({
-        {"next to the road", {.x = 1, .y = 2}, ""},
-        {"away from any road or building",
-         {.x = 3, .y = 3},
+  GIVEN("a road run to place on a site with a road down column 0") {
+    auto [description, origin, footprint, expected] = GENERATE(values<Case>({
+        {"one cell next to the road", {.x = 1, .y = 2}, {.w = 1, .h = 1}, ""},
+        {"a run whose first cell joins the road",
+         {.x = 1, .y = 1},
+         {.w = 4, .h = 1},
+         ""},
+        {"a run whose last cell joins a building",
+         {.x = 4, .y = 0},
+         {.w = 1, .h = 4},
+         ""},
+        {"a run that joins nothing",
+         {.x = 2, .y = 0},
+         {.w = 3, .h = 1},
          "Roads must join a road or building"},
-        {"on the road", {.x = 0, .y = 2}, "Something is already built there"},
-        {"off the site", {.x = 6, .y = 2}, "It doesn't fit on the site"},
+        {"a run crossing the road",
+         {.x = 0, .y = 2},
+         {.w = 3, .h = 1},
+         "Something is already built there"},
+        {"a run crossing a building",
+         {.x = 1, .y = 4},
+         {.w = 4, .h = 1},
+         "Something is already built there"},
+        {"a run off the site",
+         {.x = 3, .y = 2},
+         {.w = 4, .h = 1},
+         "It doesn't fit on the site"},
+        {"a run two cells wide",
+         {.x = 1, .y = 1},
+         {.w = 2, .h = 2},
+         "Roads are one cell wide"},
     }));
     CAPTURE(description);
     PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
-                                location);
+                                origin, footprint);
 
     THEN("it passes or fails with the expected reason") {
       auto result = action.validate(f.world);
@@ -469,16 +514,16 @@ SCENARIO("PlaceConnectorAction validates where a road may go",
     auto empty =
         f.world.entity("Empty Site").set<Site>({.width = 4, .height = 4});
     PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{empty},
-                                {.x = 2, .y = 2});
+                                {.x = 0, .y = 2}, {.w = 3, .h = 1});
 
-    THEN("the first road can go anywhere") {
+    THEN("the first run can go anywhere") {
       CHECK(action.validate(f.world).ok);
     }
   }
 
   GIVEN("a building prefab instead of a road") {
     PlaceConnectorAction action(PlacedPrefab{f.factory}, TargetSite{f.site},
-                                {.x = 1, .y = 2});
+                                {.x = 1, .y = 2}, {.w = 1, .h = 1});
 
     THEN("it fails") {
       CHECK(action.validate(f.world).message == "No road is selected");
@@ -486,27 +531,36 @@ SCENARIO("PlaceConnectorAction validates where a road may go",
   }
 }
 
-SCENARIO("PlaceConnectorAction places a road cell", "[action][site]") {
+SCENARIO("PlaceConnectorAction places a road run", "[action][site]") {
   SiteFixture f;
 
-  GIVEN("a valid road cell") {
+  GIVEN("a valid three-cell run") {
     PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
-                                {.x = 1, .y = 2});
+                                {.x = 1, .y = 2}, {.w = 3, .h = 1});
 
     WHEN("it is executed") {
       action.execute(f.world);
 
-      THEN("a numbered road of that prefab is placed there") {
-        auto roads = f.placedRoads();
-        REQUIRE(roads.size() == 1);
-        CHECK(std::string{roads[0].name().c_str()} == "Road 1");
-        CHECK(roads[0].get<SiteLocation>().x == 1);
-        CHECK(roads[0].get<SiteLocation>().y == 2);
-        CHECK(roads[0].has<ConnectorTile>());
+      THEN("one numbered road is placed on each cell") {
+        std::vector<std::pair<int, int>> cells;
+        std::vector<std::string> names;
+        for (auto road : f.placedRoads()) {
+          cells.emplace_back(road.get<SiteLocation>().x,
+                             road.get<SiteLocation>().y);
+          names.emplace_back(road.name().c_str());
+          CHECK(road.has<ConnectorTile>());
+        }
+        std::ranges::sort(cells);
+        std::ranges::sort(names);
+        CHECK(cells ==
+              std::vector<std::pair<int, int>>{{1, 2}, {2, 2}, {3, 2}});
+        CHECK(names == std::vector<std::string>{"Road 1", "Road 2", "Road 3"});
       }
 
-      THEN("it occupies its cell as a connector") {
-        CHECK(buildOccupancyGrid(f.site).at(1, 2) == CellContent::Connector);
+      THEN("its cells are occupied as connectors") {
+        const auto grid = buildOccupancyGrid(f.site);
+        CHECK(grid.at(1, 2) == CellContent::Connector);
+        CHECK(grid.at(3, 2) == CellContent::Connector);
       }
 
       THEN("the site is flagged for relayout") {

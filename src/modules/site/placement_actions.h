@@ -16,10 +16,12 @@ struct TargetSite {
 struct PlaceConnectorAction : public IAction {
   flecs::entity prefab;
   flecs::entity site;
-  SiteLocation location;
+  SiteLocation origin;
+  Footprint footprint;
 
-  PlaceConnectorAction(PlacedPrefab p, TargetSite s, SiteLocation l)
-      : prefab(p.value), site(s.value), location(l) {}
+  PlaceConnectorAction(PlacedPrefab p, TargetSite s, SiteLocation o,
+                       Footprint f)
+      : prefab(p.value), site(s.value), origin(o), footprint(f) {}
 
   [[nodiscard]] ValidationResult
   validate(const flecs::world &world) const override;
