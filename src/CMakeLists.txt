@@ -53,13 +53,11 @@ list(APPEND SolCorpSources
     modules/site/build_mode.cpp
     modules/site/building_tiles.cpp
     modules/site/connector.cpp
-    modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
     modules/site/helpers.cpp
     modules/site/placement.cpp
     modules/site/placement_actions.cpp
     modules/site/site.cpp
-    modules/site/site_construction.cpp
     modules/site/weather.cpp
     modules/staff/staff.cpp
     modules/stats/stats.cpp
@@ -120,13 +118,11 @@ list(APPEND SolCorpHeaders
     modules/site/build_mode.h
     modules/site/building_tiles.h
     modules/site/connector.h
-    modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
     modules/site/helpers.h
     modules/site/placement.h
     modules/site/placement_actions.h
     modules/site/site.h
-    modules/site/site_construction.h
     modules/site/weather.h
     modules/staff/staff.h
     modules/stats/stats.h

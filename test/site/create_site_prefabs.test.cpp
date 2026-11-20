@@ -22,11 +22,6 @@ SCENARIO("systemCreateSitePrefabs", "[on_start][system]") {
         CHECK(node.is_valid());
         CHECK(node.has<Building>());
       }
-      THEN("The Prefabs::Core node contains a ConstructionSite prefab") {
-        auto node = world.lookup("Prefabs::Core::ConstructionSite");
-        CHECK(node.is_valid());
-        CHECK(node.has<ConstructionSite>());
-      }
       THEN("The Prefabs::Facilities node is created") {
         auto node = world.lookup("Prefabs::Facilities");
         CHECK(node.is_valid());

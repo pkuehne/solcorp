@@ -2,7 +2,6 @@
 #include "build_mode.h"
 #include "building_tiles.h"
 #include "connector.h"
-#include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
@@ -20,25 +19,16 @@
 #include "placement.h"
 #include "placement_actions.h"
 #include "rocket_prefab_window.h"
-#include "site_construction.h"
 #include "weather.h"
 #include <cmath>
 #include <format>
 #include <spdlog/spdlog.h>
 #include <utility>
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
-extern unsigned char construction_png[];
-extern unsigned int construction_png_len;
-
-void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
-                                const MouseUp &mouse);
 namespace {
 void placeBuildingTiles(flecs::entity building, const Footprint &footprint);
 void drawBuildGhost(flecs::entity site, const Transform &transform,
                     const HoverCell &hover, const BuildMode &mode);
-void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
-                           float height, const MouseUp &mouse);
 } // namespace
 
 SiteModule::SiteModule(flecs::world &world) {
@@ -51,7 +41,6 @@ SiteModule::SiteModule(flecs::world &world) {
 
   // Register components
   world.component<CurrentSite>();
-  world.component<ConstructionSite>();
   world.component<SiteNeedsRelayout>();
   world.component<Site>()
       .member("width", &Site::width)
@@ -110,8 +99,6 @@ SiteModule::SiteModule(flecs::world &world) {
                    .higher_is_better = false});
   world.component<BuildingDetailWindow>().member(
       "buildingE", &BuildingDetailWindow::buildingE);
-  world.component<ConstructionSiteWindow>().member(
-      "buildingE", &ConstructionSiteWindow::buildingE);
   world.component<RocketPrefabWindow>().member(
       "manufacturingE", &RocketPrefabWindow::manufacturingE);
 
@@ -140,10 +127,7 @@ SiteModule::SiteModule(flecs::world &world) {
             .field<&Manufacturing::auto_store>("auto_store");
       });
 
-  // Connectors register their own components and the retile system, which
-  // queries Site / SiteNeedsRelayout — so this must run after those are
-  // registered above, and before the scatter system below so the autotiler
-  // runs first in ValidatePhase.
+  // The retile system queries Site / SiteNeedsRelayout, registered above.
   registerConnectors(world);
 
   // Register Systems
@@ -278,12 +262,6 @@ SiteModule::SiteModule(flecs::world &world) {
         }
       });
 
-  world.system<Transform, Sprite, const MouseUp>("Match click to Building")
-      .with<SiteLocation>()
-      .without<BuildMode>()
-      .kind(ValidatePhase)
-      .each(systemMatchClickToBuilding);
-
   world.system<const MouseUp>("Open Clicked Building")
       .without<BuildMode>()
       .kind(ValidatePhase)
@@ -306,11 +284,6 @@ SiteModule::SiteModule(flecs::world &world) {
       .with<BuildingTiles>(flecs::Wildcard)
       .event(flecs::OnSet)
       .each(placeBuildingTiles);
-
-  world.system<Site>("Update Construction Sites")
-      .with<SiteNeedsRelayout>()
-      .kind(ValidatePhase)
-      .each(systemUpdateConstructionSiteLocations);
 
   initWeather(world);
 
@@ -355,11 +328,8 @@ SiteModule::SiteModule(flecs::world &world) {
 /**
  * @brief Registers site-related prefab entities in the ECS world.
  *
- * This function creates and registers prefab entities for buildings,
- * construction sites, and facilities, along with their associated components
- * and textures. It ensures that the necessary prefab hierarchy nodes exist,
- * loads the construction site texture, and sets up default sprite properties
- * for the prefabs.
+ * This function creates and registers prefab entities for buildings and
+ * facilities, and ensures that the necessary prefab hierarchy nodes exist.
  *
  * @param it The ECS iterator providing access to the world context.
  */
@@ -367,21 +337,6 @@ void systemCreateSitePrefabs(flecs::iter &it) {
   const flecs::world &world = it.world();
 
   spdlog::debug("Creating Site Prefabs");
-  // Construction Site texture
-  auto texture_node = world.entity("Textures");
-  auto texture = world.entity("Construction")
-                     .child_of(texture_node)
-                     .set<Texture>(loadTexture(construction_png,
-                                               construction_png_len, world));
-
-  // Register Prefabs
-  Sprite sprite;
-  sprite.x = 0;
-  sprite.y = 0;
-  sprite.width = 32;
-  sprite.height = 32;
-  sprite.texture = texture;
-
   // Ensure prefab hierarchy nodes exist
   auto prefabs_node = world.lookup("Prefabs");
   if (!prefabs_node.is_valid()) {
@@ -407,15 +362,6 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .set<SiteLocation>({})
       .set<Transform>({});
 
-  // Create ConstructionSite prefab with adjusted sprite position
-  sprite.y = 128;
-  world.prefab("ConstructionSite")
-      .child_of(core_node)
-      .add<ConstructionSite>()
-      .set<SiteLocation>({})
-      .set<Transform>({})
-      .set<Sprite>(sprite);
-
   world.prefab("Facility").child_of(core_node).add<Facility>();
 }
 
@@ -423,8 +369,6 @@ void systemCreateSiteWindows(flecs::iter &it) {
   auto world = it.world();
   registerWindow("Building Detail", drawBuildingDetailWindow, world)
       .set<BuildingDetailWindow>({});
-  registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
-      .set<ConstructionSiteWindow>({});
   registerWindow("Rocket Prefab Window", drawRocketPrefabWindow, world)
       .set<RocketPrefabWindow>({});
 }
@@ -450,29 +394,7 @@ Point centredSiteOrigin(int window_width, int window_height, const Site &site) {
                .y = static_cast<float>(window_height - site_height) / 2.0F};
 }
 
-bool containsPoint(const Point &origin, float width, float height,
-                   const Point &point) {
-  return point.x > origin.x && point.x < origin.x + width &&
-         point.y > origin.y && point.y < origin.y + height;
-}
-
 namespace {
-void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
-                           float height, const MouseUp &mouse) {
-  const Point click{.x = static_cast<float>(mouse.x),
-                    .y = static_cast<float>(mouse.y)};
-  if (!containsPoint(t.worldPosition, width, height, click)) {
-    return;
-  }
-  spdlog::debug("Clicked on building {}", e.name().c_str());
-  if (e.has<Building>()) {
-    spdlog::debug("Showing Building Window for {}", e.name().c_str());
-    showBuildingDetailWindow(e);
-  } else if (e.has<ConstructionSite>()) {
-    showConstructionSiteWindow(e);
-  }
-}
-
 void placeBuildingTiles(flecs::entity building, const Footprint &footprint) {
   auto tileset = building.target<BuildingTiles>();
   const auto *layout = tileset.try_get<Tileset>();
@@ -546,13 +468,6 @@ void drawBuildGhost(flecs::entity site, const Transform &transform,
   ImGui::EndTooltip();
 }
 } // namespace
-
-void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
-                                const MouseUp &mouse) {
-  // We know from the query that this has a SiteLocation i.e. is part of a Site
-  const auto tileSize = static_cast<float>(s.width);
-  openClickedSiteEntity(e, t, tileSize, tileSize, mouse);
-}
 
 void systemBuildingUpdateManufacuringProgress(
     flecs::entity e, EffortRequired &effort,

@@ -62,11 +62,8 @@ struct Launchpad {
   Stat prep_days = Stat({.id = "prep-days", .base = 5});
 };
 
-/// @brief Indiciates the entity is a future building location
-struct ConstructionSite {};
-
-/// @brief Tag on a Site meaning its layout changed and derived state (e.g.
-/// connector autotiling) must be recomputed. Consumed in ValidatePhase.
+/// @brief Tag on a Site meaning its layout changed and its connectors must be
+/// retiled. Cleared by the retile system in ValidatePhase.
 struct SiteNeedsRelayout {};
 
 /// @brief Edge length of one site cell, in pixels
@@ -82,11 +79,6 @@ struct HoverCell {
 
 std::optional<SiteLocation> cellAt(const Point &site_origin, const Site &site,
                                    const Point &point);
-
-/// @brief Whether @p point lies strictly inside the @p width x @p height
-/// rect whose top-left corner is @p origin
-bool containsPoint(const Point &origin, float width, float height,
-                   const Point &point);
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);

@@ -33,35 +33,6 @@ flecs::entity instantiateBuilding(flecs::world &world,
   return entity;
 };
 
-flecs::entity instantiateConstructionSite(flecs::world &world,
-                                          SiteLocation location,
-                                          flecs::entity site) {
-
-  std::string prefabName = "Prefabs::Core::ConstructionSite";
-  auto prefabE = world.lookup(prefabName.c_str());
-  if (!prefabE.is_valid()) {
-    spdlog::error("Prefab {} does not exist", prefabName);
-    return {};
-  }
-  if (!site.is_valid()) {
-    spdlog::error("Site entity is not valid");
-    return {};
-  }
-
-  Transform t;
-  t.relativePosition.x = static_cast<float>(location.x) * 32;
-  t.relativePosition.y = static_cast<float>(location.y) * 32;
-
-  std::string name = fmt::format("Construction Site {}-{}/{}",
-                                 site.name().c_str(), location.x, location.y);
-  auto entity = world.entity(name.c_str())
-                    .is_a(prefabE)
-                    .set<SiteLocation>(location)
-                    .set<Transform>(t)
-                    .child_of(site);
-  return entity;
-};
-
 flecs::entity instantiateBuildingNotification(flecs::world &world,
                                               flecs::entity building,
                                               const std::string &text) {

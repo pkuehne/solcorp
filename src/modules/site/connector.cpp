@@ -152,16 +152,13 @@ void registerConnectors(flecs::world &world) {
             .field<&ConnectorTile::rotation_deg>("rotation_deg");
       });
 
-  // Re-tile a site's connectors whenever its layout changed. Matches only
-  // sites flagged SiteNeedsRelayout, so it does no work on a steady frame.
-  // Registered before the scatter "Update Construction Sites" system (which
-  // also keys off the tag and is responsible for clearing it), so this runs
-  // first and must not remove the tag itself.
   world.system<Site>("Retile Connectors")
       .with<SiteNeedsRelayout>()
       .kind(ValidatePhase)
-      .each(
-          [](flecs::entity site, Site &) { systemRetileSiteConnectors(site); });
+      .each([](flecs::entity site, Site &) {
+        systemRetileSiteConnectors(site);
+        site.remove<SiteNeedsRelayout>();
+      });
 
   world.system<const ConnectorTile, const Transform>("Render Connectors")
       .kind(RenderPhase)
