@@ -181,3 +181,21 @@ SCENARIO("systemRetileSiteConnectors", "[connector]") {
     }
   }
 }
+
+SCENARIO("Retile Connectors clears a site's relayout flag", "[connector]") {
+  GIVEN("a site flagged for relayout") {
+    flecs::world world;
+    world.import <SiteModule>();
+    auto site = world.entity("Site")
+                    .set<Site>({.width = 3, .height = 3})
+                    .add<SiteNeedsRelayout>();
+
+    WHEN("the retile system runs") {
+      world.system(world.lookup("SiteModule::Retile Connectors")).run();
+
+      THEN("the flag is removed") {
+        CHECK_FALSE(site.has<SiteNeedsRelayout>());
+      }
+    }
+  }
+}

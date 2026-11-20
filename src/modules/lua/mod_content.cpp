@@ -8,6 +8,7 @@
 #include "modules/lua/mod_registry.h"
 #include "modules/rocket/rocket_module.h"
 #include "modules/site/building_tiles.h"
+#include "modules/site/connector.h"
 #include "modules/site/placement.h"
 #include "modules/site/site.h"
 #include "spdlog/spdlog.h"
@@ -137,6 +138,41 @@ void applyTilesetData(flecs::world &world,
     world.scope(tilesets_node,
                 [&] { entity = world.entity(def.name.c_str()); });
     entity.set<Tileset>(tileset).add<TilesetTexture>(texture);
+  }
+}
+
+void applyConnectorData(flecs::world &world,
+                        const std::vector<ConnectorDef> &connectors) {
+  auto prefabs_node = world.entity("Prefabs");
+  flecs::entity connectors_node;
+  world.scope(prefabs_node,
+              [&] { connectors_node = world.entity("Connectors"); });
+
+  for (const auto &def : connectors) {
+    auto base = world.lookup(("Tilesets::" + def.base).c_str());
+    if (def.base.empty() || !base.is_valid()) {
+      spdlog::error("Skipping connector '{}': base tileset '{}' not found",
+                    def.id, def.base);
+      continue;
+    }
+
+    flecs::entity prefab;
+    world.scope(connectors_node,
+                [&] { prefab = world.prefab(def.id.c_str()); });
+    prefab.set<Label>({def.name})
+        .set<ConnectorTile>({})
+        .add<TilesetBase>(base)
+        .remove<TilesetMarkings>(flecs::Wildcard);
+
+    if (!def.markings.empty()) {
+      auto markings = world.lookup(("Tilesets::" + def.markings).c_str());
+      if (markings.is_valid()) {
+        prefab.add<TilesetMarkings>(markings);
+      } else {
+        spdlog::error("Connector '{}': markings tileset '{}' not found", def.id,
+                      def.markings);
+      }
+    }
   }
 }
 
@@ -488,6 +524,7 @@ void loadModContent(flecs::world &world) {
     mergeModDataFile(registry, "textures", mod, "textures.lua");
     mergeModDataFile(registry, "tilesets", mod, "tilesets.lua");
     mergeModDataFile(registry, "buildings", mod, "buildings.lua");
+    mergeModDataFile(registry, "connectors", mod, "connectors.lua");
     mergeModDataFile(registry, "tiles", mod, "tiles.lua");
     mergeModDataFile(registry, "rockets", mod, "rockets.lua");
     mergeModDataFile(registry, "effects", mod, "effects.lua");
@@ -499,6 +536,7 @@ void loadModContent(flecs::world &world) {
   auto rockets = parseRocketData(registry.merged("rockets"));
   applyTextureData(world, selectTextures(registry));
   applyTilesetData(world, selectTilesets(registry));
+  applyConnectorData(world, parseConnectorData(registry.merged("connectors")));
   applyBuildingData(world, buildings);
   applyTileData(world, selectBuildingTiles(registry));
   applyRocketData(world, rockets);

@@ -9,4 +9,5 @@ return {
 	Buildings = { file = "buildings.png" },
 	roads_asphalt = { file = "roads_asphalt.png" },
 	roads_markings = { file = "roads_markings.png" },
+	building_factory = { file = "building_factory.png" },
 }

@@ -46,6 +46,7 @@ add_executable(unit_test
   lua/data/building_data.test.cpp
   lua/data/texture_data.test.cpp
   lua/data/tileset_data.test.cpp
+  lua/data/connector_data.test.cpp
   lua/data/tile_data.test.cpp
   lua/data/rocket_data.test.cpp
   lua/data/effect_data.test.cpp
@@ -53,6 +54,7 @@ add_executable(unit_test
   lua/mod_content/apply_rocket_data.test.cpp
   lua/mod_content/apply_effect_data.test.cpp
   lua/mod_content/apply_tileset_data.test.cpp
+  lua/mod_content/apply_connector_data.test.cpp
   lua/mod_content/apply_tile_data.test.cpp
   lua/mod_content/create_texture.test.cpp
   lua/mod_content/create_building_prefab.test.cpp
@@ -77,13 +79,18 @@ add_executable(unit_test
   simulation/update_sim_date.test.cpp
   simulation/generate_sol_system.test.cpp
   site/connector_tiling.test.cpp
+  site/build_mode.test.cpp
   site/building_tiles.test.cpp
+  site/hover_cell.test.cpp
+  site/placement_footprint.test.cpp
+  site/place_building_action.test.cpp
+  site/drag_rectangle.test.cpp
+  site/ghost_tooltip.test.cpp
+  site/place_building_tiles.test.cpp
   site/can_place.test.cpp
   site/centred_site_origin.test.cpp
   site/check_footprint_size.test.cpp
-  site/contains_point.test.cpp
   site/occupancy_grid.test.cpp
-  site/update_construction_sites.test.cpp
   site/create_site_prefabs.test.cpp
   site/auto_start_next_build.test.cpp
   site/auto_store_built_rocket.test.cpp
@@ -98,6 +105,7 @@ add_executable(unit_test
   window/building_detail_window.test.cpp
   window/notification_window.test.cpp
   window/rocket_list_window.test.cpp
+  window/site_window.test.cpp
 )
 target_link_libraries(unit_test PRIVATE Catch2::Catch2)
 target_link_libraries(unit_test PRIVATE solcorplib)

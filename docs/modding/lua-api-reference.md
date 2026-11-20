@@ -59,8 +59,9 @@ local site = solcorp.helpers.create_site(name, width, height, active, buildable)
 -- Create a building prefab definition
 local prefab = solcorp.helpers.create_building_prefab(name)
 
--- Place a building instance at a site
-local building = solcorp.helpers.create_building(name, prefab_name, x, y, site)
+-- Place a building instance at a site; w and h optionally give a draggable
+-- building its footprint, which draws it as a 9-slice from its tiles.lua
+local building = solcorp.helpers.create_building(name, prefab_name, x, y, site, w, h)
 
 -- Add a named facility to a building prefab
 local facility = solcorp.helpers.add_facility_to_building(building_prefab, facility_name)

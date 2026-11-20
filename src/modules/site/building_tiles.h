@@ -37,6 +37,8 @@ struct BuildingTiles {
   std::vector<BuildingTile> tiles;
 };
 
+TileRole tileRoleAt(int x, int y, int w, int h);
+
 /// @brief The tiles in @p tiles that may fill @p role: those declaring it whose
 /// predicate is unset or named in @p active_flags, in registry order
 std::vector<const BuildingTile *>

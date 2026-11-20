@@ -1,12 +1,13 @@
 #include "site.h"
+#include "build_mode.h"
 #include "building_tiles.h"
 #include "connector.h"
-#include "construction_window.h"
 #include "imgui.h"
 #include "modules/base/base.h"
 #include "modules/base/notification.h"
 #include "modules/engine/engine.h"
 #include "modules/engine/gui.h"
+#include "modules/engine/helpers.h"
 #include "modules/engine/input.h"
 #include "modules/engine/render.h"
 #include "modules/lua/lua.h"
@@ -16,21 +17,18 @@
 #include "modules/stats/stats.h"
 #include "modules/window/building_detail_window.h"
 #include "placement.h"
+#include "placement_actions.h"
 #include "rocket_prefab_window.h"
-#include "site_construction.h"
 #include "weather.h"
+#include <cmath>
 #include <format>
 #include <spdlog/spdlog.h>
+#include <utility>
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
-extern unsigned char construction_png[];
-extern unsigned int construction_png_len;
-
-void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
-                                const MouseUp &mouse);
 namespace {
-void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
-                           float height, const MouseUp &mouse);
+void placeBuildingTiles(flecs::entity building, const Footprint &footprint);
+void drawBuildGhost(flecs::entity site, const Transform &transform,
+                    const HoverCell &hover, const BuildMode &mode);
 } // namespace
 
 SiteModule::SiteModule(flecs::world &world) {
@@ -43,7 +41,6 @@ SiteModule::SiteModule(flecs::world &world) {
 
   // Register components
   world.component<CurrentSite>();
-  world.component<ConstructionSite>();
   world.component<SiteNeedsRelayout>();
   world.component<Site>()
       .member("width", &Site::width)
@@ -61,6 +58,16 @@ SiteModule::SiteModule(flecs::world &world) {
   world.component<SiteLocation>()
       .member("x", &SiteLocation::x)
       .member("y", &SiteLocation::y);
+  world.component<HoverCell>()
+      .member("location", &HoverCell::location)
+      .add(flecs::Singleton);
+  world.component<PlacementKind>();
+  world.component<BuildMode>()
+      .member("kind", &BuildMode::kind)
+      .member("drag_start", &BuildMode::drag_start)
+      .member("dragging", &BuildMode::dragging)
+      .add(flecs::Singleton);
+  world.component<BuildModePrefab>().add(flecs::Exclusive);
   world.component<Facility>();
   world.component<Manufacturing>()
       .member("max_weight", &Manufacturing::max_weight)
@@ -92,8 +99,6 @@ SiteModule::SiteModule(flecs::world &world) {
                    .higher_is_better = false});
   world.component<BuildingDetailWindow>().member(
       "buildingE", &BuildingDetailWindow::buildingE);
-  world.component<ConstructionSiteWindow>().member(
-      "buildingE", &ConstructionSiteWindow::buildingE);
   world.component<RocketPrefabWindow>().member(
       "manufacturingE", &RocketPrefabWindow::manufacturingE);
 
@@ -122,10 +127,7 @@ SiteModule::SiteModule(flecs::world &world) {
             .field<&Manufacturing::auto_store>("auto_store");
       });
 
-  // Connectors register their own components and the retile system, which
-  // queries Site / SiteNeedsRelayout — so this must run after those are
-  // registered above, and before the scatter system below so the autotiler
-  // runs first in ValidatePhase.
+  // The retile system queries Site / SiteNeedsRelayout, registered above.
   registerConnectors(world);
 
   // Register Systems
@@ -181,35 +183,117 @@ SiteModule::SiteModule(flecs::world &world) {
             }
           });
 
-  world.system<Transform, Sprite, const MouseUp>("Match click to Building")
-      .with<SiteLocation>()
+  auto current_site = world.query_builder<const Site, const Transform>()
+                          .with<CurrentSite>()
+                          .build();
+  world.system<const MouseMove>("Track Hover Cell")
       .kind(ValidatePhase)
-      .each(systemMatchClickToBuilding);
-
-  world
-      .system<const Transform, const Tile, const MouseUp>(
-          "Match click to Building Tile")
-      .term_at(1)
-      .second(flecs::Wildcard)
-      .with<SiteLocation>()
-      .kind(ValidatePhase)
-      .each([](flecs::iter &it, size_t row, const Transform &t, const Tile &,
-               const MouseUp &mouse) {
-        const auto *tileset = it.pair(1).second().try_get<Tileset>();
-        if (tileset == nullptr) {
-          return;
+      .each([current_site](flecs::iter &it, size_t, const MouseMove &mouse) {
+        auto world = it.world();
+        std::optional<SiteLocation> cell;
+        current_site.each([&](const Site &site, const Transform &transform) {
+          if (!mouse.over_ui) {
+            cell = cellAt(transform.worldPosition, site,
+                          {.x = static_cast<float>(mouse.x),
+                           .y = static_cast<float>(mouse.y)});
+          }
+        });
+        if (cell) {
+          world.set<HoverCell>({.location = *cell});
+        } else {
+          world.remove<HoverCell>();
         }
-        openClickedSiteEntity(it.entity(row), t,
-                              static_cast<float>(tileset->tile_width),
-                              static_cast<float>(tileset->tile_height), mouse);
       });
 
-  world.system<Site>("Update Construction Sites")
-      .with<SiteNeedsRelayout>()
+  world
+      .system<const MouseDown, const HoverCell, BuildMode>(
+          "Start Building Drag")
       .kind(ValidatePhase)
-      .each(systemUpdateConstructionSiteLocations);
+      .each([](flecs::iter &it, size_t, const MouseDown &mouse,
+               const HoverCell &hover, BuildMode &mode) {
+        auto prefab = buildModePrefab(it.world());
+        if (mouse.button == SDL_BUTTON_LEFT &&
+            dragShape(prefab) != DragShape::None) {
+          mode.drag_start = hover.location;
+          mode.dragging = true;
+        }
+      });
+
+  world
+      .system<const MouseUp, BuildMode, const HoverCell *>(
+          "Place Building On Release")
+      .kind(ValidatePhase)
+      .each([current_site](flecs::iter &it, size_t, const MouseUp &mouse,
+                           BuildMode &mode, const HoverCell *hover) {
+        if (mouse.button != SDL_BUTTON_LEFT) {
+          return;
+        }
+        const BuildMode released = mode;
+        mode.dragging = false;
+        if (hover == nullptr) {
+          return;
+        }
+        auto world = it.world();
+        auto site = current_site.first();
+        auto prefab = buildModePrefab(world);
+        const auto placement = pendingPlacement(
+            prefab, released, hover->location, site.get<Site>());
+        auto action = makePlacementAction(
+            PlacedPrefab{prefab}, TargetSite{site}, released.kind, placement);
+        if (auto result = action->validate(world); !result) {
+          spdlog::debug("Cannot place {}: {}", prefab.name().c_str(),
+                        result.message);
+          return;
+        }
+        action->execute(world);
+      });
+
+  world.system<const MouseUp, BuildMode>("Cancel Build On Right Click")
+      .kind(ValidatePhase)
+      .each([](flecs::iter &it, size_t, const MouseUp &mouse, BuildMode &mode) {
+        if (mouse.button != SDL_BUTTON_RIGHT) {
+          return;
+        }
+        if (mode.dragging) {
+          mode.dragging = false;
+        } else {
+          auto world = it.world();
+          exitBuildMode(world);
+        }
+      });
+
+  world.system<const MouseUp>("Open Clicked Building")
+      .without<BuildMode>()
+      .kind(ValidatePhase)
+      .each([current_site](const MouseUp &mouse) {
+        current_site.each([&](flecs::entity site, const Site &size,
+                              const Transform &transform) {
+          const auto cell = cellAt(transform.worldPosition, size,
+                                   {.x = static_cast<float>(mouse.x),
+                                    .y = static_cast<float>(mouse.y)});
+          if (!cell) {
+            return;
+          }
+          if (auto building = buildingAt(site, *cell); building.is_valid()) {
+            showBuildingDetailWindow(building);
+          }
+        });
+      });
+
+  world.observer<const Footprint>("Place Building Tiles")
+      .with<BuildingTiles>(flecs::Wildcard)
+      .event(flecs::OnSet)
+      .each(placeBuildingTiles);
 
   initWeather(world);
+
+  world
+      .system<const Transform, const HoverCell, const BuildMode>(
+          "Draw Build Ghost")
+      .with<Site>()
+      .with<CurrentSite>()
+      .kind(GuiPhase)
+      .each(drawBuildGhost);
 
   world.system<const Site, const Transform>("Draw Site Border")
       .with<CurrentSite>()
@@ -244,11 +328,8 @@ SiteModule::SiteModule(flecs::world &world) {
 /**
  * @brief Registers site-related prefab entities in the ECS world.
  *
- * This function creates and registers prefab entities for buildings,
- * construction sites, and facilities, along with their associated components
- * and textures. It ensures that the necessary prefab hierarchy nodes exist,
- * loads the construction site texture, and sets up default sprite properties
- * for the prefabs.
+ * This function creates and registers prefab entities for buildings and
+ * facilities, and ensures that the necessary prefab hierarchy nodes exist.
  *
  * @param it The ECS iterator providing access to the world context.
  */
@@ -256,21 +337,6 @@ void systemCreateSitePrefabs(flecs::iter &it) {
   const flecs::world &world = it.world();
 
   spdlog::debug("Creating Site Prefabs");
-  // Construction Site texture
-  auto texture_node = world.entity("Textures");
-  auto texture = world.entity("Construction")
-                     .child_of(texture_node)
-                     .set<Texture>(loadTexture(construction_png,
-                                               construction_png_len, world));
-
-  // Register Prefabs
-  Sprite sprite;
-  sprite.x = 0;
-  sprite.y = 0;
-  sprite.width = 32;
-  sprite.height = 32;
-  sprite.texture = texture;
-
   // Ensure prefab hierarchy nodes exist
   auto prefabs_node = world.lookup("Prefabs");
   if (!prefabs_node.is_valid()) {
@@ -296,15 +362,6 @@ void systemCreateSitePrefabs(flecs::iter &it) {
       .set<SiteLocation>({})
       .set<Transform>({});
 
-  // Create ConstructionSite prefab with adjusted sprite position
-  sprite.y = 128;
-  world.prefab("ConstructionSite")
-      .child_of(core_node)
-      .add<ConstructionSite>()
-      .set<SiteLocation>({})
-      .set<Transform>({})
-      .set<Sprite>(sprite);
-
   world.prefab("Facility").child_of(core_node).add<Facility>();
 }
 
@@ -312,10 +369,22 @@ void systemCreateSiteWindows(flecs::iter &it) {
   auto world = it.world();
   registerWindow("Building Detail", drawBuildingDetailWindow, world)
       .set<BuildingDetailWindow>({});
-  registerWindow("Construction Site Window", drawConstructionSiteWindow, world)
-      .set<ConstructionSiteWindow>({});
   registerWindow("Rocket Prefab Window", drawRocketPrefabWindow, world)
       .set<RocketPrefabWindow>({});
+}
+
+std::optional<SiteLocation> cellAt(const Point &site_origin, const Site &site,
+                                   const Point &point) {
+  const auto x =
+      static_cast<int>(std::floor((point.x - site_origin.x) / SITE_CELL_SIZE));
+  const auto y =
+      static_cast<int>(std::floor((point.y - site_origin.y) / SITE_CELL_SIZE));
+  if (x < 0 || y < 0 || std::cmp_greater_equal(x, site.width) ||
+      std::cmp_greater_equal(y, site.height)) {
+    return std::nullopt;
+  }
+  return SiteLocation{.x = static_cast<uint8_t>(x),
+                      .y = static_cast<uint8_t>(y)};
 }
 
 Point centredSiteOrigin(int window_width, int window_height, const Site &site) {
@@ -325,36 +394,80 @@ Point centredSiteOrigin(int window_width, int window_height, const Site &site) {
                .y = static_cast<float>(window_height - site_height) / 2.0F};
 }
 
-bool containsPoint(const Point &origin, float width, float height,
-                   const Point &point) {
-  return point.x > origin.x && point.x < origin.x + width &&
-         point.y > origin.y && point.y < origin.y + height;
-}
-
 namespace {
-void openClickedSiteEntity(flecs::entity e, const Transform &t, float width,
-                           float height, const MouseUp &mouse) {
-  const Point click{.x = static_cast<float>(mouse.x),
-                    .y = static_cast<float>(mouse.y)};
-  if (!containsPoint(t.worldPosition, width, height, click)) {
+void placeBuildingTiles(flecs::entity building, const Footprint &footprint) {
+  auto tileset = building.target<BuildingTiles>();
+  const auto *layout = tileset.try_get<Tileset>();
+  const auto *tiles = building.try_get<BuildingTiles>(tileset);
+  if (layout == nullptr || tiles == nullptr) {
     return;
   }
-  spdlog::debug("Clicked on building {}", e.name().c_str());
-  if (e.has<Building>()) {
-    spdlog::debug("Showing Building Window for {}", e.name().c_str());
-    showBuildingDetailWindow(e);
-  } else if (e.has<ConstructionSite>()) {
-    showConstructionSiteWindow(e);
+
+  const int width = footprint.w;
+  const int height = footprint.h;
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const auto role = tileRoleAt(x, y, width, height);
+      const auto *tile =
+          pickTile(eligibleTiles(*tiles, role, {}), random_double());
+      if (tile == nullptr) {
+        continue;
+      }
+      Transform transform;
+      transform.relativePosition = {
+          .x = static_cast<float>(x * layout->tile_width),
+          .y = static_cast<float>(y * layout->tile_height)};
+      building.world()
+          .entity()
+          .child_of(building)
+          .set<Tile>(tileset, {.index = tile->index})
+          .set<Transform>(transform);
+    }
   }
 }
-} // namespace
 
-void systemMatchClickToBuilding(flecs::entity e, Transform &t, Sprite &s,
-                                const MouseUp &mouse) {
-  // We know from the query that this has a SiteLocation i.e. is part of a Site
-  const auto tileSize = static_cast<float>(s.width);
-  openClickedSiteEntity(e, t, tileSize, tileSize, mouse);
+void drawBuildGhost(flecs::entity site, const Transform &transform,
+                    const HoverCell &hover, const BuildMode &mode) {
+  auto prefab = buildModePrefab(site.world());
+  if (!prefab.is_valid()) {
+    return;
+  }
+
+  const auto placement =
+      pendingPlacement(prefab, mode, hover.location, site.get<Site>());
+  const auto validation =
+      makePlacementAction(PlacedPrefab{prefab}, TargetSite{site}, mode.kind,
+                          placement)
+          ->validate(site.world());
+  const bool valid = validation.ok;
+  const ImU32 fill =
+      valid ? IM_COL32(80, 220, 80, 90) : IM_COL32(230, 60, 60, 90);
+  const ImU32 outline =
+      valid ? IM_COL32(120, 255, 120, 230) : IM_COL32(255, 90, 90, 230);
+
+  constexpr auto CELL = static_cast<float>(SITE_CELL_SIZE);
+  const ImVec2 min{transform.worldPosition.x +
+                       (static_cast<float>(placement.origin.x) * CELL),
+                   transform.worldPosition.y +
+                       (static_cast<float>(placement.origin.y) * CELL)};
+  const ImVec2 max{min.x + (static_cast<float>(placement.footprint.w) * CELL),
+                   min.y + (static_cast<float>(placement.footprint.h) * CELL)};
+
+  auto *draw_list = ImGui::GetBackgroundDrawList();
+  draw_list->AddRectFilled(min, max, fill);
+  draw_list->AddRect(min, max, outline, 0, 0, 2.0F);
+
+  const auto tooltip = ghostTooltip(prefab, mode, placement, validation);
+  ImGui::BeginTooltip();
+  ImGui::TextUnformatted(tooltip.title.c_str());
+  ImGui::TextUnformatted(tooltip.size.c_str());
+  if (!tooltip.problem.empty()) {
+    ImGui::TextColored({1.0F, 0.4F, 0.4F, 1.0F}, "%s", tooltip.problem.c_str());
+  }
+  ImGui::TextDisabled("%s", tooltip.hint.c_str());
+  ImGui::EndTooltip();
 }
+} // namespace
 
 void systemBuildingUpdateManufacuringProgress(
     flecs::entity e, EffortRequired &effort,

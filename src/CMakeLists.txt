@@ -11,6 +11,7 @@ list(APPEND SolCorpSources
     modules/engine/movement.cpp
     modules/engine/render.cpp
     modules/lua/building_data.cpp
+    modules/lua/connector_data.cpp
     modules/lua/effect_data.cpp
     modules/lua/config.cpp
     modules/lua/entity.cpp
@@ -37,6 +38,7 @@ list(APPEND SolCorpSources
     modules/window/notification_window.cpp
     modules/window/rocket_detail_window.cpp
     modules/window/rocket_list_window.cpp
+    modules/window/site_window.cpp
     modules/window/launch_window.cpp
     modules/window/launch_detail_window.cpp
     modules/window/active_launches_window.cpp
@@ -48,14 +50,14 @@ list(APPEND SolCorpSources
     modules/rocket/rocket_actions.cpp
     modules/simulation/developer_window.cpp
     modules/simulation/simulation.cpp
+    modules/site/build_mode.cpp
     modules/site/building_tiles.cpp
     modules/site/connector.cpp
-    modules/site/construction_window.cpp
     modules/site/rocket_prefab_window.cpp
     modules/site/helpers.cpp
     modules/site/placement.cpp
+    modules/site/placement_actions.cpp
     modules/site/site.cpp
-    modules/site/site_construction.cpp
     modules/site/weather.cpp
     modules/staff/staff.cpp
     modules/stats/stats.cpp
@@ -74,6 +76,7 @@ list(APPEND SolCorpHeaders
     modules/engine/movement.h
     modules/engine/render.h
     modules/lua/building_data.h
+    modules/lua/connector_data.h
     modules/lua/effect_data.h
     modules/lua/config.h
     modules/lua/entity.h
@@ -100,6 +103,7 @@ list(APPEND SolCorpHeaders
     modules/window/notification_window.h
     modules/window/rocket_detail_window.h
     modules/window/rocket_list_window.h
+    modules/window/site_window.h
     modules/window/launch_window.h
     modules/window/launch_detail_window.h
     modules/window/active_launches_window.h
@@ -111,14 +115,14 @@ list(APPEND SolCorpHeaders
     modules/rocket/rocket_actions.h
     modules/simulation/developer_window.h
     modules/simulation/simulation.h
+    modules/site/build_mode.h
     modules/site/building_tiles.h
     modules/site/connector.h
-    modules/site/construction_window.h
     modules/site/rocket_prefab_window.h
     modules/site/helpers.h
     modules/site/placement.h
+    modules/site/placement_actions.h
     modules/site/site.h
-    modules/site/site_construction.h
     modules/site/weather.h
     modules/staff/staff.h
     modules/stats/stats.h

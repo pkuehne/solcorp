@@ -239,8 +239,13 @@ static int create_building_wrapper(lua_State *L) {
   auto x = (int)luaL_checkinteger(L, 3);
   auto y = (int)luaL_checkinteger(L, 4);
   flecs::entity site = lua_check_entity(L, 5);
-  lua_push_entity(L,
-                  create_building(*lua_get_world(L), name, prefab, x, y, site));
+  auto building = create_building(*lua_get_world(L), name, prefab, x, y, site);
+  if (building.is_valid() && !lua_isnoneornil(L, 6)) {
+    building.set<Footprint>(
+        {.w = static_cast<uint8_t>(luaL_checkinteger(L, 6)),
+         .h = static_cast<uint8_t>(luaL_checkinteger(L, 7))});
+  }
+  lua_push_entity(L, building);
   return 1;
 }
 

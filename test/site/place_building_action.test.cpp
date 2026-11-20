@@ -1,0 +1,571 @@
+#include "../lua/helpers/setup_helpers.h"
+#include "modules/base/base.h"
+#include "modules/engine/gui.h"
+#include "modules/engine/input.h"
+#include "modules/engine/render.h"
+#include "modules/site/build_mode.h"
+#include "modules/site/connector.h"
+#include "modules/site/placement.h"
+#include "modules/site/placement_actions.h"
+#include "modules/site/site.h"
+#include "modules/window/building_detail_window.h"
+#include <SDL2/SDL.h>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <flecs.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
+namespace {
+
+struct SiteFixture {
+  flecs::world world;
+  flecs::entity site;
+  flecs::entity factory;
+  flecs::entity gate;
+  flecs::entity road;
+
+  SiteFixture() {
+    run_site_prefab_setup(world);
+    site = world.entity("Test Site")
+               .set<Site>({.width = 6, .height = 6})
+               .set<Transform>({})
+               .add<CurrentSite>();
+    for (uint8_t y = 0; y < 6; ++y) {
+      world.entity().child_of(site).set<ConnectorTile>({}).set<SiteLocation>(
+          {.x = 0, .y = y});
+    }
+    factory = world.prefab("factory")
+                  .add<Building>()
+                  .set<Label>({"Factory"})
+                  .set<FootprintLimits>(
+                      {.min = {.w = 2, .h = 2}, .max = {.w = 3, .h = 3}});
+    gate = world.prefab("gate").add<Building>().add<FixedSize>();
+    road = world.prefab("road").set<Label>({"Road"}).set<ConnectorTile>({});
+  }
+
+  [[nodiscard]] std::vector<flecs::entity> placedRoads() const {
+    std::vector<flecs::entity> result;
+    site.children([&](flecs::entity child) {
+      if (child.has(flecs::IsA, road)) {
+        result.push_back(child);
+      }
+    });
+    return result;
+  }
+
+  [[nodiscard]] std::vector<flecs::entity> buildings() const {
+    std::vector<flecs::entity> result;
+    site.children([&](flecs::entity child) {
+      if (child.has<Building>()) {
+        result.push_back(child);
+      }
+    });
+    return result;
+  }
+};
+
+} // namespace
+
+SCENARIO("PlaceBuildingAction validates where a building may go",
+         "[action][site]") {
+  SiteFixture f;
+
+  struct Case {
+    std::string description;
+    bool fixed_size;
+    SiteLocation origin;
+    Footprint footprint;
+    std::string expected;
+  };
+
+  GIVEN("a building to place") {
+    auto [description, fixed_size, origin, footprint, expected] =
+        GENERATE(values<Case>({
+            {"next to the road", false, {.x = 1, .y = 1}, {.w = 2, .h = 2}, ""},
+            {"a fixed-size building next to the road",
+             true,
+             {.x = 1, .y = 0},
+             {.w = 1, .h = 1},
+             ""},
+            {"away from the road",
+             false,
+             {.x = 3, .y = 1},
+             {.w = 2, .h = 2},
+             "Buildings must be next to a road"},
+            {"on the road",
+             false,
+             {.x = 0, .y = 1},
+             {.w = 2, .h = 2},
+             "Something is already built there"},
+            {"past the site edge",
+             false,
+             {.x = 1, .y = 5},
+             {.w = 2, .h = 2},
+             "It doesn't fit on the site"},
+            {"smaller than its minimum",
+             false,
+             {.x = 1, .y = 1},
+             {.w = 1, .h = 2},
+             "It is too small"},
+            {"larger than its maximum",
+             false,
+             {.x = 1, .y = 0},
+             {.w = 4, .h = 2},
+             "It is too large"},
+            {"a fixed-size building stretched",
+             true,
+             {.x = 1, .y = 0},
+             {.w = 2, .h = 2},
+             "This building only comes in one size"},
+        }));
+    CAPTURE(description);
+    auto prefab = fixed_size ? f.gate : f.factory;
+    PlaceBuildingAction action(PlacedPrefab{prefab}, TargetSite{f.site}, origin,
+                               footprint);
+
+    WHEN("it is validated") {
+      auto result = action.validate(f.world);
+
+      THEN("it passes or fails with the expected reason") {
+        CHECK(result.ok == expected.empty());
+        CHECK(result.message == expected);
+      }
+    }
+  }
+
+  GIVEN("no prefab is selected") {
+    PlaceBuildingAction action(PlacedPrefab{}, TargetSite{f.site},
+                               {.x = 1, .y = 1}, {.w = 2, .h = 2});
+
+    THEN("it fails") {
+      CHECK(action.validate(f.world).message == "No building is selected");
+    }
+  }
+}
+
+SCENARIO("PlaceBuildingAction places a building", "[action][site]") {
+  SiteFixture f;
+
+  GIVEN("a valid placement") {
+    PlaceBuildingAction action(PlacedPrefab{f.factory}, TargetSite{f.site},
+                               {.x = 1, .y = 1}, {.w = 2, .h = 2});
+
+    WHEN("it is executed") {
+      action.execute(f.world);
+
+      THEN("one building of that prefab covers the footprint") {
+        auto buildings = f.buildings();
+        REQUIRE(buildings.size() == 1);
+        auto building = buildings[0];
+        CHECK(building.has(flecs::IsA, f.factory));
+        CHECK(building.get<SiteLocation>().x == 1);
+        CHECK(building.get<SiteLocation>().y == 1);
+        CHECK(building.get<Footprint>().w == 2);
+        CHECK(building.get<Footprint>().h == 2);
+        CHECK(building.get<Transform>().relativePosition.x ==
+              static_cast<float>(SITE_CELL_SIZE));
+      }
+
+      THEN("it is named after the building, numbered") {
+        REQUIRE(f.buildings().size() == 1);
+        CHECK(std::string{f.buildings()[0].name().c_str()} == "Factory 1");
+      }
+
+      THEN("the site is flagged for relayout") {
+        CHECK(f.site.has<SiteNeedsRelayout>());
+      }
+
+      AND_WHEN("a second one is placed below it") {
+        PlaceBuildingAction second(PlacedPrefab{f.factory}, TargetSite{f.site},
+                                   {.x = 1, .y = 3}, {.w = 2, .h = 2});
+        second.execute(f.world);
+
+        THEN("each gets the next free number") {
+          std::vector<std::string> names;
+          for (auto building : f.buildings()) {
+            names.emplace_back(building.name().c_str());
+          }
+          std::ranges::sort(names);
+          CHECK(names == std::vector<std::string>{"Factory 1", "Factory 2"});
+        }
+      }
+    }
+  }
+
+  GIVEN("an invalid placement") {
+    PlaceBuildingAction action(PlacedPrefab{f.factory}, TargetSite{f.site},
+                               {.x = 3, .y = 1}, {.w = 2, .h = 2});
+
+    WHEN("it is executed") {
+      action.execute(f.world);
+
+      THEN("nothing is built") { CHECK(f.buildings().empty()); }
+    }
+  }
+}
+
+SCENARIO("Clicking and dragging in build mode", "[build_mode][site][system]") {
+  SiteFixture f;
+  auto press =
+      f.world.system(f.world.lookup("SiteModule::Start Building Drag"));
+  auto release =
+      f.world.system(f.world.lookup("SiteModule::Place Building On Release"));
+  auto cancel =
+      f.world.system(f.world.lookup("SiteModule::Cancel Build On Right Click"));
+  REQUIRE(press.is_valid());
+  REQUIRE(release.is_valid());
+  REQUIRE(cancel.is_valid());
+
+  auto hoverOver = [&](SiteLocation cell) {
+    f.world.set<HoverCell>({.location = cell});
+  };
+  auto pressAt = [&](SiteLocation cell, int button) {
+    hoverOver(cell);
+    f.world.set<MouseDown>({.x = 0, .y = 0, .button = button});
+    press.run();
+    f.world.remove<MouseDown>();
+  };
+  auto releaseAt = [&](SiteLocation cell, int button) {
+    hoverOver(cell);
+    f.world.set<MouseUp>({.x = 0, .y = 0, .button = button});
+    release.run();
+    cancel.run();
+    f.world.remove<MouseUp>();
+  };
+
+  GIVEN("the factory is selected") {
+    enterBuildMode(f.world, f.factory);
+
+    WHEN("the player clicks next to the road without dragging") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+
+      THEN("a factory of the minimum size is placed and build mode stays on") {
+        auto buildings = f.buildings();
+        REQUIRE(buildings.size() == 1);
+        CHECK(buildings[0].get<Footprint>().w == 2);
+        CHECK(buildings[0].get<Footprint>().h == 2);
+        CHECK(f.world.has<BuildMode>());
+        CHECK_FALSE(f.world.get<BuildMode>().dragging);
+      }
+    }
+
+    WHEN("the player drags out a 3x3 rectangle") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      CHECK(f.world.get<BuildMode>().dragging);
+      releaseAt({.x = 3, .y = 3}, SDL_BUTTON_LEFT);
+
+      THEN("a factory covering that rectangle is placed") {
+        auto buildings = f.buildings();
+        REQUIRE(buildings.size() == 1);
+        CHECK(buildings[0].get<SiteLocation>().x == 1);
+        CHECK(buildings[0].get<SiteLocation>().y == 1);
+        CHECK(buildings[0].get<Footprint>().w == 3);
+        CHECK(buildings[0].get<Footprint>().h == 3);
+      }
+    }
+
+    WHEN("the player right-clicks during a drag") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 3, .y = 3}, SDL_BUTTON_RIGHT);
+
+      THEN("the drag is cancelled but build mode stays on") {
+        CHECK(f.buildings().empty());
+        REQUIRE(f.world.has<BuildMode>());
+        CHECK_FALSE(f.world.get<BuildMode>().dragging);
+      }
+    }
+
+    WHEN("the player right-clicks without dragging") {
+      releaseAt({.x = 1, .y = 1}, SDL_BUTTON_RIGHT);
+
+      THEN("build mode ends") { CHECK_FALSE(f.world.has<BuildMode>()); }
+    }
+
+    WHEN("the player releases off the site") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      f.world.remove<HoverCell>();
+      f.world.set<MouseUp>({.x = 0, .y = 0, .button = SDL_BUTTON_LEFT});
+      release.run();
+
+      THEN("nothing is placed and the drag ends") {
+        CHECK(f.buildings().empty());
+        CHECK_FALSE(f.world.get<BuildMode>().dragging);
+      }
+    }
+
+    WHEN("the player releases on an invalid rectangle") {
+      pressAt({.x = 3, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 4, .y = 2}, SDL_BUTTON_LEFT);
+
+      THEN("nothing is placed") { CHECK(f.buildings().empty()); }
+    }
+  }
+
+  GIVEN("the road is selected") {
+    enterBuildMode(f.world, f.road);
+
+    WHEN("the player clicks next to the road") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+
+      THEN("one road cell is placed") {
+        auto roads = f.placedRoads();
+        REQUIRE(roads.size() == 1);
+        CHECK(roads[0].get<SiteLocation>().x == 1);
+        CHECK(roads[0].get<SiteLocation>().y == 1);
+      }
+    }
+
+    WHEN("the player drags mostly sideways from next to the road") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      CHECK(f.world.get<BuildMode>().dragging);
+      releaseAt({.x = 4, .y = 2}, SDL_BUTTON_LEFT);
+
+      THEN("a straight run along the press row is placed") {
+        std::vector<std::pair<int, int>> cells;
+        for (auto road : f.placedRoads()) {
+          cells.emplace_back(road.get<SiteLocation>().x,
+                             road.get<SiteLocation>().y);
+        }
+        std::ranges::sort(cells);
+        CHECK(cells ==
+              std::vector<std::pair<int, int>>{{1, 1}, {2, 1}, {3, 1}, {4, 1}});
+        CHECK(f.buildings().empty());
+      }
+    }
+  }
+
+  GIVEN("a fixed-size building is selected") {
+    enterBuildMode(f.world, f.gate);
+
+    WHEN("the player drags from next to the road") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 3, .y = 3}, SDL_BUTTON_LEFT);
+
+      THEN("no drag starts, and one cell under the mouse is tried") {
+        CHECK(f.buildings().empty());
+      }
+    }
+
+    WHEN("the player clicks next to the road") {
+      pressAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+      releaseAt({.x = 1, .y = 1}, SDL_BUTTON_LEFT);
+
+      THEN("a single-cell building is placed") {
+        auto buildings = f.buildings();
+        REQUIRE(buildings.size() == 1);
+        CHECK(buildings[0].get<Footprint>().w == 1);
+        CHECK(buildings[0].get<Footprint>().h == 1);
+      }
+    }
+  }
+}
+
+SCENARIO("Clicking a building opens its window", "[site][system]") {
+  SiteFixture f;
+  auto open =
+      f.world.system(f.world.lookup("SiteModule::Open Clicked Building"));
+  REQUIRE(open.is_valid());
+  f.world.entity("Hall")
+      .child_of(f.site)
+      .add<Building>()
+      .set<SiteLocation>({.x = 2, .y = 2})
+      .set<Footprint>({.w = 3, .h = 2});
+  auto window = registerWindow(
+                    "Building Detail", [](flecs::entity) {}, f.world)
+                    .set<BuildingDetailWindow>({});
+  REQUIRE(window.is_valid());
+
+  auto centreOf = [](int cell) {
+    return (cell * SITE_CELL_SIZE) + (SITE_CELL_SIZE / 2);
+  };
+
+  struct Case {
+    std::string description;
+    bool building_mode;
+    SiteLocation cell;
+    bool expected_open;
+  };
+
+  GIVEN("a 3x2 building at (2, 2)") {
+    auto [description, building_mode, cell, expected_open] =
+        GENERATE(values<Case>({
+            {"its top-left cell", false, {.x = 2, .y = 2}, true},
+            {"its far corner", false, {.x = 4, .y = 3}, true},
+            {"just past its right edge", false, {.x = 5, .y = 3}, false},
+            {"just below it", false, {.x = 2, .y = 4}, false},
+            {"its cell while in build mode", true, {.x = 3, .y = 2}, false},
+        }));
+    CAPTURE(description);
+    if (building_mode) {
+      enterBuildMode(f.world, f.factory);
+    }
+
+    WHEN("the player clicks there") {
+      f.world.set<MouseUp>({.x = centreOf(cell.x),
+                            .y = centreOf(cell.y),
+                            .button = SDL_BUTTON_LEFT});
+      open.run();
+
+      THEN("the building window opens only on the building, outside build "
+           "mode") {
+        CHECK(window.get<Window>().open == expected_open);
+      }
+    }
+  }
+}
+
+SCENARIO("buildingAt finds the building covering a cell", "[site]") {
+  SiteFixture f;
+  f.world.entity("Hall")
+      .child_of(f.site)
+      .add<Building>()
+      .set<SiteLocation>({.x = 2, .y = 1})
+      .set<Footprint>({.w = 2, .h = 3});
+  f.world.entity("Kiosk").child_of(f.site).add<Building>().set<SiteLocation>(
+      {.x = 5, .y = 5});
+
+  struct Case {
+    SiteLocation cell;
+    std::string expected;
+  };
+  auto [cell, expected] = GENERATE(values<Case>({
+      {{.x = 2, .y = 1}, "Hall"},
+      {{.x = 3, .y = 3}, "Hall"},
+      {{.x = 4, .y = 1}, ""},
+      {{.x = 2, .y = 4}, ""},
+      {{.x = 5, .y = 5}, "Kiosk"},
+      {{.x = 5, .y = 4}, ""},
+      {{.x = 0, .y = 2}, ""},
+  }));
+  CAPTURE(cell.x, cell.y);
+
+  THEN("the covering building, or none, is found") {
+    auto found = buildingAt(f.site, cell);
+    CHECK(std::string{found.is_valid() ? found.name().c_str() : ""} ==
+          expected);
+  }
+}
+
+SCENARIO("PlaceConnectorAction validates where a road may go",
+         "[action][site]") {
+  SiteFixture f;
+  f.world.entity("Hall")
+      .child_of(f.site)
+      .add<Building>()
+      .set<SiteLocation>({.x = 3, .y = 4})
+      .set<Footprint>({.w = 2, .h = 2});
+
+  struct Case {
+    std::string description;
+    SiteLocation origin;
+    Footprint footprint;
+    std::string expected;
+  };
+
+  GIVEN("a road run to place on a site with a road down column 0") {
+    auto [description, origin, footprint, expected] = GENERATE(values<Case>({
+        {"one cell next to the road", {.x = 1, .y = 2}, {.w = 1, .h = 1}, ""},
+        {"a run whose first cell joins the road",
+         {.x = 1, .y = 1},
+         {.w = 4, .h = 1},
+         ""},
+        {"a run whose last cell joins a building",
+         {.x = 4, .y = 0},
+         {.w = 1, .h = 4},
+         ""},
+        {"a run that joins nothing",
+         {.x = 2, .y = 0},
+         {.w = 3, .h = 1},
+         "Roads must join a road or building"},
+        {"a run crossing the road",
+         {.x = 0, .y = 2},
+         {.w = 3, .h = 1},
+         "Something is already built there"},
+        {"a run crossing a building",
+         {.x = 1, .y = 4},
+         {.w = 4, .h = 1},
+         "Something is already built there"},
+        {"a run off the site",
+         {.x = 3, .y = 2},
+         {.w = 4, .h = 1},
+         "It doesn't fit on the site"},
+        {"a run two cells wide",
+         {.x = 1, .y = 1},
+         {.w = 2, .h = 2},
+         "Roads are one cell wide"},
+    }));
+    CAPTURE(description);
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
+                                origin, footprint);
+
+    THEN("it passes or fails with the expected reason") {
+      auto result = action.validate(f.world);
+      CHECK(result.ok == expected.empty());
+      CHECK(result.message == expected);
+    }
+  }
+
+  GIVEN("an empty site") {
+    auto empty =
+        f.world.entity("Empty Site").set<Site>({.width = 4, .height = 4});
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{empty},
+                                {.x = 0, .y = 2}, {.w = 3, .h = 1});
+
+    THEN("the first run can go anywhere") {
+      CHECK(action.validate(f.world).ok);
+    }
+  }
+
+  GIVEN("a building prefab instead of a road") {
+    PlaceConnectorAction action(PlacedPrefab{f.factory}, TargetSite{f.site},
+                                {.x = 1, .y = 2}, {.w = 1, .h = 1});
+
+    THEN("it fails") {
+      CHECK(action.validate(f.world).message == "No road is selected");
+    }
+  }
+}
+
+SCENARIO("PlaceConnectorAction places a road run", "[action][site]") {
+  SiteFixture f;
+
+  GIVEN("a valid three-cell run") {
+    PlaceConnectorAction action(PlacedPrefab{f.road}, TargetSite{f.site},
+                                {.x = 1, .y = 2}, {.w = 3, .h = 1});
+
+    WHEN("it is executed") {
+      action.execute(f.world);
+
+      THEN("one numbered road is placed on each cell") {
+        std::vector<std::pair<int, int>> cells;
+        std::vector<std::string> names;
+        for (auto road : f.placedRoads()) {
+          cells.emplace_back(road.get<SiteLocation>().x,
+                             road.get<SiteLocation>().y);
+          names.emplace_back(road.name().c_str());
+          CHECK(road.has<ConnectorTile>());
+        }
+        std::ranges::sort(cells);
+        std::ranges::sort(names);
+        CHECK(cells ==
+              std::vector<std::pair<int, int>>{{1, 2}, {2, 2}, {3, 2}});
+        CHECK(names == std::vector<std::string>{"Road 1", "Road 2", "Road 3"});
+      }
+
+      THEN("its cells are occupied as connectors") {
+        const auto grid = buildOccupancyGrid(f.site);
+        CHECK(grid.at(1, 2) == CellContent::Connector);
+        CHECK(grid.at(3, 2) == CellContent::Connector);
+      }
+
+      THEN("the site is flagged for relayout") {
+        CHECK(f.site.has<SiteNeedsRelayout>());
+      }
+    }
+  }
+}

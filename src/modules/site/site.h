@@ -4,6 +4,7 @@
 #include "modules/stats/stats.h"
 #include <cstdint>
 #include <flecs.h>
+#include <optional>
 
 struct Rocket;
 struct Point;
@@ -61,11 +62,8 @@ struct Launchpad {
   Stat prep_days = Stat({.id = "prep-days", .base = 5});
 };
 
-/// @brief Indiciates the entity is a future building location
-struct ConstructionSite {};
-
-/// @brief Tag on a Site meaning its layout changed and derived state (e.g.
-/// connector autotiling) must be recomputed. Consumed in ValidatePhase.
+/// @brief Tag on a Site meaning its layout changed and its connectors must be
+/// retiled. Cleared by the retile system in ValidatePhase.
 struct SiteNeedsRelayout {};
 
 /// @brief Edge length of one site cell, in pixels
@@ -74,10 +72,13 @@ constexpr int SITE_CELL_SIZE = 32;
 /// @brief Top-left corner that centres @p site in a window of the given size
 Point centredSiteOrigin(int window_width, int window_height, const Site &site);
 
-/// @brief Whether @p point lies strictly inside the @p width x @p height
-/// rect whose top-left corner is @p origin
-bool containsPoint(const Point &origin, float width, float height,
-                   const Point &point);
+/// @brief Absent when the mouse is off the current site or over the UI
+struct HoverCell {
+  SiteLocation location;
+};
+
+std::optional<SiteLocation> cellAt(const Point &site_origin, const Site &site,
+                                   const Point &point);
 
 void systemCreateSitePrefabs(flecs::iter &);
 void systemCreateSiteWindows(flecs::iter &it);

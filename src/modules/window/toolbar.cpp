@@ -9,6 +9,7 @@
 #include <modules/window/contracts_window.h>
 #include <modules/window/notification_window.h>
 #include <modules/window/rocket_list_window.h>
+#include <modules/window/site_window.h>
 
 void systemDrawToolbar(flecs::entity winE, Toolbar) {
   auto world = winE.world();
@@ -46,6 +47,11 @@ void systemDrawToolbar(flecs::entity winE, Toolbar) {
         showLaunchWindowAdd(world, LaunchWindowDraftOptions{});
       }
       ImGui::SetItemTooltip("Plan a Launch");
+      ImGui::SameLine();
+      if (ImGui::Button("\xef\x89\xb5")) { // fa-industry f275
+        showSiteWindow(world);
+      }
+      ImGui::SetItemTooltip("Site");
 
       static const char *envelope = "\xef\x83\xa0"; // fa-envelope f0e0
       static const char *weather_ref =

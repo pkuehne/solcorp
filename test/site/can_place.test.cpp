@@ -121,9 +121,51 @@ SCENARIO("canPlace for connectors", "[site][placement]") {
     }));
     CAPTURE(origin.x, origin.y);
 
-    THEN("placing it gives the expected result, ignoring any footprint") {
+    THEN("placing it gives the expected result") {
       CHECK(canPlace(gridFrom(rows), PlacementKind::Connector, origin,
-                     Footprint{.w = 3, .h = 3}) == expected);
+                     Footprint{.w = 1, .h = 1}) == expected);
+    }
+  }
+
+  GIVEN("a site and a connector run") {
+    struct RunCase {
+      std::vector<std::string> rows;
+      SiteLocation origin;
+      Footprint footprint;
+      PlacementResult expected;
+    };
+    auto [rows, origin, footprint, expected] = GENERATE(values<RunCase>({
+        // joins the road at one end
+        {{"C....", ".....", "....."},
+         {.x = 1, .y = 0},
+         {.w = 4, .h = 1},
+         PlacementResult::Ok},
+        // joins nothing, although its own cells touch each other
+        {{"C....", ".....", "....."},
+         {.x = 2, .y = 2},
+         {.w = 3, .h = 1},
+         PlacementResult::ConnectorNotConnected},
+        // crosses the road
+        {{"..C..", ".....", "....."},
+         {.x = 0, .y = 0},
+         {.w = 4, .h = 1},
+         PlacementResult::Occupied},
+        // runs off the site
+        {{"C....", ".....", "....."},
+         {.x = 0, .y = 1},
+         {.w = 1, .h = 3},
+         PlacementResult::OutOfBounds},
+        // the first run on an empty site goes anywhere
+        {{".....", ".....", "....."},
+         {.x = 1, .y = 1},
+         {.w = 3, .h = 1},
+         PlacementResult::Ok},
+    }));
+    CAPTURE(origin.x, origin.y, footprint.w, footprint.h);
+
+    THEN("placing it gives the expected result") {
+      CHECK(canPlace(gridFrom(rows), PlacementKind::Connector, origin,
+                     footprint) == expected);
     }
   }
 }

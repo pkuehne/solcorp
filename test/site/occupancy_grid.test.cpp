@@ -83,20 +83,17 @@ SCENARIO("buildOccupancyGrid", "[site][placement]") {
     }
   }
 
-  GIVEN("a site with a construction-site ghost and a building without a "
-        "footprint") {
+  GIVEN("a site with a building without a footprint") {
     flecs::world world;
     world.import <SiteModule>();
     auto site = world.entity("Site").set<Site>({.width = 3, .height = 1});
-    world.entity().child_of(site).add<ConstructionSite>().set<SiteLocation>(
-        {.x = 0, .y = 0});
     world.entity().child_of(site).add<Building>().set<SiteLocation>(
         {.x = 2, .y = 0});
 
     WHEN("its occupancy grid is built") {
       const OccupancyGrid grid = buildOccupancyGrid(site);
 
-      THEN("the ghost is not an obstacle and the building fills one cell") {
+      THEN("the building fills one cell") {
         CHECK(render(grid) == std::vector<std::string>{"..B"});
       }
     }

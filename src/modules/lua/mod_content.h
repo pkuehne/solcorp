@@ -16,6 +16,7 @@
 
 #include "modules/engine/render.h" // Sprite
 #include "modules/lua/building_data.h"
+#include "modules/lua/connector_data.h"
 #include "modules/lua/effect_data.h"
 #include "modules/lua/rocket_data.h"
 #include "modules/lua/texture_data.h"
@@ -114,6 +115,12 @@ void applyTextureData(flecs::world &world,
 void applyTilesetData(flecs::world &world,
                       const std::vector<TilesetDef> &tilesets);
 
+/// @brief Create Prefabs::Connectors::<id> for each definition, linked to its
+/// base and markings tilesets. A definition whose base tileset is missing is
+/// logged and skipped; a missing markings tileset is logged and left out.
+void applyConnectorData(flecs::world &world,
+                        const std::vector<ConnectorDef> &connectors);
+
 /// @brief Create a building prefab (sprite + facilities) for each definition.
 void applyBuildingData(flecs::world &world,
                        const std::vector<BuildingDef> &buildings);
@@ -137,8 +144,8 @@ void applyEffectData(flecs::world &world,
 
 /**
  * @brief Read and apply every mod's textures.lua, tilesets.lua,
- *        buildings.lua, tiles.lua, rockets.lua and effects.lua, in dependency
- *        load order.
+ *        buildings.lua, connectors.lua, tiles.lua, rockets.lua and
+ *        effects.lua, in dependency load order.
  * Each file is optional per mod.
  */
 void loadModContent(flecs::world &world);
