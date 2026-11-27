@@ -1,7 +1,7 @@
 set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 
 build_dir := "build"
-aseprite := "/mnt/c/Program Files (x86)/Steam/steamapps/common/Aseprite/aseprite.exe"
+aseprite := "/usr/bin/aseprite"
 
 # List available commands
 help:
@@ -108,7 +108,11 @@ lint-fix-cpp:
 docs:
     python3 -m http.server 8000 --directory docs
 
-# Export tilesets from Aseprite files in the assets/aseprite directory to PNG files in the assets/textures directory
+# Export tilesets from Aseprite files in the assets/aseprite directory to PNG files in the core mod directory
 export-tilesets:
-    "{{ aseprite }}" -b --layer "road_asphalt" assets/aseprite/solcorp_roads.aseprite --export-tileset --sheet assets/textures/roads_asphalt.png
-    "{{ aseprite }}" -b --layer "road_markings" assets/aseprite/solcorp_roads.aseprite --export-tileset --sheet assets/textures/roads_markings.png
+    "{{ aseprite }}" -b --layer "road_asphalt" --export-tileset assets/aseprite/solcorp_roads.aseprite  --sheet mods/core/roads_asphalt.png
+    "{{ aseprite }}" -b --layer "road_markings" --export-tileset assets/aseprite/solcorp_roads.aseprite  --sheet mods/core/roads_markings.png
+    "{{ aseprite }}" -b --layer "building_outline" --export-tileset assets/aseprite/solcorp_factory.aseprite  --sheet mods/core/building_factory.png
+    "{{ aseprite }}" -b --layer "building_outline" --export-tileset assets/aseprite/solcorp_launchpad.aseprite  --sheet mods/core/building_launchpad.png
+    "{{ aseprite }}" -b --layer "building_outline" --export-tileset assets/aseprite/solcorp_office.aseprite  --sheet mods/core/building_office.png
+    "{{ aseprite }}" -b --layer "building_outline" --export-tileset assets/aseprite/solcorp_storage.aseprite  --sheet mods/core/building_storage.png
