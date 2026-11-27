@@ -10,4 +10,7 @@ return {
 	roads_asphalt = { file = "roads_asphalt.png" },
 	roads_markings = { file = "roads_markings.png" },
 	building_factory = { file = "building_factory.png" },
+	building_launchpad = { file = "building_launchpad.png" },
+	building_office = { file = "building_office.png" },
+	building_storage = { file = "building_storage.png" },
 }
