@@ -8,4 +8,7 @@ return {
 	roads_markings = { texture = "roads_markings", tile_size = 32 },
 	buildings = { texture = "Buildings", tile_size = 32 },
 	factory = { texture = "building_factory", tile_size = 32 },
+	launchpad = { texture = "building_launchpad", tile_size = 32 },
+	office = { texture = "building_office", tile_size = 32 },
+	storage = { texture = "building_storage", tile_size = 32 },
 }

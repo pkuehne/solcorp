@@ -4,12 +4,11 @@
 -- ECS. Each entry describes a building prefab: its display name, the tile it is
 -- drawn with (see tilesets.lua), and its facilities.
 --
--- See ADR 011 (Lua mod registry) and ADR 012 (building tileset metadata).
 return {
 	launch_complex = {
 		name = "Launch Complex",
-		tile = { tileset = "buildings", index = 3 },
-		fixed_size = true,
+		tile = { tileset = "launchpad" },
+		max_size = 3,
 		facilities = {
 			{ name = "Launchpad A", type = "Launchpad" },
 		},
@@ -17,8 +16,7 @@ return {
 
 	office_building = {
 		name = "Office Building",
-		tile = { tileset = "buildings", index = 1 },
-		fixed_size = true,
+		tile = { tileset = "office" },
 		facilities = {
 			{ name = "Floor 1", type = "Office" },
 		},
@@ -26,8 +24,7 @@ return {
 
 	storage_hall = {
 		name = "Storage Hall",
-		tile = { tileset = "buildings", index = 2 },
-		fixed_size = true,
+		tile = { tileset = "storage" },
 		facilities = {
 			{ name = "Hall 1", type = "Storage" },
 		},
