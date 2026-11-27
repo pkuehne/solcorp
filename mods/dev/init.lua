@@ -22,12 +22,24 @@ local function on_start()
 			"roads_markings"
 		)
 	end
+	for i = 0, 11 do
+		solcorp.helpers.create_connector(
+			"Road " .. i .. ", 5",
+			ConnectorVariant.Straight,
+			0,
+			i,
+			5,
+			site,
+			"roads_asphalt",
+			"roads_markings"
+		)
+	end
 
 	-- Add some buildings to the site
-	solcorp.helpers.create_building("Manufacturing A", "factory", 1, 1, site, 2, 2)
-	local storage = solcorp.helpers.create_building("Storage Hall 1", "storage_hall", 1, 0, site)
-	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 8, 5, site)
-	solcorp.helpers.create_building("North Building", "office_building", 0, 6, site)
+	solcorp.helpers.create_building("Manufacturing A", "factory", 4, 0, site, 3, 3)
+	local storage = solcorp.helpers.create_building("Storage Hall 1", "storage_hall", 4, 3, site, 8, 2)
+	local main_launchpad = solcorp.helpers.create_building("Main Launchpad", "launch_complex", 3, 10, site, 2, 2)
+	solcorp.helpers.create_building("North Building", "office_building", 0, 0, site, 3, 5)
 
 	-- Attach effects to the site and launchpad via HasEffect. The effects (and
 	-- their modifiers) are defined as data in effects.lua and created once by the
